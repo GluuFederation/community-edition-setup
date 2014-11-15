@@ -136,6 +136,7 @@ class Setup(object):
         self.oxEncodePWCommand = '%s/bin/encode.py' % self.gluuHome
         self.keytoolCommand = '/usr/java/latest/bin/keytool'
         self.opensslCommand = '/usr/bin/openssl'
+        self.defaultTrustStore = '/usr/java/latest/lib/security/'
         self.defaultTrustStoreFN = '/usr/java/latest/lib/security/cacerts'
         self.defaultTrustStorePW = 'changeit'
 
@@ -407,7 +408,14 @@ class Setup(object):
         self.run(["/bin/chown", '%s:%s' % (user, user), key])
         self.run(["/bin/chmod", '700', key])
 
-        self.run(["/usr/bin/keytool", "-import", "-trustcacerts", "-alias", self.hostname, "-file", public_certificate, "-keystore", "/usr/java/latest/lib/security/cacerts", "-storepass", "changeit", "-noprompt"])
+        self.run([self.keytoolCommand,
+                  '-import',
+                  '-trustcacerts',
+                  '-alias', self.hostname,
+                  '-file', public_certificate,
+                  '-keystore', self.defaultTrustStoreFN,
+                  '-storepass', 'changeit',
+                  '-noprompt'])
 
     def gen_keystore(self, suffix, keystoreFN, keystorePW, inKey, inCert, user='root'):
         self.logIt("Creating keystore %s" % suffix)
@@ -453,7 +461,7 @@ class Setup(object):
 
     def gen_openid_keys(self):
         self.logIt("Generating oxAuth OpenID Connect keys")
-        self.copyFile("static/oxauth/java.security", "/usr/java/latest/lib/security")
+        self.copyFile("static/oxauth/java.security", self.defaultTrustStore)
         self.copyFile("static/oxauth/lib/oxauth.jar", self.tomcat_user_home_lib)
         self.copyFile("static/oxauth/lib/jettison-1.3.jar", self.tomcat_user_home_lib)
         self.copyFile("static/oxauth/lib/oxauth-model.jar", self.tomcat_user_home_lib)
@@ -1138,4 +1146,3 @@ if __name__ == '__main__':
         installObject.save_properties()
         print "Properties saved to %s. Change filename to %s if you want to re-use" % \
                          (installObject.savedProperties, installObject.setup_properties_fn)
-
