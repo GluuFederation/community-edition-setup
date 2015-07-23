@@ -42,7 +42,7 @@ class Setup(object):
     def __init__(self, install_dir=None):
         self.install_dir = install_dir
 
-        self.oxVersion = '2.3.1.Final'
+        self.oxVersion = '2.3.2.Final'
         self.githubBranchName = 'version_2.3'
 
         # Used only if -w (get wars) options is given to setup.py
