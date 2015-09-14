@@ -42,12 +42,13 @@ class Setup(object):
     def __init__(self, install_dir=None):
         self.install_dir = install_dir
 
-        self.oxVersion = '2.3.3.Final'
+        self.oxVersion = '2.3.4.Final'
         self.githubBranchName = 'version_2.3'
 
         # Used only if -w (get wars) options is given to setup.py
         self.oxtrust_war = 'https://ox.gluu.org/maven/org/xdi/oxtrust-server/%s/oxtrust-server-%s.war' % (self.oxVersion, self.oxVersion)
         self.oxauth_war = 'https://ox.gluu.org/maven/org/xdi/oxauth-server/%s/oxauth-server-%s.war' % (self.oxVersion, self.oxVersion)
+        self.oxauth_rp_war = 'https://ox.gluu.org/maven/org/xdi/oxauth-rp/%s/oxauth-rp-%s.war' % (self.oxVersion, self.oxVersion)
         self.idp_war = 'http://ox.gluu.org/maven/org/xdi/oxidp/%s/oxidp-%s.war' % (self.oxVersion, self.oxVersion)
         self.asimba_war = "http://ox.gluu.org/maven/org/xdi/oxasimba-proxy/%s/oxasimba-proxy-%s.war" % (self.oxVersion, self.oxVersion)
         self.cas_war = "http://ox.gluu.org/maven/org/xdi/ox-cas-server-webapp/%s/ox-cas-server-webapp-%s.war" % (self.oxVersion, self.oxVersion)
@@ -62,7 +63,8 @@ class Setup(object):
                            'httpd':   {'enabled': True},
                            'saml':    {'enabled': False},
                            'asimba':  {'enabled': False},
-                           'cas':     {'enabled': False}
+                           'cas':     {'enabled': False},
+                           'oxauth_rp':  {'enabled': False}
         }
 
         self.os_types = ['centos', 'redhat', 'fedora', 'ubuntu', 'debian']
@@ -188,6 +190,7 @@ class Setup(object):
         self.oxTrust_properties = '%s/conf/oxTrust.properties' % self.tomcatHome
         self.tomcat_server_xml = '%s/conf/server.xml' % self.tomcatHome
         self.oxtrust_ldap_properties = '%s/conf/oxTrustLdap.properties' % self.tomcatHome
+        self.oxtrust_import_person_properties = '%s/conf/gluuImportPerson.properties' % self.tomcatHome
         self.tomcat_gluuTomcatWrapper = '%s/conf/gluuTomcatWrapper.conf' % self.tomcatHome
         self.tomcat_oxauth_static_conf_json = '%s/conf/oxauth-static-conf.json' % self.tomcatHome
         self.tomcat_log_folder = "%s/logs" % self.tomcatHome
@@ -230,6 +233,7 @@ class Setup(object):
                      self.oxTrust_properties: True,
                      self.tomcat_server_xml: True,
                      self.oxtrust_ldap_properties: True,
+                     self.oxtrust_import_person_properties: True,
                      self.tomcat_gluuTomcatWrapper: True,
                      self.tomcat_oxauth_static_conf_json: True,
                      self.oxTrust_log_rotation_configuration: True,
@@ -270,7 +274,8 @@ class Setup(object):
             + 'Install Apache 2 web server'.ljust(30) + `self.components['httpd']['enabled']`.rjust(35) + "\n" \
             + 'Install Shibboleth 2 SAML IDP'.ljust(30) + `self.components['saml']['enabled']`.rjust(35) + "\n" \
             + 'Install Asimba SAML Proxy'.ljust(30) + `self.components['asimba']['enabled']`.rjust(35) + "\n" \
-            + 'Install CAS'.ljust(30) + `self.components['cas']['enabled']`.rjust(35) + "\n"
+            + 'Install CAS'.ljust(30) + `self.components['cas']['enabled']`.rjust(35) + "\n" \
+            + 'Install oxAuth RP'.ljust(30) + `self.components['oxauth_rp']['enabled']`.rjust(35) + "\n"
 
     def add_ldap_schema(self):
         try:
@@ -284,9 +289,11 @@ class Setup(object):
 
     def change_ownership(self):
         self.logIt("Changing ownership")
+        realCertFolder = os.path.realpath(self.certFolder)
         realTomcatFolder = os.path.realpath(self.tomcatHome)
         realLdapBaseFolder = os.path.realpath(self.ldapBaseFolder)
 
+        self.run(['/bin/chown', '-R', 'tomcat:tomcat', realCertFolder])
         self.run(['/bin/chown', '-R', 'tomcat:tomcat', realTomcatFolder])
         self.run(['/bin/chown', '-R', 'ldap:ldap', realLdapBaseFolder])
         self.run(['/bin/chown', '-R', 'tomcat:tomcat', self.oxBaseDataFolder])
@@ -294,8 +301,8 @@ class Setup(object):
     def change_permissions(self):
         realCertFolder = os.path.realpath(self.certFolder)
 
-        self.run(['/bin/chmod', 'a-x', realCertFolder])
-        self.run(['/bin/chmod', '-R', 'u+X', realCertFolder])
+        self.run(['/bin/chmod', '-R', '400', realCertFolder])
+        self.run(['/bin/chmod', 'u+X', realCertFolder])
 
     def check_properties(self):
         self.logIt('Checking properties')
@@ -469,7 +476,7 @@ class Setup(object):
     def copy_static(self):
         self.createDirs("%s/conf/template/conf" % self.tomcatHome)
         self.copyFile("%s/static/oxtrust/oxTrustCacheRefresh-template.properties.vm" % self.install_dir, "%s/conf/template/conf" % self.tomcatHome)
-        # TODO: add this file to rpm.
+
         self.copyFile("%s/static/tomcat/tomcat7-1.1.jar" % self.install_dir, "%s/lib/" % self.tomcatHome)
         if self.components['saml']['enabled']: 
             self.copyFile("%s/static/tomcat/idp.xml" % self.install_dir, "%s/conf/Catalina/localhost/" % self.tomcatHome)
@@ -477,6 +484,11 @@ class Setup(object):
             self.copyFile("%s/static/idp/conf/attribute-filter.xml" % self.install_dir, "%s/" % self.idpConfFolder)
             self.copyFile("%s/static/idp/conf/relying-party.xml" % self.install_dir, "%s/" % self.idpConfFolder)
             self.copyFile("%s/static/idp/metadata/idp-metadata.xml" % self.install_dir, "%s/" % self.idpMetadataFolder)
+
+        if self.components['oxauth']['enabled']: 
+            self.copyFile("%s/static/auth/lib/duo_web.py" % self.install_dir, "%s/conf/python/" % self.tomcatHome)
+            self.copyFile("%s/static/auth/conf/duo_creds.json" % self.install_dir, "%s/" % self.certFolder)
+            self.copyFile("%s/static/auth/conf/gplus_client_secrets.json" % self.install_dir, "%s/" % self.certFolder)
 
     def createDirs(self, name):
         try:
@@ -513,16 +525,15 @@ class Setup(object):
 
     def downloadWarFiles(self):
         if self.downloadWars:
-            print "Downloading latest oxAuth war file..."
+            print "Downloading oxAuth war file..."
             self.run(['/usr/bin/wget', self.oxauth_war, '-O', '%s/oxauth.war' % self.tomcatWebAppFolder])
-            print "Downloading latest oxTrust war file..."
+            print "Downloading oxTrust war file..."
             self.run(['/usr/bin/wget', self.oxtrust_war, '-O', '%s/identity.war' % self.tomcatWebAppFolder])
-            print "Downloading latest Shibboleth IDP war file..."
+            print "Downloading Shibboleth IDP war file..."
             self.run(['/usr/bin/wget', self.idp_war, '-O', '%s/idp.war' % self.idpWarFolder])
-            print "Downloading latest CAS war file..."
+            print "Downloading CAS war file..."
             self.run(['/usr/bin/wget', self.cas_war, '-O', '%s/oxcas.war' % self.distFolder])
-            print "Downloading latest Asimba war file..."
-            self.run(['/usr/bin/wget', self.asimba_war, '-O', '%s/oxasimba.war' % self.distFolder])
+
             print "Finished downloading latest war files"
 
     def encode_passwords(self):
@@ -640,7 +651,7 @@ class Setup(object):
     def gen_crypto(self):
         try:
             self.logIt('Generating certificates and keystores')
-            self.gen_cert('httpd', self.httpdKeyPass, 'apache')
+            self.gen_cert('httpd', self.httpdKeyPass, 'tomcat')
             self.gen_cert('shibIDP', self.shibJksPass, 'tomcat')
             self.gen_cert('asimba', self.asimbaJksPass, 'tomcat')
             # Shibboleth IDP and Asimba will be added soon...
@@ -831,9 +842,9 @@ class Setup(object):
                   '-c',
                   '%s' % importCmd])
 
-    def index_opendj(self):
+    def index_opendj(self, backend):
         try:
-            self.logIt("Running LDAP index creation commands")
+            self.logIt("Running LDAP index creation commands for " + backend + " backend")
             # This json file contains a mapping of the required indexes.
             # [ { "attribute": "inum", "type": "string", "index": ["equality"] }, ...}
             index_json = self.load_json(self.indexJson)
@@ -842,38 +853,41 @@ class Setup(object):
                     attr_name = attrDict['attribute']
                     index_types = attrDict['index']
                     for index_type in index_types:
-                        self.logIt("Creating %s index for attribute %s" % (index_type, attr_name))
-                        indexCmd = " ".join(['cd %s/bin ; ' % self.ldapBaseFolder,
-                                             self.ldapDsconfigCommand,
-                                             'create-local-db-index',
-                                             '--backend-name',
-                                             'userRoot',
-                                             '--type',
-                                             'generic',
-                                             '--index-name',
-                                             attr_name,
-                                             '--set',
-                                             'index-type:%s' % index_type,
-                                             '--set',
-                                             'index-entry-limit:4000',
-                                             '--hostName',
-                                             self.ldap_hostname,
-                                             '--port',
-                                             self.ldap_admin_port,
-                                             '--bindDN',
-                                             '"%s"' % self.ldap_binddn,
-                                             '-j', self.ldapPassFn,
-                                             '--trustAll',
-                                             '--noPropertiesFile',
-                                             '--no-prompt'])
-                        self.run(['/bin/su',
-                                  'ldap',
-                                  '-c',
-                                  indexCmd])
+                        backend_names = attrDict['backend']
+                        for backend_name in backend_names:
+                            if (backend_name == backend):
+                                self.logIt("Creating %s index for attribute %s" % (index_type, attr_name))
+                                indexCmd = " ".join(['cd %s/bin ; ' % self.ldapBaseFolder,
+                                                     self.ldapDsconfigCommand,
+                                                     'create-local-db-index',
+                                                     '--backend-name',
+                                                     backend,
+                                                     '--type',
+                                                     'generic',
+                                                     '--index-name',
+                                                     attr_name,
+                                                     '--set',
+                                                     'index-type:%s' % index_type,
+                                                     '--set',
+                                                     'index-entry-limit:4000',
+                                                     '--hostName',
+                                                     self.ldap_hostname,
+                                                     '--port',
+                                                     self.ldap_admin_port,
+                                                     '--bindDN',
+                                                     '"%s"' % self.ldap_binddn,
+                                                     '-j', self.ldapPassFn,
+                                                     '--trustAll',
+                                                     '--noPropertiesFile',
+                                                     '--no-prompt'])
+                                self.run(['/bin/su',
+                                          'ldap',
+                                          '-c',
+                                          indexCmd])
             else:
                 self.logIt('NO indexes found %s' % self.indexJson, True)
         except:
-            self.logIt("Error occured during LDAP indexing", True)
+            self.logIt("Error occured during backend " + backend + " LDAP indexing", True)
             self.logIt(traceback.format_exc(), True)
 
     def install_asimba_war(self):
@@ -883,7 +897,7 @@ class Setup(object):
 
             # Asimba is not part of CE package. We need to download it if needed
             if not os.path.exists(distAsimbaPath):
-                print "Downloading latest Asimba war file..."
+                print "Downloading Asimba war file..."
                 self.run(['/usr/bin/wget', self.asimba_war, '-O', '%s/oxasimba.war' % self.distFolder])
 
             tmpAsimbaDir = '%s/tmp_asimba' % self.distFolder
@@ -949,6 +963,21 @@ class Setup(object):
 
             self.removeDirs(tmpCasDir)
             self.removeFile('%s/cas.war' % self.distFolder)
+
+    def install_oxauth_rp_war(self):
+        if self.components['oxauth_rp']['enabled']:
+            oxAuthRPWar = 'oxauth-rp.war'
+            distOxAuthRpPath = '%s/%s' % (self.distFolder, oxAuthRPWar)
+
+            # oxAuth RP is not part of CE package. We need to download it if needed
+            if not os.path.exists(distOxAuthRpPath):
+                print "Downloading oxAuth RP war file..."
+                self.run(['/usr/bin/wget', self.oxauth_rp_war, '-O', '%s/oxauth-rp.war' % self.distFolder])
+
+            self.logIt("Copying oxauth-rp.war into tomcat webapps folder...")
+            self.copyFile('%s/oxauth-rp.war' % self.distFolder, self.tomcatWebAppFolder)
+
+            self.removeFile('%s/oxauth-rp.war' % self.distFolder)
 
     def isIP(self, address):
         try:
@@ -1153,6 +1182,12 @@ class Setup(object):
             installObject.components['cas']['enabled'] = True
         else:
             installObject.components['cas']['enabled'] = False
+
+        promptForOxAuthRP = self.getPrompt("Install oxAuth RP?", "No")[0].lower()
+        if promptForOxAuthRP == 'y':
+            installObject.components['oxauth_rp']['enabled'] = True
+        else:
+            installObject.components['oxauth_rp']['enabled'] = False
 
     def removeDirs(self, name):
         try:
@@ -1371,6 +1406,7 @@ def print_help():
     print "Options:"
     print ""
     print "    -a   Install Asimba"
+    print "    -r   Install oxAuth RP"
     print "    -c   Install CAS"
     print "    -d   specify the directory where community-edition-setup is located. Defaults to '.'"
     print "    -f   specify setup.properties file"
@@ -1419,6 +1455,8 @@ def getOpts(argv, setupOptions):
             setupOptions['modifyNetworking'] = True
         elif opt == "-w":
             setupOptions['downloadWars'] = True
+        elif opt == '-r':
+            setupOptions['installOxAuthRP'] = True
     return setupOptions
 
 if __name__ == '__main__':
@@ -1434,6 +1472,7 @@ if __name__ == '__main__':
         'installSAML': False,
         'installAsimba': False,
         'installCAS': False,
+        'installOxAuthRP': False,
         'modifyNetworking': False
     }
     if len(sys.argv) > 1:
@@ -1451,6 +1490,7 @@ if __name__ == '__main__':
     installObject.components['saml']['enabled'] = setupOptions['installSAML']
     installObject.components['asimba']['enabled'] = setupOptions['installAsimba']
     installObject.components['cas']['enabled'] = setupOptions['installCAS']
+    installObject.components['oxauth_rp']['enabled'] = setupOptions['installOxAuthRP']
 
     print "\nInstalling Gluu Server...\n\nFor more info see:\n  %s  \n  %s\n" % (installObject.log, installObject.logError)
     print "\n** All clear text passwords contained in %s.\n" % installObject.savedProperties
@@ -1496,13 +1536,13 @@ if __name__ == '__main__':
             installObject.encode_passwords()
             installObject.render_templates()
             installObject.render_test_templates()
-            1
             installObject.update_hostname()
             installObject.gen_crypto()
             installObject.configure_httpd()
             installObject.setup_opendj()
             installObject.configure_opendj()
-            installObject.index_opendj()
+            installObject.index_opendj('userRoot')
+            installObject.index_opendj('site')
             installObject.import_ldif()
             installObject.deleteLdapPw()
             installObject.export_opendj_public_cert()
@@ -1511,6 +1551,7 @@ if __name__ == '__main__':
             installObject.copy_static()
             installObject.install_cas_war()
             installObject.install_asimba_war()
+            installObject.install_oxauth_rp_war()
             installObject.change_ownership()
             installObject.change_permissions()
             installObject.start_services()
