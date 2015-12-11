@@ -1380,6 +1380,7 @@ class Setup(object):
                 try:
                     self.copyFile(self.tomcat_template_centos7, dest_folder)
                     self.run(["chmod", "755", self.tomcat_service_centos7])
+                    self.run([self.tomcat_service_centos7, "install"])
                 except:
                     self.logIt("Error copying script file %s to %s" % (self.tomcat_template_centos7, dest_folder))
                     self.logIt(traceback.format_exc(), True)
@@ -1435,7 +1436,6 @@ class Setup(object):
                 print ".",
                 i = i + 1
             if self.os_type == 'centos' and self.os_initdaemon == 'systemd':
-               self.run([self.tomcat_service_centos7, "install"])
                self.run([service_path, 'enable', 'tomcat'])
                self.run([service_path, 'start', 'tomcat'])
             else:
