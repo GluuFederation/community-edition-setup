@@ -205,6 +205,7 @@ class Setup(object):
         self.oxtrust_import_person_json = '%s/oxtrust-import-person.json' % self.outputFolder
         self.oxidp_config_json = '%s/oxidp-config.json' % self.outputFolder
         self.oxcas_config_json = '%s/oxcas-config.json' % self.outputFolder
+        self.oxasimba_config_json = '%s/oxasimba-config.json' % self.outputFolder
         self.tomcat_server_xml = '%s/conf/server.xml' % self.tomcatHome
         self.tomcat_python_readme = '%s/conf/python/python.txt' % self.tomcatHome
         self.ox_ldap_properties = '%s/conf/ox-ldap.properties' % self.tomcatHome
@@ -229,6 +230,7 @@ class Setup(object):
         self.ldif_scripts = '%s/scripts.ldif' % self.outputFolder
         self.ldif_configuration = '%s/configuration.ldif' % self.outputFolder
         self.ldif_scim = '%s/scim.ldif' % self.outputFolder
+        self.ldif_asimba = '%s/asimba.ldif' % self.outputFolder
         self.encode_script = '%s/bin/encode.py' % self.gluuOptFolder
         self.cas_properties = '%s/cas.properties' % self.outputFolder
         self.asimba_configuration = '%s/asimba.xml' % self.outputFolder
@@ -250,6 +252,7 @@ class Setup(object):
         self.oxtrust_import_person_base64 = None
         self.oxidp_config_base64 = None
         self.oxcas_config_base64 = None
+        self.oxasimba_config_base64 = None
 
 
         # oxTrust SCIM configuration
@@ -272,7 +275,8 @@ class Setup(object):
                            self.ldif_site,
                            self.ldif_scripts,
                            self.ldif_configuration,
-                           self.ldif_scim
+                           self.ldif_scim,
+                           self.ldif_asimba
                            ]
 
         self.ce_templates = {self.oxauth_config_json: False,
@@ -284,6 +288,7 @@ class Setup(object):
                      self.oxtrust_import_person_json: False,
                      self.oxidp_config_json: False,
                      self.oxcas_config_json: False,
+                     self.oxasimba_config_json: False,
                      self.tomcat_server_xml: True,
                      self.ox_ldap_properties: True,
                      self.tomcat_gluuTomcatWrapper: True,
@@ -306,6 +311,7 @@ class Setup(object):
                      self.ldif_groups: False,
                      self.ldif_scripts: False,
                      self.ldif_scim: False,
+                     self.ldif_asimba: False,
                      self.cas_properties: False,
                      self.asimba_configuration: False,
                      self.asimba_properties: False,
@@ -1564,6 +1570,7 @@ class Setup(object):
 
         self.oxidp_config_base64 = self.generate_base64_ldap_file(self.oxidp_config_json)
         self.oxcas_config_base64 = self.generate_base64_ldap_file(self.oxcas_config_json)
+        self.oxasimba_config_base64 = self.generate_base64_ldap_file(self.oxasimba_config_json)
 
     # args = command + args, i.e. ['ls', '-ltr']
     def run(self, args, cwd=None):
