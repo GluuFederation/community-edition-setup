@@ -1183,6 +1183,10 @@ class Setup(object):
             self.logIt("Error making folders", True)
             self.logIt(traceback.format_exc(), True)
 
+    def configureOsPatches(self):
+        if self.os_type in ['debian']:
+            self.defaultTrustStoreFN = '/etc/ssl/certs/java/cacerts'
+
     def make_salt(self):
         try:
             f = open("%s/conf/salt" % self.tomcatHome, 'w')
@@ -1737,6 +1741,7 @@ if __name__ == '__main__':
         proceed = raw_input('Proceed with these values [Y|n] ').lower().strip()
     if (setupOptions['noPrompt'] or not len(proceed) or (len(proceed) and (proceed[0] == 'y'))):
         try:
+            installObject.configureOsPatches()
             installObject.makeFolders()
             installObject.make_salt()
             installObject.make_oxauth_salt()
