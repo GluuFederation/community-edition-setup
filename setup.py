@@ -652,7 +652,9 @@ class Setup(object):
         try:
             distro_info = self.file_get_contents('/etc/redhat-release')
         except IOError as e:
-            distro_info = self.file_get_contents('/etc/os-release')
+            # FIXME
+            # distro_info = self.file_get_contents('/etc/os-release')
+            distro_info = self.file_get_contents('os-release')
 
         if 'CentOS' in distro_info:
             return self.os_types[0]
@@ -1842,7 +1844,7 @@ def print_help():
 
 def getOpts(argv, setupOptions):
     try:
-        opts, args = getopt.getopt(argv, "acd:fhNn:suw")
+        opts, args = getopt.getopt(argv, "acd:f:hNnsuwr")
     except getopt.GetoptError:
         print_help()
         sys.exit(2)
@@ -1874,6 +1876,8 @@ def getOpts(argv, setupOptions):
             setupOptions['installHTTPD'] = False
         elif opt == "-s":
             setupOptions['installSaml'] = True
+        elif opt == "-u":
+            pass  # TODO implement this option or remove it from help
         elif opt == "-w":
             setupOptions['downloadWars'] = True
         elif opt == '-r':
