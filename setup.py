@@ -252,6 +252,8 @@ class Setup(object):
 
         self.ldap_setup_properties = '%s/opendj-setup.properties' % self.templateFolder
 
+        self.gluuotp_config = '/opt/tomcat/conf/python/gluuotp/config.py'
+
         # oxAuth/oxTrust Base64 configuration files
         self.oxauth_config_base64 = None
         self.oxauth_static_conf_base64 = None
@@ -328,7 +330,8 @@ class Setup(object):
                      self.asimba_configuration: False,
                      self.asimba_properties: False,
                      self.asimba_selector_configuration: True,
-                     self.network: False
+                     self.network: False,
+                     self.gluuotp_config: True
                      }
 
     def __repr__(self):
