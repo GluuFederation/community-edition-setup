@@ -252,7 +252,7 @@ class Setup(object):
 
         self.ldap_setup_properties = '%s/opendj-setup.properties' % self.templateFolder
 
-        self.gluuotp_config = '%s/gluu_otpconfig.py' % self.templateFolder
+        self.gluuotp_config = '%s/gluuotp_config.py' % self.templateFolder
 
         # oxAuth/oxTrust Base64 configuration files
         self.oxauth_config_base64 = None
