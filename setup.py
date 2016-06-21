@@ -650,7 +650,7 @@ class Setup(object):
         gluuotpFolder = "%s/conf/python/gluuotp" % self.tomcatHome
         if not os.path.exists(gluuotpFolder):
             os.makedirs(gluuotpFolder)
-        shutil.copyfile("%s/gluuotp_config.py" % self.outputFolder, "%s/config.py" % gluuotpFolder)
+        self.copyFile("%s/gluuotp_config.py" % self.outputFolder, "%s/config.py" % gluuotpFolder)
 
     def createDirs(self, name):
         try:
