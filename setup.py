@@ -647,7 +647,10 @@ class Setup(object):
             self.copyFile("%s/static/auth/conf/cert_creds.json" % self.install_dir, "%s/" % self.certFolder)
 
         # Copy the rendered template to the appropriate location
-        self.copyFile("%s/gluuotp_config.py" % self.outputFolder, "%s/conf/python/gluuotp/config.py" % self.tomcatHome)
+        gluuotpFolder = "%s/conf/python/gluuotp" % self.tomcatHome
+        if not os.path.exists(gluuotpFolder):
+            os.makedirs(gluuotpFolder)
+        shutil.copyfile("%s/gluuotp_config.py" % self.outputFolder, "%s/config.py" % gluuotpFolder)
 
     def createDirs(self, name):
         try:
