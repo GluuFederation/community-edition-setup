@@ -252,7 +252,7 @@ class Setup(object):
 
         self.ldap_setup_properties = '%s/opendj-setup.properties' % self.templateFolder
 
-        self.gluuotp_config = '/opt/tomcat/conf/python/gluuotp/config.py'
+        self.gluuotp_config = '%s/gluu_otpconfig.py' % self.templateFolder
 
         # oxAuth/oxTrust Base64 configuration files
         self.oxauth_config_base64 = None
@@ -645,6 +645,9 @@ class Setup(object):
             self.copyFile("%s/static/auth/conf/gplus_client_secrets.json" % self.install_dir, "%s/" % self.certFolder)
             self.copyFile("%s/static/auth/conf/oxpush2_creds.json" % self.install_dir, "%s/" % self.certFolder)
             self.copyFile("%s/static/auth/conf/cert_creds.json" % self.install_dir, "%s/" % self.certFolder)
+
+        # Copy the rendered template to the appropriate location
+        self.copyFile("%s/gluuotp_config.py" % self.outputFolder, "%s/conf/python/gluuotp/config.py" % self.tomcatHome)
 
     def createDirs(self, name):
         try:
