@@ -43,7 +43,7 @@ class Setup(object):
     def __init__(self, install_dir=None):
         self.install_dir = install_dir
 
-        self.oxVersion = '2.4.3-SNAPSHOT'
+        self.oxVersion = '2.4.4-SNAPSHOT'
         self.githubBranchName = 'master'
 
         # Used only if -w (get wars) options is given to setup.py
@@ -51,6 +51,8 @@ class Setup(object):
         self.oxauth_war = 'https://ox.gluu.org/maven/org/xdi/oxauth-server/%s/oxauth-server-%s.war' % (self.oxVersion, self.oxVersion)
         self.oxauth_rp_war = 'https://ox.gluu.org/maven/org/xdi/oxauth-rp/%s/oxauth-rp-%s.war' % (self.oxVersion, self.oxVersion)
         self.idp_war = 'http://ox.gluu.org/maven/org/xdi/oxidp/%s/oxidp-%s.war' % (self.oxVersion, self.oxVersion)
+        self.idp3_war = 'http://ox.gluu.org/maven/org/xdi/oxshibbolethIdp/%s/oxshibbolethIdp-%s.war' % (self.oxVersion, self.oxVersion)
+        self.idp3_dist_jar = 'http://ox.gluu.org/maven/org/xdi/oxShibbolethStatic/%s/oxShibbolethStatic-%s.jar' % (self.oxVersion, self.oxVersion)
         self.asimba_war = "http://ox.gluu.org/maven/org/asimba/asimba-wa/%s/asimba-wa-%s.war" % (self.oxVersion, self.oxVersion)
         self.cas_war = "http://ox.gluu.org/maven/org/xdi/ox-cas-server-webapp/%s/ox-cas-server-webapp-%s.war" % (self.oxVersion, self.oxVersion)
         self.ce_setup_zip = 'https://github.com/GluuFederation/community-edition-setup/archive/%s.zip' % self.githubBranchName
@@ -62,9 +64,12 @@ class Setup(object):
         self.installLdap = True
         self.installHttpd = True
         self.installSaml = False
+        self.installSamlIDP2 = False
+        self.installSamlIDP3 = False
         self.installAsimba = False
         self.installCas = False
         self.installOxAuthRP = False
+        self.allowPreReleasedApplications = False
 
         self.os_types = ['centos', 'redhat', 'fedora', 'ubuntu', 'debian']
         self.os_type = None
@@ -72,19 +77,19 @@ class Setup(object):
         self.apache_version = None
         self.opendj_version = None
 
-        self.distFolder = "/opt/dist"
-        self.setup_properties_fn = "%s/setup.properties" % self.install_dir
+        self.distFolder = '/opt/dist'
+        self.setup_properties_fn = '%s/setup.properties' % self.install_dir
         self.log = '%s/setup.log' % self.install_dir
         self.logError = '%s/setup_error.log' % self.install_dir
-        self.savedProperties = "%s/setup.properties.last" % self.install_dir
+        self.savedProperties = '%s/setup.properties.last' % self.install_dir
 
-        self.gluuOptFolder = "/opt/gluu"
-        self.gluuOptBinFolder = "/opt/gluu/bin"
+        self.gluuOptFolder = '/opt/gluu'
+        self.gluuOptBinFolder = '/opt/gluu/bin'
         self.configFolder = '/etc/gluu/config'
         self.certFolder = '/etc/certs'
         self.tomcatHome = '/opt/tomcat'
-        self.tomcat_user_home_lib = "/home/tomcat/lib"
-        self.oxauth_lib = "/opt/tomcat/webapps/oxauth/WEB-INF/lib"
+        self.tomcat_user_home_lib = '/home/tomcat/lib'
+        self.oxauth_lib = '/opt/tomcat/webapps/oxauth/WEB-INF/lib'
         self.tomcatWebAppFolder = "/opt/tomcat/webapps"
         self.oxBaseDataFolder = "/var/ox"
         self.oxPhotosFolder = "/var/ox/photos"
@@ -103,6 +108,17 @@ class Setup(object):
         self.idpTempMetadataFolder = "/opt/idp/temp_metadata"
         self.idpWarFolder = "/opt/idp/war"
         self.idpSPFolder = "/opt/idp/sp"
+        self.idpWarFullPath = '%s/idp.war' % self.idpWarFolder
+
+        
+        self.idp3Folder = "/opt/shibboleth-idp"
+        self.idp3MetadataFolder = "/opt/shibboleth-idp/metadata"
+        self.idp3LogsFolder = "/opt/shibboleth-idp/logs"
+        self.idp3LibFolder = "/opt/shibboleth-idp/lib"
+        self.idp3ConfFolder = "/opt/shibboleth-idp/conf"
+        self.idp3SslFolder = "/opt/shibboleth-idp/credentials"
+        self.idp3TempMetadataFolder = "/opt/shibboleth-idp/temp_metadata"
+        self.idp3WarFolder = "/opt/shibboleth-idp/war"
 
         self.hostname = None
         self.ip = None
@@ -139,7 +155,11 @@ class Setup(object):
         self.staticFolder = '%s/static/opendj' % self.install_dir
         self.indexJson = '%s/static/opendj/opendj_index.json' % self.install_dir
         self.oxauth_error_json = '%s/static/oxauth/oxauth-errors.json' % self.install_dir
-        self.oxauth_openid_key_json = "%s/oxauth-web-keys.json" % self.certFolder
+        self.staticIDP3FolderConf = '%s/static/idp3/conf' % self.install_dir
+        self.staticIDP3FolderMetadata = '%s/static/idp3/metadata' % self.install_dir
+        self.oxauth_openid_jwks_fn = "%s/oxauth-keys.json" % self.certFolder
+        self.oxauth_openid_jks_fn = "%s/oxauth-keys.jks" % self.certFolder
+        self.oxauth_openid_jks_pass = None
 
         self.httpdKeyPass = None
         self.httpdKeyFn = '%s/httpd.key' % self.certFolder
@@ -178,6 +198,7 @@ class Setup(object):
                                 '%s/static/scripts/testBind.py' % self.install_dir]
         self.init_files = ['%s/static/tomcat/tomcat' % self.install_dir,
                            '%s/static/opendj/opendj' % self.install_dir]
+        self.opendj_service_centos7 = '%s/static/opendj/systemd/opendj.service' % self.install_dir
         self.tomcat_template_centos7 = '%s/static/tomcat/systemd/tomcat' % self.install_dir
         self.tomcat_service_centos7 = "%s/bin/tomcat" % self.tomcatHome
         self.redhat_services = ['memcached', 'opendj', 'tomcat', 'httpd']
@@ -237,6 +258,14 @@ class Setup(object):
         self.asimba_properties = '%s/asimba.properties' % self.outputFolder
         self.asimba_selector_configuration = '%s/conf/asimba-selector.xml' % self.tomcatHome
         self.network = "/etc/sysconfig/network"
+        
+        self.idp3_configuration_properties = '/idp.properties' 
+        self.idp3_configuration_ldap_properties = '/ldap.properties'
+        self.idp3_configuration_login = '/login.config' 
+        self.idp3_configuration_saml_nameid = '/saml-nameid.properties' 
+        self.idp3_configuration_services = '/services.properties' 
+        self.idp3_configuration_jaas = '/authn/jaas.config' 
+        self.idp3_metadata = '/idp-metadata.xml' 
 
         self.ldap_setup_properties = '%s/opendj-setup.properties' % self.templateFolder
 
@@ -255,15 +284,24 @@ class Setup(object):
         self.oxasimba_config_base64 = None
 
 
+        # OpenID key generation default setting
+        self.default_openid_jks_dn_name = 'CN=oxAuth CA Certificates'
+        self.default_key_algs = 'RS256 RS384 RS512 ES256 ES384 ES512'        
+        self.default_key_expiration = 365
+
         # oxTrust SCIM configuration
         self.scim_rs_client_id = None
-        self.scim_rp_client_id = None
         self.scim_rs_client_jwks = None
-        self.scim_rp_client_jwks = None
         self.scim_rs_client_base64_jwks = None
-        self.scim_rp_client_base64_jwks = None
+        self.scim_rs_client_jks_fn = "%s/scim-rs.jks" % self.certFolder
+        self.scim_rs_client_jks_pass = None
+        self.scim_rs_client_jks_pass_encoded = None
 
-        self.scim_rp_client_openid_key_json = '%s/scim-rp-openid-keys.json' % self.outputFolder
+        self.scim_rp_client_id = None
+        self.scim_rp_client_jwks = None
+        self.scim_rp_client_base64_jwks = None
+        self.scim_rp_client_jks_fn = "%s/scim-rp.jks" % self.outputFolder
+        self.scim_rp_client_jks_pass = 'secret'
 
         self.ldif_files = [self.ldif_base,
                            self.ldif_appliance,
@@ -334,7 +372,7 @@ class Setup(object):
                 + 'Install oxTrust'.ljust(30) + repr(self.installOxTrust).rjust(35) + "\n" \
                 + 'Install LDAP'.ljust(30) + repr(self.installLdap).rjust(35) + "\n" \
                 + 'Install Apache 2 web server'.ljust(30) + repr(self.installHttpd).rjust(35) + "\n" \
-                + 'Install Shibboleth 2 SAML IDP'.ljust(30) + repr(self.installSaml).rjust(35) + "\n" \
+                + 'Install Shibboleth SAML IDP'.ljust(30) + repr(self.installSaml).rjust(35) + "\n" \
                 + 'Install Asimba SAML Proxy'.ljust(30) + repr(self.installAsimba).rjust(35) + "\n" \
                 + 'Install CAS'.ljust(30) + repr(self.installCas).rjust(35) + "\n" \
                 + 'Install oxAuth RP'.ljust(30) + repr(self.installOxAuthRP).rjust(35) + "\n"
@@ -360,13 +398,17 @@ class Setup(object):
         realCertFolder = os.path.realpath(self.certFolder)
         realTomcatFolder = os.path.realpath(self.tomcatHome)
         realLdapBaseFolder = os.path.realpath(self.ldapBaseFolder)
-        realIdpFolder = os.path.realpath(self.idpFolder)
 
         self.run(['/bin/chown', '-R', 'tomcat:tomcat', realCertFolder])
         self.run(['/bin/chown', '-R', 'tomcat:tomcat', realTomcatFolder])
         self.run(['/bin/chown', '-R', 'ldap:ldap', realLdapBaseFolder])
         self.run(['/bin/chown', '-R', 'tomcat:tomcat', self.oxBaseDataFolder])
-        self.run(['/bin/chown', '-R', 'tomcat:tomcat', realIdpFolder])
+
+        if self.installSaml:
+            realIdpFolder = os.path.realpath(self.idpFolder)
+            realIdp3Folder = os.path.realpath(self.idp3Folder)
+            self.run(['/bin/chown', '-R', 'tomcat:tomcat', realIdpFolder])
+            self.run(['/bin/chown', '-R', 'tomcat:tomcat', realIdp3Folder])
 
     def change_permissions(self):
         realCertFolder = os.path.realpath(self.certFolder)
@@ -429,6 +471,8 @@ class Setup(object):
             self.ldapPass = self.getPW()
         if not self.shibJksPass:
             self.shibJksPass = self.getPW()
+        if not self.oxauth_openid_jks_pass:
+            self.oxauth_openid_jks_pass = self.getPW()
         if not self.asimbaJksPass:
             self.asimbaJksPass = self.getPW()
         if not self.encode_salt:
@@ -614,10 +658,15 @@ class Setup(object):
         self.copyFile("%s/static/tomcat/tomcat7-1.1.jar" % self.install_dir, "%s/lib/" % self.tomcatHome)
         if self.installSaml:
             self.copyFile("%s/static/tomcat/idp.xml" % self.install_dir, "%s/conf/Catalina/localhost/" % self.tomcatHome)
-            self.copyFile("%s/static/tomcat/attribute-resolver.xml.vm" % self.install_dir, "%s/conf/shibboleth2/idp/" % self.tomcatHome)
+            self.renderTemplateInOut("%s/conf/Catalina/localhost/idp.xml" % self.tomcatHome, "%s/conf/Catalina/localhost" % self.tomcatHome, "%s/conf/Catalina/localhost" % self.tomcatHome)
+            
+            self.copyFile("%s/static/tomcat/attribute-resolver.xml.vm" % self.install_dir, "%s/conf/shibboleth2/idp/attribute-resolver.xml.vm" % self.tomcatHome)
 
             self.copyTree("%s/static/idp/conf/" % self.install_dir, self.idpConfFolder)
             self.copyFile("%s/static/idp/metadata/idp-metadata.xml" % self.install_dir, "%s/" % self.idpMetadataFolder)
+            
+            self.copyTree("%s/static/idp3/conf/" % self.install_dir, self.idp3ConfFolder)
+            self.copyFile("%s/static/idp3/metadata/idp-metadata.xml" % self.install_dir, "%s/" % self.idp3MetadataFolder)
 
         if self.installOxAuth:
             self.copyFile("%s/static/auth/lib/duo_web.py" % self.install_dir, "%s/conf/python/" % self.tomcatHome)
@@ -699,13 +748,17 @@ class Setup(object):
     def downloadWarFiles(self):
         if self.downloadWars:
             print "Downloading oxAuth war file..."
-            self.run(['/usr/bin/wget', self.oxauth_war, '-O', '%s/oxauth.war' % self.tomcatWebAppFolder])
+            self.run(['/usr/bin/wget', self.oxauth_war, '-O', '--retry-connrefused', '--tries=10', '%s/oxauth.war' % self.tomcatWebAppFolder])
             print "Downloading oxTrust war file..."
-            self.run(['/usr/bin/wget', self.oxtrust_war, '-O', '%s/identity.war' % self.tomcatWebAppFolder])
-            print "Downloading Shibboleth IDP war file..."
-            self.run(['/usr/bin/wget', self.idp_war, '-O', '%s/idp.war' % self.idpWarFolder])
+            self.run(['/usr/bin/wget', self.oxtrust_war, '-O', '--retry-connrefused', '--tries=10', '%s/identity.war' % self.tomcatWebAppFolder])
+            print "Downloading Shibboleth IDP 2 war file..."
+            self.run(['/usr/bin/wget', self.idp_war, '-O', '--retry-connrefused', '--tries=10', '%s/idp.war' % self.idpWarFolder])
+            print "Downloading Shibboleth IDP 3 war file..."
+            self.run(['/usr/bin/wget', self.idp3_war, '-O', '-c', '--retry-connrefused', '--tries=10', '%s/idp.war' % self.idp3WarFolder])
+            print "Downloading Shibboleth IDP 3 binary distributive file..."
+            self.run(['/usr/bin/wget', self.idp3_dist_jar, '-O', '-c', '--retry-connrefused', '--tries=10', '%s/shibboleth-idp.jar' % self.outputFolder])
             print "Downloading CAS war file..."
-            self.run(['/usr/bin/wget', self.cas_war, '-O', '%s/oxcas.war' % self.distFolder])
+            self.run(['/usr/bin/wget', self.cas_war, '-O', '--retry-connrefused', '--tries=10', '%s/oxcas.war' % self.distFolder])
 
             print "Finished downloading latest war files"
 
@@ -900,22 +953,70 @@ class Setup(object):
         self.run(["/bin/chown", '%s:%s' % (user, user), keystoreFN])
         self.run(["/bin/chmod", '700', keystoreFN])
 
-    def gen_openid_keys(self):
+    def gen_openid_jwks_jks_keys(self, jks_path, jks_pwd, jks_create = True, key_expiration = None, dn_name = None, key_algs = None):
         self.logIt("Generating oxAuth OpenID Connect keys")
+        
+        if dn_name == None:
+            dn_name = self.default_openid_jks_dn_name
+        
+        if key_algs == None:
+            key_algs = self.default_key_algs
+
+        if key_expiration == None:
+            key_expiration = self.default_key_expiration
+
+
+        # We can remove this once KeyGenerator will do the same
+        if jks_create == True:
+            self.logIt("Creating empty JKS keystore")
+            # Create JKS with dummy key
+            cmd = " ".join([self.keytoolCommand,
+                      '-genkey',
+                      '-alias',
+                      'dummy',
+                      '-keystore',
+                      jks_path,
+                      '-storepass',
+                      jks_pwd,
+                      '-keypass',
+                      jks_pwd,
+                      '-dname',
+                      '"%s"' % dn_name])
+            self.run(['/bin/sh', '-c', cmd])
+
+            # Delete dummy key from JKS
+            cmd = " ".join([self.keytoolCommand,
+                      '-delete',
+                      '-alias',
+                      'dummy',
+                      '-keystore',
+                      jks_path,
+                      '-storepass',
+                      jks_pwd,
+                      '-keypass',
+                      jks_pwd,
+                      '-dname',
+                      '"%s"' % dn_name])
+            self.run(['/bin/sh', '-c', cmd])
+
         self.copyFile("%s/static/oxauth/lib/oxauth.jar" % self.install_dir, self.tomcat_user_home_lib)
         self.copyFile("%s/static/oxauth/lib/jettison-1.3.jar" % self.install_dir, self.tomcat_user_home_lib)
         self.copyFile("%s/static/oxauth/lib/oxauth-model.jar" % self.install_dir, self.tomcat_user_home_lib)
-        self.copyFile("%s/static/oxauth/lib/bcprov-jdk16-1.46.jar" % self.install_dir, self.tomcat_user_home_lib)
+        self.copyFile("%s/static/oxauth/lib/bcprov-jdk15on-1.54.jar" % self.install_dir, self.tomcat_user_home_lib)
+        self.copyFile("%s/static/oxauth/lib/bcpkix-jdk15on-1.54.jar" % self.install_dir, self.tomcat_user_home_lib)
         self.copyFile("%s/static/oxauth/lib/commons-codec-1.5.jar" % self.install_dir, self.tomcat_user_home_lib)
         self.copyFile("%s/static/oxauth/lib/commons-lang-2.6.jar" % self.install_dir, self.tomcat_user_home_lib)
+        self.copyFile("%s/static/oxauth/lib/commons-cli-1.2.jar" % self.install_dir, self.tomcat_user_home_lib)
         self.copyFile("%s/static/oxauth/lib/log4j-1.2.14.jar" % self.install_dir, self.tomcat_user_home_lib)
 
         self.change_ownership()
 
-        requiredJars =['%s/bcprov-jdk16-1.46.jar' % self.tomcat_user_home_lib,
+        requiredJars =['%s/bcprov-jdk15on-1.54.jar' % self.tomcat_user_home_lib,
+                       '%s/bcpkix-jdk15on-1.54.jar' % self.tomcat_user_home_lib,
                        '%s/commons-lang-2.6.jar' % self.tomcat_user_home_lib,
                        '%s/log4j-1.2.14.jar' % self.tomcat_user_home_lib,
                        '%s/commons-codec-1.5.jar' % self.tomcat_user_home_lib,
+                       '%s/commons-cli-1.2.jar' % self.tomcat_user_home_lib,
                        '%s/jettison-1.3.jar' % self.tomcat_user_home_lib,
                        '%s/oxauth-model.jar' % self.tomcat_user_home_lib,
                        '%s/oxauth.jar' % self.tomcat_user_home_lib]
@@ -924,8 +1025,18 @@ class Setup(object):
                         "-Dlog4j.defaultInitOverride=true",
                         "-cp",
                         ":".join(requiredJars),
-                        "org.xdi.oxauth.util.KeyGenerator"])
-        args = ["/bin/su", "tomcat", "-c", cmd]
+                        "org.xdi.oxauth.util.KeyGenerator",
+                        "-keystore",
+                        jks_path,
+                        "-keypasswd",
+                        jks_pwd,
+                        "-algorithms",
+                        "%s" % key_algs,
+                        "-dnname",
+                        '"%s"' % dn_name,
+                        "-expiration",
+                        "%s" % key_expiration])
+        args = ['/bin/sh', '-c', cmd]
 
         self.logIt("Runnning: %s" % " ".join(args))
         try:
@@ -961,8 +1072,8 @@ class Setup(object):
             self.logIt(traceback.format_exc(), True)
 
     def generate_oxauth_openid_keys(self):
-        jwks = self.gen_openid_keys()
-        self.write_openid_keys(self.oxauth_openid_key_json, jwks)
+        jwks = self.gen_openid_jwks_jks_keys(self.oxauth_openid_jks_fn, self.oxauth_openid_jks_pass)
+        self.write_openid_keys(self.oxauth_openid_jwks_fn, jwks)
 
     def generate_base64_string(self, lines, num_spaces):
         if not lines:
@@ -982,13 +1093,16 @@ class Setup(object):
                                      + string.digits) for _ in range(N))
 
     def generate_scim_configuration(self):
-        self.scim_rs_client_jwks = self.gen_openid_keys()
-        self.scim_rp_client_jwks = self.gen_openid_keys()
+        self.scim_rs_client_jks_pass = self.getPW()
 
+        cmd = "%s %s" % (self.oxEncodePWCommand, self.scim_rs_client_jks_pass)
+        self.scim_rs_client_jks_pass_encoded = os.popen(cmd, 'r').read().strip()
+        
+        self.scim_rs_client_jwks = self.gen_openid_jwks_jks_keys(self.scim_rs_client_jks_fn, self.scim_rs_client_jks_pass)
         self.scim_rs_client_base64_jwks = self.generate_base64_string(self.scim_rs_client_jwks, 1)
-        self.scim_rp_client_base64_jwks = self.generate_base64_string(self.scim_rp_client_jwks, 1)
 
-        self.write_openid_keys(self.scim_rp_client_openid_key_json, self.scim_rp_client_jwks)
+        self.scim_rp_client_jwks = self.gen_openid_jwks_jks_keys(self.scim_rp_client_jks_fn, self.scim_rp_client_jks_pass)
+        self.scim_rp_client_base64_jwks = self.generate_base64_string(self.scim_rp_client_jwks, 1)
 
     def getPrompt(self, prompt, defaultValue=None):
         try:
@@ -1159,15 +1273,28 @@ class Setup(object):
             self.run(['/bin/chmod', '-R', '755', endorsedFolder])
             
             # Copy  files into endorsed
-            bcFilePath = '%s/WEB-INF/lib/bcprov-jdk16-1.46.jar' % tmpOxAuthDir
+            bcFilePath1 = '%s/WEB-INF/lib/bcprov-jdk15on-1.54.jar' % tmpOxAuthDir
+            bcFilePath2 = '%s/WEB-INF/lib/bcpkix-jdk15on-1.54.jar' % tmpOxAuthDir
 
             self.logIt("Copying files to %s..." % endorsedFolder)
-            self.copyFile(bcFilePath, endorsedFolder)
+            self.copyFile(bcFilePath1, endorsedFolder)
+            self.copyFile(bcFilePath2, endorsedFolder)
 
             self.removeDirs(tmpOxAuthDir)
 
     def install_saml(self):
         if self.installSaml:
+            self.logIt("Install Saml general files...")
+            # choose SAML IDP version
+            if self.allowPreReleasedApplications:
+                saml_version_var = self.choose_from_list(['IDP v2', 'IDP v3'], "Shibboleth IDP version")
+                if '3' in saml_version_var: 
+                    self.installSamlIDP3 = True
+                else:
+                    self.installSamlIDP2 = True
+            else:
+                self.installSamlIDP2 = True
+
             # Put latest Saml templates
             identityWar = 'identity.war'
             distIdentityPath = '%s/%s' % (self.tomcatWebAppFolder, identityWar)
@@ -1196,20 +1323,24 @@ class Setup(object):
             self.copyTree('%s/shibboleth2' % tmpIdentityDir, '%s/conf/shibboleth2' % self.tomcatHome)
 
             self.removeDirs(tmpIdentityDir)
-            
+        
+        if self.installSamlIDP2:
+            self.logIt("Install Saml Shibboleth IDP v2...")
             # Put files to /opt/idp
             idpWar = "idp.war"
             distIdpPath = '%s/%s' % (self.idpWarFolder, idpWar)
+            
+            #idp3War = "idp.war"
+            #distIdp3Path = '%s/%s' % (self.idp3WarFolder, idp3War)
 
             tmpIdpDir = '%s/tmp_idp' % self.distFolder
+            #tmpIdp3Dir = '%s/tmp_idp3' % self.distFolder
 
             self.logIt("Unpacking %s..." % idpWar)
             self.removeDirs(tmpIdpDir)
             self.createDirs(tmpIdpDir)
 
-            self.run([self.jarCommand,
-                      'xf',
-                      distIdpPath], tmpIdpDir)
+            self.run([self.jarCommand,'xf',distIdpPath], tmpIdpDir)
 
             self.logIt("Copying files to %s..." % self.idpLibFolder)
             self.copyTree('%s/WEB-INF/lib' % tmpIdpDir, self.idpLibFolder)
@@ -1217,6 +1348,33 @@ class Setup(object):
             self.copyFile("%s/static/idp/lib/servlet-api-2.5.jar" % self.install_dir, self.idpLibFolder)
 
             self.removeDirs(tmpIdpDir)
+            
+            self.idpWarFullPath = '%s/idp.war' % self.idpWarFolder
+
+        if self.installSamlIDP3:
+            self.logIt("Install Saml Shibboleth IDP v3...")
+            # unpack IDP3 JAR with static configs
+            self.run([self.jarCommand, 'xf', '%s/shibboleth-idp.jar' % self.outputFolder], '/opt')
+            
+            # copy templates
+            self.copyFile(self.staticIDP3FolderConf + self.idp3_configuration_properties, self.idp3ConfFolder + self.idp3_configuration_properties)
+            self.copyFile(self.staticIDP3FolderConf + self.idp3_configuration_ldap_properties, self.idp3ConfFolder + self.idp3_configuration_ldap_properties)
+            self.copyFile(self.staticIDP3FolderConf + self.idp3_configuration_login, self.idp3ConfFolder + self.idp3_configuration_login)
+            self.copyFile(self.staticIDP3FolderConf + self.idp3_configuration_saml_nameid, self.idp3ConfFolder + self.idp3_configuration_saml_nameid)
+            self.copyFile(self.staticIDP3FolderConf + self.idp3_configuration_services, self.idp3ConfFolder + self.idp3_configuration_services)
+            self.copyFile(self.staticIDP3FolderConf + self.idp3_configuration_jaas, self.idp3ConfFolder + self.idp3_configuration_jaas)
+            self.copyFile(self.staticIDP3FolderMetadata + self.idp3_metadata, self.idp3MetadataFolder + self.idp3_metadata)
+            
+            # Process templates
+            self.renderTemplateInOut(self.idp3ConfFolder + self.idp3_configuration_properties, self.idp3ConfFolder, self.idp3ConfFolder)
+            self.renderTemplateInOut(self.idp3ConfFolder + self.idp3_configuration_ldap_properties, self.idp3ConfFolder, self.idp3ConfFolder) 
+            self.renderTemplateInOut(self.idp3ConfFolder + self.idp3_configuration_login, self.idp3ConfFolder, self.idp3ConfFolder) 
+            self.renderTemplateInOut(self.idp3ConfFolder + self.idp3_configuration_saml_nameid, self.idp3ConfFolder, self.idp3ConfFolder)
+            #self.renderTemplateInOut(self.idp3ConfFolder + self.idp3_configuration_services, self.idp3ConfFolder, self.idp3ConfFolder) 
+            self.renderTemplateInOut(self.idp3ConfFolder + self.idp3_configuration_jaas, self.idp3ConfFolder + '/authn', self.idp3ConfFolder + '/authn') 
+            self.renderTemplateInOut(self.idp3ConfFolder + self.idp3_metadata, self.idp3MetadataFolder, self.idp3MetadataFolder) 
+            
+            self.idpWarFullPath = '%s/idp.war' % self.idp3WarFolder
 
     def install_asimba_war(self):
         if self.installAsimba:
@@ -1409,6 +1567,15 @@ class Setup(object):
                 self.run([mkdir, '-p', self.idpWarFolder])
                 self.run([mkdir, '-p', self.idpSPFolder])
                 self.run([chown, '-R', 'tomcat:tomcat', self.idpFolder])
+                self.run([mkdir, '-p', self.idp3Folder])
+                self.run([mkdir, '-p', self.idp3MetadataFolder])
+                self.run([mkdir, '-p', self.idp3LogsFolder])
+                self.run([mkdir, '-p', self.idp3LibFolder])
+                self.run([mkdir, '-p', self.idp3ConfFolder])
+                self.run([mkdir, '-p', self.idp3SslFolder])
+                self.run([mkdir, '-p', self.idp3TempMetadataFolder])
+                self.run([mkdir, '-p', self.idp3WarFolder])
+                self.run([chown, '-R', 'tomcat:tomcat', self.idp3Folder])
         except:
             self.logIt("Error making folders", True)
             self.logIt(traceback.format_exc(), True)
@@ -1464,7 +1631,7 @@ class Setup(object):
 
         self.orgName = self.getPrompt("Enter Organization Name")
         self.admin_email = self.getPrompt('Enter email address for support at your organization')
-        self.tomcat_max_ram = self.getPrompt("Enter maximum RAM for tomcat in MB", '1536')
+        self.tomcat_max_ram = self.getPrompt("Enter maximum RAM for tomcat in MB", '3072')
         randomPW = self.getPW()
         self.ldapPass = self.getPrompt("Optional: enter password for oxTrust and LDAP superuser", randomPW)
 
@@ -1492,7 +1659,7 @@ class Setup(object):
         else:
             self.installHttpd = False
 
-        promptForShibIDP = self.getPrompt("Install Shibboleth 2 SAML IDP?", "No")[0].lower()
+        promptForShibIDP = self.getPrompt("Install Shibboleth SAML IDP?", "No")[0].lower()
         if promptForShibIDP == 'y':
             self.installSaml = True
         else:
@@ -1544,15 +1711,18 @@ class Setup(object):
 
         return file_paths
 
-    def renderTemplate(self, filePath):
+    def renderTemplateInOut(self, filePath, templateFolder, outputFolder):
         self.logIt("Rendering template %s" % filePath)
         fn = os.path.split(filePath)[-1]
-        f = open(os.path.join(self.templateFolder, fn))
+        f = open(os.path.join(templateFolder, fn))
         template_text = f.read()
         f.close()
-        newFn = open(os.path.join(self.outputFolder, fn), 'w+')
+        newFn = open(os.path.join(outputFolder, fn), 'w+')
         newFn.write(template_text % self.__dict__)
         newFn.close()
+
+    def renderTemplate(self, filePath):
+        self.renderTemplateInOut(filePath, self.templateFolder, self.outputFolder)
 
     def render_templates(self):
         self.logIt("Rendering templates")
@@ -1631,7 +1801,7 @@ class Setup(object):
         self.oxauth_config_base64 = self.generate_base64_ldap_file(self.oxauth_config_json)
         self.oxauth_static_conf_base64 = self.generate_base64_ldap_file(self.oxauth_static_conf_json)
         self.oxauth_error_base64 = self.generate_base64_ldap_file(self.oxauth_error_json)
-        self.oxauth_openid_key_base64 = self.generate_base64_ldap_file(self.oxauth_openid_key_json)
+        self.oxauth_openid_key_base64 = self.generate_base64_ldap_file(self.oxauth_openid_jwks_fn)
 
         self.oxtrust_config_base64 = self.generate_base64_ldap_file(self.oxtrust_config_json);
         self.oxtrust_cache_refresh_base64 = self.generate_base64_ldap_file(self.oxtrust_cache_refresh_json)
@@ -1715,13 +1885,21 @@ class Setup(object):
         except:
             self.logIt("Error running dsjavaproperties", True)
             self.logIt(traceback.format_exc(), True)
-        
+
         if self.os_type in ['centos', 'redhat', 'fedora'] and self.os_initdaemon == 'systemd':
-              self.run(["/opt/opendj/bin/create-rc-script", "--outputFile", "/etc/init.d/opendj", "--userName",  "ldap"])
-              self.run(["/usr/sbin/chkconfig", "--add", "opendj"])
+                opendj_script_name = os.path.split(self.opendj_service_centos7)[-1]
+                opendj_dest_folder = "/etc/systemd/system"
+                try:
+                    self.copyFile(self.opendj_service_centos7, opendj_dest_folder)
+                    service_path = '/usr/bin/systemctl'
+                    self.run([service_path, 'daemon-reload'])
+                    self.run([service_path, 'enable', 'opendj'])
+                except:
+                    self.logIt("Error copying script file %s to %s" % (opendj_script_name, opendj_dest_folder))
+                    self.logIt(traceback.format_exc(), True)
         else:
               self.run(["/opt/opendj/bin/create-rc-script", "--outputFile", "/etc/init.d/opendj", "--userName",  "ldap"])
-
+        
     def setup_init_scripts(self):
         if self.os_type in ['centos', 'redhat', 'fedora'] and self.os_initdaemon == 'systemd':
                 script_name = os.path.split(self.tomcat_template_centos7)[-1]
@@ -1742,14 +1920,16 @@ class Setup(object):
                 except:
                     self.logIt("Error copying script file %s to /etc/init.d" % init_file)
                     self.logIt(traceback.format_exc(), True)
-
+        
         if self.os_type in ['centos', 'redhat', 'fedora']:
             for service in self.redhat_services:
-                self.run(["/sbin/chkconfig", service, "on"])
+                if service != 'opendj':
+                    self.run(["/sbin/chkconfig", service, "on"])
         elif self.os_type in ['ubuntu', 'debian']:
             self.run(["/usr/sbin/update-rc.d", 'tomcat', 'start', '50', '3', "."])
             for service in self.debian_services:
                 self.run(["/usr/sbin/update-rc.d", service, 'enable'])
+
 
     def start_services(self):
         # Detect sevice path and apache service name
@@ -1785,6 +1965,8 @@ class Setup(object):
                 print ".",
                 i = i + 1
             if self.os_type in ['centos', 'redhat', 'fedora'] and self.os_initdaemon == 'systemd':
+               # Stop opendj conventionally and now it'll run via systemctl
+               self.run(['/opt/opendj/bin/stop-ds'])
                self.run([service_path, 'enable', 'tomcat'])
                self.run([service_path, 'start', 'tomcat'])
             else:
@@ -1844,10 +2026,11 @@ def print_help():
     print "    -s   Install the Shibboleth IDP"
     print "    -u   Update hosts file with IP address / hostname"
     print "    -w   Get the development head war files"
+    print "    --allow_pre_released_applications"
 
 def getOpts(argv, setupOptions):
     try:
-        opts, args = getopt.getopt(argv, "acd:f:hNnsuwr")
+        opts, args = getopt.getopt(argv, "acd:f:hNnsuwr", ['allow_pre_released_applications'])
     except getopt.GetoptError:
         print_help()
         sys.exit(2)
@@ -1885,6 +2068,8 @@ def getOpts(argv, setupOptions):
             setupOptions['downloadWars'] = True
         elif opt == '-r':
             setupOptions['installOxAuthRP'] = True
+        elif opt == '--allow_pre_released_applications':
+            setupOptions['allowPreReleasedApplications'] = True
     return setupOptions
 
 if __name__ == '__main__':
@@ -1901,7 +2086,8 @@ if __name__ == '__main__':
         'installSaml': False,
         'installAsimba': False,
         'installCas': False,
-        'installOxAuthRP': False
+        'installOxAuthRP': False,
+        'allowPreReleasedApplications': False
     }
     if len(sys.argv) > 1:
         setupOptions = getOpts(sys.argv[1:], setupOptions)
@@ -1918,6 +2104,7 @@ if __name__ == '__main__':
     installObject.installAsimba = setupOptions['installAsimba']
     installObject.installCas = setupOptions['installCas']
     installObject.installOxAuthRP = setupOptions['installOxAuthRP']
+    installObject.allowPreReleasedApplications = setupOptions['allowPreReleasedApplications']
 
     # Get the OS type
     installObject.os_type = installObject.detect_os_type()
