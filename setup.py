@@ -119,7 +119,6 @@ class Setup(object):
         self.idp3ConfFolder = "/opt/shibboleth-idp/conf"
         self.idp3ConfAuthnFolder = "/opt/shibboleth-idp/conf/authn"
         self.idp3CredentialsFolder = "/opt/shibboleth-idp/credentials"
-        self.idp3TempMetadataFolder = "/opt/shibboleth-idp/temp_metadata"
         self.idp3WarFolder = "/opt/shibboleth-idp/war"
 
         self.hostname = None
@@ -666,9 +665,6 @@ class Setup(object):
 
             self.copyTree("%s/static/idp/conf/" % self.install_dir, self.idpConfFolder)
             self.copyFile("%s/static/idp/metadata/idp-metadata.xml" % self.install_dir, "%s/" % self.idpMetadataFolder)
-            
-            self.copyTree("%s/static/idp3/conf/" % self.install_dir, self.idp3ConfFolder)
-            self.copyFile("%s/static/idp3/metadata/idp-metadata.xml" % self.install_dir, "%s/" % self.idp3MetadataFolder)
 
         if self.installOxAuth:
             self.copyFile("%s/static/auth/lib/duo_web.py" % self.install_dir, "%s/conf/python/" % self.tomcatHome)
@@ -1282,6 +1278,15 @@ class Setup(object):
 
             self.removeDirs(tmpOxAuthDir)
 
+    def load_certificate_text(self, filePath):
+        self.logIt("Load certificate %s" % filePath)
+        f = open(filePath)
+        certificate_text = f.read()
+        f.close()
+        certificate_text = certificate_text.replace('-----BEGIN CERTIFICATE-----', '').replace('-----END CERTIFICATE-----', '').strip()
+        return certificate_text
+        
+
     def install_saml(self):
         if self.installSaml:
             self.logIt("Install Saml general files...")
@@ -1377,6 +1382,11 @@ class Setup(object):
             self.renderTemplateInOut(self.idp3ConfFolder + self.idp3_configuration_saml_nameid, self.idp3ConfFolder, self.idp3ConfFolder)
             #self.renderTemplateInOut(self.idp3ConfFolder + self.idp3_configuration_services, self.idp3ConfFolder, self.idp3ConfFolder) 
             self.renderTemplateInOut(self.idp3ConfFolder + self.idp3_configuration_jaas, self.idp3ConfFolder + '/authn', self.idp3ConfFolder + '/authn') 
+            
+            # load certificates to update metadata 
+            self.idp3EncryptionCertificateText = self.load_certificate_text(self.certFolder + '/idp-encryption.crt')
+            self.idp3SigningCertificateText = self.load_certificate_text(self.certFolder + '/idp-signing.crt')
+            # update IDP3 metadata 
             self.renderTemplateInOut(self.idp3MetadataFolder + self.idp3_metadata, self.idp3MetadataFolder, self.idp3MetadataFolder) 
             
             self.idpWarFullPath = '%s/idp.war' % self.idp3WarFolder
@@ -1387,6 +1397,8 @@ class Setup(object):
             
             # chown -R tomcat:tomcat /opt/shibboleth-idp
             self.run(['chown','-R', 'tomcat:tomcat', self.idp3Folder], '/opt')
+            
+            
     def install_asimba_war(self):
         if self.installAsimba:
             asimbaWar = 'oxasimba.war'
@@ -1585,7 +1597,6 @@ class Setup(object):
                 self.run([mkdir, '-p', self.idp3ConfFolder])
                 self.run([mkdir, '-p', self.idp3ConfAuthnFolder])
                 self.run([mkdir, '-p', self.idp3CredentialsFolder])
-                self.run([mkdir, '-p', self.idp3TempMetadataFolder])
                 self.run([mkdir, '-p', self.idp3WarFolder])
                 self.run([chown, '-R', 'tomcat:tomcat', self.idp3Folder])
         except:
