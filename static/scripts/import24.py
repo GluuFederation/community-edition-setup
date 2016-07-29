@@ -233,10 +233,6 @@ def getOutput(args):
 def restoreConfig(ldifFolder, newLdif, ldifModFolder):
     logging.info('Comparing old LDAP data and creating `modify` files.')
     ignoreList = ['objectClass', 'ou', 'oxAuthJwks', 'oxAuthConfWebKeys']
-    multivalueAttrs = ['oxTrustEmail', 'oxTrustPhoneValue', 'oxTrustImsValue',
-                       'oxTrustPhotos', 'oxTrustAddresses',
-                       'oxTrustEntitlements', 'oxTrustRole',
-                       'oxTrustx509Certificate']
     current_config_dns = getDns(newLdif)
     oldDnMap = getOldEntryMap(ldifFolder)
     for dn in oldDnMap.keys():
@@ -255,18 +251,7 @@ def restoreConfig(ldifFolder, newLdif, ldifModFolder):
             if attr in ignoreList:
                 continue
 
-            if current_version >= 244 and backup_version < 244 and \
-                    attr in multivalueAttrs:
-                # transform the multiValueAttrs from JSON arrays to multi
-                # value attrs in the LDAP
-                try:
-                    valueList = json.loads(old_entry[attr][0])
-                    writeMod(dn, attr, valueList, filename, True)
-                except:
-                    logging.error(
-                        'Failed array to multivalue conversion for: %s',
-                        attr)
-            elif attr not in new_entry:
+            if attr not in new_entry:
                 writeMod(dn, attr, old_entry[attr], filename, True)
                 logging.debug("Adding attr %s to %s", attr, dn)
             elif old_entry[attr] != new_entry[attr]:
