@@ -14,14 +14,27 @@ match_oid = published + '.2'
 attr_oid = published + '.3'
 objc_oid = published + '.4'
 
+attrs = 0
+objclasses = 0
+header = """# Macros defining the OID structure
+objectIdentifier oxOrgOID      1.3.6.1.4.1.12345
+objectIdentifier oxReserved    oxOrgOID:0
+objectIdentifier oxPublished   oxOrgOID:1
+objectIdentifier oxSyntax      oxPublished:1
+objectIdentifier oxMatchRules  oxPublished:2
+objectIdentifier oxAttribute   oxPublished:3
+objectIdentifier oxObjectClass oxPublished:4
+"""
 
-def convert(in_file, out_file):
+
+def convert(in_file, out_file, add_header=False):
+    global attrs, objclasses
     ldif = open(in_file, 'r')
     schema = open(out_file, 'w')
     output = ''
 
-    attrs = 0
-    objclasses = 0
+    if add_header:
+        output = header
 
     for line in ldif:
         if re.match('^dn:', line) or re.match('^objectClass:', line) or \
@@ -39,14 +52,14 @@ def convert(in_file, out_file):
         elif re.match('^attributeTypes:\s', line, re.IGNORECASE):
             line = re.sub('^attributeTypes:', '\nattributetype', line, 1,
                           re.IGNORECASE)
-            oid = attr_oid + '.' + str(attrs+1)
+            oid = 'oxAttribute:' + str(attrs+1)
             line = re.sub('[\w]+-oid', oid, line, 1, re.IGNORECASE)
             attrs += 1
         # Change the keyword for objectclass
         elif re.match('^objectClasses:\s', line, re.IGNORECASE):
             line = re.sub('^objectClasses:', '\nobjectclass', line, 1,
                           re.IGNORECASE)
-            oid = objc_oid + '.' + str(objclasses+1)
+            oid = 'oxObjectClass:' + str(objclasses+1)
             line = re.sub('[\w]+-oid', oid, line, 1, re.IGNORECASE)
             objclasses += 1
         else:
@@ -60,7 +73,12 @@ def convert(in_file, out_file):
     schema.close()
     ldif.close()
 
+
 if __name__ == '__main__':
-    input_ldif = './static/opendj/101-ox.ldif'
-    output_file = './static/openldap/gluu.schema'
-    convert(input_ldif, output_file)
+    ox101 = './static/opendj/101-ox.ldif'
+    gluu_schema = './static/openldap/gluu.schema'
+    convert(ox101, gluu_schema, True)
+
+    custom77 = './static/opendj/77-customAttributes.ldif'
+    custom_schema = './static/openldap/custom.schema'
+    convert(custom77, custom_schema)
