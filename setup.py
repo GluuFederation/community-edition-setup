@@ -56,6 +56,7 @@ class Setup(object):
         self.idp3_cml_keygenerator = 'http://ox.gluu.org/maven/org/xdi/oxShibbolethKeyGenerator/%s/oxShibbolethKeyGenerator-%s.jar' % (self.oxVersion, self.oxVersion)
         self.asimba_war = "http://ox.gluu.org/maven/org/asimba/asimba-wa/%s/asimba-wa-%s.war" % (self.oxVersion, self.oxVersion)
         self.cas_war = "http://ox.gluu.org/maven/org/xdi/ox-cas-server-webapp/%s/ox-cas-server-webapp-%s.war" % (self.oxVersion, self.oxVersion)
+        self.credmgr_war = "http://ox.gluu.org/maven/org/gluu/credmgr/credmgr/%s/credmgr-%s.war" % (self.oxVersion, self.oxVersion)
         self.ce_setup_zip = 'https://github.com/GluuFederation/community-edition-setup/archive/%s.zip' % self.githubBranchName
 
         self.downloadWars = None
@@ -71,6 +72,7 @@ class Setup(object):
         self.installCas = False
         self.installOxAuthRP = False
         self.allowPreReleasedApplications = False
+        self.installCredmgr = False
 
         self.os_types = ['centos', 'redhat', 'fedora', 'ubuntu', 'debian']
         self.os_type = None
@@ -122,6 +124,10 @@ class Setup(object):
         self.idp3ConfAuthnFolder = "/opt/shibboleth-idp/conf/authn"
         self.idp3CredentialsFolder = "/opt/shibboleth-idp/credentials"
         self.idp3WarFolder = "/opt/shibboleth-idp/war"
+        
+        
+        self.credmgrFolder = "/opt/credmgr"
+        self.credmgrWarFolder = "/opt/credmgr/war"
 
         self.hostname = None
         self.ip = None
