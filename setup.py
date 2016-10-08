@@ -1882,12 +1882,12 @@ class Setup(object):
         if promptForLDAP == 'y':
             self.installLdap = True
             option = None
-            while (option != 1) or (option != 2):
+            while (option != 1) and (option != 2):
                 try:
-                    option = int(self.getPrompt("Choose a LDAP software. [1] OpenLDAP [2] OpenDJ", "1"))
+                    option = int(self.getPrompt("Choose a LDAP software. 1.OpenLDAP 2.OpenDJ", "1"))
                 except ValueError:
                     option = None
-                if (option != 1) or (option != 2):
+                if (option != 1) and (option != 2):
                     print "You did not enter the correct option. Enter either 1 or 2."
 
             if option == 1:
