@@ -245,6 +245,11 @@ class Setup(object):
         self.defaultTrustStoreFN = '%s/jre/lib/security/cacerts' % self.jre_home
         self.defaultTrustStorePW = 'changeit'
 
+        self.openldapBaseFolder = '/opt/symas'
+        self.openldapBinFolder = '/opt/symas/bin'
+        self.openldapConfFolder = '/opt/symas/etc/openldap'
+        self.openldapRootUser = "cn=directory manager,o=gluu"
+
         # Stuff that gets rendered; filname is necessary. Full path should
         # reflect final path if the file must be copied after its rendered.
         self.oxauth_config_json = '%s/oxauth-config.json' % self.outputFolder
@@ -2266,6 +2271,21 @@ class Setup(object):
         except:
             self.logIt("Error writing temporary LDAP password.")
 
+    def configure_openldap(self):
+        self.logIt("Configuring OpenLDAP")
+        # 1. Use slappasswd to genrate the SSHA of ldapPass value
+        cmd = os.path.join(self.openldapBinFolder, "slappasswd") + " -s " + self.ldapPass
+        passwd = os.popen(cmd).read().strip()
+        # 2. Generate the slapd.conf file with the hashed password
+        slapd_template = "%s/static/openldap/slapd.conf" % self.install_dir
+        slapd_conf = os.path.join(self.openldapConfFolder, "slapd.conf")
+        with open(slapd_template, 'r') as temp:
+            template = temp.read()
+            with open(slapd_conf, 'w') as conf:
+                conf.write(template % {'passwd': passwd})
+        # 3. Just copy over the symas conf file
+        self.copyFile("%s/static/openldap/symas-openldap.conf" % self.install_dir, self.openldapConfFolder)
+
 ############################   Main Loop   #################################################
 
 def print_help():
@@ -2452,6 +2472,8 @@ if __name__ == '__main__':
                 installObject.import_ldif()
                 installObject.export_opendj_public_cert()
                 installObject.deleteLdapPw()
+            elif installObject.ldap_type is 'openldap':
+                installObject.configure_openldap()
             installObject.copy_output()
             installObject.setup_init_scripts()
             installObject.install_gluu_components()
