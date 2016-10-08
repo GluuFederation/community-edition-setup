@@ -236,5 +236,8 @@
 		"3": ["oxpush2",
 		"u2f"]
 	},
-    "endSessionWithAccessToken":false
+    "endSessionWithAccessToken":false,
+    "clientWhiteList": ["*"],
+    "clientBlackList": ["*.attacker.com/*"],
+    "legacyIdTokenClaims": true
 }
