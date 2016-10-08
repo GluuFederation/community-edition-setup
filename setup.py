@@ -1878,9 +1878,22 @@ class Setup(object):
         else:
             self.installOxTrust = False
 
-        promptForLDAP = self.getPrompt("Install Gluu OpenDJ LDAP Server?", "Yes")[0].lower()
+        promptForLDAP = self.getPrompt("Install LDAP Server?", "Yes")[0].lower()
         if promptForLDAP == 'y':
             self.installLdap = True
+            option = None
+            while (option != 1) or (option != 2):
+                try:
+                    option = int(self.getPrompt("Choose a LDAP software. [1] OpenLDAP [2] OpenDJ", "1"))
+                except ValueError:
+                    option = None
+                if (option != 1) or (option != 2):
+                    print "You did not enter the correct option. Enter either 1 or 2."
+
+            if option == 1:
+                self.ldap_type = 'openldap'
+            elif option == 2:
+                self.ldap_type = 'opendj'
         else:
             self.installLdap = False
 
@@ -2141,7 +2154,7 @@ class Setup(object):
                     self.logIt(traceback.format_exc(), True)
         else:
               self.run(["/opt/opendj/bin/create-rc-script", "--outputFile", "/etc/init.d/opendj", "--userName",  "ldap"])
-        
+
     def setup_init_scripts(self):
         if self.os_type in ['centos', 'redhat', 'fedora'] and self.os_initdaemon == 'systemd':
                 script_name = os.path.split(self.tomcat_template_centos7)[-1]
@@ -2162,7 +2175,7 @@ class Setup(object):
                 except:
                     self.logIt("Error copying script file %s to /etc/init.d" % init_file)
                     self.logIt(traceback.format_exc(), True)
-        
+
         if self.os_type in ['centos', 'fedora']:
             for service in self.redhat_services:
                 if service != 'opendj':
@@ -2354,14 +2367,15 @@ if __name__ == '__main__':
 
     # Get the OS type
     installObject.os_type = installObject.detect_os_type()
-    # Get the init type   
+    # Get the init type
     installObject.os_initdaemon = installObject.detect_initd()
-    # Get apache version   
+    # Get apache version
     installObject.apache_version = installObject.determineApacheVersionForOS()
-    
+
+    # TODO find if this extraction of opendj by default is necessary as we move to opendlap install
     installObject.extractOpenDJ()
 
-    # Get OpenDJ version   
+    # Get OpenDJ version
     installObject.opendj_version = installObject.determineOpenDJVersion()
 
     print "\nInstalling Gluu Server..."
@@ -2416,7 +2430,8 @@ if __name__ == '__main__':
             installObject.make_oxauth_salt()
             installObject.downloadWarFiles()
             installObject.render_jetty_templates()
-            installObject.configure_opendj_install()
+            if installObject.ldap_type is 'opendj':
+                installObject.configure_opendj_install()
             installObject.copy_scripts()
             installObject.encode_passwords()
             installObject.generate_scim_configuration()
@@ -2429,12 +2444,14 @@ if __name__ == '__main__':
             installObject.render_configuration_template()
             installObject.update_hostname()
             installObject.configure_httpd()
-            installObject.setup_opendj()
-            installObject.configure_opendj()
-            installObject.index_opendj()
-            installObject.import_ldif()
-            installObject.deleteLdapPw()
-            installObject.export_opendj_public_cert()
+            if installObject.ldap_type is 'opendj':
+                installObject.setup_opendj()
+                installObject.configure_opendj()
+                installObject.index_opendj('userRoot')
+                installObject.index_opendj('site')
+                installObject.import_ldif()
+                installObject.export_opendj_public_cert()
+                installObject.deleteLdapPw()
             installObject.copy_output()
             installObject.setup_init_scripts()
             installObject.install_gluu_components()
