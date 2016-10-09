@@ -2292,6 +2292,9 @@ class Setup(object):
         self.copyFile("%s/static/openldap/symas-openldap.conf" % self.install_dir, self.openldapConfFolder)
         # 4. Copy the user.schema file
         self.copyFile(self.user_schema, "/opt/gluu/")
+        # 5. Move the gluu.schema and custom.gluu
+        self.copyFile("%s/static/openldap/gluu.schema" % self.install_dir, "/opt/gluu/")
+        self.copyFile("%s/static/openldap/custom.schema" % self.install_dir, "/opt/gluu/")
 
     def import_ldif_openldap(self):
         self.logIt("Importing o=gluu ldif files.")
