@@ -249,6 +249,7 @@ class Setup(object):
         self.openldapBinFolder = '/opt/symas/bin'
         self.openldapConfFolder = '/opt/symas/etc/openldap'
         self.openldapRootUser = "cn=directory manager,o=gluu"
+        self.user_schema = '%s/user.schema' % self.outputFolder
 
         # Stuff that gets rendered; filname is necessary. Full path should
         # reflect final path if the file must be copied after its rendered.
@@ -388,7 +389,8 @@ class Setup(object):
                      self.asimba_configuration: False,
                      self.asimba_properties: False,
                      self.asimba_selector_configuration: True,
-                     self.network: False
+                     self.network: False,
+                     self.user_schema: True
                      }
 
     def __repr__(self):
@@ -1812,6 +1814,10 @@ class Setup(object):
                 self.run([self.cmd_mkdir, '-p', self.idp3CredentialsFolder])
                 self.run([self.cmd_mkdir, '-p', self.idp3WarFolder])
                 self.run([self.cmd_chown, '-R', 'tomcat:tomcat', self.idp3Folder])
+
+            if self.installLDAP and self.ldap_type is 'openldap':
+                self.run([mkdir, '-p', '/opt/gluu/data'])
+                self.run([chown, '-R', 'openldap:openldap', '/opt/gluu/data'])
         except:
             self.logIt("Error making folders", True)
             self.logIt(traceback.format_exc(), True)
@@ -2285,6 +2291,15 @@ class Setup(object):
                 conf.write(template % {'passwd': passwd})
         # 3. Just copy over the symas conf file
         self.copyFile("%s/static/openldap/symas-openldap.conf" % self.install_dir, self.openldapConfFolder)
+        # 4. Copy the user.schema file
+        self.copyFile(self.user_schema, "/opt/gluu/")
+
+    def import_ldif_openldap(self):
+        self.logIt("Importing o=gluu ldif files.")
+        cmd = os.path.join(self.openldapBinFolder, 'slapadd')
+        config = os.path.join(self.openldapConfFolder, 'slapd.conf')
+        for ldif in self.ldif_files:
+            self.run([cmd, '-b', 'o=gluu', '-f', config, '-l', ldif])
 
 ############################   Main Loop   #################################################
 
@@ -2474,6 +2489,7 @@ if __name__ == '__main__':
                 installObject.deleteLdapPw()
             elif installObject.ldap_type is 'openldap':
                 installObject.configure_openldap()
+                installObject.import_ldif_openldap()
             installObject.copy_output()
             installObject.setup_init_scripts()
             installObject.install_gluu_components()
