@@ -2301,9 +2301,10 @@ class Setup(object):
         cmd = os.path.join(self.openldapBinFolder, 'slapadd')
         config = os.path.join(self.openldapConfFolder, 'slapd.conf')
         for ldif in self.ldif_files:
-            self.run([cmd, '-b', 'o=gluu', '-f', config, '-l', ldif])
             if 'site.ldif' in ldif:
                 self.run([cmd, '-b', 'o=site', '-f', config, '-l', ldif])
+            else:
+                self.run([cmd, '-b', 'o=gluu', '-f', config, '-l', ldif])
 
 ############################   Main Loop   #################################################
 
