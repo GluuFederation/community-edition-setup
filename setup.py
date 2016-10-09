@@ -1817,7 +1817,6 @@ class Setup(object):
 
             if self.installLDAP and self.ldap_type is 'openldap':
                 self.run([mkdir, '-p', '/opt/gluu/data'])
-                self.run([chown, '-R', 'openldap:openldap', '/opt/gluu/data'])
         except:
             self.logIt("Error making folders", True)
             self.logIt(traceback.format_exc(), True)
@@ -2300,6 +2299,8 @@ class Setup(object):
         config = os.path.join(self.openldapConfFolder, 'slapd.conf')
         for ldif in self.ldif_files:
             self.run([cmd, '-b', 'o=gluu', '-f', config, '-l', ldif])
+            if 'site.ldif' in ldif:
+                self.run([cmd, '-b', 'o=site', '-f', config, '-l', ldif])
 
 ############################   Main Loop   #################################################
 
