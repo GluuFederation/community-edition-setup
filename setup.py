@@ -2303,7 +2303,11 @@ class Setup(object):
         self.copyFile("%s/static/openldap/custom.schema" % self.install_dir, "/opt/gluu/")
         self.copyFile(self.user_schema, "/opt/gluu/")
         # 4. Create the PEM file from key and crt
-        self.run(['/bin/cat', self.openldapTLSCert, self.openldapTLSKey, '>', self.openldapTLSCACert])
+        with open(self.openldapTLSCACert, 'w') as pem:
+            with open(self.openldapTLSCert, 'r') as crt:
+                pem.write(crt.read())
+            with open(self.openldapTLSKey, 'r') as key:
+                pem.write(key.read())
 
     def import_ldif_openldap(self):
         self.logIt("Importing LDIF files into OpenLDAP")
