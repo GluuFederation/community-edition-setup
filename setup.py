@@ -250,6 +250,12 @@ class Setup(object):
         self.openldapConfFolder = '/opt/symas/etc/openldap'
         self.openldapRootUser = "cn=directory manager,o=gluu"
         self.user_schema = '%s/user.schema' % self.outputFolder
+        self.openldapKeyPass = None
+        self.openldapTLSCACert = '%s/openldap.pem' % self.certFolder
+        self.openldapTLSCert = '%s/openldap.crt' % self.certFolder
+        self.openldapTLSKey = '%s/openldap.key' % self.certFolder
+        self.openldapPassHash = None
+
 
         # Stuff that gets rendered; filname is necessary. Full path should
         # reflect final path if the file must be copied after its rendered.
@@ -517,6 +523,8 @@ class Setup(object):
             self.oxauth_openid_jks_pass = self.getPW()
         if not self.asimbaJksPass:
             self.asimbaJksPass = self.getPW()
+        if not self.openldapKeyPass:
+            self.openldapKeyPass = self.getPW()
         if not self.encode_salt:
             self.encode_salt= self.getPW() + self.getPW()
         if not self.baseInum:
@@ -922,7 +930,11 @@ class Setup(object):
         self.logIt("Encoding passwords")
         try:
             self.encoded_ldap_pw = self.ldap_encode(self.ldapPass)
-            
+            # Alternate for openldap
+            if self.ldap_type is 'openldap':
+                cmd = os.path.join(self.openldapBinFolder, "slappasswd") + " -s " + self.ldapPass
+                self.openldapPassHash = os.popen(cmd).read().strip()
+
             cmd = "%s %s" % (self.oxEncodePWCommand, self.shibJksPass)
             self.encoded_shib_jks_pw = os.popen(cmd, 'r').read().strip()
             cmd = "%s %s" % (self.oxEncodePWCommand, self.ldapPass)
@@ -1050,6 +1062,7 @@ class Setup(object):
             self.gen_cert('idp-encryption', self.shibJksPass, 'tomcat')
             self.gen_cert('idp-signing', self.shibJksPass, 'tomcat')
             self.gen_cert('asimba', self.asimbaJksPass, 'tomcat')
+            self.gen_cert('openldap', self.openldapKeyPass, 'ldap')
             # Shibboleth IDP and Asimba will be added soon...
             self.gen_keystore('shibIDP',
                               self.shibJksFn,
@@ -2278,26 +2291,18 @@ class Setup(object):
 
     def configure_openldap(self):
         self.logIt("Configuring OpenLDAP")
-        # 1. Use slappasswd to genrate the SSHA of ldapPass value
-        cmd = os.path.join(self.openldapBinFolder, "slappasswd") + " -s " + self.ldapPass
-        passwd = os.popen(cmd).read().strip()
-        # 2. Generate the slapd.conf file with the hashed password
-        slapd_template = "%s/static/openldap/slapd.conf" % self.install_dir
-        slapd_conf = os.path.join(self.openldapConfFolder, "slapd.conf")
-        with open(slapd_template, 'r') as temp:
-            template = temp.read()
-            with open(slapd_conf, 'w') as conf:
-                conf.write(template % {'passwd': passwd})
-        # 3. Just copy over the symas conf file
-        self.copyFile("%s/static/openldap/symas-openldap.conf" % self.install_dir, self.openldapConfFolder)
-        # 4. Copy the user.schema file
-        self.copyFile(self.user_schema, "/opt/gluu/")
-        # 5. Move the gluu.schema and custom.gluu
+        # 1. Copy the conf files to
+        self.copyFile("%s/slapd.conf" % self.outputFolder, self.openldapConfFolder)
+        self.copyFile("%s/symas-openldap.conf" % self.outputFolder, self.openldapConfFolder)
+        # 2. Copy the schema files into place
         self.copyFile("%s/static/openldap/gluu.schema" % self.install_dir, "/opt/gluu/")
         self.copyFile("%s/static/openldap/custom.schema" % self.install_dir, "/opt/gluu/")
+        self.copyFile(self.user_schema, "/opt/gluu/")
+        # 4. Create the PEM file from key and crt
+        self.run(['/bin/cat', self.openldapTLSCert, self.openldapTLSKey, '>', self.openldapTLSCACert])
 
     def import_ldif_openldap(self):
-        self.logIt("Importing o=gluu ldif files.")
+        self.logIt("Importing LDIF files into OpenLDAP")
         cmd = os.path.join(self.openldapBinFolder, 'slapadd')
         config = os.path.join(self.openldapConfFolder, 'slapd.conf')
         for ldif in self.ldif_files:
