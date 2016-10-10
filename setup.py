@@ -255,6 +255,8 @@ class Setup(object):
         self.openldapTLSCert = '%s/openldap.crt' % self.certFolder
         self.openldapTLSKey = '%s/openldap.key' % self.certFolder
         self.openldapPassHash = None
+        self.openldapSlapdConf = '%s/slapd.conf' % self.outputFolder
+        self.openldapSymasConf = '%s/symas-openldap.conf' % self.outputFolder
 
 
         # Stuff that gets rendered; filname is necessary. Full path should
@@ -396,7 +398,9 @@ class Setup(object):
                      self.asimba_properties: False,
                      self.asimba_selector_configuration: True,
                      self.network: False,
-                     self.user_schema: True
+                     self.user_schema: True,
+                     self.openldapSlapdConf: True,
+                     self.openldapSymasConf: True
                      }
 
     def __repr__(self):
@@ -2292,8 +2296,8 @@ class Setup(object):
     def configure_openldap(self):
         self.logIt("Configuring OpenLDAP")
         # 1. Copy the conf files to
-        self.copyFile("%s/slapd.conf" % self.outputFolder, self.openldapConfFolder)
-        self.copyFile("%s/symas-openldap.conf" % self.outputFolder, self.openldapConfFolder)
+        self.copyFile(self.openldapSlapdConf, self.openldapConfFolder)
+        self.copyFile(self.openldapSymasConf, self.openldapConfFolder)
         # 2. Copy the schema files into place
         self.copyFile("%s/static/openldap/gluu.schema" % self.install_dir, "/opt/gluu/")
         self.copyFile("%s/static/openldap/custom.schema" % self.install_dir, "/opt/gluu/")
