@@ -1775,7 +1775,8 @@ class Setup(object):
                 fullPath = '%s/%s' % (templateBase, templateFile)
                 try:
                     self.logIt("Rendering test template %s" % fullPath)
-                    fn = fullPath[12:] # Remove ./template/ from fullPath
+                    # Remove ./template/ and everything left of it from fullPath
+                    fn = re.match(r'(^.+/templates/)(.*$)', fullPath).groups()[1]
                     f = open(os.path.join(self.templateFolder, fn))
                     template_text = f.read()
                     f.close()
