@@ -19,7 +19,7 @@
 
     ```bash
     cd ~
-    git clone https://github.com/GluuFederation/community-edition-setup.git
+    git clone -b openldap-migration --single-branch https://github.com/GluuFederation/community-edition-setup.git
     cd community-edition-setup/openldap_migration
     ```
 
