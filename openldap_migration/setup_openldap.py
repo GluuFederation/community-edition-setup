@@ -209,24 +209,32 @@ class SetupOpenLDAP(object):
         infile.close()
         return output
 
+    def __update_user_schema(self, infile, outfile):
+        with open(infile, 'r') as olduser:
+            with open(outfile, 'w') as newuser:
+                for line in olduser:
+                    if 'SUP top' in line:
+                        line = line.replace('SUP top', 'SUP gluuPerson')
+                    newuser.write(line)
+
     def create_user_schema(self):
-        logging.info('Converting existing custom attributes to OpenLDAP schema')
+        logging.info('Converting custom attributes to OpenLDAP schema')
         schema_99 = '/opt/opendj/config/schema/99-user.ldif'
         schema_100 = '/opt/opendj/config/schema/100-user.ldif'
         new_user = '%s/new_99.ldif' % self.miniSetupFolder
 
-        if os.path.isfile(schema_99):
-            with open(schema_99, 'r') as olduser:
-                with open(new_user, 'w') as newuser:
-                    for line in olduser:
-                        if 'SUP top' in line:
-                            line = line.replace('SUP top', 'SUP gluuPerson')
-                        newuser.write(line)
-
         outfile = open('%s/user.schema' % self.outputFolder, 'w')
-        output = self.convert_schema(schema_100)
+        output = ""
+
         if os.path.isfile(schema_99):
+            output = self.convert_schema(schema_100)
+            new_user = self.__update_user_schema(schema_99, new_user)
             output = output + "\n" + self.convert_schema(new_user)
+        else:
+            # If there is no 99-user file, then the schema def is in 100-user
+            new_user = self.__update_user_schema(schema_100, new_user)
+            output = self.convert_schema(new_user)
+
         outfile.write(output)
         outfile.close()
 
