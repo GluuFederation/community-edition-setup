@@ -228,11 +228,11 @@ class SetupOpenLDAP(object):
 
         if os.path.isfile(schema_99):
             output = self.convert_schema(schema_100)
-            new_user = self.__update_user_schema(schema_99, new_user)
+            self.__update_user_schema(schema_99, new_user)
             output = output + "\n" + self.convert_schema(new_user)
         else:
             # If there is no 99-user file, then the schema def is in 100-user
-            new_user = self.__update_user_schema(schema_100, new_user)
+            self.__update_user_schema(schema_100, new_user)
             output = self.convert_schema(new_user)
 
         outfile.write(output)
