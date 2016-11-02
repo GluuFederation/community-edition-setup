@@ -215,16 +215,18 @@ class SetupOpenLDAP(object):
         schema_100 = '/opt/opendj/config/schema/100-user.ldif'
         new_user = '%s/new_99.ldif' % self.miniSetupFolder
 
-        with open(schema_99, 'r') as olduser:
-            with open(new_user, 'w') as newuser:
-                for line in olduser:
-                    if 'SUP top' in line:
-                        line = line.replace('SUP top', 'SUP gluuPerson')
-                    newuser.write(line)
+        if os.path.isfile(schema_99):
+            with open(schema_99, 'r') as olduser:
+                with open(new_user, 'w') as newuser:
+                    for line in olduser:
+                        if 'SUP top' in line:
+                            line = line.replace('SUP top', 'SUP gluuPerson')
+                        newuser.write(line)
 
         outfile = open('%s/user.schema' % self.outputFolder, 'w')
         output = self.convert_schema(schema_100)
-        output = output + "\n" + self.convert_schema(new_user)
+        if os.path.isfile(schema_99):
+            output = output + "\n" + self.convert_schema(new_user)
         outfile.write(output)
         outfile.close()
 
