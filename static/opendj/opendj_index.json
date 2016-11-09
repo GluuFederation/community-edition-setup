@@ -158,6 +158,20 @@
 		"type": "string",
 		"index": ["equality"],
 		"backend": ["userRoot"]
+	},
+	
+	{
+		"attribute": "member",
+		"type": "string",
+		"index": ["equality"],
+		"backend": ["site"]
+	},
+	
+	{
+		"attribute": "uniqueMember",
+		"type": "string",
+		"index": ["equality"],
+		"backend": ["site"]
 	}
 
 ]
