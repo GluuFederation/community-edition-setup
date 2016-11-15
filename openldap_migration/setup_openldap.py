@@ -124,9 +124,6 @@ class SetupOpenLDAP(object):
                 pem.write(crt.read())
             with open(self.openldapTLSKey, 'r') as key:
                 pem.write(key.read())
-        # 5. Generate the cn=config directory
-        self.run([self.cmd_mkdir, '-p', self.openldapCnConfig])
-        self.run([self.slaptest, '-f', self.openldapSlapdConf, '-F', self.openldapCnConfig])
 
     def export_opendj(self):
         logging.info("Exporting all the data from OpenDJ")
@@ -141,8 +138,12 @@ class SetupOpenLDAP(object):
         config = os.path.join(self.openldapConfFolder, 'slapd.conf')
 
         # Import the base.ldif
-        self.run([cmd, '-b', 'o=gluu', '-f', config, '-l', self.o_gluu])
-        self.run([cmd, '-b', 'o=site', '-f', config, '-l', self.o_site])
+        self.run([cmd, '-c', '-b', 'o=gluu', '-f', config, '-l', self.o_gluu])
+        self.run([cmd, '-c', '-b', 'o=site', '-f', config, '-l', self.o_site])
+
+        # Generate the cn=config directory
+        self.run([self.cmd_mkdir, '-p', self.openldapCnConfig])
+        self.run([self.slaptest, '-f', self.openldapSlapdConf, '-F', self.openldapCnConfig])
 
     def get_old_properties(self):
         # grab the old inumOrgFN
@@ -201,7 +202,7 @@ class SetupOpenLDAP(object):
                 line = re.sub('ox-[\w]+-oid', oid, line, 1, re.IGNORECASE)
                 self.objclasses += 1
             else:
-                logging.warning("Skipping Line: {}".format(line))
+                logging.warning("Skipping Line: {}".format(line.strip()))
                 line = ""
 
             output += line
