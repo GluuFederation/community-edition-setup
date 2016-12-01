@@ -2,7 +2,7 @@
 - Ubuntu 14.04
 - OpenLDAP Binary as a deb package - Preferably Symas Openldap Gold 
 
-### Procedure for replacing OpenDJ with OpenLDAP in 2.4.4
+### Procedure for replacing OpenDJ with OpenLDAP in 2.4.4.2
 1. Install the Openldap debian package  `dpkg -i <openldap.deb>`
 2. Generate the certificates using OpenSSL
 
@@ -35,6 +35,30 @@
     ```
     service solserver start
     ```
+
+6. Update the `ox-ldap.properties` bindDN. Open `/opt/tomcat/conf/ox-ldap.properties` using a text editor like Vim and change
+   the bind DN to
+
+    ```
+    bindDN: cn=directory manager,o=gluu
+    ```
+
+7. Connect to the LDAP server from a client like jXplorer using the server IP, port 1636, bindDN `cn=directory manager,o=gluu`, via SSL + User + Password.
+    * Navigate to the entry o=gluu > ou=appliances > \<inum of your Org>. Edit the attribute `oxIDPAuthentication`. Find bindDN and change it to `cn=directory manager,o=gluu`.
+    * Navigate to the entry o=gluu > ou=appliances > \<inum of your Org> > ou=configuration > ou=oxTrust. Edit the attribute `oxTrustConfApplication`. Find the value for `idpBindDn` and update it to `cn=directory manager,o=gluu`
+
+8. Patch oxAuth
+
+    ```
+    service tomcat stop
+    cd /opt/tomcat/webapps/
+    rm -rf oxauth
+    mv oxauth.war oxauth.war.bk01
+    wget http://ox.gluu.org/maven/org/xdi/oxauth-server/2.4.4.sp2_openldap/oxauth-server-2.4.4.sp2_openldap.war -O oxauth.war
+    service tomcat start
+    ```
+
+Now the system has been migrated from OpenDJ to OpenLDAP.
 
 
 ### Procedure for migrating an existing Gluu Server 2.4.4
