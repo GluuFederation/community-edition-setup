@@ -61,7 +61,62 @@
 Now the system has been migrated from OpenDJ to OpenLDAP.
 
 
-### Procedure for migrating an existing Gluu Server 2.4.4
+### Setting up an Standalone OpenLDAP server
+
+#### Pre-requisites
+* Gluu Server Community Edition 2.4.4.2
+* Tested on Ubuntu 14.04 only
+
+#### Terminology
+
+* **Gluu Server** - The server where the gluu-server-2.4.4.2 Community Edition has been installed.
+* **LDAP Server** - A Standalone server which has OpenLDAP installed.
+
+#### Procedure
+
+1. Install `The gluu-server-2.4.4 by default comes bundled with the OpenDJ LDAP server. Opt `Yes` while running the `setup.py` during installation. This creates the necessary structure for data and populates the base data for the gluu-server to function.
+2. Export the data for the standalone setup from the **Gluu Server**
+    ```
+    service gluu-server-2.4.4.2 login
+    git clone -b openldap-migration --single-branch https://github.com/GluuFederation/community-edition-setup.git
+    cd community-edition-setup/openldap_migration
+    python standalone_export.py
+    <input the address of standalone ldap server when prompted>
+    ```
+3. Step 2 creates a folder called `standalone\_export`. Copy the folder to the standalone **LDAP Server**
+4. Install OpenLDAP in the LDAP server `dpkg -i \<openldap.deb>`
+5. Generate the certificates using OpenSSL
+
+    ```bash
+    mkdir /etc/certs
+    cd /etc/certs
+    openssl genrsa -des3 -out openldap.key 2048
+    openssl rsa -in openldap.key -out openldap.key.insecure
+    mv openldap.key.insecure openldap.key
+    openssl req -new -key openldap.key -out openldap.csr
+    openssl x509 -req -days 365 -in openldap.csr -signkey openldap.key -out openldap.crt
+    cat openldap.crt openldap.key > openldap.pem
+    ```
+6. Setup the LDAP server
+    ```
+    wget https://raw.githubusercontent.com/GluuFederation/community-edition-setup/openldap-migration/openldap_migration/setup_standalone.py
+    python setup_standalone.py \<location of standalone_export folder>
+    ```
+7. Start OpenLDAP in the LDAP server `service solserver start`
+8. Stop OpenDJ in the Gluu Server `service opendj stop`
+9. In Gluu Server, edit `/opt/tomcat/conf/ox-ldap.properties`, change the lines with `bindDN` and `servers` to read
+    ```
+    bindDn: cn=directory manager,o=gluu
+    ...
+    servers: \<ip-address-of-ldap-server>:1636`
+    ```
+10. Connect to the LDAP server from a client like jXplorer using the server IP, port 1636, bindDN `cn=directory manager,o=gluu`, via SSL + User + Password.
+    * Navigate to the entry o=gluu > ou=appliances > \<inum of your Org>. Edit the attribute `oxIDPAuthentication`. Find bindDN and change it to `cn=directory manager,o=gluu`. and find servers and change it to `\"[<ldap-server-ip>:1636]\"` and save it.
+    * Navigate to the entry o=gluu > ou=appliances > \<inum of your Org> > ou=configuration > ou=oxTrust. Edit the attribute `oxTrustConfApplication`. Find the value for `idpBindDn` and update it to `cn=directory manager,o=gluu`, find the value for `idpLdapServer` and update it to `<ldap-server-ip>:1636` and save it.
+11. In Gluu Server, restart tomcat with `service tomcat restart`
+
+
+### {DEPRECATED} Procedure for migrating an existing Gluu Server 2.4.4
 1. Export the ldap data using the export\_opendj script
 
   ```bash

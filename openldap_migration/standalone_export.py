@@ -218,10 +218,6 @@ class SetupOpenLDAP(object):
         self.copyFile(self.user_schema, self.standaloneExport)
         self.copyFile("%s/static/openldap/gluu.schema" % self.setupFolder, self.standaloneExport)
         self.copyFile("%s/static/openldap/custom.schema" % self.setupFolder, self.standaloneExport)
-        # CA Certificates
-        self.copyFile(self.openldapTLSKey, self.standaloneExport)
-        self.copyFile(self.openldapTLSCert, self.standaloneExport)
-        self.copyFile(self.openldapTLSCACert, self.standaloneExport)
         # Processed LDIF data
         self.copyFile(self.o_gluu, self.standaloneExport)
         self.copyFile(self.o_site, self.standaloneExport)

@@ -30,9 +30,6 @@ class SetupStandalone(object):
         self.gluuSchema = os.path.join(backup_folder, "gluu.schema")
         self.customSchema = os.path.join(backup_folder, "custom.schema")
         self.userSchema = os.path.join(backup_folder, "user.schema")
-        self.openldapTLSKey = os.path.join(backup_folder, "openldap.key")
-        self.openldapTLSCert = os.path.join(backup_folder, "openldap.crt")
-        self.openldapTLSCACert = os.path.join(backup_folder, "openldap.pem")
         self.o_gluu = os.path.join(backup_folder, 'o_gluu.ldif')
         self.o_site = os.path.join(backup_folder, 'o_site.ldif')
         self.slaptest = os.path.join(self.openldapBinFolder, 'slaptest')
@@ -74,14 +71,7 @@ class SetupStandalone(object):
         self.copyFile(self.gluuSchema, "/opt/gluu/")
         self.copyFile(self.customSchema, "/opt/gluu/")
         self.copyFile(self.userSchema, "/opt/gluu/")
-        # 3. Copy the TLS Certificates
-        logging.info("Copying OpenLDAP CA Certificate files")
-        if not os.path.isdir(self.certsFolder):
-            self.run([self.cmd_mkdir, '-p', self.certsFolder])
-        self.copyFile(self.openldapTLSKey, self.certsFolder)
-        self.copyFile(self.openldapTLSCert, self.certsFolder)
-        self.copyFile(self.openldapTLSCACert, self.certsFolder)
-        # 4. Populate the data
+        # 3. Populate the data
         logging.info("Importing LDIF files into OpenLDAP")
         cmd = os.path.join(self.openldapBinFolder, 'slapadd')
         config = os.path.join(self.openldapConfFolder, 'slapd.conf')
