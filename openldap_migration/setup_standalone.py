@@ -31,8 +31,11 @@ class SetupStandalone(object):
         self.customSchema = os.path.join(backup_folder, "custom.schema")
         self.userSchema = os.path.join(backup_folder, "user.schema")
         self.openldapTLSKey = os.path.join(backup_folder, "openldap.key")
-        self.openldapTLSCert = os.path.join(backup_folder, "openldap.cert")
+        self.openldapTLSCert = os.path.join(backup_folder, "openldap.crt")
         self.openldapTLSCACert = os.path.join(backup_folder, "openldap.pem")
+        self.o_gluu = os.path.join(backup_folder, 'o_gluu.ldif')
+        self.o_site = os.path.join(backup_folder, 'o_site.ldif')
+        self.slaptest = os.path.join(self.openldapBinFolder, 'slaptest')
 
     def copyFile(self, infile, destfolder):
         try:

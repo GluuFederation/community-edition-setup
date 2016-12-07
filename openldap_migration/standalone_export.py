@@ -1,4 +1,3 @@
-import sys
 import os
 import os.path
 import logging
@@ -10,7 +9,7 @@ import re
 # configure logging
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)-8s %(name)s %(message)s',
-                    filename='setup_openldap.log',
+                    filename='standalone_export.log',
                     filemode='w')
 console = logging.StreamHandler()
 console.setLevel(logging.INFO)
