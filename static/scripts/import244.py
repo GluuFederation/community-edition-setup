@@ -168,6 +168,8 @@ def stopOpenDJ():
             logging.critical("OpenDJ did not stop properly... exiting."
                              " Check /opt/opendj/logs/errors")
             sys.exit(3)
+        else:
+            return 
     output = getOutput([service, 'opendj', 'stop'])
     if output.find("Directory Server is now stopped") > 0:
         logging.info("Directory Server is now stopped")
