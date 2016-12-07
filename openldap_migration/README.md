@@ -74,8 +74,9 @@ Now the system has been migrated from OpenDJ to OpenLDAP.
 
 #### Procedure
 
-1. Install `The gluu-server-2.4.4 by default comes bundled with the OpenDJ LDAP server. Opt `Yes` while running the `setup.py` during installation. This creates the necessary structure for data and populates the base data for the gluu-server to function.
+1. Install `The gluu-server-2.4.4` by default comes bundled with the OpenDJ LDAP server. Opt `Yes` while running the `setup.py` during installation. This creates the necessary structure for data and populates the base data for the gluu-server to function.
 2. Export the data for the standalone setup from the **Gluu Server**
+
     ```
     service gluu-server-2.4.4.2 login
     git clone -b openldap-migration --single-branch https://github.com/GluuFederation/community-edition-setup.git
