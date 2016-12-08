@@ -79,6 +79,7 @@ Now the system has been migrated from OpenDJ to OpenLDAP.
 
     ```
     service gluu-server-2.4.4.2 login
+    service opendj stop
     git clone -b openldap-migration --single-branch https://github.com/GluuFederation/community-edition-setup.git
     cd community-edition-setup/openldap_migration
     python standalone_export.py
