@@ -416,6 +416,10 @@ class Setup(object):
 
         self.run(['/bin/chmod', '-R', '400', realCertFolder])
         self.run(['/bin/chmod', 'u+X', realCertFolder])
+        
+        # Add write permissions to Asimba's keystore (oxTrust can change it)
+        realasimbaJks = os.path.realpath(self.asimbaJksFn)
+        self.run(['/bin/chmod', 'u+w', realasimbaJks])        
 
     def get_ip(self):
         testIP = None
@@ -904,6 +908,9 @@ class Setup(object):
                               'tomcat')
             self.run(['/bin/chown', '-R', 'tomcat:tomcat', self.certFolder])
             self.run(['/bin/chmod', '-R', '500', self.certFolder])
+            
+            # Add write permissions to Asimba's keystore (oxTrust can change it)
+            self.run(['/bin/chmod', 'u+w', self.asimbaJksFn])
         except:
             self.logIt("Error generating cyrpto")
             self.logIt(traceback.format_exc(), True)
