@@ -1,6 +1,27 @@
 [
 	{
+		"attribute": "displayName",
+		"type": "string",
+		"index": ["equality"],
+		"backend": ["userRoot", "site"]
+	},
+
+	{
+		"attribute": "description",
+		"type": "string",
+		"index": ["equality"],
+		"backend": ["userRoot", "site"]
+	},
+
+	{
 		"attribute": "inum",
+		"type": "string",
+		"index": ["equality"],
+		"backend": ["userRoot", "site"]
+	},
+
+	{
+		"attribute": "iname",
 		"type": "string",
 		"index": ["equality"],
 		"backend": ["userRoot", "site"]
@@ -15,6 +36,13 @@
 
 	{
 		"attribute": "oxID",
+		"type": "string",
+		"index": ["equality"],
+		"backend": ["userRoot"]
+	},
+
+	{
+		"attribute": "oxAuthClientId",
 		"type": "string",
 		"index": ["equality"],
 		"backend": ["userRoot"]
@@ -63,7 +91,21 @@
 	},
 
 	{
+		"attribute": "oxScriptType",
+		"type": "string",
+		"index": ["equality"],
+		"backend": ["userRoot", "site"]
+	},
+
+	{
 		"attribute": "oxAuthExpiration",
+		"type": "date",
+		"index": ["ordering"],
+		"backend": ["userRoot"]
+	},
+
+	{
+		"attribute": "oxLastAccessTime",
 		"type": "date",
 		"index": ["ordering"],
 		"backend": ["userRoot"]
