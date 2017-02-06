@@ -44,8 +44,8 @@ class Setup(object):
     def __init__(self, install_dir=None):
         self.install_dir = install_dir
 
-        self.oxVersion = '3.0.0-SNAPSHOT'
-        self.githubBranchName = 'master'
+        self.oxVersion = '3.0.0'
+        self.githubBranchName = 'version_3.0.0'
 
         # Used only if -w (get wars) options is given to setup.py
         self.oxauth_war = 'https://ox.gluu.org/maven/org/xdi/oxauth-server/%s/oxauth-server-%s.war' % (self.oxVersion, self.oxVersion)
