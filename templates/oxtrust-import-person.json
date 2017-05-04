@@ -28,5 +28,11 @@
 		"displayName": "Password",
 		"dataType": "string",
 		"required": "false"
+	},
+	{
+		"ldapName": "gluuStatus",
+		"displayName": "User Status",
+		"dataType": "string",
+		"required": "true"
 	}]
 }
