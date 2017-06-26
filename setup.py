@@ -2784,6 +2784,7 @@ if __name__ == '__main__':
             installObject.set_ownership()
             installObject.set_permissions()
             installObject.start_services()
+	    installObject.change_rc_links()
             installObject.save_properties()
         except:
             installObject.logIt("***** Error caught in main loop *****", True)
