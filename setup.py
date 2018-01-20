@@ -2093,6 +2093,12 @@ class Setup(object):
         if self.installHttpd:
             self.ip = self.get_ip()
 
+
+        promptForMITLicense = self.getPrompt("Do you acknowledge that use of the Gluu Server is under the MIT license? [y|n]", "y")[0].lower()
+        if promptForMITLicense == 'n':
+            sys.exit(0)
+
+
         detectedHostname = None
         try:
             detectedHostname = socket.gethostbyaddr(socket.gethostname())[0]
@@ -2201,11 +2207,6 @@ class Setup(object):
                 self.installJce = False
         else:
             self.installJce = False
-
-
-        promptForMITLicense = self.getPrompt("Do you acknowledge that use of the Gluu Server is under the MIT license?","N|y")[0].lower()
-        if promptForMITLicense != 'y':
-            sys.exit(0)
 
 
     def get_filepaths(self, directory):
