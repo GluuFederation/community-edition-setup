@@ -20,6 +20,8 @@ import re
 import subprocess
 import time
 import datetime
+import base64
+import pyDes
 
 from distutils.dir_util import copy_tree
 from ldif import LDIFParser, LDIFWriter
@@ -92,6 +94,16 @@ class Migration(object):
         self.key_store = "/opt/jre/jre/lib/security/cacerts"
         self.ldif_import = "/opt/opendj/bin/import-ldif"
         self.ldif_export = "/opt/opendj/bin/export-ldif"
+        self.ldif_search = "/opt/opendj/bin/ldapsearch"
+        self.ldif_modify = "/opt/opendj/bin/ldapmodify"
+        self.ldapHost = "127.0.0.1"
+        self.ldapPort = "1636"
+        self.baseDn = "cn=directory manager,o=gluu"
+        self.ldappassowrd = None
+        self.key = None
+        self.oxAuthClientSecret = None
+        self.idpDN = None
+        self.encryptIdpJson = None
 
         self.ldapDataFile = "/opt/gluu/data/main_db/data.mdb"
         self.ldapSiteFile = "/opt/gluu/data/site_db/data.mdb"
@@ -744,13 +756,26 @@ class Migration(object):
         if (os.path.isfile('/usr/bin/systemctl')):
             self.getOutput(['systemctl', 'start', 'opendj'])
             output = self.getOutput(['systemctl', 'is-active', 'opendj'])
+
         output = self.getOutput([self.service, 'opendj', 'start'])
-        if output.find("Directory Server has started successfully") > 0 or \
-                        output.strip() == "active":
-            logging.info("Directory Server has started successfully")
-        else:
-            logging.error("OpenDJ did not start properly. Check "
-                          "/opt/opendj/logs/errors. Restart it manually.")
+
+        # force fully start opendj server
+        while True:
+            if output.find("instance of this server is already"):
+                break
+            elif output.find("Directory Server has started successfully") > 0 or output.strip() == "active":
+                break
+            else:
+                output = self.getOutput([self.service, 'opendj', 'start'])
+                print "system trying to Once again starting opendj"
+        # if output.find("Directory Server has started successfully") > 0 or \
+        #                 output.strip() == "active":
+        #     logging.info("Directory Server has started successfully")
+        # else:
+        #     output = self.getOutput([self.service, 'opendj', 'start'])
+        #     logging.error("OpenDJ did not start properly. Check "
+        #                   "/opt/opendj/logs/errors. Restart it manually.")
+
 
     def stopLDAPServer(self):
         if self.ldap_type == 'openldap':
@@ -759,6 +784,7 @@ class Migration(object):
             self.stopOpenDJ()
 
     def startLDAPServer(self):
+
         if self.ldap_type == 'openldap':
             self.startSolserver()
         else:
@@ -789,6 +815,117 @@ class Migration(object):
                 if line.startswith(prop):
                     return line.split('=')[-1].strip()
 
+    def unobscure(self,s=""):
+        engine = pyDes.triple_des(self.key, pyDes.ECB, pad=None, padmode=pyDes.PAD_PKCS5)
+        cipher = pyDes.triple_des(self.key)
+        decrypted = cipher.decrypt(base64.b64decode(s), padmode=pyDes.PAD_PKCS5)
+        return decrypted
+
+    def getLdapPassword(self):
+
+        try:
+            with open('/etc/gluu/conf/ox-ldap.properties') as f:
+                for line in f:
+                    if line.startswith("bindPassword:"):
+                        self.ldappassowrd = line.split(":")[1].split("\n")[0].strip()
+
+        except:
+            logging.error("ox-ldap.properties file not Found")
+
+
+        #get salt key
+        saltFn = "/etc/gluu/conf/salt"
+        try:
+            f = open(saltFn)
+            salt_property = f.read()
+            f.close()
+            self.key = salt_property.split("=")[1].strip()
+            self.ldappassowrd = self.unobscure(self.ldappassowrd)
+            #print self.ldappassowrd
+
+        except:
+            logging.error("Salt key Access Error")
+
+
+    def idpResolved(self):
+
+        logging.info('Idp Configuration Setting...')
+        self.getLdapPassword()
+
+
+        if self.ldap_type == 'opendj':
+            self.baseDn = "cn=directory manager"
+
+        command = [self.ldif_search,'-h',self.ldapHost,'-p',self.ldapPort,'-s','sub','-T','-Z','-X','-D',self.baseDn,'-w',self.ldappassowrd,'-b','o=gluu','-z', '3','&(objectclass=oxauthclient)(displayName=oxTrust Admin GUI)','oxAuthClientSecret']
+        output = self.getOutput(command)
+
+        outSplit = output.split(': ')
+        self.oxAuthClientSecret = outSplit[2]
+
+        command = [self.ldif_search,'-h',self.ldapHost,'-p',self.ldapPort,'-s','sub','-T','-Z','-X','-D',self.baseDn,'-w',self.ldappassowrd,'-b','o=gluu','-z', '3','&(objectclass=oxapplicationconfiguration)','1.1']
+        output = self.getOutput(command)
+
+        self.idpDN = output
+
+
+        idp_conf_command = self.ldif_search+' -h '+self.ldapHost+' -p '+self.ldapPort+' -s sub -T -Z -X -D '+"'"+self.baseDn+"'"+' -w '+self.ldappassowrd+" -b 'o=gluu' -z 3 '&(objectclass=oxapplicationconfiguration)' oxConfApplication | grep -v '^dn\:\ ' | cut -d' ' -f2 | base64 -d > idp_conf.json"
+        os.system(idp_conf_command)
+
+        output = self.getOutput(['chmod','777','-R','idp_conf.json'])
+
+
+        #change openIdClientPassword with oxAuthClientSecret
+        file = "idp_conf.json"
+        data = ""
+        try:
+            with open(file) as f:
+                for line in f:
+                    data += line
+        except:
+            logging.error("Error reading idp_conf.json Template")
+            logging.error(traceback.format_exc())
+            sys.exit(1)
+
+        datastore = json.loads(data)
+        datastore['openIdClientPassword'] = self.oxAuthClientSecret
+
+        try:
+            with open(file, 'w') as outfile:
+                json.dump(datastore, outfile,indent=4)
+        except:
+            logging.error("Error writting idp_conf.json Template")
+            logging.error(traceback.format_exc())
+            sys.exit(1)
+
+        self.encryptIdpJson  = os.popen('cat idp_conf.json | base64 -w 0; echo').read()
+        getdn = self.idpDN.split('\n\n')
+
+        fileLdif = "idpconf_upd.ldif"
+        try:
+            file = open(fileLdif,'w')
+            file.write(getdn[0]+"\n")
+            file.write("changetype: modify\n")
+            file.write("replace: oxConfApplication\n")
+            file.write("oxConfApplication: "+self.encryptIdpJson)
+            file.close()
+        except:
+            logging.error("Error writting idpconf_upd.ldif Template")
+            sys.exit(1)
+
+
+        command = [self.ldif_modify,'-h',self.ldapHost,'-p',self.ldapPort,'-Z','-X','-D',self.baseDn,'-w',self.ldappassowrd,'-f','idpconf_upd.ldif']
+        output = self.getOutput(command)
+
+        command = ['cp','/etc/certs/shibIDP.crt','/etc/certs/idp-signing.crt']
+        output = self.getOutput(command)
+
+        command = ['cp','/etc/certs/shibIDP.key','/etc/certs/idp-signing.key']
+        output = self.getOutput(command)
+
+        command = ['service','idp','restart']
+        output = self.getOutput(command)
+
+
     def migrate(self):
         """Main function for the migration of backup data
         """
@@ -812,6 +949,7 @@ class Migration(object):
         self.importProcessedData()
         self.fixPermissions()
         self.startLDAPServer()
+        self.idpResolved()
         # self.startWebapps()
         print("============================================================")
         print("The migration is complete. Gluu Server needs to be restarted.")
