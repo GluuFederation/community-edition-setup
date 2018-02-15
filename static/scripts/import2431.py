@@ -860,7 +860,7 @@ class Migration(object):
         output = self.getOutput(command)
 
         outSplit = output.split(': ')
-        self.oxAuthClientSecret = outSplit[2]
+        self.oxAuthClientSecret = outSplit[2].split('\n\n')[0]
 
         command = [self.ldif_search,'-h',self.ldapHost,'-p',self.ldapPort,'-s','sub','-T','-Z','-X','-D',self.baseDn,'-w',self.ldappassowrd,'-b','o=gluu','-z', '3','&(objectclass=oxapplicationconfiguration)','1.1']
         output = self.getOutput(command)
