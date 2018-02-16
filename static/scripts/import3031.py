@@ -578,13 +578,18 @@ class Migration(object):
         logging.debug(output)
 
     def importDataIntoOpenDJ(self):
-        command = [self.ldif_import,'-b','o=gluu','-n', 'userRoot',
+        # command = [self.ldif_import,'-b','o=gluu','-n', 'userRoot',
+        #            '-l', self.o_gluu, '-R', self.o_gluu + '.rejects']
+        command = [self.ldif_import,'-n', 'userRoot',
                    '-l', self.o_gluu, '-R', self.o_gluu + '.rejects']
         output = self.getOutput(command)
         logging.debug(output)
-        command = [self.ldif_import,'-b','o=gluu','-n', 'userRoot',
+        command = [self.ldif_import,'-n', 'site',
                    '-l', self.o_site, '-R', self.o_site + '.rejects']
         output = self.getOutput(command)
+        # command = [self.ldif_import,'-b','o=gluu','-n', 'userRoot',
+        #            '-l', self.o_site, '-R', self.o_site + '.rejects']
+        # output = self.getOutput(command)
         logging.debug(output)
 
     def importProcessedData(self):

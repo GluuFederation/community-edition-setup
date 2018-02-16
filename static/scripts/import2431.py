@@ -701,10 +701,10 @@ class Migration(object):
                    '-l', self.o_gluu, '-R', self.o_gluu + '.rejects']
         output = self.getOutput(command)
         logging.debug(output)
-        command = [self.ldif_import, '-n', 'userRoot',
+        #command = [self.ldif_import, '-n', 'userRoot',
+        #           '-l', self.o_site, '-R', self.o_site + '.rejects']
+        command = [self.ldif_import, '-n', 'site',
                    '-l', self.o_site, '-R', self.o_site + '.rejects']
-        # command = [self.ldif_import, '-n', 'site',
-        #            '-l', self.o_site, '-R', self.o_site + '.rejects']
         output = self.getOutput(command)
         logging.debug(output)
 
