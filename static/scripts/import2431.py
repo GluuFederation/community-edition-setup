@@ -703,6 +703,8 @@ class Migration(object):
         logging.debug(output)
         command = [self.ldif_import, '-n', 'userRoot',
                    '-l', self.o_site, '-R', self.o_site + '.rejects']
+        # command = [self.ldif_import, '-n', 'site',
+        #            '-l', self.o_site, '-R', self.o_site + '.rejects']
         output = self.getOutput(command)
         logging.debug(output)
 
@@ -763,10 +765,13 @@ class Migration(object):
             if output.find("Directory Server has started successfully") > 0 or \
                             output.strip() == "active":
                 logging.info("Directory Server has started successfully")
-            else:
-                output = self.getOutput([self.service, 'opendj', 'start'])
+        else:
+            # start opendj through service
+            output = self.getOutput([self.service, 'opendj', 'start'])
+            if output != "":
                 logging.error("OpenDJ did not start properly. Check "
                               "/opt/opendj/logs/errors. Restart it manually.")
+                sys.exit(1)
 
 
     def stopLDAPServer(self):
