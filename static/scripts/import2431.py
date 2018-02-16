@@ -760,25 +760,13 @@ class Migration(object):
         if (os.path.isfile('/usr/bin/systemctl')):
             self.getOutput(['systemctl', 'start', 'opendj'])
             output = self.getOutput(['systemctl', 'is-active', 'opendj'])
-
-        output = self.getOutput([self.service, 'opendj', 'start'])
-
-        # force fully start opendj server
-        while True:
-            if output.find("instance of this server is already"):
-                break
-            elif output.find("Directory Server has started successfully") > 0 or output.strip() == "active":
-                break
+            if output.find("Directory Server has started successfully") > 0 or \
+                            output.strip() == "active":
+                logging.info("Directory Server has started successfully")
             else:
                 output = self.getOutput([self.service, 'opendj', 'start'])
-                print "system trying to Once again starting opendj"
-        # if output.find("Directory Server has started successfully") > 0 or \
-        #                 output.strip() == "active":
-        #     logging.info("Directory Server has started successfully")
-        # else:
-        #     output = self.getOutput([self.service, 'opendj', 'start'])
-        #     logging.error("OpenDJ did not start properly. Check "
-        #                   "/opt/opendj/logs/errors. Restart it manually.")
+                logging.error("OpenDJ did not start properly. Check "
+                              "/opt/opendj/logs/errors. Restart it manually.")
 
 
     def stopLDAPServer(self):
@@ -910,7 +898,7 @@ class Migration(object):
             file.write(getdn[0]+"\n")
             file.write("changetype: modify\n")
             file.write("replace: oxConfApplication\n")
-            file.write("oxConfApplication: "+self.encryptIdpJson)
+            file.write("oxConfApplication:: "+self.encryptIdpJson)
             file.close()
         except:
             logging.error("Error writting idpconf_upd.ldif Template")
