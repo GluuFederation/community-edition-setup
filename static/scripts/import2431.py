@@ -116,6 +116,7 @@ class Migration(object):
         self.attrs = 2000
         self.objclasses = 2000
         self.ldap_type = 'openldap'
+        self.oxIDPAuthentication = 2
         self.gluuSchemaDir = '/opt/gluu/schema/openldap/'
         self.backupVersion = 0
         self.setup_properties = 'backup_2431/setup.properties'
@@ -563,7 +564,7 @@ class Migration(object):
                            'oxTrustPhotos', 'oxTrustAddresses', 'oxTrustRole',
                            'oxTrustEntitlements', 'oxTrustx509Certificate']
 
-        if self.ldap_type == 'opendj':
+        if self.oxIDPAuthentication == 1:
             ignoreList.remove('oxIDPAuthentication')
 
         # Rewriting all the new DNs in the new installation to ldif file
@@ -735,6 +736,25 @@ class Migration(object):
             self.ldap_type = 'openldap'
         elif choice == 2:
             self.ldap_type = 'opendj'
+        else:
+            logging.error("Invalid selection of LDAP Server. Cannot Migrate.")
+            sys.exit(1)
+
+    def getoxIDPAuthentication(self):
+
+        self.oxIDPAuthentication = 2
+        try:
+            choice = int(raw_input(
+                "\nMigrate LDAP Server details for IDP Authentication?- 1.yes, 2.no [2]: "))
+        except ValueError:
+            logging.error('You entered non-interger value. Cannot decide LDAP migration'
+                          'server type. Quitting.')
+            sys.exit(1)
+
+        if choice == 1:
+            self.oxIDPAuthentication = 1
+        elif choice == 2:
+            self.oxIDPAuthentication = 2
         else:
             logging.error("Invalid selection of LDAP Server. Cannot Migrate.")
             sys.exit(1)
@@ -968,6 +988,7 @@ class Migration(object):
         print("============================================================")
         self.version = int(self.getProp('version').replace('.', '')[0:3])
         self.getLDAPServerType()
+        self.getoxIDPAuthentication()
         self.verifyBackupData()
         self.setupWorkDirectory()
         self.stopWebapps()
