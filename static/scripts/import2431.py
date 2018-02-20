@@ -913,6 +913,42 @@ class Migration(object):
         command = [self.ldif_modify,'-h',self.ldapHost,'-p',self.ldapPort,'-Z','-X','-D',self.baseDn,'-w',self.ldappassowrd,'-f','idpconf_upd.ldif']
         output = self.getOutput(command)
 
+        # CR bindDN = cn=directory manager set opendj time
+        if self.ldap_type == 'opendj':
+
+            command = [self.ldif_search,'-h',self.ldapHost,'-p',self.ldapPort,'-s','sub','-T','-Z','-X','-D',self.baseDn,'-w',self.ldappassowrd,'-b','o=gluu','&(objectclass=oxtrustconfiguration)','oxTrustConfCacheRefresh']
+            output = self.getOutput(command)
+            oxtrustconfcacherefreshDn = output.split('\n')
+
+            valueget = oxtrustconfcacherefreshDn[1].split('oxTrustConfCacheRefresh: ')
+            data = json.loads(valueget[1])
+            data["inumConfig"]["bindDN"] = "cn=directory manager"
+
+            fileLdif = "oxtrustconfcacherefreshDn.json"
+            try:
+                with open(fileLdif, 'w') as outfile:
+                    json.dump(data, outfile,indent=4)
+            except:
+                logging.error("Error writting oxtrustconfcacherefreshDn.json Template")
+
+            self.encryptIdpJson  = os.popen('cat oxtrustconfcacherefreshDn.json | base64 -w 0; echo').read()
+
+            fileLdif = "oxtrustconfcacherefreshDn.ldif"
+            try:
+                file = open(fileLdif,'w')
+                file.write(oxtrustconfcacherefreshDn[0]+"\n")
+                file.write("changetype: modify\n")
+                file.write("replace: oxTrustConfCacheRefresh\n")
+                file.write("oxTrustConfCacheRefresh:: "+self.encryptIdpJson)
+                file.close()
+            except:
+                logging.error("Error writting oxtrustconfcacherefreshDn.ldif Template")
+
+
+        command = [self.ldif_modify,'-h',self.ldapHost,'-p',self.ldapPort,'-Z','-X','-D',self.baseDn,'-w',self.ldappassowrd,'-f','oxtrustconfcacherefreshDn.ldif']
+        output = self.getOutput(command)
+        #end here
+
         command = ['cp','/etc/certs/shibIDP.crt','/etc/certs/idp-signing.crt']
         output = self.getOutput(command)
 
