@@ -578,6 +578,20 @@ class Migration(object):
                 continue
 
             old_entry = self.getEntry(os.path.join(self.ldifDir, old_dn_map[dn]), dn)
+
+            if "ou=trustRelationships" in dn:
+                try:
+                    if old_entry['gluuIsFederation'][0] == "false":
+                        if 'gluuEntityType' not in old_entry:
+                            old_entry['gluuEntityType'] = []
+                            old_entry['gluuEntityType'].append('Single SP')
+                except:
+                    old_entry['gluuIsFederation'] = []
+                    old_entry['gluuIsFederation'].append('true')
+                    old_entry['gluuEntityType'] = []
+                    old_entry['gluuEntityType'].append('Federation/Aggregate')
+
+
             for attr in old_entry.keys():
                 if attr in ignoreList:
                     continue
