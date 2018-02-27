@@ -1036,7 +1036,7 @@ class Migration(object):
                 output = self.getOutput(command)
 
             except:
-                logging.error("Already set CR bindDN = cn=directory manager ")
+                logging.info("Already set CR bindDN value")
         #end here
 
         command = ['cp','/etc/certs/shibIDP.crt','/etc/certs/idp-signing.crt']
