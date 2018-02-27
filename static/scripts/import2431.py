@@ -403,6 +403,7 @@ class Migration(object):
         schema_99 = os.path.join(loc, '99-user.ldif')
         schema_100 = os.path.join(loc, '100-user.ldif')
         new_schema_100 = os.path.join(loc,'new-100-user.ldif')
+        schema_77 = os.path.join("/opt","opendj","config","schema","77-customAttributes.ldif")
 
         if self.ldap_type == 'opendj':
 
@@ -437,30 +438,41 @@ class Migration(object):
                     logging.error("Error reading schema100.ldif file")
                     logging.error(traceback.format_exc())
 
+            # read 77-customAttributefile
+            check = False
+            headerdn = ""
+            objectclass = ""
+            cncheck = True
+            try:
+                with open(schema_77,"r") as customattrfile77:
+                    for line in customattrfile77:
+
+                        # get all Header
+                        if cncheck:
+                            headerdn += str(line)
+
+                        if cncheck == False:
+                            objectclass += str(line)
+
+                        if line.startswith("cn: schema"):
+                            cncheck = False
+            except:
+                logging.error("Error reading 77-customAttribute.ldif file")
+                logging.error(traceback.format_exc())
+
+            ObjectClassStore.append(objectclass)
             # finally create new_100-user.ldif file
             try:
-                with open(new_schema_100,'w') as new_schema100:
+                with open(schema_77,'w') as new_schema77:
 
-                    new_schema100.write("# Temporary solution to add custom objectClass which we\n")
-                    new_schema100.write("# use as origin for custom person attributes\n")
-                    new_schema100.write("dn: cn=schema\n")
-                    new_schema100.write("objectClass: top\n")
-                    new_schema100.write("objectClass: ldapSubentry\n")
-                    new_schema100.write("objectClass: subschema\n")
-                    new_schema100.write("cn: schema\n")
-
-                    for attribute in AttributeStore:
-                        new_schema100.write(attribute)
-
-                    for objectclass in ObjectClassStore:
-                        new_schema100.write(objectclass)
-
-                # replace new-100-user.ldif with 100-user.ldif
-                shutil.copyfile(new_schema_100, '/opt/opendj/config/schema/100-user.ldif')
-                #shutil.copyfile(schema_100, '/opt/opendj/config/schema/100-user.ldif')
+                    new_schema77.write(headerdn)
+                    for attr in AttributeStore:
+                        new_schema77.write(attr)
+                    for classobj in ObjectClassStore:
+                        new_schema77.write(classobj)
 
             except:
-                logging.error("Error writting new-100-user.ldif file")
+                logging.error("Error writting 77-customAttribute.ldif file")
                 logging.error(traceback.format_exc())
 
             return
