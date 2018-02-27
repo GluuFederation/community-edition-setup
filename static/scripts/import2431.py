@@ -411,11 +411,9 @@ class Migration(object):
             if os.path.isfile(schema_99):
                 #shutil.copyfile(
                 #    schema_99, '/opt/opendj/config/schema/99-user.ldif')
-                print "simple find all the objectclasses and attributeclasses"
                 try:
                     with open(schema_99,'r') as schema99:
                         for line in schema99:
-                            print line
                             if line.startswith("attributeTypes"):
                                 AttributeStore.append(line)
                             if line.startswith("objectClasses"):
@@ -428,11 +426,9 @@ class Migration(object):
             if os.path.isfile(schema_100):
                 #shutil.copyfile(
                 #    schema_100, '/opt/opendj/config/schema/100-user.ldif')
-                print "simple find all the objectclasses and attributeclasses in 100.ldif "
                 try:
                     with open(schema_100,'r') as schema100:
                         for line in schema100:
-                            print line
                             if line.startswith("attributeTypes"):
                                 AttributeStore.append(line)
                             if line.startswith("objectClasses"):
