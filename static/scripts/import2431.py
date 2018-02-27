@@ -402,14 +402,71 @@ class Migration(object):
         loc = os.path.join(self.backupDir, 'opt', 'opendj', 'config', 'schema')
         schema_99 = os.path.join(loc, '99-user.ldif')
         schema_100 = os.path.join(loc, '100-user.ldif')
+        new_schema_100 = os.path.join(loc,'new-100-user.ldif')
 
         if self.ldap_type == 'opendj':
+
+            AttributeStore = []
+            ObjectClassStore = []
             if os.path.isfile(schema_99):
-                shutil.copyfile(
-                    schema_99, '/opt/opendj/config/schema/99-user.ldif')
+                #shutil.copyfile(
+                #    schema_99, '/opt/opendj/config/schema/99-user.ldif')
+                print "simple find all the objectclasses and attributeclasses"
+                try:
+                    with open(schema_99,'r') as schema99:
+                        for line in schema99:
+                            print line
+                            if line.startswith("attributeTypes"):
+                                AttributeStore.append(line)
+                            if line.startswith("objectClasses"):
+                                line = line.replace("SUP top","SUP ( top )")
+                                ObjectClassStore.append(line)
+                except:
+                    logging.error("Error reading schema99.ldif file")
+                    logging.error(traceback.format_exc())
+
             if os.path.isfile(schema_100):
-                shutil.copyfile(
-                    schema_100, '/opt/opendj/config/schema/100-user.ldif')
+                #shutil.copyfile(
+                #    schema_100, '/opt/opendj/config/schema/100-user.ldif')
+                print "simple find all the objectclasses and attributeclasses in 100.ldif "
+                try:
+                    with open(schema_100,'r') as schema100:
+                        for line in schema100:
+                            print line
+                            if line.startswith("attributeTypes"):
+                                AttributeStore.append(line)
+                            if line.startswith("objectClasses"):
+                                ObjectClassStore.append(line)
+                except:
+                    logging.error("Error reading schema100.ldif file")
+                    logging.error(traceback.format_exc())
+
+            # finally create new_100-user.ldif file
+            try:
+                with open(new_schema_100,'w') as new_schema100:
+
+                    new_schema100.write("# Temporary solution to add custom objectClass which we\n")
+                    new_schema100.write("# use as origin for custom person attributes\n")
+                    new_schema100.write("dn: cn=schema\n")
+                    new_schema100.write("objectClass: top\n")
+                    new_schema100.write("objectClass: ldapSubentry\n")
+                    new_schema100.write("objectClass: subschema\n")
+                    new_schema100.write("cn: schema\n")
+
+                    for attribute in AttributeStore:
+                        new_schema100.write(attribute)
+
+                    for objectclass in ObjectClassStore:
+                        new_schema100.write(objectclass)
+
+                # replace new-100-user.ldif with 100-user.ldif
+                shutil.copyfile(new_schema_100, '/opt/opendj/config/schema/100-user.ldif')
+                #shutil.copyfile(schema_100, '/opt/opendj/config/schema/100-user.ldif')
+
+            except:
+                logging.error("Error writting new-100-user.ldif file")
+                logging.error(traceback.format_exc())
+
             return
 
         # Process for openldap and then append the contents to custom schema
@@ -949,38 +1006,41 @@ class Migration(object):
 
         # CR bindDN = cn=directory manager set opendj time
         if self.ldap_type == 'opendj':
-
-            command = [self.ldif_search,'-h',self.ldapHost,'-p',self.ldapPort,'-s','sub','-T','-Z','-X','-D',self.baseDn,'-w',self.ldappassowrd,'-b','o=gluu','&(objectclass=oxtrustconfiguration)','oxTrustConfCacheRefresh']
-            output = self.getOutput(command)
-            oxtrustconfcacherefreshDn = output.split('\n')
-
-            valueget = oxtrustconfcacherefreshDn[1].split('oxTrustConfCacheRefresh: ')
-            data = json.loads(valueget[1])
-            data["inumConfig"]["bindDN"] = "cn=directory manager"
-
-            fileLdif = "oxtrustconfcacherefreshDn.json"
             try:
-                with open(fileLdif, 'w') as outfile:
-                    json.dump(data, outfile,indent=4)
+                command = [self.ldif_search,'-h',self.ldapHost,'-p',self.ldapPort,'-s','sub','-T','-Z','-X','-D',self.baseDn,'-w',self.ldappassowrd,'-b','o=gluu','&(objectclass=oxtrustconfiguration)','oxTrustConfCacheRefresh']
+                output = self.getOutput(command)
+                oxtrustconfcacherefreshDn = output.split('\n')
+
+                valueget = oxtrustconfcacherefreshDn[1].split('oxTrustConfCacheRefresh: ')
+                data = json.loads(valueget[1])
+                data["inumConfig"]["bindDN"] = "cn=directory manager"
+
+                fileLdif = "oxtrustconfcacherefreshDn.json"
+                try:
+                    with open(fileLdif, 'w') as outfile:
+                        json.dump(data, outfile,indent=4)
+                except:
+                    logging.error("Error writting oxtrustconfcacherefreshDn.json Template")
+
+                self.encryptIdpJson  = os.popen('cat oxtrustconfcacherefreshDn.json | base64 -w 0; echo').read()
+
+                fileLdif = "oxtrustconfcacherefreshDn.ldif"
+                try:
+                    file = open(fileLdif,'w')
+                    file.write(oxtrustconfcacherefreshDn[0]+"\n")
+                    file.write("changetype: modify\n")
+                    file.write("replace: oxTrustConfCacheRefresh\n")
+                    file.write("oxTrustConfCacheRefresh:: "+self.encryptIdpJson)
+                    file.close()
+                except:
+                    logging.error("Error writting oxtrustconfcacherefreshDn.ldif Template")
+
+
+                command = [self.ldif_modify,'-h',self.ldapHost,'-p',self.ldapPort,'-Z','-X','-D',self.baseDn,'-w',self.ldappassowrd,'-f','oxtrustconfcacherefreshDn.ldif']
+                output = self.getOutput(command)
+
             except:
-                logging.error("Error writting oxtrustconfcacherefreshDn.json Template")
-
-            self.encryptIdpJson  = os.popen('cat oxtrustconfcacherefreshDn.json | base64 -w 0; echo').read()
-
-            fileLdif = "oxtrustconfcacherefreshDn.ldif"
-            try:
-                file = open(fileLdif,'w')
-                file.write(oxtrustconfcacherefreshDn[0]+"\n")
-                file.write("changetype: modify\n")
-                file.write("replace: oxTrustConfCacheRefresh\n")
-                file.write("oxTrustConfCacheRefresh:: "+self.encryptIdpJson)
-                file.close()
-            except:
-                logging.error("Error writting oxtrustconfcacherefreshDn.ldif Template")
-
-
-        command = [self.ldif_modify,'-h',self.ldapHost,'-p',self.ldapPort,'-Z','-X','-D',self.baseDn,'-w',self.ldappassowrd,'-f','oxtrustconfcacherefreshDn.ldif']
-        output = self.getOutput(command)
+                logging.error("Already set CR bindDN = cn=directory manager ")
         #end here
 
         command = ['cp','/etc/certs/shibIDP.crt','/etc/certs/idp-signing.crt']
