@@ -461,19 +461,66 @@ class Migration(object):
                 logging.error(traceback.format_exc())
 
             ObjectClassStore.append(objectclass)
-            # finally create new_100-user.ldif file
-            try:
-                with open(schema_77,'w') as new_schema77:
+            # finally write into 77-CustomAttrbute.ldif file
+            # step 1 find duplication of attrbutes are available or not
+            # get all the Attribute
+            schema_path = os.path.join("/opt","opendj","config","schema")
+            AttributeName = []
+            files = os.listdir(schema_path)
+            for name in files:
+                #print "---------------start--------------"
+                #print name
+                with open(os.path.join(schema_path,name),'r') as AttributeFinds:
+                    check = False
+                    Attributeline = ""
+                    for line in AttributeFinds:
+                        if line.startswith("attributeTypes"):
+                            if line.endswith(")\n"):
+                                Attributeline = line
+                                datastore = Attributeline.split(" ")
+                                if datastore[4] == "(":
+                                    AttributeName.append(datastore[5])
+                                    AttributeName.append(datastore[6])
+                                else:
+                                    AttributeName.append(datastore[4])
+                                check = False
+                                Attributeline = ""
+                            else:
+                                check = True
 
-                    new_schema77.write(headerdn)
-                    for attr in AttributeStore:
-                        new_schema77.write(attr)
-                    for classobj in ObjectClassStore:
-                        new_schema77.write(classobj)
+                        if check:
+                            Attributeline += line
+                            if line.endswith(")\n"):
+                                check = False
+                                datastore = Attributeline.split(" ")
+                                if datastore[4] == "NAME":
+                                    AttributeName.append(datastore[5])
+                                elif datastore[4] == "(":
+                                    AttributeName.append(datastore[5])
+                                    AttributeName.append(datastore[6])
+                                else:
+                                    AttributeName.append(datastore[4])
+                                Attributeline = ""
 
-            except:
-                logging.error("Error writting 77-customAttribute.ldif file")
-                logging.error(traceback.format_exc())
+            #print AttributeName
+            new_AttributeName = []
+
+            for objclasstmp in ObjectClassStore:
+                datastore = str(objclasstmp).split(" ")
+                #print datastore
+
+            # try:
+            #     with open(schema_77,'w') as new_schema77:
+            #
+            #         new_schema77.write(headerdn)
+            #         for attr in AttributeStore:
+            #             new_schema77.write(attr)
+            #         for classobj in ObjectClassStore:
+            #             new_schema77.write(classobj)
+            #
+            # except:
+            #     logging.error("Error writting 77-customAttribute.ldif file")
+            #     logging.error(traceback.format_exc())
 
             return
 
@@ -643,20 +690,6 @@ class Migration(object):
                 continue
 
             old_entry = self.getEntry(os.path.join(self.ldifDir, old_dn_map[dn]), dn)
-
-            if "ou=trustRelationships" in dn:
-                try:
-                    if old_entry['gluuIsFederation'][0] == "false":
-                        if 'gluuEntityType' not in old_entry:
-                            old_entry['gluuEntityType'] = []
-                            old_entry['gluuEntityType'].append('Single SP')
-                except:
-                    old_entry['gluuIsFederation'] = []
-                    old_entry['gluuIsFederation'].append('true')
-                    old_entry['gluuEntityType'] = []
-                    old_entry['gluuEntityType'].append('Federation/Aggregate')
-
-
             for attr in old_entry.keys():
                 if attr in ignoreList:
                     continue
@@ -690,6 +723,23 @@ class Migration(object):
                 continue  # Already processed
 
             entry = self.getEntry(os.path.join(self.ldifDir, old_dn_map[dn]), dn)
+            if "ou=trustRelationships" in dn:
+                logging.debug(entry)
+                try:
+                    if entry['gluuIsFederation'][0] == "false":
+                        if 'gluuEntityType' not in entry:
+                            entry['gluuEntityType'] = []
+                            entry['gluuEntityType'].append('Single SP')
+                except:
+                    if entry['displayName'][0] == 'gluu SP on appliance' and entry['description'][0] == 'Trust Relationship for the SP':
+                        logging.debug("skip default SP entry")
+                    else:
+                        entry['gluuIsFederation'] = []
+                        entry['gluuIsFederation'].append('true')
+                        entry['gluuEntityType'] = []
+                        entry['gluuEntityType'].append('Federation/Aggregate')
+                logging.debug(entry)
+
 
             for attr in entry.keys():
                 if attr not in multivalueAttrs:
