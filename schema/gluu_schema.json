@@ -4923,6 +4923,8 @@
                 "oxRevision",
                 "oxType",
                 "oxScopeExpression",
+                "oxAuthCreation",
+                "oxAuthExpiration",
                 "description"
             ],
             "must": [
@@ -5243,7 +5245,8 @@
                 "oxConfigurationProperty",
                 "oxLevel",
                 "oxRevision",
-                "gluuStatus"
+                "gluuStatus",
+                "oxScriptError"
             ],
             "must": [
                 "objectclass"
