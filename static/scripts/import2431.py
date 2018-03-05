@@ -414,12 +414,25 @@ class Migration(object):
                 #    schema_99, '/opt/opendj/config/schema/99-user.ldif')
                 try:
                     with open(schema_99,'r') as schema99:
+                        Object_check = False
+                        Attribute_check= False
+                        objectclass_merge = ""
+                        Attribute_merge = ""
                         for line in schema99:
                             if line.startswith("attributeTypes"):
-                                AttributeStore.append(line)
+                                Attribute_check = True
                             if line.startswith("objectClasses"):
-                                line = line.replace("SUP top","SUP ( top )")
-                                ObjectClassStore.append(line)
+                                Object_check = True
+                            if Object_check:
+                                objectclass_merge += line
+                                if line.endswith(")\n") or line.endswith(")"):
+                                    ObjectClassStore.append(objectclass_merge)
+                                    Object_check = False
+                            if Attribute_check:
+                                Attribute_merge += line
+                                if line.endswith(")\n") or line.endswith(")"):
+                                    AttributeStore.append(Attribute_merge)
+                                    Attribute_check = False
                 except:
                     logging.error("Error reading schema99.ldif file")
                     logging.error(traceback.format_exc())
@@ -429,14 +442,29 @@ class Migration(object):
                 #    schema_100, '/opt/opendj/config/schema/100-user.ldif')
                 try:
                     with open(schema_100,'r') as schema100:
+                        Object_check = False
+                        Attribute_check= False
+                        objectclass_merge = ""
+                        Attribute_merge = ""
                         for line in schema100:
                             if line.startswith("attributeTypes"):
-                                AttributeStore.append(line)
+                                Attribute_check = True
                             if line.startswith("objectClasses"):
-                                ObjectClassStore.append(line)
+                                Object_check = True
+                            if Object_check:
+                                objectclass_merge += line
+                                if line.endswith(")\n") or line.endswith(")"):
+                                    ObjectClassStore.append(objectclass_merge)
+                                    Object_check = False
+                            if Attribute_check:
+                                Attribute_merge += line
+                                if line.endswith(")\n") or line.endswith(")"):
+                                    AttributeStore.append(Attribute_merge)
+                                    Attribute_check = False
                 except:
                     logging.error("Error reading schema100.ldif file")
                     logging.error(traceback.format_exc())
+
 
             # read 77-customAttributefile
             check = False
@@ -461,15 +489,13 @@ class Migration(object):
                 logging.error(traceback.format_exc())
 
             ObjectClassStore.append(objectclass)
-            # finally write into 77-CustomAttrbute.ldif file
             # step 1 find duplication of attrbutes are available or not
-            # get all the Attribute
+            # step 2 get all the Attribute 99.ldif and 100.ldif
+            # finally write into 77-CustomAttrbute.ldif file
             schema_path = os.path.join("/opt","opendj","config","schema")
             AttributeName = []
             files = os.listdir(schema_path)
             for name in files:
-                #print "---------------start--------------"
-                #print name
                 with open(os.path.join(schema_path,name),'r') as AttributeFinds:
                     check = False
                     Attributeline = ""
@@ -504,23 +530,71 @@ class Migration(object):
 
             #print AttributeName
             new_AttributeName = []
-
+            current_objectclass_skip = 0
             for objclasstmp in ObjectClassStore:
-                datastore = str(objclasstmp).split(" ")
-                #print datastore
+                if current_objectclass_skip != len(ObjectClassStore) - 1:
+                    datastore = str(objclasstmp).split(" ")
+                    check = False
+                    for customAttribute_name in datastore:
+                        if customAttribute_name == "MAY":
+                            check = True
+                            continue
+                        if check:
+                            if customAttribute_name != "(" and customAttribute_name != "$":
+                                if customAttribute_name == ")":
+                                    check = False
+                                    continue
+                                else:
+                                    new_AttributeName.append(customAttribute_name)
+                else:
+                    current_objectclass_merge = ""
+                    datastore = str(objclasstmp).split(" ")
+                    check = False
+                    for customAttribute_name in datastore:
+                        if customAttribute_name == "MAY":
+                            check = True
+                            current_objectclass_merge += " "+str(customAttribute_name)
+                            continue
+                        if check:
+                            if customAttribute_name == "(":
+                                current_objectclass_merge +=" "+str(customAttribute_name)
+                                Attr_count = 0
+                                for new_Attribute in new_AttributeName:
+                                    add_or_not = True;
+                                    for a in AttributeName:
+                                        if a == "'"+new_Attribute+"'" or a == "'"+new_Attribute+"'"+"\n":
+                                            logging.debug(new_Attribute)
+                                            add_or_not = False
+                                    if add_or_not:
+                                        if Attr_count == 0:
+                                            current_objectclass_merge += " "+str(new_Attribute)+" $"
+                                        else:
+                                            current_objectclass_merge += " $ "+str(new_Attribute)
+                                    Attr_count = Attr_count + 1
 
-            # try:
-            #     with open(schema_77,'w') as new_schema77:
-            #
-            #         new_schema77.write(headerdn)
-            #         for attr in AttributeStore:
-            #             new_schema77.write(attr)
-            #         for classobj in ObjectClassStore:
-            #             new_schema77.write(classobj)
-            #
-            # except:
-            #     logging.error("Error writting 77-customAttribute.ldif file")
-            #     logging.error(traceback.format_exc())
+                                check = False
+                        else:
+                            if str(customAttribute_name).startswith("objectClasses:"):
+                                current_objectclass_merge += str(customAttribute_name)
+                            else:
+                                current_objectclass_merge += " "+str(customAttribute_name)
+
+                current_objectclass_skip = current_objectclass_skip + 1
+
+            logging.debug(new_AttributeName)
+            logging.debug(current_objectclass_merge)
+
+            try:
+                with open(schema_77,'w') as new_schema77:
+
+                    new_schema77.write(headerdn)
+                    for attr in AttributeStore:
+                        new_schema77.write(attr)
+                    new_schema77.write(current_objectclass_merge)
+
+            except:
+                logging.error("Error writting 77-customAttribute.ldif file")
+                logging.error(traceback.format_exc())
 
             return
 
@@ -556,7 +630,7 @@ class Migration(object):
                     custArrtributes = custArrtributes + line + " $ "
                 else:
                     custArrtributes = custArrtributes + line
-        print custArrtributes
+
 
         temp_schema = temp_schema.replace(
             re.search(r'\((.*?)\)', temp_schema.split('MAY')[1]).group(1),
