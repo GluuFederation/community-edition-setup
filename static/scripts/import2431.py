@@ -566,12 +566,8 @@ class Migration(object):
                                             logging.debug(new_Attribute)
                                             add_or_not = False
                                     if add_or_not:
-                                        if Attr_count == 0:
-                                            current_objectclass_merge += " "+str(new_Attribute)+" $"
-                                        else:
-                                            current_objectclass_merge += " "+str(new_Attribute)+" $"
+                                        current_objectclass_merge += " "+str(new_Attribute)+" $"
                                     Attr_count = Attr_count + 1
-
                                 check = False
                         else:
                             if str(customAttribute_name).startswith("objectClasses:"):
