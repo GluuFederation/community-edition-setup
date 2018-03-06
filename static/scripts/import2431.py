@@ -104,6 +104,7 @@ class Migration(object):
         self.oxAuthClientSecret = None
         self.idpDN = None
         self.encryptIdpJson = None
+        self.custmo_schema = 0
 
         self.ldapDataFile = "/opt/gluu/data/main_db/data.mdb"
         self.ldapSiteFile = "/opt/gluu/data/site_db/data.mdb"
@@ -427,11 +428,13 @@ class Migration(object):
                                 objectclass_merge += line
                                 if line.endswith(")\n") or line.endswith(")"):
                                     ObjectClassStore.append(objectclass_merge)
+                                    objectclass_merge = ""
                                     Object_check = False
                             if Attribute_check:
                                 Attribute_merge += line
                                 if line.endswith(")\n") or line.endswith(")"):
                                     AttributeStore.append(Attribute_merge)
+                                    Attribute_merge = ""
                                     Attribute_check = False
                 except:
                     logging.error("Error reading schema99.ldif file")
@@ -455,11 +458,13 @@ class Migration(object):
                                 objectclass_merge += line
                                 if line.endswith(")\n") or line.endswith(")"):
                                     ObjectClassStore.append(objectclass_merge)
+                                    objectclass_merge = ""
                                     Object_check = False
                             if Attribute_check:
                                 Attribute_merge += line
                                 if line.endswith(")\n") or line.endswith(")"):
                                     AttributeStore.append(Attribute_merge)
+                                    Attribute_merge = ""
                                     Attribute_check = False
                 except:
                     logging.error("Error reading schema100.ldif file")
@@ -560,13 +565,13 @@ class Migration(object):
                                 current_objectclass_merge +=" "+str(customAttribute_name)
                                 Attr_count = 0
                                 for new_Attribute in new_AttributeName:
-                                    add_or_not = True;
-                                    for a in AttributeName:
-                                        if a == "'"+new_Attribute+"'" or a == "'"+new_Attribute+"'"+"\n":
-                                            logging.debug(new_Attribute)
-                                            add_or_not = False
-                                    if add_or_not:
-                                        current_objectclass_merge += " "+str(new_Attribute)+" $"
+                                    # add_or_not = True;
+                                    # for a in AttributeName:
+                                    #     if a == "'"+new_Attribute+"'" or a == "'"+new_Attribute+"'"+"\n":
+                                    #         logging.debug(new_Attribute)
+                                    #         add_or_not = False
+                                    # if add_or_not:
+                                    current_objectclass_merge += " "+str(new_Attribute)+" $"
                                     Attr_count = Attr_count + 1
                                 check = False
                         else:
@@ -958,6 +963,21 @@ class Migration(object):
             logging.error("Invalid selection of LDAP Server. Cannot Migrate.")
             sys.exit(1)
 
+    def getCustomSchema(self):
+
+        try:
+            self.custmo_schema = int(raw_input("Automatically attempt to import your custom schema - 1.yes, 2.no [1]: "))
+        except ValueError:
+            logging.error("You did not enter a integer value. "
+                          "Cannot decide Custom schema import or not. Quitting.")
+            sys.exit(1)
+
+        if self.custmo_schema != 1 and self.custmo_schema != 2:
+            logging.error("Invalid selection of custom schema choice. Cannot Migrate.")
+            sys.exit(1)
+
+
+
     def stopOpenDJ(self):
         logging.info('Stopping OpenDJ Directory Server...')
         if (os.path.isfile('/usr/bin/systemctl')):
@@ -1191,6 +1211,8 @@ class Migration(object):
         self.version = int(self.getProp('version').replace('.', '')[0:3])
         self.getLDAPServerType()
         self.getoxIDPAuthentication()
+        if self.version < 300 or self.ldap_type == 'opendj':
+            self.getCustomSchema()
         self.verifyBackupData()
         self.setupWorkDirectory()
         self.stopWebapps()
@@ -1199,7 +1221,8 @@ class Migration(object):
         self.copyCustomFiles()
         self.copyIDPFiles()
         if self.version < 300 or self.ldap_type == 'opendj':
-            self.copyCustomSchema()
+            if self.custmo_schema == 1:
+                self.copyCustomSchema()
         self.exportInstallData()
         self.processBackupData()
         self.importProcessedData()
