@@ -569,7 +569,7 @@ class Migration(object):
                                         if Attr_count == 0:
                                             current_objectclass_merge += " "+str(new_Attribute)+" $"
                                         else:
-                                            current_objectclass_merge += " $ "+str(new_Attribute)
+                                            current_objectclass_merge += " "+str(new_Attribute)+" $"
                                     Attr_count = Attr_count + 1
 
                                 check = False
