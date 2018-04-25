@@ -328,10 +328,10 @@ class Migration(object):
         if self.version < 300:
             custom = '/var/gluu/webapps/'
             folder_map = [
-                (custom + 'oxauth/pages', self.jettyDir + 'oxauth/custom/pages'),
+                #(custom + 'oxauth/pages', self.jettyDir + 'oxauth/custom/pages'),
                 (custom + 'oxauth/resources', self.jettyDir + 'oxauth/custom/static'),
                 (custom + 'oxauth/libs', self.jettyDir + 'oxauth/lib/ext'),
-                (custom + 'oxtrust/pages', self.jettyDir + 'identity/custom/pages'),
+                #(custom + 'oxtrust/pages', self.jettyDir + 'identity/custom/pages'),
                 (custom + 'oxtrust/resources', self.jettyDir + 'identity/custom/static'),
                 (custom + 'oxtrust/libs', self.jettyDir + 'identity/lib/ext'),
             ]
@@ -504,7 +504,10 @@ class Migration(object):
     def processBackupData(self):
         logging.info('Processing the LDIF data.')
 
+        attrib_dn = "inum={0}!0005!D2E0,ou=attributes,o={0},o=gluu".format(self.inumOrg)
+
         processed_fp = open(self.processTempFile, 'w')
+
         ldif_writer = LDIFWriter(processed_fp)
 
         currentDNs = self.getDns(self.currentData)
@@ -525,6 +528,7 @@ class Migration(object):
         for cnt, dn in enumerate(currentDNs):
             progress_bar(cnt, nodn, 'Rewriting DNs')
             new_entry = self.getEntry(self.currentData, dn)
+
             if "o=site" in dn:
                 continue  # skip all the o=site DNs
             if dn not in old_dn_map.keys():
@@ -533,6 +537,9 @@ class Migration(object):
                 continue
 
             old_entry = self.getEntry(os.path.join(self.ldifDir, old_dn_map[dn]), dn)
+
+
+
             for attr in old_entry.keys():
                 if attr in ignoreList:
                     continue
@@ -556,6 +563,8 @@ class Migration(object):
                     else:
                         new_entry[attr] = old_entry[attr]
                         logging.debug("Keep multiple old values for %s", attr)
+                        
+            
             ldif_writer.unparse(dn, new_entry)
         
         progress_bar(0, 0, 'Rewriting DNs', True)
@@ -565,8 +574,11 @@ class Migration(object):
         
         ldif_shelve_dict = {}
         
+        sector_identifiers = 'ou=sector_identifiers,o={},o=gluu'.format(self.inumOrg)
+
+        
         for cnt, dn in enumerate(sorted(old_dn_map, key=len)):
-            progress_bar(cnt, nodn, 'Perapring DNs for 3.1.2')
+            progress_bar(cnt, nodn, 'Perapring DNs for ' + self.oxVersion)
             if "o=site" in dn:
                 continue  # skip all the o=site DNs
             if dn in currentDNs:
@@ -579,6 +591,7 @@ class Migration(object):
                 ldif_shelve_dict[cur_ldif_file]=sdb.sdb
 
             entry = ldif_shelve_dict[cur_ldif_file][dn]
+
 
             for attr in entry.keys():
                 if attr not in multivalueAttrs:
@@ -595,13 +608,31 @@ class Migration(object):
                         logging.debug('Cannot parse multival %s in DN %s', attr, dn)
                         attr_values.append(val)
                 entry[attr] = attr_values
+                
 
+
+            if '3.1.3' in self.oxVersion:
+
+                if dn == attrib_dn:
+                    if 'oxAuthClaimName' in entry and not 'member_off' in entry['oxAuthClaimName']:
+                        entry['oxAuthClaimName'].append('member_off')
+                    else:
+                        entry['oxAuthClaimName'] = ['member_off']
+
+                if sector_identifiers in dn:
+                    if dn.startswith('inum'):
+                        
+                        dn = dn.replace('inum=', 'oxId=')
+                        oxId = entry['inum'][:]
+                        entry['oxId'] = oxId
+                        del entry['inum']
+            
             ldif_writer.unparse(dn, entry)
 
         # Finally
         processed_fp.close()
 
-        progress_bar(0, 0, 'Perapring DNs for 3.1.2', True)
+        progress_bar(0, 0, 'Perapring DNs for ' + self.oxVersion, True)
 
         nodn = sum(1 for line in open(self.processTempFile))
 
@@ -724,7 +755,6 @@ class Migration(object):
     def getLDAPServerTypeChoice(self):
         choice = 0
         
-        print self.setup_properties
         if os.path.isfile(self.setup_properties):
             data = ""
             
@@ -885,6 +915,11 @@ class Migration(object):
         print("        Gluu Server Community Edition Migration Tool        ")
         print("============================================================")
         self.version = int(self.getProp('version').replace('.', '')[0:3])
+        self.inumOrg = self.getProp('inumOrg', 
+                    '/install/community-edition-setup/setup.properties.last')
+        self.oxVersion = self.getProp('oxVersion', 
+                    '/install/community-edition-setup/setup.properties.last')
+        
         self.getLDAPServerTypeChoice()
         self.getLDAPServerType()
         self.verifyBackupData()
