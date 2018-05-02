@@ -63,7 +63,7 @@ class Setup(object):
     def __init__(self, install_dir=None):
         self.install_dir = install_dir
 
-        self.oxVersion = '3.1.3.Final'
+        self.oxVersion = '3.1.4-SNAPSHOT'
         self.githubBranchName = 'version_3.1.3'
 
         # Used only if -w (get wars) options is given to setup.py
