@@ -1987,17 +1987,22 @@ class Setup(object):
             self.logIt("Error encountered while extracting archive %s" % passportArchive)
             self.logIt(traceback.format_exc(), True)
 
-        # Install dependencies
-        try:
-            self.logIt("Running npm install in %s" % self.gluu_passport_base)
+        if os.path.exists(passport_mdules_archive):
+            self.logIt("Extracting passport node modules")
+            self.run(['tar', '-zxf', passport_mdules_archive,'-C' ,'/'])
+        
+        else:
+            # Install dependencies
+            try: 
+                self.logIt("Running npm install in %s" % self.gluu_passport_base)
 
-            nodeEnv = os.environ.copy()
-            nodeEnv['PATH'] = '%s/bin:' % self.node_home + nodeEnv['PATH']
+                nodeEnv = os.environ.copy()
+                nodeEnv['PATH'] = '%s/bin:' % self.node_home + nodeEnv['PATH']
 
-            self.run(['npm', 'install', '-P'], self.gluu_passport_base, nodeEnv, True)
-        except:
-            self.logIt("Error encountered running npm install in %s" % self.gluu_passport_base)
-            self.logIt(traceback.format_exc(), True)
+                self.run(['npm', 'install', '-P'], self.gluu_passport_base, nodeEnv, True)
+            except:
+                self.logIt("Error encountered running npm install in %s" % self.gluu_passport_base)
+                self.logIt(traceback.format_exc(), True)
 
         # Create logs folder
         self.run([self.cmd_mkdir, '-p', '%s/server/logs' % self.gluu_passport_base])
