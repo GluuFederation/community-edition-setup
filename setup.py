@@ -3335,6 +3335,7 @@ class Setup(object):
                 'debian 8': 'apache2 curl wget tar xz-utils unzip facter python rsyslog',
                 'ubuntu 14': 'apache2 curl wget xz-utils unzip facter python rsyslog',
                 'ubuntu 16': 'apache2 curl wget xz-utils unzip facter python rsyslog',
+                'ubuntu 18': 'apache2 curl wget xz-utils unzip facter python rsyslog',
                 'centos 6': 'httpd mod_ssl curl wget tar xz unzip facter python rsyslog',
                 'centos 7': 'httpd mod_ssl curl wget tar xz unzip facter python rsyslog',
                 'red 6': 'httpd mod_ssl curl wget tar xz unzip facter python rsyslog',
