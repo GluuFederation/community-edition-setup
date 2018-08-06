@@ -2224,10 +2224,16 @@ class Setup(object):
             except:
                 self.logIt("No detected hostname", True)
                 self.logIt(traceback.format_exc(), True)
-        if detectedHostname:
-            self.hostname = self.getPrompt("Enter hostname", detectedHostname)
-        else:
-            self.hostname = self.getPrompt("Enter hostname")
+        while True:
+            if detectedHostname:
+                self.hostname = self.getPrompt("Enter hostname", detectedHostname)
+            else:
+                self.hostname = self.getPrompt("Enter hostname")
+
+            if self.hostname != 'localhost':
+                break
+            else:
+                print "Hostname can't be \033[;1mlocalhost\033[0;0m"
 
         # Get city and state|province code
         self.city = self.getPrompt("Enter your city or locality")
