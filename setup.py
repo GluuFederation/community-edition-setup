@@ -2224,6 +2224,10 @@ class Setup(object):
             except:
                 self.logIt("No detected hostname", True)
                 self.logIt(traceback.format_exc(), True)
+
+        if detectedHostname == 'localhost':
+            detectedHostname = None
+
         while True:
             if detectedHostname:
                 self.hostname = self.getPrompt("Enter hostname", detectedHostname)
