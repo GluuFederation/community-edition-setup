@@ -64,7 +64,7 @@ class Setup(object):
         self.install_dir = install_dir
 
         self.oxVersion = '3.1.4-SNAPSHOT'
-        self.githubBranchName = 'version_3.1.3'
+        self.githubBranchName = 'version_3.1.4'
 
         # Used only if -w (get wars) options is given to setup.py
         self.oxauth_war = 'https://ox.gluu.org/maven/org/xdi/oxauth-server/%s/oxauth-server-%s.war' % (self.oxVersion, self.oxVersion)
@@ -104,7 +104,7 @@ class Setup(object):
         self.jetty_version = '9.4.9.v20180320'
         self.jython_version = '2.7.2a'
         self.node_version = '9.9.0'
-        self.opendj_version_number = '3.0.0.2'
+        self.opendj_version_number = '3.0.1.gluu'
         self.apache_version = None
         self.opendj_version = None
 
@@ -121,7 +121,7 @@ class Setup(object):
         self.allowPreReleasedApplications = False
         self.allowDeprecatedApplications = False
 
-        self.currentGluuVersion = '3.1.3'
+        self.currentGluuVersion = '3.1.4'
 
         self.jreDestinationPath = '/opt/jdk1.8.0_%s' % self.jre_version
 
