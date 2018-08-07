@@ -2217,13 +2217,9 @@ class Setup(object):
 
         detectedHostname = None
         try:
-            detectedHostname = socket.gethostbyaddr(socket.gethostname())[0]
+            detectedHostname = socket.getfqdn(self.ip)
         except:
-            try:
-                detectedHostname = os.popen("/bin/hostname").read().strip()
-            except:
-                self.logIt("No detected hostname", True)
-                self.logIt(traceback.format_exc(), True)
+            self.logIt(traceback.format_exc(), True)
 
         if detectedHostname == 'localhost':
             detectedHostname = None
