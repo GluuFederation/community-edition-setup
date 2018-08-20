@@ -2027,35 +2027,35 @@ class Setup(object):
 
     def install_gluu_components(self):
         if self.installLdap:
-            progress_bar(25, "Installing Gluu components: LDAP")
+            progress_bar(27, "Installing Gluu components: LDAP")
             self.install_ldap_server()
 
         if self.installHttpd:
-            progress_bar(25, "Installing Gluu components: HTTPD")
+            progress_bar(27, "Installing Gluu components: HTTPD")
             self.configure_httpd()
 
         if self.installOxAuth:
-            progress_bar(25, "Installing Gluu components: OxAuth")
+            progress_bar(27, "Installing Gluu components: OxAuth")
             self.install_oxauth()
 
         if self.installOxTrust:
-            progress_bar(25, "Installing Gluu components: oxtruest")
+            progress_bar(27, "Installing Gluu components: oxtruest")
             self.install_oxtrust()
 
         if self.installSaml:
-            progress_bar(25, "Installing Gluu components: saml")
+            progress_bar(27, "Installing Gluu components: saml")
             self.install_saml()
 
         if self.installAsimba:
-            progress_bar(25, "Installing Gluu components: Asimba")
+            progress_bar(27, "Installing Gluu components: Asimba")
             self.install_asimba()
 
         if self.installOxAuthRP:
-            progress_bar(25, "Installing Gluu components: OxAuthRP")
+            progress_bar(227, "Installing Gluu components: OxAuthRP")
             self.install_oxauth_rp()
 
         if self.installPassport:
-            progress_bar(25, "Installing Gluu components: Passport")
+            progress_bar(27, "Installing Gluu components: Passport")
             self.install_passport()
 
     def isIP(self, address):
@@ -2275,7 +2275,7 @@ class Setup(object):
             if self.os_type in ('ubuntu', 'debian'):
                 if glob.glob(self.distFolder+'/symas/symas-openldap*.deb'):
                     open_ldap_exist = True
-            elif self.os_type in ('centos', 'red', 'fedorat'):
+            elif self.os_type in ('centos', 'red', 'fedora'):
                     if glob.glob(self.distFolder+'/symas/symas-openldap*.rpm'):
                         open_ldap_exist = True
 
@@ -3185,30 +3185,40 @@ class Setup(object):
 
     def install_ldap_server(self):
         self.logIt("Running OpenDJ Setup")
-
+        progress_bar(25, "Extracting OpenDJ")
         self.extractOpenDJ()
         self.opendj_version = self.determineOpenDJVersion()
 
         self.createLdapPw()
         try:
+            progress_bar(25, "Installing OpenDJ")
             self.install_opendj()
     
             if self.ldap_type == 'opendj':
+                progress_bar(25, "Preparing OpenDj schema")
                 self.prepare_opendj_schema()
+                progress_bar(25, "Setting up OpenDj service")
                 self.setup_opendj_service()
+                progress_bar(25, "Configuring OpenDj")
                 self.configure_opendj()
                 self.export_opendj_public_cert()
+                progress_bar(25, "Creating OpenDj indexes")
                 self.index_opendj()
+                progress_bar(25, "Importing Ldif files")
                 self.import_ldif_opendj()
-    
+            
+            progress_bar(25, "OpenDj post installation")
             self.post_install_opendj()
         finally:
             self.deleteLdapPw()
 
         if self.ldap_type == 'openldap':
             self.logIt("Running OpenLDAP Setup")
+            progress_bar(25, "Installing OpenLDAP")
             self.install_openldap()
+            progress_bar(25, "Configuring OpenLDAP")
             self.configure_openldap()
+            progress_bar(25, "Importing Ldif files")
             self.import_ldif_openldap()
 
     def calculate_aplications_memory(self, application_max_ram, jetty_app_configuration, installedComponents):
