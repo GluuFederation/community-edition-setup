@@ -562,7 +562,7 @@ class Setup(object):
 
     def __repr__(self):
         try:
-            return 'hostname'.ljust(30) + self.hostname.rjust(35) + "\n" \
+            partA = 'hostname'.ljust(30) + self.hostname.rjust(35) + "\n" \
                    + 'orgName'.ljust(30) + self.orgName.rjust(35) + "\n" \
                    + 'os'.ljust(30) + self.os_type.rjust(35) + "\n" \
                    + 'city'.ljust(30) + self.city.rjust(35) + "\n" \
@@ -576,10 +576,15 @@ class Setup(object):
                    + 'Install LDAP'.ljust(30) + repr(self.installLdap).rjust(35) + "\n" \
                    + 'Install JCE 1.8'.ljust(30) + repr(self.installJce).rjust(35) + "\n" \
                    + 'Install Apache 2 web server'.ljust(30) + repr(self.installHttpd).rjust(35) + "\n" \
-                   + 'Install Shibboleth SAML IDP'.ljust(30) + repr(self.installSaml).rjust(35) + "\n" \
-                   + 'Install Asimba SAML Proxy'.ljust(30) + repr(self.installAsimba).rjust(35) + "\n" \
-                   + 'Install oxAuth RP'.ljust(30) + repr(self.installOxAuthRP).rjust(35) + "\n" \
-                   + 'Install Passport '.ljust(30) + repr(self.installPassport).rjust(35) + "\n"
+                   + 'Install Shibboleth SAML IDP'.ljust(30) + repr(self.installSaml).rjust(35) + "\n"
+            if self.allowDeprecatedApplications:       
+                partB = 'Install Asimba SAML Proxy'.ljust(30) + repr(self.installAsimba).rjust(35) + "\n"
+            else:
+                partB = ''
+
+            partC = 'Install oxAuth RP'.ljust(30) + repr(self.installOxAuthRP).rjust(35) + "\n" \
+                    + 'Install Passport '.ljust(30) + repr(self.installPassport).rjust(35) + "\n"
+            return partA + partB + partC
         except:
             s = ""
             for key in self.__dict__.keys():
