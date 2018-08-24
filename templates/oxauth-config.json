@@ -180,6 +180,7 @@
     "umaAddScopesAutomatically":true,
     "umaValidateClaimToken":false,
     "umaGrantAccessIfNoPolicies":false,
+    "umaRestrictResourceToAssociatedClient":false,
     "umaKeepClientDuringResourceSetRegistration":true,
     "umaRptAsJwt":false,
     "cleanServiceInterval":600,
@@ -279,5 +280,12 @@
     ],
     "legacyDynamicRegistrationScopeParam": false,
     "useCacheForAllImplicitFlowObjects":false,
-    "disableU2fEndpoint":false
+    "disableU2fEndpoint":false,
+	"authenticationProtectionConfiguration": {
+		"attemptExpiration": 15,
+		"maximumAllowedAttempts": 10,
+		"maximumAllowedAttemptsWithoutDelay": 4,
+		"delayTime": 2,
+		"bruteForceProtectionEnabled": false
+	}    
 }
