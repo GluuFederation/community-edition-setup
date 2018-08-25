@@ -3034,7 +3034,7 @@ class Setup(object):
 
     def install_openldap(self):
         self.logIt("Installing OpenLDAP from package")
-
+        progress_bar(25, "Installing OpenLDAP")
         # Determine package type
         packageRpm = True
         packageExtension = ".rpm"
