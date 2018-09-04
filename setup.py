@@ -2003,16 +2003,12 @@ class Setup(object):
             self.logIt("Error encountered while extracting archive %s" % passportArchive)
             self.logIt(traceback.format_exc(), True)
 
-        passport_mdules_archive = os.path.join(self.gluu_passport_base, 'passport-%s-node_modules.tar.gz' % self.githubBranchName)
-        modules_target_dir = os.path.join(self.gluu_passport_base, 'node_modules')
-        
-        self.run([self.cmd_mkdir, '-p', modules_target_dir])
+        passport_mdules_archive = os.path.join(self.distGluuFolder, 'passport-node_modules.tar.gz')
         
         if os.path.exists(passport_mdules_archive):
             self.logIt("Extracting passport node modules")
-            self.run(['tar', '--strip', '1', '-xzf', passport_mdules_archive, '-C', modules_target_dir, '--no-xattrs', '--no-same-owner', '--no-same-permissions'])
-            self.logIt("Removing passport node modules archieve")
-            self.run(['rm', '-f', passport_mdules_archive])
+            self.run(['tar', '-zxf', passport_mdules_archive,'-C' ,'/'])
+        
         else:
             # Install dependencies
             try: 
