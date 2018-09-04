@@ -260,9 +260,15 @@ class Setup(object):
         self.inumOrgFN = None
         self.inumApplianceFN = None
         self.ldapBaseFolderldapPass = None
+
         self.oxauth_client_id = None
         self.oxauthClient_pw = None
         self.oxauthClient_encoded_pw = None
+
+        self.idp_client_id = None
+        self.idpClient_pw = None
+        self.idpClient_encoded_pw = None
+
         self.oxTrustConfigGeneration = None
 
         self.oxd_hostname = '%(oxd_hostname)s'
@@ -733,6 +739,9 @@ class Setup(object):
         if not self.oxauth_client_id:
             clientTwoQuads = '%s.%s' % tuple([self.getQuad() for i in xrange(2)])
             self.oxauth_client_id = '%s!0008!%s' % (self.inumOrg, clientTwoQuads)
+
+            clientTwoQuads = '%s.%s' % tuple([self.getQuad() for i in xrange(2)])
+            self.idp_client_id = '%s!0008!%s' % (self.inumOrg, clientTwoQuads)
         if not self.scim_rs_client_id:
             scimClientTwoQuads = '%s.%s' % tuple([self.getQuad() for i in xrange(2)])
             self.scim_rs_client_id = '%s!0008!%s' % (self.inumOrg, scimClientTwoQuads)
@@ -1400,8 +1409,12 @@ class Setup(object):
             self.encoded_ox_ldap_pw = self.obscure(self.ldapPass)
             self.encoded_openldapJksPass = self.obscure(self.openldapJksPass)
             self.encoded_opendj_p12_pass = self.obscure(self.opendj_p12_pass)
+
             self.oxauthClient_pw = self.getPW()
             self.oxauthClient_encoded_pw = self.obscure(self.oxauthClient_pw)
+
+            self.idpClient_pw = self.getPW()
+            self.idpClient_encoded_pw = self.obscure(self.idpClient_pw)
         except:
             self.logIt("Error encoding passwords", True)
             self.logIt(traceback.format_exc(), True)
@@ -2281,35 +2294,41 @@ class Setup(object):
         promptForLDAP = self.getPrompt("Install LDAP Server?", "Yes")[0].lower()
         if promptForLDAP == 'y':
             
-            open_ldap_exist = False
+            backend_types = []
+
+            if glob.glob(self.distFolder+'/app/opendj-server*.zip'):
+                backend_types.append(('Gluu OpenDj','opendj'))
             
             if self.os_type in ('ubuntu', 'debian'):
-                if glob.glob(self.distFolder+'/symas/symas-openldap*.deb'):
-                    open_ldap_exist = True
-            elif self.os_type in ('centos', 'red', 'fedora'):
-                    if glob.glob(self.distFolder+'/symas/symas-openldap*.rpm'):
-                        open_ldap_exist = True
+                suffix = 'deb'
 
-            
+            elif self.os_type in ('centos', 'red', 'fedora'):
+                suffix = 'rpm'
+
+            if self.allowDeprecatedApplications and glob.glob(self.distFolder+'/symas/symas-openldap*.'+suffix):
+                backend_types.append(('OpenLDAP Gluu Edition','openldap'))
+                
+
+
             self.installLdap = True
             option = None
             
-            if open_ldap_exist:
-                while (option != 1) and (option != 2):
-                    try:
-                        option = int(self.getPrompt("Install (1) Gluu OpenDJ (2) OpenLDAP Gluu Edition [1|2]", "1"))
-                    except ValueError:
-                        option = None
-                    if (option != 1) and (option != 2):
-                        print "You did not enter the correct option. Enter either 1 or 2."
-            else:
-                option = 1
+            if backend_types:
+                prompt_text = 'Install '
+                options = []
+                for i, backend in enumerate(backend_types):
+                    prompt_text += '({0}) {1} '.format(i+1, backend[0])
+                    options.append(str(i+1))
 
+                prompt_text += '[{0}]'.format('|'.join(options))
+                option=None
 
-            if option == 1:
-                self.ldap_type = 'opendj'
-            elif option == 2:
-                self.ldap_type = 'openldap'
+                while not option in options:
+                    option=self.getPrompt(prompt_text, options[0])
+                    if not option in options:
+                        print "You did not enter the correct option. Enter one of this options: {0}".format(', '.join(options))
+
+                self.ldap_type = backend_types[int(option)-1][1]
         else:
             self.installLdap = False
 
