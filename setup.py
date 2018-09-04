@@ -2003,11 +2003,11 @@ class Setup(object):
             self.logIt("Error encountered while extracting archive %s" % passportArchive)
             self.logIt(traceback.format_exc(), True)
 
-        passport_mdules_archive = os.path.join(self.distGluuFolder, 'passport-node_modules.tar.gz')
+        passport_modules_archive = os.path.join(self.distGluuFolder, 'passport-node_modules.tar.gz')
         
-        if os.path.exists(passport_mdules_archive):
+        if os.path.exists(passport_modules_archive):
             self.logIt("Extracting passport node modules")
-            self.run(['tar', '-zxf', passport_mdules_archive,'-C' ,'/'])
+            self.run(['tar', '-zxf', passport_modules_archive,'-C' ,'/'])
         
         else:
             # Install dependencies
