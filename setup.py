@@ -2092,7 +2092,7 @@ class Setup(object):
             self.install_asimba()
 
         if self.installOxAuthRP:
-            progress_bar(227, "Installing Gluu components: OxAuthRP")
+            progress_bar(27, "Installing Gluu components: OxAuthRP")
             self.install_oxauth_rp()
 
         if self.installPassport:
@@ -3243,40 +3243,40 @@ class Setup(object):
 
     def install_ldap_server(self):
         self.logIt("Running OpenDJ Setup")
-        progress_bar(25, "Extracting OpenDJ")
+        progress_bar(27, "Extracting OpenDJ")
         self.extractOpenDJ()
         self.opendj_version = self.determineOpenDJVersion()
 
         self.createLdapPw()
         try:
-            progress_bar(25, "Installing OpenDJ")
+            progress_bar(27, "Installing OpenDJ")
             self.install_opendj()
     
             if self.ldap_type == 'opendj':
-                progress_bar(25, "Preparing OpenDj schema")
+                progress_bar(27, "Preparing OpenDj schema")
                 self.prepare_opendj_schema()
-                progress_bar(25, "Setting up OpenDj service")
+                progress_bar(27, "Setting up OpenDj service")
                 self.setup_opendj_service()
-                progress_bar(25, "Configuring OpenDj")
+                progress_bar(27, "Configuring OpenDj")
                 self.configure_opendj()
                 self.export_opendj_public_cert()
-                progress_bar(25, "Creating OpenDj indexes")
+                progress_bar(27, "Creating OpenDj indexes")
                 self.index_opendj()
-                progress_bar(25, "Importing Ldif files")
+                progress_bar(27, "Importing Ldif files")
                 self.import_ldif_opendj()
             
-            progress_bar(25, "OpenDj post installation")
+            progress_bar(27, "OpenDj post installation")
             self.post_install_opendj()
         finally:
             self.deleteLdapPw()
 
         if self.ldap_type == 'openldap':
             self.logIt("Running OpenLDAP Setup")
-            progress_bar(25, "Installing OpenLDAP")
+            progress_bar(27, "Installing OpenLDAP")
             self.install_openldap()
-            progress_bar(25, "Configuring OpenLDAP")
+            progress_bar(27, "Configuring OpenLDAP")
             self.configure_openldap()
-            progress_bar(25, "Importing Ldif files")
+            progress_bar(27, "Importing Ldif files")
             self.import_ldif_openldap()
 
     def calculate_aplications_memory(self, application_max_ram, jetty_app_configuration, installedComponents):
