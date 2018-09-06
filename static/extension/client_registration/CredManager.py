@@ -17,7 +17,7 @@ class ClientRegistration(ClientRegistrationType):
         self.currentTimeMillis = currentTimeMillis
 
     def init(self, configurationAttributes):
-        print "Cred-manager client registration. Initialization"
+        print "Cred-manager client registration. Initialization!"
         
         self.clientRedirectUrisSet = self.prepareClientRedirectUris(configurationAttributes)
 
@@ -50,17 +50,14 @@ class ClientRegistration(ClientRegistrationType):
 
         print "Cred-manager client registration. Client is Cred-manager"
 
+        scopeService = CdiUtil.bean(ScopeService)
+        requiredScopes = [ "openid", "profile", "user_name", "clientinfo", "uma_protection" ]
         newScopes = client.getScopes()
         
-        scopeService = CdiUtil.bean(ScopeService)
-
-        profileScope = scopeService.getScopeByDisplayName("profile")
-        clientinfoScope = scopeService.getScopeByDisplayName("clientinfo")
-        usernameScope = scopeService.getScopeByDisplayName("user_name")
-
-        newScopes = ArrayHelper.addItemToStringArray(newScopes, profileScope.getDn())
-        newScopes = ArrayHelper.addItemToStringArray(newScopes, clientinfoScope.getDn())
-        newScopes = ArrayHelper.addItemToStringArray(newScopes, usernameScope.getDn()) 
+        for scopeName in requiredScopes:
+            scope = scopeService.getScopeByDisplayName(scopeName)
+            if not scope.getIsDefault():
+                newScopes = ArrayHelper.addItemToStringArray(newScopes, scope.getDn())
 
         print "Cred-manager client registration. Result scopes: %s" % newScopes
         client.setScopes(newScopes)
@@ -99,3 +96,4 @@ class ClientRegistration(ClientRegistrationType):
             i = i + 1
 
         return clientRedirectUrisSet
+
