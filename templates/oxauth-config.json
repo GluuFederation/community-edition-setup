@@ -7,7 +7,7 @@
     "tokenEndpoint":"https://%(hostname)s/oxauth/seam/resource/restv1/oxauth/token",
     "userInfoEndpoint":"https://%(hostname)s/oxauth/seam/resource/restv1/oxauth/userinfo",
     "clientInfoEndpoint":"https://%(hostname)s/oxauth/seam/resource/restv1/oxauth/clientinfo",
-    "checkSessionIFrame":"https://%(hostname)s/oxauth/opiframe",
+    "checkSessionIFrame":"https://%(hostname)s/oxauth/opiframe.htm",
     "endSessionEndpoint":"https://%(hostname)s/oxauth/seam/resource/restv1/oxauth/end_session",
     "endSessionPage":"https://%(hostname)s/oxauth/seam/resource/restv1/oxauth/end_session_page",
     "jwksUri":"https://%(hostname)s/oxauth/seam/resource/restv1/oxauth/jwks",
