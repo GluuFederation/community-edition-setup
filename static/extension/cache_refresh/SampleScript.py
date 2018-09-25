@@ -33,6 +33,8 @@ class CacheRefresh(CacheRefreshType):
     #   return None (use password from configuration) or org.xdi.model.custom.script.model.bind.BindCredentials
     def getBindCredentials(self, configId, configurationAttributes):
         print "Cache refresh. GetBindCredentials method"
+#        if configId == "source":
+#            return BindCredentials("cn=Directory Manager", "password")
 
         return None
 
