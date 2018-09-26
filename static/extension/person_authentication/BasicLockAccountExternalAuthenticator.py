@@ -100,7 +100,8 @@ class PersonAuthentication(PersonAuthenticationType):
 
                 if countInvalidLogin >= self.maximumInvalidLoginAttemps:
                     self.lockUser(user_name, self.maximumInvalidLoginAttemps)
-                    return False
+                    self.setUserAttributeValue(user_name, self.invalidLoginCountAttribute, StringHelper.toString("0"))
+
 
                 object_from_store = cacheService.get(None, "lock_user_" + user_name)
                 if object_from_store == None and countInvalidLogin >= self.maximumInvalidLoginAttemps:
