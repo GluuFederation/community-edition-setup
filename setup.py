@@ -1306,25 +1306,23 @@ class Setup(object):
         self.run([self.cmd_mkdir, '-p', self.node_base])
         self.run([self.cmd_chown, '-R', 'node:node', self.node_base])
 
-    def jetty_init_scripts(self, serviceName):
+    def fix_init_scripts(self, serviceName, initscript_fn):
 
-        jetty_initscript_fn = os.path.join(self.jetty_home, 'bin/jetty.sh')
-
-        jetty_initscript = open(jetty_initscript_fn).readlines()
+        initscript = open(initscript_fn).readlines()
         
-        for i,l in enumerate(jetty_initscript):
+        for i,l in enumerate(initscript):
             if l.startswith('# Provides:'):
-                jetty_initscript[i] = '# Provides:          {0}\n'.format(serviceName)
+                initscript[i] = '# Provides:          {0}\n'.format(serviceName)
             elif l.startswith('# description:'):
-                jetty_initscript[i] = '# description: Jetty 9 {0}\n'.format(serviceName)
+                initscript[i] = '# description: Jetty 9 {0}\n'.format(serviceName)
             elif l.startswith('# Required-Start:'):
-                jetty_initscript[i] = '# Required-Start:    $local_fs $network {0}\n'.format(self.service_requirements[serviceName][0])
+                initscript[i] = '# Required-Start:    $local_fs $network {0}\n'.format(self.service_requirements[serviceName][0])
             elif l.startswith('# chkconfig:'):
-                jetty_initscript[i] = '# chkconfig: 3 {0} {1}\n'.format(self.service_requirements[serviceName][1], 100 - self.service_requirements[serviceName][1])
+                initscript[i] = '# chkconfig: 3 {0} {1}\n'.format(self.service_requirements[serviceName][1], 100 - self.service_requirements[serviceName][1])
         
         service_init_script_fn = os.path.join('/etc/init.d', serviceName)
         with open(service_init_script_fn, 'w') as W:
-            W.write(''.join(jetty_initscript))
+            W.write(''.join(initscript))
 
         self.run([self.cmd_chmod, '+x', service_init_script_fn])
 
@@ -1378,7 +1376,8 @@ class Setup(object):
             self.setup.logIt("Error rendering service '%s' web_resources.xml" % serviceName, True)
             self.setup.logIt(traceback.format_exc(), True)
 
-        self.jetty_init_scripts(serviceName)
+        initscript_fn = os.path.join(self.jetty_home, 'bin/jetty.sh')
+        self.fix_init_scripts(serviceName, initscript_fn)
 
         self.enable_service_at_start(serviceName)
 
@@ -1401,18 +1400,10 @@ class Setup(object):
         self.run([self.cmd_chown, 'root:root', '/etc/default/%s' % serviceName])
 
         if serviceName == 'passport':
-            self.copyFile('%s/%s' % (self.gluuOptSystemFolder, serviceName), '/etc/init.d/')
+            initscript_fn = os.path.join(self.gluuOptSystemFolder, serviceName)
+            self.fix_init_scripts(serviceName, initscript_fn)
         else:
             self.run([self.cmd_ln, '-sf', '%s/node' % self.gluuOptSystemFolder, '/etc/init.d/%s' % serviceName])
-
-        # Enable service autoload on Gluu-Server startup
-        if self.os_type in ['centos', 'fedora', 'red']:
-            if self.os_initdaemon == 'systemd':
-                self.run(["/usr/bin/systemctl", 'enable', serviceName])
-            else:
-                self.run(["/sbin/chkconfig", serviceName, "on"])
-        elif self.os_type in ['ubuntu', 'debian']:
-            self.run(["/usr/sbin/update-rc.d", serviceName, 'defaults', '70', '30'])
 
     def installJython(self):
         self.logIt("Installing Jython %s..." % self.jython_version)
