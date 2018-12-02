@@ -3297,6 +3297,11 @@ class Setup(object):
     def install_ldap_server(self):
         self.logIt("Running OpenDJ Setup")
         self.pbar.progress("Extracting OpenDJ", False)
+
+        if self.ldap_type == 'openldap':
+            for service in self.service_requirements:
+                self.service_requirements[service][0] = self.service_requirements[service][0].replace('opendj','slapd')
+
         self.extractOpenDJ()
         self.opendj_version = self.determineOpenDJVersion()
 
