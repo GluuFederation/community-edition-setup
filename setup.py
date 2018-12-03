@@ -2964,10 +2964,6 @@ class Setup(object):
         for schemaFile in self.openDjschemaFiles:
             self.copyFile(schemaFile, self.openDjSchemaFolder)
 
-        if 'importLDIFDir' in setupOptions.keys():
-            self.import_custom_ldif_opendj(setupOptions['importLDIFDir'])
-
-
         self.run([self.cmd_chmod, '-R', 'a+rX', self.ldapBaseFolder])
         self.run([self.cmd_chown, '-R', 'ldap:ldap', self.ldapBaseFolder])
 
@@ -3216,6 +3212,25 @@ class Setup(object):
         realInstallDir = os.path.realpath(self.install_dir)
         self.run(['/bin/su', 'ldap', '-c', "cd " + realInstallDir + "; " + " ".join([cmd, '-b', 'o=gluu', '-f', config, '-l', ldif])])
 
+    def import_custom_ldif(self, fullPath):
+        output_dir = os.path.join(fullPath, '.output')
+        self.logIt("Importing Custom LDIF files")
+        cmd = os.path.join(self.openldapBinFolder, 'slapadd')
+        config = os.path.join(self.openldapConfFolder, 'slapd.conf')
+        realInstallDir = os.path.realpath(self.install_dir)
+
+        try:
+            for ldif in self.get_filepaths(output_dir):
+                custom_ldif = output_dir + '/' + ldif
+                if self.ldap_type == 'openldap':
+                    self.run(['/bin/su', 'ldap', '-c', "cd " + realInstallDir + "; " + " ".join([cmd, '-b', 'o=gluu', '-f', config, '-l', custom_ldif])])
+                else:
+                    self.import_ldif_template_opendj(custom_ldif)
+        except:
+            self.logIt("Error importing custom ldif file %s" % ldif, True)
+            self.logIt(traceback.format_exc(), True)
+
+
     def import_ldif_openldap(self):
         self.logIt("Importing LDIF files into OpenLDAP")
         cmd = os.path.join(self.openldapBinFolder, 'slapadd')
@@ -3240,37 +3255,6 @@ class Setup(object):
                 self.run(['/bin/su', 'ldap', '-c', "cd " + realInstallDir + "; " + " ".join([cmd, '-b', 'o=gluu', '-f', config, '-l', custom_ldif])])
         except:
             self.logIt("Error importing custom ldif file %s" % ldif, True)
-            self.logIt(traceback.format_exc(), True)
-
-    def import_custom_ldif_opendj(self, fullPath):
-        #opendj does not support imorting raw ldif files. ldif files
-        #will be copied directly to config/schema dir
-        
-        try:
-            for ldif in self.get_filepaths(fullPath):
-                c = 102
-                makenew = False
-                target_ldif = ldif
-                if '-' in target_ldif:
-                    la = target_ldif.split('-')
-                    if la[0].isdigit():
-                        if int(la[0]) < 102:
-                            target_ldif = target_ldif.replace(la[0], str(c))
-                            c +=1
-                    else:
-                        makenew = True
-                else:
-                    makenew = True
-                    
-                if makenew:
-                    target_ldif = str(c)+'-'+target_ldif
-                    c +=1
-        
-                custom_ldif = os.path.join(fullPath, ldif)
-                shutil.copy(custom_ldif, os.path.join(self.openDjSchemaFolder, target_ldif))
-                self.logIt("Custom schema file %s was copied as %s" % (ldif, target_ldif))
-        except:
-            self.logIt("Error importing custom ldif files")
             self.logIt(traceback.format_exc(), True)
 
     def install_ldap_server(self):
@@ -3485,7 +3469,16 @@ class Setup(object):
             if os.path.exists(default_site):
                 os.remove(default_site)
 
+    def loadTestData(self):
         
+        self.logIt("Loading test ldif files")
+        ox_auth_test_ldif = os.path.join(self.outputFolder, 'test/oxauth/data/oxauth-test-data.ldif')
+        scim_test_ldif = os.path.join(self.outputFolder, 'test/scim-client/data/scim-test-data.ldif')    
+        ldif_files = [ox_auth_test_ldif, scim_test_ldif]
+        
+        self.import_ldif_couchebase(ldif_files)
+
+
 ############################   Main Loop   #################################################
 
 def print_help():
@@ -3553,6 +3546,8 @@ def getOpts(argv, setupOptions):
             setupOptions['installPassport'] = True
         elif opt == "-e":
             setupOptions['installJce'] = True
+        elif opt == "-t":
+            setupOptions['loadTestData'] = True
         elif opt == '--allow_pre_released_applications':
             setupOptions['allowPreReleasedApplications'] = True
         elif opt == '--allow_deprecated_applications':
@@ -3581,6 +3576,7 @@ if __name__ == '__main__':
         'installAsimba': False,
         'installOxAuthRP': False,
         'installPassport': False,
+        'loadTestData': False,
         'allowPreReleasedApplications': False,
         'allowDeprecatedApplications': False,
         'installJce': False
@@ -3658,7 +3654,7 @@ if __name__ == '__main__':
         if os.path.isdir(installObject.openldapBaseFolder):
             installObject.logIt("Gluu server already installed. Setup will render and import templates and exit.", True)
             installObject.render_custom_templates(setupOptions['importLDIFDir'])
-            installObject.import_custom_ldif_openldap(setupOptions['importLDIFDir'])
+            installObject.import_custom_ldif(setupOptions['importLDIFDir'])
             installObject.logIt("Setup is exiting now after import of ldifs generated.", True)
             sys.exit(2)
 
@@ -3733,16 +3729,17 @@ if __name__ == '__main__':
             installObject.start_services()
             installObject.pbar.progress("Saving properties")
             installObject.save_properties()
-            
+
+            if setupOptions['loadTestData']:
+                installObject.pbar.progress("Loading test data", False)
+                installObject.loadTestData()
+
             if 'importLDIFDir' in setupOptions.keys():
                 installObject.pbar.progress("Importing LDIF files")
-                if installObject.ldap_type == 'openldap':
-                    installObject.render_custom_templates(setupOptions['importLDIFDir'])
-                    installObject.import_custom_ldif_openldap(setupOptions['importLDIFDir'])
-
-                installObject.pbar.complete("Completed")
-            else:
-                installObject.pbar.complete("Completed")
+                installObject.render_custom_templates(setupOptions['importLDIFDir'])
+                installObject.import_custom_ldif(setupOptions['importLDIFDir'])
+            
+            installObject.pbar.complete("Completed")
             print
         except:
             installObject.logIt("***** Error caught in main loop *****", True)
