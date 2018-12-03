@@ -559,7 +559,7 @@ class Setup(object):
                                         'jackson-core-*.jar', 'jackson-core-asl-*.jar', 'jackson-mapper-asl-*.jar', 'jackson-xc-*.jar',
                                         'jettison-*.jar', 'oxauth-model-*.jar', 'oxauth-client-*.jar' ]
 
-        # will be removed after all init scripts is fixed
+        # MB: will be removed after all init scripts is fixed
         self.init_fixes = {
                 'opendj' : {'src_pattern' : 'S*opendj',
                             'result_name' : 'S90opendj'
@@ -1307,6 +1307,11 @@ class Setup(object):
         self.run([self.cmd_chown, '-R', 'node:node', self.node_base])
 
     def fix_init_scripts(self, serviceName, initscript_fn):
+
+        if self.ldap_type == 'openldap':
+            for service in self.service_requirements:
+                self.service_requirements[service][0] = self.service_requirements[service][0].replace('opendj','slapd')
+
 
         initscript = open(initscript_fn).readlines()
         
@@ -3298,10 +3303,6 @@ class Setup(object):
         self.logIt("Running OpenDJ Setup")
         self.pbar.progress("Extracting OpenDJ", False)
 
-        if self.ldap_type == 'openldap':
-            for service in self.service_requirements:
-                self.service_requirements[service][0] = self.service_requirements[service][0].replace('opendj','slapd')
-
         self.extractOpenDJ()
         self.opendj_version = self.determineOpenDJVersion()
 
@@ -3408,6 +3409,7 @@ class Setup(object):
 
         return result
 
+    # MB: will be removed after all init scripts is fixed
     ##### Below function is temporary and will serve only 
     ##### Untill we're done with systemd units for all services for Ubuntu 16 and CentOS 7
     def process_rc_links(self, init_fixes):
@@ -3420,6 +3422,7 @@ class Setup(object):
                 if len(init_file) > 0:
                         self.run(['mv -f %s%s %s%s' % ('/etc/rc3.d/', src_pattern, '/etc/rc3.d/', result_name)], None, None, True, True)
 
+    # MB: will be removed after all init scripts is fixed
     def change_rc_links(self):
         self.process_rc_links(self.init_fixes)
 
