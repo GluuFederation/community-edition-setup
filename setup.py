@@ -59,7 +59,7 @@ except:
 
 class ProgressBar:
 
-    def __init__(self, tty_columns, max_steps=35):
+    def __init__(self, tty_columns, max_steps=34):
         self.n = 0
         self.max_steps = max_steps
         self.tty_columns = tty_columns
@@ -558,37 +558,6 @@ class Setup(object):
                                         'log4j-*.jar', 'commons-codec-*.jar', 'commons-cli-*.jar', 'commons-io-*.jar',
                                         'jackson-core-*.jar', 'jackson-core-asl-*.jar', 'jackson-mapper-asl-*.jar', 'jackson-xc-*.jar',
                                         'jettison-*.jar', 'oxauth-model-*.jar', 'oxauth-client-*.jar' ]
-
-        # MB: will be removed after all init scripts is fixed
-        self.init_fixes = {
-                'opendj' : {'src_pattern' : 'S*opendj',
-                            'result_name' : 'S90opendj'
-                           },
-                'solserver' : {'src_pattern' : 'S*solserver',
-                            'result_name' : 'S90solserver'
-                           },
-                'oxauth' : {'src_pattern' : 'S*oxauth',
-                            'result_name' : 'S92oxauth'
-                           },
-                'identity' : {'src_pattern' : 'S*identity',
-                            'result_name' : 'S93identity'
-                           },
-                'idp' : {'src_pattern' : 'S*idp',
-                            'result_name' : 'S94idp'
-                           },
-                'oxauth-rp' : {'src_pattern' : 'S*oxauth-rp',
-                            'result_name' : 'S95oxauth-rp'
-                           },
-                'asimba' : {'src_pattern' : 'S*asimba',
-                            'result_name' : 'S96asimba'
-                           },
-                'passport' : {'src_pattern' : 'S*passport',
-                            'result_name' : 'S97passport'
-                           },
-                'apache2' : {'src_pattern' : 'S*apache2',
-                            'result_name' : 'S98apache2'
-                           },
-        }
 
 
         self.service_requirements = {'oxauth': ['opendj', 72],
@@ -1308,10 +1277,15 @@ class Setup(object):
 
     def fix_init_scripts(self, serviceName, initscript_fn):
 
-        if self.ldap_type == 'openldap':
-            for service in self.service_requirements:
-                self.service_requirements[service][0] = self.service_requirements[service][0].replace('opendj','slapd')
+        changeTo = None
+        os_ = self.os_type + self.os_version
 
+        if self.ldap_type == 'openldap':
+            changeTo = 'slapd'
+
+        if changeTo != None:
+            for service in self.service_requirements:
+                self.service_requirements[service][0] = self.service_requirements[service][0].replace('opendj', changeTo)
 
         initscript = open(initscript_fn).readlines()
         
@@ -3308,34 +3282,34 @@ class Setup(object):
 
         self.createLdapPw()
         try:
-            self.pbar.progress("Installing OpenDJ", False)
+            self.pbar.progress("OpenDJ: installing", False)
             self.install_opendj()
     
             if self.ldap_type == 'opendj':
-                self.pbar.progress("Preparing OpenDj schema", False)
+                self.pbar.progress("OpenDJ: preparing schema", False)
                 self.prepare_opendj_schema()
-                self.pbar.progress("Setting up OpenDj service", False)
+                self.pbar.progress("OpenDJ: setting up service", False)
                 self.setup_opendj_service()
-                self.pbar.progress("Configuring OpenDj", False)
+                self.pbar.progress("OpenDJ: configuring", False)
                 self.configure_opendj()
                 self.export_opendj_public_cert()
-                self.pbar.progress("Creating OpenDj indexes", False)
+                self.pbar.progress("OpenDJ: creating indexes", False)
                 self.index_opendj()
-                self.pbar.progress("Importing Ldif files", False)
+                self.pbar.progress("OpenDJ: importing Ldif files", False)
                 self.import_ldif_opendj()
             
-            self.pbar.progress("OpenDj post installation", False)
+            self.pbar.progress("OpenDJ: post installation", False)
             self.post_install_opendj()
         finally:
             self.deleteLdapPw()
 
         if self.ldap_type == 'openldap':
             self.logIt("Running OpenLDAP Setup")
-            self.pbar.progress("Installing OpenLDAP", False)
+            self.pbar.progress("OpenLDAP: installing", False)
             self.install_openldap()
-            self.pbar.progress("Configuring OpenLDAP", False)
+            self.pbar.progress("OpenLDAP: configuring", False)
             self.configure_openldap()
-            self.pbar.progress("Importing Ldif files", False)
+            self.pbar.progress("OpenLDAP: importing Ldif files", False)
             self.import_ldif_openldap()
 
     def calculate_aplications_memory(self, application_max_ram, jetty_app_configuration, installedComponents):
@@ -3421,10 +3395,6 @@ class Setup(object):
                 init_file = self.findFiles(src_pattern, '/etc/rc3.d')
                 if len(init_file) > 0:
                         self.run(['mv -f %s%s %s%s' % ('/etc/rc3.d/', src_pattern, '/etc/rc3.d/', result_name)], None, None, True, True)
-
-    # MB: will be removed after all init scripts is fixed
-    def change_rc_links(self):
-        self.process_rc_links(self.init_fixes)
 
 
     def run_command(self, cmd):
@@ -3761,8 +3731,6 @@ if __name__ == '__main__':
             installObject.set_permissions()
             installObject.pbar.progress("Starting services")
             installObject.start_services()
-            installObject.pbar.progress("Changing rc links")
-            installObject.change_rc_links()
             installObject.pbar.progress("Saving properties")
             installObject.save_properties()
             
