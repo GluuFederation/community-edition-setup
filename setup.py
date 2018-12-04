@@ -804,8 +804,11 @@ class Setup(object):
             if startSequence and stopSequence:
                 cmd_list.append(str(startSequence))
                 cmd_list.append(str(stopSequence))
+            elif self.os_type+self.os_version == 'ubuntu14':
+                cmd_list.append(str(self.service_requirements[serviceName][1]))
+                cmd_list.append(str(100 - self.service_requirements[serviceName][1]))
+            
             self.run(cmd_list)
-
 
     # = File system  =================================================================
     def findFiles(self, filePatterns, filesFolder):
@@ -2997,15 +3000,14 @@ class Setup(object):
                     '# Description:       Enable service provided by daemon.\n'
                     '### END INIT INFO\n'
                     )
+
             self.insertLinesInFile("/etc/init.d/opendj", 1, lsb_str)
+
+            if self.os_type in ['ubuntu', 'debian']:
+                self.run(["/usr/sbin/update-rc.d", "-f", "opendj", "remove"])
+
+            self.enable_service_at_start('opendj')
             self.fix_init_scripts('opendj', '/etc/init.d/opendj')
-        
-        if self.os_type in ['centos', 'fedora', 'red']:
-            self.run(["/sbin/chkconfig", 'opendj', "on"])
-            self.run([service_path, 'opendj', 'start'])
-        elif self.os_type in ['ubuntu', 'debian']:
-            self.run(["/usr/sbin/update-rc.d", 'opendj', 'defaults', 'start', '40', '30'])
-            self.run(["/usr/sbin/update-rc.d", 'opendj', 'enable'])
             self.run([service_path, 'opendj', 'start'])
 
     def setup_init_scripts(self):
