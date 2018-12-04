@@ -2222,6 +2222,7 @@ class Setup(object):
             if self.installLdap and self.ldap_type == 'openldap':
                 self.run([self.cmd_mkdir, '-p', '/opt/gluu/data/main_db'])
                 self.run([self.cmd_mkdir, '-p', '/opt/gluu/data/site_db'])
+                self.run([self.cmd_mkdir, '-p', '/opt/gluu/data/metric_db'])
 
             if self.installAsimba:
                 self.run([self.cmd_mkdir, '-p', self.asimba_conf_folder])
