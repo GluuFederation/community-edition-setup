@@ -560,7 +560,9 @@ class Setup(object):
                                         'jettison-*.jar', 'oxauth-model-*.jar', 'oxauth-client-*.jar' ]
 
 
-        self.service_requirements = {'oxauth': ['opendj', 72],
+        self.service_requirements = {
+                        'opendj': ['', 70],
+                        'oxauth': ['opendj', 72],
                         'identity': ['opendj oxauth', 74],
                         'idp': ['opendj oxauth', 76],
                         'casa': ['opendj oxauth', 78],
@@ -1297,7 +1299,7 @@ class Setup(object):
             elif l.startswith('# Required-Start:'):
                 initscript[i] = '# Required-Start:    $local_fs $network {0}\n'.format(self.service_requirements[serviceName][0])
             elif l.startswith('# chkconfig:'):
-                initscript[i] = '# chkconfig: 3 {0} {1}\n'.format(self.service_requirements[serviceName][1], 100 - self.service_requirements[serviceName][1])
+                initscript[i] = '# chkconfig: 345 {0} {1}\n'.format(self.service_requirements[serviceName][1], 100 - self.service_requirements[serviceName][1])
         
         service_init_script_fn = os.path.join('/etc/init.d', serviceName)
         with open(service_init_script_fn, 'w') as W:
@@ -2983,18 +2985,20 @@ class Setup(object):
                 self.logIt(traceback.format_exc(), True)
         else:
             self.run([self.ldapDsCreateRcCommand, "--outputFile", "/etc/init.d/opendj", "--userName",  "ldap"])
-            # Make the generated script LSB compliant            
-            lsb_str="""### BEGIN INIT INFO
-# Provides:          opendj
-# Required-Start:    $remote_fs $syslog
-# Required-Stop:     $remote_fs $syslog
-# Default-Start:     2 3 4 5
-# Default-Stop:      0 1 6
-# Short-Description: Start daemon at boot time
-# Description:       Enable service provided by daemon.
-### END INIT INFO
-"""                        
+            # Make the generated script LSB compliant   
+            lsb_str=(
+                    '### BEGIN INIT INFO\n'
+                    '# Provides:          opendj\n'
+                    '# Required-Start:    $remote_fs $syslog\n'
+                    '# Required-Stop:     $remote_fs $syslog\n'
+                    '# Default-Start:     2 3 4 5\n'
+                    '# Default-Stop:      0 1 6\n'
+                    '# Short-Description: Start daemon at boot time\n'
+                    '# Description:       Enable service provided by daemon.\n'
+                    '### END INIT INFO\n'
+                    )
             self.insertLinesInFile("/etc/init.d/opendj", 1, lsb_str)
+            self.fix_init_scripts('opendj', '/etc/init.d/opendj')
         
         if self.os_type in ['centos', 'fedora', 'red']:
             self.run(["/sbin/chkconfig", 'opendj', "on"])
