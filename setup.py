@@ -3211,6 +3211,11 @@ class Setup(object):
             self.run([self.cmd_mkdir, '-p', '/etc/rsyslog.d/'])
         self.copyFile(self.openldapSyslogConf, '/etc/rsyslog.d/')
         self.copyFile(self.openldapLogrotate, '/etc/logrotate.d/')
+        
+        #Fix me: for some reason broken startup links are created for opendj.
+        #Remove them.
+        if self.os_type in ['ubuntu', 'debian']:
+            self.run(["/usr/sbin/update-rc.d", "-f", "opendj", "remove"])
 
     def import_ldif_template_openldap(self, ldif):
         self.logIt("Importing LDIF file '%s' into OpenLDAP" % ldif)
