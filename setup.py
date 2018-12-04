@@ -370,6 +370,7 @@ class Setup(object):
         self.openldapConfFolder = '/opt/symas/etc/openldap'
         self.openldapRootUser = "cn=directory manager,o=gluu"
         self.openldapSiteUser = "cn=directory manager,o=site"
+        self.openldapMetricUser = "cn=directory manager,o=metric"
         self.openldapKeyPass = None
         self.openldapTLSCACert = '%s/openldap.pem' % self.certFolder
         self.openldapTLSCert = '%s/openldap.crt' % self.certFolder
@@ -422,6 +423,7 @@ class Setup(object):
         self.ldif_clients = '%s/clients.ldif' % self.outputFolder
         self.ldif_people = '%s/people.ldif' % self.outputFolder
         self.ldif_groups = '%s/groups.ldif' % self.outputFolder
+        self.ldif_metric = '%s/metric/o_metric.ldif' % self.staticFolder
         self.ldif_site = '%s/static/cache-refresh/o_site.ldif' % self.install_dir
         self.ldif_scripts = '%s/scripts.ldif' % self.outputFolder
         self.ldif_configuration = '%s/configuration.ldif' % self.outputFolder
@@ -506,6 +508,7 @@ class Setup(object):
                            self.ldif_people,
                            self.ldif_groups,
                            self.ldif_site,
+                           self.ldif_metric,
                            self.ldif_scripts,
                            self.ldif_configuration,
                            self.ldif_scim,
@@ -3248,11 +3251,17 @@ class Setup(object):
         cmd = os.path.join(self.openldapBinFolder, 'slapadd')
         config = os.path.join(self.openldapConfFolder, 'slapd.conf')
         realInstallDir = os.path.realpath(self.install_dir)
+
         for ldif in self.ldif_files:
+
             if 'site.ldif' in ldif:
-                self.run(['/bin/su', 'ldap', '-c', "cd " + realInstallDir + "; " + " ".join([cmd, '-b', 'o=site', '-f', config, '-l', ldif])])
+                db_base = 'o=site'
+            elif 'metric.ldif' in ldif:
+                db_base = 'o=metric'
             else:
-                self.run(['/bin/su', 'ldap', '-c', "cd " + realInstallDir + "; " + " ".join([cmd, '-b', 'o=gluu', '-f', config, '-l', ldif])])
+                db_base = 'o=gluu'
+
+            self.run(['/bin/su', 'ldap', '-c', "cd " + realInstallDir + "; " + " ".join([cmd, '-b', db_base, '-f', config, '-l', ldif])])
 
     def import_custom_ldif_openldap(self, fullPath):
         output_dir = fullPath + '.output'
