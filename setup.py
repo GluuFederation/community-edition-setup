@@ -3082,6 +3082,8 @@ class Setup(object):
     def update_hostname(self):
         self.logIt("Copying hosts and hostname to final destination")
 
+        #disable setting hostname
+        """
         if self.os_initdaemon == 'systemd' and self.os_type in ['centos', 'red', 'fedora']:
             self.run(['/usr/bin/hostnamectl', 'set-hostname', self.hostname])
         else:
@@ -3093,6 +3095,7 @@ class Setup(object):
                 self.copyFile("%s/network" % self.outputFolder, self.network)
 
             self.run(['/bin/hostname', self.hostname])
+        """
 
         self.copyFile("%s/hosts" % self.outputFolder, self.etc_hosts)
         self.run(['/bin/chmod', '-R', '644', self.etc_hosts])
@@ -3697,9 +3700,8 @@ if __name__ == '__main__':
             installObject.generate_base64_configuration()
             installObject.pbar.progress("Rendering configuratipn template")
             installObject.render_configuration_template()
-            # disable hostname change
-            #installObject.pbar.progress("Updating hostname")
-            #installObject.update_hostname()
+            installObject.pbar.progress("Updating hostname")
+            installObject.update_hostname()
             installObject.pbar.progress("Setting ulimits")
             installObject.set_ulimits()
             installObject.pbar.progress("Copying output")
