@@ -2739,8 +2739,6 @@ class Setup(object):
                           ['create-backend', '--backend-name', 'site', '--set', 'base-dn:o=site', '--type %s' % self.ldap_backend_type, '--set', 'enabled:true', '--set', 'db-cache-percent:20'],
                           ['create-backend', '--backend-name', 'metric', '--set', 'base-dn:o=metric', '--type %s' % self.ldap_backend_type, '--set', 'enabled:true', '--set', 'db-cache-percent:10'],
                           ['set-connection-handler-prop', '--handler-name', '"LDAP Connection Handler"', '--set', 'enabled:false'],
-                          ['set-connection-handler-prop', '--handler-name', '"LDAPS Connection Handler"', '--set', 'enabled:true', '--set', 'listen-address:127.0.0.1'],
-                          ['set-administration-connector-prop', '--set', 'listen-address:127.0.0.1'],
                           ['set-access-control-handler-prop', '--remove', '%s' % opendj_prop_name],
                           ['set-global-configuration-prop', '--set', 'reject-unauthenticated-requests:true'],
                           ['set-password-policy-prop', '--policy-name', '"Default Password Policy"', '--set', 'default-password-storage-scheme:"Salted SHA-512"'],
@@ -2748,6 +2746,11 @@ class Setup(object):
                           ['create-plugin', '--plugin-name', '"Unique mail address"', '--type', 'unique-attribute', '--set enabled:true',  '--set', 'base-dn:o=gluu', '--set', 'type:mail'],
                           ['create-plugin', '--plugin-name', '"Unique uid entry"', '--type', 'unique-attribute', '--set enabled:true',  '--set', 'base-dn:o=gluu', '--set', 'type:uid'],
                           ]
+        
+        if not self.listenAllInterfaces:
+            config_changes.append(['set-connection-handler-prop', '--handler-name', '"LDAPS Connection Handler"', '--set', 'enabled:true', '--set', 'listen-address:127.0.0.1'])
+            config_changes.append(['set-administration-connector-prop', '--set', 'listen-address:127.0.0.1'])
+
         for changes in config_changes:
             dsconfigCmd = " ".join(['cd %s/bin ; ' % self.ldapBaseFolder,
                                     self.ldapDsconfigCommand,
@@ -3501,10 +3504,11 @@ def print_help():
 #    print "    --allow_pre_released_applications"
     print "    --allow_deprecated_applications"
     print "    --import-ldif=custom-ldif-dir Render ldif templates from custom-ldif-dir and import them in LDAP"
+    print "    --listen_all_interfaces"
 
 def getOpts(argv, setupOptions):
     try:
-        opts, args = getopt.getopt(argv, "adp:f:hNnsuwrev", ['allow_pre_released_applications', 'allow_deprecated_applications', 'import-ldif='])
+        opts, args = getopt.getopt(argv, "adp:f:hNnsuwrev", ['allow_pre_released_applications', 'allow_deprecated_applications', 'import-ldif=', 'listen_all_interfaces'])
     except getopt.GetoptError:
         print_help()
         sys.exit(2)
@@ -3549,6 +3553,8 @@ def getOpts(argv, setupOptions):
             setupOptions['allowPreReleasedApplications'] = True
         elif opt == '--allow_deprecated_applications':
             setupOptions['allowDeprecatedApplications'] = True
+        elif opt == '--listen_all_interfaces':
+            setupOptions['listenAllInterfaces'] = True
         elif opt == '--import-ldif':
             if os.path.isdir(arg):
                 setupOptions['importLDIFDir'] = arg
@@ -3576,6 +3582,7 @@ if __name__ == '__main__':
         'loadTestData': False,
         'allowPreReleasedApplications': False,
         'allowDeprecatedApplications': False,
+        'listenAllInterfaces': False
     }
     if len(sys.argv) > 1:
         setupOptions = getOpts(sys.argv[1:], setupOptions)
@@ -3598,6 +3605,7 @@ if __name__ == '__main__':
     installObject.installPassport = setupOptions['installPassport']
     installObject.allowPreReleasedApplications = setupOptions['allowPreReleasedApplications']
     installObject.allowDeprecatedApplications = setupOptions['allowDeprecatedApplications']
+    installObject.listenAllInterfaces = setupOptions['listenAllInterfaces']
 
     # Get the OS type
     installObject.os_type, installObject.os_version = installObject.detect_os_type()
