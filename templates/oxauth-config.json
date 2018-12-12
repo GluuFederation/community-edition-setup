@@ -295,5 +295,6 @@
       "certificationServerMetadataFolder":"",
       "disable":true
    },
-   "errorHandlingMethod":"internal",
+   "loggingLevel": "INFO",
+   "errorHandlingMethod":"internal"
 }
