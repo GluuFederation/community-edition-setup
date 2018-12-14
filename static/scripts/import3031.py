@@ -24,12 +24,19 @@ import shelve
 import ldap
 import pyDes
 import base64
+import uuid
+import string
+import random
+
+from pyDes import *
+
 
 from distutils.dir_util import copy_tree
 from ldif import LDIFParser, LDIFWriter, CreateLDIF
 from jsonmerge import merge
 from ldifschema_utils import parse_open_ldap_schema
 from ldap.schema import AttributeType
+import ldap.modlist as modlist
 
 ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
 
@@ -63,6 +70,18 @@ def progress_bar(t, n, act='', finished=None):
     if finished:
         print
 
+def getQuad():
+    return str(uuid.uuid4())[:4].upper()
+
+def getPW(size=12, chars=string.ascii_uppercase + string.digits + string.lowercase):
+        return ''.join(random.choice(chars) for _ in range(size))
+
+def obscure(data, encode_salt):
+    engine = triple_des(encode_salt, ECB, pad=None, padmode=PAD_PKCS5)
+    data = data.encode('ascii')
+    en_data = engine.encrypt(data)
+    return base64.b64encode(en_data)
+
 class DBLDIF(LDIFParser):
     def __init__(self, ldif_file):
         LDIFParser.__init__(self, open(ldif_file,'rb'))
@@ -74,7 +93,7 @@ class DBLDIF(LDIFParser):
         self.sdb = shelve.open(sdb_file)
 
     def handle(self, dn, entry):
-        self.sdb[dn] = entry
+        self.sdb[str(dn)] = entry
 
 
 class MyLDIF(LDIFParser):
@@ -281,10 +300,9 @@ class Migration(object):
             keys.remove('openldap')
 
 
-        hostname = self.getOutput(['hostname']).strip()
         # import all the keys into the keystore
         for key in keys:
-            alias = "{0}_{1}".format(hostname, key)
+            alias = "{0}_{1}".format(self.hostname, key)
             filename = os.path.join(self.certsDir, key + ".crt")
             if not os.path.isfile(filename):
                 logging.debug("Missing file: %s", filename)
@@ -601,8 +619,20 @@ class Migration(object):
                     else:
                         new_entry[attr] = old_entry[attr]
                         logging.debug("Keep multiple old values for %s", attr)
-                        
+                
             
+            if '314' >= self.oxVersion:
+                if 'ou=oxauth,ou=configuration' in dn:
+                    oxAuthConfDynamic = json.loads(new_entry['oxAuthConfDynamic'][0])
+                    oxAuthConfDynamic['authorizationPage'] = 'https://{0}/oxauth/authorize.htm'.format(self.hostname)
+                    oxAuthConfDynamic['loginPage'] = 'https://{0}/oxauth/login.htm'.format(self.hostname)
+                    oxAuthConfDynamic['checkSessionIFrame'] = 'https://{0}/oxauth/opiframe.htm'.format(self.hostname)
+                    new_entry['oxAuthConfDynamic'] = [json.dumps(oxAuthConfDynamic, indent=2)]
+                    
+                    oxAuthConfStatic = json.loads(new_entry['oxAuthConfStatic'][0])
+                    oxAuthConfStatic['baseDn']['metric'] = 'ou=statistic,o=metric'
+                    new_entry['oxAuthConfStatic'] = [json.dumps(oxAuthConfStatic, indent=2)]
+
             ldif_writer.unparse(dn, new_entry)
         
         progress_bar(0, 0, 'Rewriting DNs', True)
@@ -617,6 +647,7 @@ class Migration(object):
         
         for cnt, dn in enumerate(sorted(old_dn_map, key=len)):
             progress_bar(cnt, nodn, 'Perapring DNs for ' + self.oxVersion)
+            
             if "o=site" in dn:
                 continue  # skip all the o=site DNs
             if dn in currentDNs:
@@ -628,7 +659,7 @@ class Migration(object):
                 sdb.parse()
                 ldif_shelve_dict[cur_ldif_file]=sdb.sdb
 
-            entry = ldif_shelve_dict[cur_ldif_file][dn]
+            entry = ldif_shelve_dict[cur_ldif_file][str(dn)]
 
 
             for attr in entry.keys():
@@ -665,7 +696,7 @@ class Migration(object):
                         entry['oxId'] = oxId
                         del entry['inum']
             
-            ldif_writer.unparse(dn, entry)
+
 
         # Finally
         processed_fp.close()
@@ -928,8 +959,7 @@ class Migration(object):
         else:
             bindDn = 'cn=directory manager,o=gluu'
 
-        inumAppliance = self.getProp('inumAppliance', 
-                    '/install/community-edition-setup/setup.properties.last')
+        inumAppliance = self.getProp('inumAppliance', self.setup_properties_last)
 
         con = ldap.initialize('ldaps://localhost:1636')
         con.simple_bind_s(bindDn, self.ldapPassword)
@@ -945,6 +975,90 @@ class Migration(object):
             con.modify_s(dn, [( ldap.MOD_REPLACE, 'oxTrustConfCacheRefresh',  jsons)])
 
 
+        # Delete inum=None IDP client if exists
+        dn = 'ou=clients,o={0},o=gluu'.format(self.inumOrg)
+        result = con.search_s(dn, ldap.SCOPE_SUBTREE,'(&(objectClass=oxAuthClient)(displayName=IDP client))',['inum'])
+        if result:
+            if result[0][1]['inum'][0] == 'None':
+                dn = result[0][0]
+                con.delete_s(dn)
+                logging.info('Idp Client with inum=None deleted.')
+
+        #Create Client for IDP
+
+        clientTwoQuads = '%s.%s' % (getQuad(), getQuad())
+
+        
+        idp_client_id = self.getProp('idp_client_id')
+
+        if not idp_client_id:
+            logging.info('Idp Client does not exist. Creating ...')
+            idp_client_id = '%s!0008!%s' % (self.inumOrg, clientTwoQuads)
+
+            dn = "inum={0},ou=clients,o={1},o=gluu".format(idp_client_id, self.inumOrg)
+            
+            idpClient_pw = getPW()
+            
+            encode_salt = self.getProp('encode_salt', self.setup_properties_last)
+            idpClient_encoded_pw = obscure(idpClient_pw, encode_salt)
+
+            attrs = { 'objectClass': ['oxAuthClient', 'top'],
+                      'displayName': ['IDP client'],
+                      'inum': [idp_client_id],
+                      'oxAuthClientSecret': [idpClient_encoded_pw],
+                      'oxAuthAppType': ['web'],
+                      'oxAuthResponseType': ['code'],
+                      'oxAuthGrantType': ['authorization_code','refresh_token'],
+                      'oxAuthScope': [ 'inum={0}!0009!F0C4,ou=scopes,o={0},o=gluu'.format(self.inumOrg),
+                                       'inum={0}!0009!10B2,ou=scopes,o={0},o=gluu'.format(self.inumOrg),
+                                       'inum={0}!0009!764C,ou=scopes,o={0},o=gluu'.format(self.inumOrg),
+                                    ],
+                      'oxAuthRedirectURI': ['https://{0}/idp/Authn/oxAuth'.format(self.hostname)],
+                      'oxAuthPostLogoutRedirectURI': ['https://{0}/idp/profile/Logout'.format(self.hostname)],
+                      'oxAuthPostLogoutRedirectURI': ['https://{0}/identity/authentication/finishlogout'.format(self.hostname)],
+                      'oxAuthLogoutURI': ['https://{0}/identity/logout'.format(self.hostname)],
+                      'oxAuthTokenEndpointAuthMethod': ['client_secret_basic'],
+                      'oxAuthIdTokenSignedResponseAlg': ['HS256'],
+                      'oxAuthTrustedClient': ['true'],
+                      'oxAuthSubjectType': ['public'],
+                      'oxPersistClientAuthorizations': ['false'],
+                      'oxAuthLogoutSessionRequired': ['true'],
+                      }
+
+            ldif = modlist.addModlist(attrs)
+            con.add_s(dn,ldif)
+
+            with open('/install/community-edition-setup/setup.properties.last','a') as W:
+                W.write('idp_client_id=' + idp_client_id+'\n')
+                W.write('idpClient_pw=' + idpClient_pw+'\n')
+                W.write('idpClient_encoded_pw=' + idpClient_encoded_pw+'\n')
+
+            logging.info('Idp client added')
+
+        else:
+            dn = "inum={0},ou=clients,o={1},o=gluu".format(idp_client_id, self.inumOrg)
+            idp_client_id = '{0}!0008!%{1}'.format(self.inumOrg, idp_client_id)
+            result = con.search_s(dn, ldap.SCOPE_BASE,'(objectClass=*)')
+            idpClient_encoded_pw = result[0][1]['oxAuthClientSecret'][0]
+            if not 'oxAuthLogoutURI' in result[0][1]:
+                con.modify_s(dn, [( ldap.MOD_ADD, 'oxAuthLogoutURI', ['https://{0}/identity/logout'.format(self.hostname)])])
+                logging.info('oxAuthLogoutURI was added for Idp client') 
+
+
+        #Fix oxIDP for SAML
+        dn = 'ou=oxidp,ou=configuration,inum={0},ou=appliances,o=gluu'.format(inumAppliance)        
+        result = con.search_s(dn, ldap.SCOPE_BASE,'(objectClass=*)')
+        oxConfApplication = json.loads(result[0][1]['oxConfApplication'][0])
+        oxConfApplication['openIdClientId'] = idp_client_id
+        oxConfApplication['openIdClientPassword'] = idpClient_encoded_pw
+        
+        oxConfApplication['openIdRedirectUrl'] = 'https://{0}/idp/Authn/oxAuth'.format(self.hostname)
+        oxConfApplication['openIdPostLogoutRedirectUri'] = 'https://{0}/idp/profile/Logout'.format(self.hostname)
+        oxConfApplication_js = json.dumps(oxConfApplication)
+        con.modify_s(dn, [( ldap.MOD_REPLACE, 'oxConfApplication',  oxConfApplication_js)])
+        logging.info('oxConfApplication was fixed for SAML') 
+
+        
     def migrate(self):
         """Main function for the migration of backup data
         """
@@ -952,11 +1066,13 @@ class Migration(object):
         print("------------------------------------------------------------")
         print("        Gluu Server Community Edition Migration Tool        ")
         print("============================================================")
+        
+        self.setup_properties_last = '/install/community-edition-setup/setup.properties.last'
         self.version = int(self.getProp('version').replace('.', '')[0:3])
-        self.inumOrg = self.getProp('inumOrg', 
-                    '/install/community-edition-setup/setup.properties.last')
-        self.oxVersion = self.getProp('oxVersion', 
-                    '/install/community-edition-setup/setup.properties.last')
+        self.inumOrg = self.getProp('inumOrg', self.setup_properties_last)
+        self.oxVersion = self.getProp('oxVersion', self.setup_properties_last)
+        self.oxVersion_number = self.oxVersion.replace('.', '').replace('Final','')
+        self.hostname = self.getProp('hostname', self.setup_properties_last)
         
         self.getLDAPServerTypeChoice()
         self.getLDAPServerType()
@@ -974,7 +1090,7 @@ class Migration(object):
         self.fixPermissions()
         self.startLDAPServer()
         self.idpResolved()
-        # self.startWebapps()
+
         print("============================================================")
         print("The migration is complete. Gluu Server needs to be restarted.")
         print("\n\n\t# logout\n\t# service gluu-server-x.x.x restart\n")
