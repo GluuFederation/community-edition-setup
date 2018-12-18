@@ -4263,6 +4263,17 @@
             "x_origin": "Gluu created attribute"
         },
         {
+            "desc": "oxPublicKeyId",
+            "equality": "caseIgnoreMatch",
+            "names": [
+                "oxPublicKeyId"
+            ],
+            "oid": "oxAttribute:393",
+            "substr": "caseIgnoreSubstringsMatch",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+            "x_origin": "Gluu created attribute"
+        },
+        {
             "desc": "oxRptAsJwt",
             "equality": "caseIgnoreMatch",
             "names": [
@@ -4271,6 +4282,17 @@
             "oid": "oxAttribute:398",
             "substr": "caseIgnoreSubstringsMatch",
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+            "x_origin": "Gluu created attribute"
+        },
+        {
+            "desc": "OX code challenge hash",
+            "equality": "caseIgnoreMatch",
+            "names": [
+                "oxCodeChallengeHash"
+            ],
+            "oid": "oxAttribute:399",
+            "substr": "caseIgnoreSubstringsMatch",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.27",
             "x_origin": "Gluu created attribute"
         }
     ],
@@ -5712,8 +5734,10 @@
                 "creationDate",
                 "oxSessionStateId",
                 "oxCodeChallenge",
+                "oxCodeChallengeHash",
                 "personInum",
-                "oxAuthenticationData"
+                "oxAuthenticationData",
+                "oxStatus"
             ],
             "must": [
                 "objectclass"
@@ -5736,7 +5760,9 @@
                 "oxCodeChallenge",
                 "oxPublicKeyId",
                 "personInum",
-                "oxRegistrationData"
+                "oxRegistrationData",
+                "oxDeviceNotificationConf",
+                "oxStatus"
             ],
             "must": [
                 "objectclass"
