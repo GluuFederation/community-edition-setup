@@ -170,6 +170,7 @@ class Setup(object):
         self.gluuOptPythonFolder = '%s/python' % self.gluuOptFolder
         self.gluuBaseFolder = '/etc/gluu'
         self.configFolder = '%s/conf' % self.gluuBaseFolder
+        self.fido2ConfigFolder = '%s/fido2' % self.configFolder
         self.certFolder = '/etc/certs'
 
         self.oxBaseDataFolder = "/var/ox"
