@@ -288,16 +288,16 @@
 		"delayTime": 2,
 		"bruteForceProtectionEnabled": false
 	},
-   "fido2Configuration":{
-      "certFilesFolder":"",
-      "mdsTocRootCertFile":"",
-      "mdsTocFilesFolder":"",
-      "certificationServerMetadataFolder":"",
-      "userAutoEnrollment":false,
-      "unfinishedRequestExpiration":120,
-      "authenticationHistoryExpiration":1296000,
-      "disable":true
-   },
+	"fido2Configuration":{
+		"authenticatorCertsFolder":"",
+		"mdsCertsFolder":"",
+		"mdsTocsFolder":"",
+		"serverMetadataFolder":"",
+		"userAutoEnrollment":false,
+		"unfinishedRequestExpiration":120,
+		"authenticationHistoryExpiration":1296000,
+		"disable":true
+	},
    "loggingLevel": "INFO",
    "errorHandlingMethod":"internal"
 }
