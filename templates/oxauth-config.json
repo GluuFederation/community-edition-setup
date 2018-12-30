@@ -289,10 +289,10 @@
 		"bruteForceProtectionEnabled": false
 	},
 	"fido2Configuration":{
-		"authenticatorCertsFolder":"%(configFolder)s/authenticator_cert",
-		"mdsCertsFolder":"%(configFolder)s/mds/cert",
-		"mdsTocsFolder":"%(configFolder)s/mds/toc",
-		"serverMetadataFolder":"%(configFolder)s/server_metadata",
+		"authenticatorCertsFolder":"%(fido2ConfigFolder)s/authenticator_cert",
+		"mdsCertsFolder":"%(fido2ConfigFolder)s/mds/cert",
+		"mdsTocsFolder":"%(fido2ConfigFolder)s/mds/toc",
+		"serverMetadataFolder":"%(fido2ConfigFolder)s/server_metadata",
 		"userAutoEnrollment":false,
 		"unfinishedRequestExpiration":120,
 		"authenticationHistoryExpiration":1296000,
