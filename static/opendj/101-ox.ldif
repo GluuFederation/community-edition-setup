@@ -2335,8 +2335,7 @@ attributeTypes: ( 1.3.6.1.4.1.48710.1.3.398 NAME 'oxRptAsJwt'
   X-ORIGIN 'Gluu created attribute' )
 attributeTypes: ( 1.3.6.1.4.1.48710.1.3.399 NAME 'oxCodeChallengeHash'
   DESC 'OX code challenge hash'
-  EQUALITY caseIgnoreMatch
-  SUBSTR caseIgnoreSubstringsMatch
+  EQUALITY integerMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
   X-ORIGIN 'Gluu created attribute' )
 attributeTypes: ( 1.3.6.1.4.1.48710.1.3.400 NAME 'oxUidIDP'
