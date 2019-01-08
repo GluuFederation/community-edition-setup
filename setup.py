@@ -3086,7 +3086,7 @@ class Setup(object):
                         self.run([self.cmd_chmod, "755", "/etc/init.d/%s" % rsyslogFn])
     
                     self.run([service_path, 'rsyslog', 'restart'])
-                    self.run([service_path, 'solserver', 'start'])
+                    self.run([service_path, 'solserver', 'restart'])
             elif self.ldap_type == 'opendj':
                 self.run_service_command('opendj', 'stop')
                 self.run_service_command('opendj', 'start')
