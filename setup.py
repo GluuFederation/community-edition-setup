@@ -575,6 +575,7 @@ class Setup(object):
                         'oxd-server': ['opendj oxauth', 80],
                         'passport': ['opendj oxauth', 82],
                         'oxauth-rp': ['opendj oxauth', 84],
+                        'asimba': ['opendj oxauth', 86],
                         }
                                 
 
