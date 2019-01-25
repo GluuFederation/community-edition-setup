@@ -85,8 +85,8 @@ class Setup(object):
     def __init__(self, install_dir=None):
         self.install_dir = install_dir
 
-        self.oxVersion = '3.1.5.Final'
-        self.githubBranchName = 'version_3.1.5'
+        self.oxVersion = '3.1.6.Final'
+        self.githubBranchName = 'version_3.1.6'
 
         self.pbar = ProgressBar(tty_columns)
 
@@ -144,7 +144,7 @@ class Setup(object):
         self.allowPreReleasedApplications = False
         self.allowDeprecatedApplications = False
 
-        self.currentGluuVersion = '3.1.5'
+        self.currentGluuVersion = '3.1.6'
 
         self.jreDestinationPath = '/opt/jdk1.8.0_%s' % self.jre_version
 
