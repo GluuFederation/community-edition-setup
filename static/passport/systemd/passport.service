@@ -1,0 +1,15 @@
+[Unit]
+Description=Passport service
+Requires=identity.service
+After=identity.service
+
+[Service]
+Type=forking
+EnvironmentFile=/etc/default/passport
+ExecStart=/etc/init.d/passport start
+ExecStop=/etc/init.d/passport stop
+User=node
+Group=node
+
+[Install]
+WantedBy=multi-user.target

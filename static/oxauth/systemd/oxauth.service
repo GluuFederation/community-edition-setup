@@ -1,0 +1,14 @@
+[Unit]
+Description=Oxauth service
+After=opendj.service
+Requires=opendj.service
+
+[Service]
+Type=forking
+ExecStart=/etc/init.d/oxauth start
+ExecStop=/etc/init.d/oxauth stop
+User=jetty
+Group=jetty
+
+[Install]
+WantedBy=multi-user.target

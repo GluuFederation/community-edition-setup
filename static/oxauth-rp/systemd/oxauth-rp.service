@@ -1,0 +1,15 @@
+[Unit]
+Description=Identity service
+Requires=identity.service
+After=identity.service
+
+
+[Service]
+Type=forking
+ExecStart=/etc/init.d/oxauth-rp start
+ExecStop=/etc/init.d/oxauth-rp stop
+User=jetty
+Group=jetty
+
+[Install]
+WantedBy=multi-user.target
