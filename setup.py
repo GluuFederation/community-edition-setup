@@ -120,6 +120,7 @@ class Setup(object):
         self.cmd_java = '%s/bin/java' % self.jre_home
         self.cmd_keytool = '%s/bin/keytool' % self.jre_home
         self.cmd_jar = '%s/bin/jar' % self.jre_home
+        os.environ["OPENDJ_JAVA_HOME"] =  self.jre_home
 
         # Component ithversions
         self.jre_version = '181'
