@@ -3335,8 +3335,7 @@ class Setup(object):
             self.pbar.progress("OpenDJ: post installation", False)
             self.post_install_opendj()
         finally:
-            #self.deleteLdapPw()
-            pass
+            self.deleteLdapPw()
 
         if self.ldap_type == 'openldap':
             self.logIt("Running OpenLDAP Setup")
