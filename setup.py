@@ -129,6 +129,7 @@ class Setup(object):
         self.opendj_version_number = '3.0.1.gluu'
         self.apache_version = None
         self.opendj_version = None
+        self.opendj_type = 'opendj'
 
         # Gluu components installation status
         self.installOxAuth = True
@@ -1211,10 +1212,14 @@ class Setup(object):
 
 
     def extractOpenDJ(self):
-        openDJArchive = 'opendj-server-%s.zip' % self.opendj_version_number
+        if self.opendj_type == 'opendj':
+            openDJArchive = max(glob.glob(os.path.join(self.distFolder, 'app/opendj-server-*3*gluu*.zip')))
+        else:
+            openDJArchive = max(glob.glob(os.path.join(self.distFolder, 'app/opendj-server-*4*.zip')))
+
         try:
             self.logIt("Unzipping %s in /opt/" % openDJArchive)
-            self.run(['unzip', '-n', '-q', '%s/%s' % (self.distAppFolder, openDJArchive), '-d', '/opt/' ])
+            self.run(['unzip', '-n', '-q', openDJArchive, '-d', '/opt/' ])
         except:
             self.logIt("Error encountered while doing unzip %s/%s -d /opt/" % (self.distAppFolder, openDJArchive))
             self.logIt(traceback.format_exc(), True)
@@ -2364,8 +2369,10 @@ class Setup(object):
 
             if self.allowDeprecatedApplications and glob.glob(self.distFolder+'/symas/symas-openldap*.'+suffix):
                 backend_types.append(('OpenLDAP Gluu Edition','openldap'))
-                
+            
 
+            if self.allowPreReleasedApplications and glob.glob(self.distFolder+'/app/opendj-server-*4*.zip'):
+                backend_types.append(('Wren:DS','wrends'))
 
             self.installLdap = True
             option = None
@@ -2389,6 +2396,11 @@ class Setup(object):
                         print "You did not enter the correct option. Enter one of this options: {0}".format(', '.join(options))
 
                 self.ldap_type = backend_types[int(option)-1][1]
+
+                if self.ldap_type == 'wrends':
+                    self.ldap_type = 'opendj'
+                    self.opendj_type = 'wrends'
+
         else:
             self.installLdap = False
 
@@ -2704,7 +2716,8 @@ class Setup(object):
                                                                                                        '--cli',
                                                                                                        '--propertiesFilePath',
                                                                                                        setupPropsFN,
-                                                                                                       '--acceptLicense'])
+                                                                                                       '--acceptLicense'
+                                                                                                       ])
             self.run(['/bin/su',
                       'ldap',
                       '-c',
@@ -2713,17 +2726,19 @@ class Setup(object):
             self.logIt("Error running LDAP setup script", True)
             self.logIt(traceback.format_exc(), True)
 
-        try:
-            ldapDsJavaPropCommand = "%s/bin/dsjavaproperties" % self.ldapBaseFolder
-            dsjavaCmd = "cd /opt/opendj/bin ; %s" % ldapDsJavaPropCommand
-            self.run(['/bin/su',
-                      'ldap',
-                      '-c',
-                      dsjavaCmd
-                      ])
-        except:
-            self.logIt("Error running dsjavaproperties", True)
-            self.logIt(traceback.format_exc(), True)
+
+        if self.opendj_type == 'opendj':
+
+            try:
+                dsjavaCmd = "cd /opt/opendj/bin ; %s" % self.ldapDsJavaPropCommand
+                self.run(['/bin/su',
+                          'ldap',
+                          '-c',
+                          dsjavaCmd
+                          ])
+            except:
+                self.logIt("Error running dsjavaproperties", True)
+                self.logIt(traceback.format_exc(), True)
 
         try:
             stopDsJavaPropCommand = "%s/bin/stop-ds" % self.ldapBaseFolder
@@ -2751,7 +2766,6 @@ class Setup(object):
         config_changes = [
                           ['set-backend-prop', '--backend-name', 'userRoot', '--set', 'db-cache-percent:70'],  
                           ['set-global-configuration-prop', '--set', 'single-structural-objectclass-behavior:accept'],
-                          ['set-attribute-syntax-prop', '--syntax-name', '"Directory String"',   '--set', 'allow-zero-length-values:true'],
                           ['set-password-policy-prop', '--policy-name', '"Default Password Policy"', '--set', 'allow-pre-encoded-passwords:true'],
                           ['set-log-publisher-prop', '--publisher-name', '"File-Based Audit Logger"', '--set', 'enabled:true'],
                           ['create-backend', '--backend-name', 'site', '--set', 'base-dn:o=site', '--type %s' % self.ldap_backend_type, '--set', 'enabled:true', '--set', 'db-cache-percent:20'],
@@ -2764,6 +2778,10 @@ class Setup(object):
                           ['create-plugin', '--plugin-name', '"Unique mail address"', '--type', 'unique-attribute', '--set enabled:true',  '--set', 'base-dn:o=gluu', '--set', 'type:mail'],
                           ['create-plugin', '--plugin-name', '"Unique uid entry"', '--type', 'unique-attribute', '--set enabled:true',  '--set', 'base-dn:o=gluu', '--set', 'type:uid'],
                           ]
+
+        if self.opendj_type == 'opendj':
+            config_changes.insert(2, ['set-attribute-syntax-prop', '--syntax-name', '"Directory String"',   '--set', 'allow-zero-length-values:true'])
+
         
         if not self.listenAllInterfaces:
             config_changes.append(['set-connection-handler-prop', '--handler-name', '"LDAPS Connection Handler"', '--set', 'enabled:true', '--set', 'listen-address:127.0.0.1'])
@@ -2861,7 +2879,10 @@ class Setup(object):
                               self.ldapPassFn,
                               '--trustAll']
         importParams.append('--useSSL')
-        importParams.append('--defaultAdd')
+
+        if self.opendj_type == 'opendj':
+            importParams.append('--defaultAdd')
+        
         importParams.append('--continueOnError')
         importParams.append('--filename')
         importParams.append(ldif_file_fullpath)
@@ -2899,7 +2920,10 @@ class Setup(object):
                                   self.ldapPassFn,
                                   '--trustAll']
             importParams.append('--useSSL')
-            importParams.append('--defaultAdd')
+            
+            if self.opendj_type == 'opendj':
+                importParams.append('--defaultAdd')
+            
             importParams.append('--continueOnError')
             importParams.append('--filename')
             importParams.append(ldif_file_fullpath)
@@ -3009,7 +3033,12 @@ class Setup(object):
 
             self.fix_init_scripts('opendj', '/etc/init.d/opendj')
             self.enable_service_at_start('opendj')
+            
+            if self.opendj_type == 'wrends':
+                self.run([service_path, 'opendj', 'stop'])
+            
             self.run([service_path, 'opendj', 'start'])
+            
 
     def setup_init_scripts(self):
         if self.os_initdaemon == 'initd':
@@ -3306,7 +3335,8 @@ class Setup(object):
             self.pbar.progress("OpenDJ: post installation", False)
             self.post_install_opendj()
         finally:
-            self.deleteLdapPw()
+            #self.deleteLdapPw()
+            pass
 
         if self.ldap_type == 'openldap':
             self.logIt("Running OpenLDAP Setup")
