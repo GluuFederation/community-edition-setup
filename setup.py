@@ -3615,7 +3615,7 @@ def getOpts(argv, setupOptions):
 if __name__ == '__main__':
 
     setupOptions = {
-        'install_dir': '.',
+        'install_dir': os.path.dirname(os.path.realpath(__file__)),
         'setup_properties': None,
         'noPrompt': False,
         'downloadWars': False,
@@ -3632,6 +3632,7 @@ if __name__ == '__main__':
         'allowDeprecatedApplications': False,
         'listenAllInterfaces': False
     }
+
     if len(sys.argv) > 1:
         setupOptions = getOpts(sys.argv[1:], setupOptions)
 
