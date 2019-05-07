@@ -85,8 +85,8 @@ class Setup(object):
     def __init__(self, install_dir=None):
         self.install_dir = install_dir
 
-        self.oxVersion = '3.1.6.Final'
-        self.githubBranchName = 'version_3.1.6'
+        self.oxVersion = '3.1.6.sp1'
+        self.githubBranchName = 'version_3.1.6.sp1'
 
         self.pbar = ProgressBar(tty_columns)
 
