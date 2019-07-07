@@ -404,6 +404,8 @@ touch vault_role_id.txt
 touch vault_secret_id.txt
 touch gcp_kms_stanza.hcl
 touch gcp_kms_creds.json
+touch couchbase_chain.pem
+touch couchbase_pkey.key
 
 get_files
 

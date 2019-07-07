@@ -91,8 +91,10 @@ services:
       # use this value as LDAP hostname
       - GLUU_CERT_ALT_NAME=ldap
       - GLUU_LDAP_ADVERTISE_ADDR=ldap
-      # - GLUU_PERSISTENCE_TYPE=hybrid
-      # - GLUU_PERSISTENCE_LDAP_MAPPING=user
+      # options: ldap/couchbase/hybrid
+      - GLUU_PERSISTENCE_TYPE=ldap
+      # options: default/user/site/cache/statistic; used only if GLUU_PERSISTENCE_TYPE is hybrid
+      # - GLUU_PERSISTENCE_LDAP_MAPPING=default
     container_name: ldap
     volumes:
       - ./volumes/opendj/config:/opt/opendj/config
@@ -113,12 +115,14 @@ services:
     environment:
       - GLUU_CONFIG_CONSUL_HOST=consul
       - GLUU_SECRET_VAULT_HOST=vault
-      - GLUU_LDAP_URL=ldap:1636
+      # options: ldap/couchbase/hybrid
       - GLUU_PERSISTENCE_TYPE=ldap
-      # - GLUU_PERSISTENCE_TYPE=couchbase
-      # - GLUU_PERSISTENCE_TYPE=hybrid
-      # - GLUU_PERSISTENCE_LDAP_MAPPING=user
-      # - GLUU_COUCHBASE_URL=couchbase
+      # options: default/user/site/cache/statistic; used only if GLUU_PERSISTENCE_TYPE is hybrid
+      - GLUU_PERSISTENCE_LDAP_MAPPING=default
+      # used only if GLUU_PERSISTENCE_TYPE is ldap or hybrid
+      - GLUU_LDAP_URL=ldap:1636
+      # used only if GLUU_PERSISTENCE_TYPE is couchbase or hybrid
+      - GLUU_COUCHBASE_URL=couchbase
     extra_hosts:
       - "${DOMAIN}:${HOST_IP}"
     container_name: oxauth
@@ -143,13 +147,15 @@ services:
     environment:
       - GLUU_CONFIG_CONSUL_HOST=consul
       - GLUU_SECRET_VAULT_HOST=vault
-      - GLUU_LDAP_URL=ldap:1636
       - GLUU_OXAUTH_BACKEND=oxauth:8080
+      # options: ldap/couchbase/hybrid
       - GLUU_PERSISTENCE_TYPE=ldap
-      # - GLUU_PERSISTENCE_TYPE=couchbase
-      # - GLUU_PERSISTENCE_TYPE=hybrid
-      # - GLUU_PERSISTENCE_LDAP_MAPPING=user
-      # - GLUU_COUCHBASE_URL=couchbase
+      # options: default/user/site/cache/statistic; used only if GLUU_PERSISTENCE_TYPE is hybrid
+      - GLUU_PERSISTENCE_LDAP_MAPPING=default
+      # used only if GLUU_PERSISTENCE_TYPE is ldap or hybrid
+      - GLUU_LDAP_URL=ldap:1636
+      # used only if GLUU_PERSISTENCE_TYPE is couchbase or hybrid
+      - GLUU_COUCHBASE_URL=couchbase
     extra_hosts:
       - "${DOMAIN}:${HOST_IP}"
     container_name: oxtrust
@@ -171,44 +177,51 @@ services:
       - "SERVICE_8080_CHECK_TIMEOUT=5s"
       - "APP_NAME=oxtrust"
 
-  # oxshibboleth:
-  #   image: gluufederation/oxshibboleth:4.0.0_dev
-  #   environment:
-  #     - GLUU_CONFIG_CONSUL_HOST=consul
-  #     - GLUU_SECRET_VAULT_HOST=vault
-  #     - GLUU_LDAP_URL=ldap:1636
-  #   extra_hosts:
-  #     - "${DOMAIN}:${HOST_IP}"
-  #   container_name: oxshibboleth
-  #   volumes:
-  #     - ./volumes/shared-shibboleth-idp:/opt/shared-shibboleth-idp
-  #     - ./vault_role_id.txt:/etc/certs/vault_role_id
-  #     - ./vault_secret_id.txt:/etc/certs/vault_secret_id
-  #   mem_limit: 1024M
-  #   restart: unless-stopped
-  #   labels:
-  #     - "SERVICE_NAME=oxshibboleth"
-  #     - "SERVICE_8086_CHECK_HTTP=/idp"
-  #     - "SERVICE_8086_CHECK_INTERVAL=15s"
-  #     - "SERVICE_8086_CHECK_TIMEOUT=5s"
+  oxshibboleth:
+    image: gluufederation/oxshibboleth:4.0.0_dev
+    environment:
+      - GLUU_CONFIG_CONSUL_HOST=consul
+      - GLUU_SECRET_VAULT_HOST=vault
+      # options: ldap/couchbase/hybrid
+      - GLUU_PERSISTENCE_TYPE=ldap
+      # options: default/user/site/cache/statistic; used only if GLUU_PERSISTENCE_TYPE is hybrid
+      - GLUU_PERSISTENCE_LDAP_MAPPING=default
+      # used only if GLUU_PERSISTENCE_TYPE is ldap or hybrid
+      - GLUU_LDAP_URL=ldap:1636
+      # used only if GLUU_PERSISTENCE_TYPE is couchbase or hybrid
+      - GLUU_COUCHBASE_URL=couchbase
+    extra_hosts:
+      - "${DOMAIN}:${HOST_IP}"
+    container_name: oxshibboleth
+    volumes:
+      - ./volumes/shared-shibboleth-idp:/opt/shared-shibboleth-idp
+      - ./vault_role_id.txt:/etc/certs/vault_role_id
+      - ./vault_secret_id.txt:/etc/certs/vault_secret_id
+    mem_limit: 1024M
+    restart: unless-stopped
+    labels:
+      - "SERVICE_NAME=oxshibboleth"
+      - "SERVICE_8086_CHECK_HTTP=/idp"
+      - "SERVICE_8086_CHECK_INTERVAL=15s"
+      - "SERVICE_8086_CHECK_TIMEOUT=5s"
 
-  # oxpassport:
-  #   image: gluufederation/oxpassport:4.0.0_dev
-  #   environment:
-  #     - GLUU_CONFIG_CONSUL_HOST=consul
-  #     - GLUU_SECRET_VAULT_HOST=vault
-  #   extra_hosts:
-  #     - "${DOMAIN}:${HOST_IP}"
-  #   volumes:
-  #     - ./vault_role_id.txt:/etc/certs/vault_role_id
-  #     - ./vault_secret_id.txt:/etc/certs/vault_secret_id
-  #   container_name: oxpassport
-  #   restart: unless-stopped
-  #   labels:
-  #     - "SERVICE_NAME=oxpassport"
-  #     - "SERVICE_8090_CHECK_HTTP=/passport"
-  #     - "SERVICE_8090_CHECK_INTERVAL=15s"
-  #     - "SERVICE_8090_CHECK_TIMEOUT=5s"
+  oxpassport:
+    image: gluufederation/oxpassport:4.0.0_dev
+    environment:
+      - GLUU_CONFIG_CONSUL_HOST=consul
+      - GLUU_SECRET_VAULT_HOST=vault
+    extra_hosts:
+      - "${DOMAIN}:${HOST_IP}"
+    volumes:
+      - ./vault_role_id.txt:/etc/certs/vault_role_id
+      - ./vault_secret_id.txt:/etc/certs/vault_secret_id
+    container_name: oxpassport
+    restart: unless-stopped
+    labels:
+      - "SERVICE_NAME=oxpassport"
+      - "SERVICE_8090_CHECK_HTTP=/passport"
+      - "SERVICE_8090_CHECK_INTERVAL=15s"
+      - "SERVICE_8090_CHECK_TIMEOUT=5s"
 
   # key_rotation:
   #   image: gluufederation/key-rotation:4.0.0_dev
@@ -243,18 +256,11 @@ services:
   #     - "SERVICE_IGNORE=yes"
 
   # couchbase:
-  #   # image: couchbase:6.0.1
-  #   image: gluufederation/couchbase:4.0.0_dev
-  #   environment:
-  #     - GLUU_CONFIG_CONSUL_HOST=consul
-  #     - GLUU_SECRET_VAULT_HOST=vault
-  #     # - GLUU_PERSISTENCE_TYPE=hybrid
-  #     # - GLUU_PERSISTENCE_LDAP_MAPPING=user
+  #   image: couchbase:6.0.1
   #   volumes:
-  #     - ./vault_role_id.txt:/etc/certs/vault_role_id
-  #     - ./vault_secret_id.txt:/etc/certs/vault_secret_id
   #     - ./volumes/couchbase/var:/opt/couchbase/var
-  #     - ./volumes/couchbase/flag:/flag
+  #     - ./couchbase_chain.pem:/opt/couchbase/var/lib/couchbase/inbox/chain.pem
+  #     - ./couchbase_pkey.key:/opt/couchbase/var/lib/couchbase/inbox/pkey.key
   #   container_name: couchbase
   #   restart: unless-stopped
   #   mem_limit: 4096M
