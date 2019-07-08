@@ -1983,6 +1983,7 @@ class Setup(object):
                     '--versionfile',  os.path.join(self.idp3Folder, 'credentials/sealer.kver'),
                     '--alias secret',
                     '--storepass', self.shibJksPass]
+
             self.run(' '.join(cmd), shell=True)
 
             jettyIdpServiceName = 'idp'
@@ -2665,7 +2666,9 @@ class Setup(object):
 
     # args = command + args, i.e. ['ls', '-ltr']
     def run(self, args, cwd=None, env=None, useWait=False, shell=False):
-        self.logIt('Running: %s' % ' '.join(args))
+        output = ''
+        log_arg = ' '.join(args) if type(args) is list else args
+        self.logIt('Running: %s' % log_arg)
         
         if args[0] == self.cmd_chown:
             argsc = self.get_clean_args(args)
