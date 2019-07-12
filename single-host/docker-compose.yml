@@ -210,6 +210,7 @@ services:
     environment:
       - GLUU_CONFIG_CONSUL_HOST=consul
       - GLUU_SECRET_VAULT_HOST=vault
+      # - PASSPORT_LOG_LEVEL=debug
     extra_hosts:
       - "${DOMAIN}:${HOST_IP}"
     volumes:
@@ -219,7 +220,7 @@ services:
     restart: unless-stopped
     labels:
       - "SERVICE_NAME=oxpassport"
-      - "SERVICE_8090_CHECK_HTTP=/passport"
+      - "SERVICE_8090_CHECK_HTTP=/passport/token"
       - "SERVICE_8090_CHECK_INTERVAL=15s"
       - "SERVICE_8090_CHECK_TIMEOUT=5s"
 
