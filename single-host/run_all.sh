@@ -364,6 +364,7 @@ setup_vault() {
     init_vault
     sleep 5
     unseal_vault
+    sleep 5
     write_policy
     enable_approle
 }
