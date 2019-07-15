@@ -260,29 +260,6 @@ generate_config() {
             --city "$CITY"
 }
 
-check_license() {
-    if [ ! -f volumes/license_ack ]; then
-        echo "Gluu License Agreement: https://github.com/GluuFederation/gluu-docker/blob/4.0.0/LICENSE"
-        echo ""
-        read -p "Do you acknowledge that use of Gluu Server Docker Edition is subject to the Gluu Support License [y/N]: " ACCEPT_LICENSE
-
-        case $ACCEPT_LICENSE in
-            y|Y)
-                ACCEPT_LICENSE="true"
-                echo ""
-                mkdir -p volumes
-                touch volumes/license_ack
-                ;;
-            n|N|"")
-                exit 1
-                ;;
-            *)
-                echo "Error: invalid input"
-                exit 1
-        esac
-    fi
-}
-
 ### unselaing the vault
 init_vault() {
     vault_initialized=$($DOCKER exec vault vault status -format=yaml | grep initialized | awk -F ': ' '{print $2}')
@@ -394,7 +371,6 @@ setup_vault() {
 # ==========
 # entrypoint
 # ==========
-check_license
 check_docker
 check_docker_compose
 
