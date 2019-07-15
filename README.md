@@ -4,7 +4,7 @@ These are fast deployments of Gluu for demonstration , exploration, and testing 
 
 ## Examples
 
-[Single Host](./single-host/)
+### [Single Host](./single-host/)
 
 - This is test driving Gluu broken down into microservices in containers at a single node instance using docker and docker-compose.
 
