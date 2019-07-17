@@ -1,10 +1,8 @@
 #!/bin/bash
-
 set -e
 
 CONFIG_DIR=$PWD/volumes/config-init/db
 GLUU_VERSION=4.0.0_dev
-INIT_CONFIG_CMD=""
 DOMAIN=""
 ADMIN_PW=""
 EMAIL=""
@@ -57,7 +55,7 @@ check_health(){
         status_code=$(timeout 5s curl -o /dev/null --silent -k --head --write-out '%{http_code}\n' https://"$nginx_ip" || true)
         if [ "$status_code" -eq "302" ] &>/dev/null
         then
-                printf "\n[I] Gluu Server installed successfully; please visit https://$DOMAIN\n"
+                printf "\n[I] Gluu Server installed successfully; please visit https://%s\n" "$DOMAIN"
                 break
         fi
         sleep 5
@@ -81,7 +79,7 @@ gather_ip() {
         HOST_IP=$(route get default | grep gateway | awk '{print $2}')
     else
         echo "Cannot determine IP address."
-        read -p "Please input the hosts external IP Address: " HOST_IP
+        read -rp "Please input the hosts external IP Address: " HOST_IP
     fi
 }
 
@@ -92,7 +90,7 @@ valid_ip() {
     if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
         OIFS=$IFS
         IFS='.'
-        ip=($ip)
+        ip=("$ip")
         IFS=$OIFS
         [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 \
             && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
@@ -102,14 +100,14 @@ valid_ip() {
 }
 
 confirm_ip() {
-    read -p "Is this the correct external IP Address: ${HOST_IP} [Y/n]? " cont
+    read -rp "Is this the correct external IP Address: ${HOST_IP} [Y/n]? " cont
     case "$cont" in
         y|Y)
             return 0
             ;;
         n|N)
-            read -p "Please input the hosts external IP Address: " HOST_IP
-            if valid_ip $HOST_IP; then
+            read -rp "Please input the hosts external IP Address: " HOST_IP
+            if valid_ip "$HOST_IP"; then
                 return 0
             else
                 echo "Please enter a valid IP Address."
@@ -125,7 +123,7 @@ confirm_ip() {
 }
 
 check_docker() {
-    if [ -z "$(which $DOCKER)" ]; then
+    if [ -z "$(command -v "$DOCKER")" ]; then
         echo "[E] Unable to detect docker executable"
         echo "[W] Make sure docker is installed and available in PATH or explictly passed as DOCKER environment variable"
         exit 1
@@ -133,7 +131,7 @@ check_docker() {
 }
 
 check_docker_compose() {
-    if [ -z "$(which $DOCKER_COMPOSE)" ]; then
+    if [ -z "$(command -v "$DOCKER_COMPOSE")" ]; then
         echo "[E] Unable to detect docker-compose executable"
         echo "[W] Make sure docker-compose is installed and available in PATH or explictly passed as DOCKER_COMPOSE environment variable"
         exit 1
@@ -162,7 +160,7 @@ prepare_config_secret() {
     while [[ $retry -le 3 ]]; do
         sleep 5
         consul_ip=$($DOCKER inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' consul)
-        DOMAIN=$(curl $consul_ip:8500/v1/kv/gluu/config/hostname?raw -s)
+        DOMAIN=$(curl "$consul_ip":8500/v1/kv/gluu/config/hostname?raw -s)
 
         if [[ $DOMAIN != "" ]]; then
             break
@@ -170,7 +168,7 @@ prepare_config_secret() {
 
         echo "[W] Unable to get config in Consul; retrying ..."
 
-        retry=$(($retry+1))
+        retry=$((retry+1))
         sleep 5
     done
     # if there's no config in Consul, check from previously saved config
@@ -178,18 +176,18 @@ prepare_config_secret() {
         echo "[W] Configuration not found in Consul"
 
          if [[ -f $CONFIG_DIR/config.json  ]]; then
-            read -p "[I] Load previously saved configuration in local disk? [Y/n]" load_choice
+            read -rp "[I] Load previously saved configuration in local disk? [Y/n]" load_choice
 
             if [[ $load_choice != "n" && $load_choice != "N" ]]; then
-                DOMAIN=$(cat $CONFIG_DIR/config.json |  awk ' /'hostname'/ {print $2} ' | sed 's/[",]//g')
+                DOMAIN=$(cat "$CONFIG_DIR"/config.json |  awk ' /'hostname'/ {print $2} ' | sed 's/[",]//g')
 
-                if [[ ! -z $DOMAIN ]]; then
+                if [[ ! -z "$DOMAIN" ]]; then
                     $DOCKER run \
                         --rm \
                         --network container:consul \
-                        -v $CONFIG_DIR:/opt/config-init/db/ \
-                        -v $PWD/vault_role_id.txt:/etc/certs/vault_role_id \
-                        -v $PWD/vault_secret_id.txt:/etc/certs/vault_secret_id \
+                        -v "$CONFIG_DIR":/opt/config-init/db/ \
+                        -v "$PWD"/vault_role_id.txt:/etc/certs/vault_role_id \
+                        -v "$PWD"/vault_secret_id.txt:/etc/certs/vault_secret_id \
                         -e GLUU_CONFIG_CONSUL_HOST=consul \
                         -e GLUU_SECRET_VAULT_HOST=vault \
                         gluufederation/config-init:$GLUU_VERSION load
@@ -202,16 +200,16 @@ prepare_config_secret() {
     if [[ -z $DOMAIN ]]; then
         if [[ ! -f "$PWD/generate.json" ]]; then
             echo "[I] Creating new configuration, please input the following parameters"
-            read -p "Enter Hostname (demoexample.gluu.org):                 " DOMAIN
+            read -rp "Enter Hostname (demoexample.gluu.org):                 " DOMAIN
             if ! [[ $DOMAIN == *"."*"."* ]]; then
                 echo "[E] Hostname provided is invalid. Please enter a FQDN with the format demoexample.gluu.org"
                 exit 1
             fi
-            read -p "Enter Country Code:           " COUNTRY_CODE
-            read -p "Enter State:                  " STATE
-            read -p "Enter City:                   " CITY
-            read -p "Enter Email:                  " EMAIL
-            read -p "Enter Organization:           " ORG_NAME
+            read -rp "Enter Country Code:           " COUNTRY_CODE
+            read -rp "Enter State:                  " STATE
+            read -rp "Enter City:                   " CITY
+            read -rp "Enter Email:                  " EMAIL
+            read -rp "Enter Organization:           " ORG_NAME
             while true; do
                 echo "Enter Admin/LDAP Password:"
                 mask_password
@@ -227,7 +225,7 @@ prepare_config_secret() {
                 "") echo "Password cannot be empty"; exit 1;
             esac
 
-            read -p "Continue with the above settings? [Y/n]" choiceCont
+            read -rp "Continue with the above settings? [Y/n]" choiceCont
 
             case "$choiceCont" in
                 y|Y ) ;;
@@ -252,10 +250,10 @@ EOL
         $DOCKER run \
             --rm \
             --network container:consul \
-            -v $CONFIG_DIR:/opt/config-init/db/ \
-            -v $PWD/vault_role_id.txt:/etc/certs/vault_role_id \
-            -v $PWD/vault_secret_id.txt:/etc/certs/vault_secret_id \
-            -v $PWD/generate.json:/opt/config-init/db/generate.json \
+            -v "$CONFIG_DIR":/opt/config-init/db/ \
+            -v "$PWD"/vault_role_id.txt:/etc/certs/vault_role_id \
+            -v "$PWD"/vault_secret_id.txt:/etc/certs/vault_secret_id \
+            -v "$PWD"/generate.json:/opt/config-init/db/generate.json \
             -e GLUU_CONFIG_CONSUL_HOST=consul \
             -e GLUU_SECRET_VAULT_HOST=vault \
             gluufederation/config-init:$GLUU_VERSION load
@@ -275,19 +273,19 @@ init_vault() {
             -key-shares=1 \
             -key-threshold=1 \
             -recovery-shares=1 \
-            -recovery-threshold=1 > $PWD/vault_key_token.txt
+            -recovery-threshold=1 > "$PWD"/vault_key_token.txt
         echo "[I] Vault recovery key and root token saved to $PWD/vault_key_token.txt"
     fi
 }
 
 get_root_token() {
-    if [ -f $PWD/vault_key_token.txt ]; then
-        cat $PWD/vault_key_token.txt | grep "Initial Root Token" | awk -F ': ' '{print $2}'
+    if [ -f "$PWD"/vault_key_token.txt ]; then
+        cat "$PWD"/vault_key_token.txt | grep "Initial Root Token" | awk -F ': ' '{print $2}'
     fi
 }
 
 enable_approle() {
-    $DOCKER exec vault vault login -no-print $(get_root_token)
+    $DOCKER exec vault vault login -no-print "$(get_root_token)"
 
     approle_enabled=$($DOCKER exec vault vault auth list | grep 'approle' || :)
 
@@ -314,7 +312,7 @@ enable_approle() {
 }
 
 write_policy() {
-    $DOCKER exec vault vault login -no-print $(get_root_token)
+    $DOCKER exec vault vault login -no-print "$(get_root_token)"
 
     policy_created=$($DOCKER exec vault vault policy list | grep gluu || :)
 
@@ -327,8 +325,8 @@ write_policy() {
 }
 
 get_unseal_key() {
-    if [ -f $PWD/vault_key_token.txt ]; then
-        cat $PWD/vault_key_token.txt | grep "Unseal Key 1" | awk -F ': ' '{print $2}'
+    if [ -f "$PWD"/vault_key_token.txt ]; then
+        cat "$PWD"/vault_key_token.txt | grep "Unseal Key 1" | awk -F ': ' '{print $2}'
     fi
 }
 
@@ -340,7 +338,7 @@ unseal_vault() {
         has_gcp=$(cat gcp_kms_creds.json|wc -l)
         if [ "$has_gcp" = "0" ]; then
             echo "[I] Unsealing Vault manually"
-            $DOCKER exec vault vault operator unseal $(get_unseal_key)
+            $DOCKER exec vault vault operator unseal "$(get_unseal_key)"
         fi
     fi
 }
@@ -352,7 +350,7 @@ setup_vault() {
     while [[ $retry -le 3 ]]; do
         sleep 5
         vault_id=$($DOCKER ps -q --filter name=vault)
-        if [ ! -z $vault_id ]; then
+        if [ ! -z "$vault_id" ]; then
             vault_status=$($DOCKER exec vault vault status -format yaml | grep 'sealed' | awk -F ': ' '{print $2}')
             if [ ! -z "$vault_status" ]; then
                 break
@@ -360,7 +358,7 @@ setup_vault() {
         fi
 
         echo "[W] Unable to get seal status in Vault; retrying ..."
-        retry=$(($retry+1))
+        retry=$((retry+1))
         sleep 5
     done
 
@@ -378,7 +376,7 @@ setup_vault() {
 check_docker
 check_docker_compose
 
-mkdir -p $CONFIG_DIR
+mkdir -p "$CONFIG_DIR"
 touch vault_role_id.txt
 touch vault_secret_id.txt
 touch gcp_kms_stanza.hcl
