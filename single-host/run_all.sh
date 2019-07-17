@@ -210,6 +210,7 @@ prepare_config_secret() {
             read -rp "Enter City:                   " CITY
             read -rp "Enter Email:                  " EMAIL
             read -rp "Enter Organization:           " ORG_NAME
+			echo "[I] Password must be at least 6 characters and include one uppercase letter, one lowercase letter, one digit,  and one special character."
             while true; do
                 echo "Enter Admin/LDAP Password:"
                 mask_password
