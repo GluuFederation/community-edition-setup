@@ -173,7 +173,6 @@ prepare_config_secret() {
         retry=$(($retry+1))
         sleep 5
     done
-
     # if there's no config in Consul, check from previously saved config
     if [[ -z $DOMAIN ]]; then
         echo "[W] Configuration not found in Consul"
@@ -201,7 +200,7 @@ prepare_config_secret() {
 
     # config is not loaded from previously saved configuration
     if [[ -z $DOMAIN ]]; then
-        if [[ -f "$PWD/generate.json" ]]; then
+        if [[ ! -f "$PWD/generate.json" ]]; then
             echo "[I] Creating new configuration, please input the following parameters"
             read -p "Enter Hostname (demoexample.gluu.org):                 " DOMAIN
             if ! [[ $DOMAIN == *"."*"."* ]]; then
