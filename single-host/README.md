@@ -1,4 +1,4 @@
-# Gluu Server DE single-host test drive
+# Gluu Server DE single-host test drive -- ![CDNJS](https://img.shields.io/badge/UNDERCONSTRUCTION-red.svg?style=for-the-badge)
 
 This is an example of running the Gluu Server Docker Edition demo on a single VM. It's just two steps:
 
