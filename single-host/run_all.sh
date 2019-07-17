@@ -146,11 +146,15 @@ load_services() {
 }
 
 prepare_config_secret() {
-    echo "[I] Preparing cluster-wide config and secrets"
+    echo "[I] Preparing cluster-wide config and secret"
 
-    # guess if config already in Consul
     if [[ -z $($DOCKER ps --filter name=consul -q) ]]; then
         $DOCKER_COMPOSE up -d consul
+    fi
+
+    if [[ -z $($DOCKER ps --filter name=vault -q) ]]; then
+        $DOCKER_COMPOSE up -d vault
+        setup_vault
     fi
 
     echo "[I] Checking existing config in Consul"
@@ -170,97 +174,97 @@ prepare_config_secret() {
         sleep 5
     done
 
-    # if there's no config in Consul, ask users whether they want to load from previously saved config
+    # if there's no config in Consul, check from previously saved config
     if [[ -z $DOMAIN ]]; then
         echo "[W] Configuration not found in Consul"
 
-        if [[ -f $CONFIG_DIR/config.json ]]; then
+         if [[ -f $CONFIG_DIR/config.json  ]]; then
             read -p "[I] Load previously saved configuration in local disk? [Y/n]" load_choice
 
             if [[ $load_choice != "n" && $load_choice != "N" ]]; then
                 DOMAIN=$(cat $CONFIG_DIR/config.json |  awk ' /'hostname'/ {print $2} ' | sed 's/[",]//g')
-                INIT_CONFIG_CMD="load"
+
+                if [[ ! -z $DOMAIN ]]; then
+                    $DOCKER run \
+                        --rm \
+                        --network container:consul \
+                        -v $CONFIG_DIR:/opt/config-init/db/ \
+                        -v $PWD/vault_role_id.txt:/etc/certs/vault_role_id \
+                        -v $PWD/vault_secret_id.txt:/etc/certs/vault_secret_id \
+                        -e GLUU_CONFIG_CONSUL_HOST=consul \
+                        -e GLUU_SECRET_VAULT_HOST=vault \
+                        gluufederation/config-init:$GLUU_VERSION load
+                fi
             fi
         fi
     fi
 
     # config is not loaded from previously saved configuration
     if [[ -z $DOMAIN ]]; then
-        echo "[I] Creating new configuration, please input the following parameters"
-        read -p "Enter Hostname (demoexample.gluu.org):                 " DOMAIN
-        if ! [[ $DOMAIN == *"."*"."* ]]; then
-            echo "[E] Hostname provided is invalid. Please enter a FQDN with the format demoexample.gluu.org"
-            exit 1
+        if [[ -f "$PWD/generate.json" ]]; then
+            echo "[I] Creating new configuration, please input the following parameters"
+            read -p "Enter Hostname (demoexample.gluu.org):                 " DOMAIN
+            if ! [[ $DOMAIN == *"."*"."* ]]; then
+                echo "[E] Hostname provided is invalid. Please enter a FQDN with the format demoexample.gluu.org"
+                exit 1
+            fi
+            read -p "Enter Country Code:           " COUNTRY_CODE
+            read -p "Enter State:                  " STATE
+            read -p "Enter City:                   " CITY
+            read -p "Enter Email:                  " EMAIL
+            read -p "Enter Organization:           " ORG_NAME
+            while true; do
+                echo "Enter Admin/LDAP Password:"
+                mask_password
+                ADMIN_PW=$password
+                echo "Confirm Admin/LDAP Password:"
+                mask_password
+                password2=$password
+                [ "$ADMIN_PW" = "$password2" ] && break || echo "Please try again"
+            done
+
+            case "$ADMIN_PW" in
+                * ) ;;
+                "") echo "Password cannot be empty"; exit 1;
+            esac
+
+            read -p "Continue with the above settings? [Y/n]" choiceCont
+
+            case "$choiceCont" in
+                y|Y ) ;;
+                n|N ) exit 1 ;;
+                * )   ;;
+            esac
+
+            cat > generate.json <<EOL
+{
+    "hostname": "$DOMAIN",
+    "country_code": "$COUNTRY_CODE",
+    "state": "$STATE",
+    "city": "$CITY",
+    "admin_pw": "$ADMIN_PW",
+    "email": "$EMAIL",
+    "org_name": "$ORG_NAME"
+}
+EOL
         fi
-        read -p "Enter Country Code:           " COUNTRY_CODE
-        read -p "Enter State:                  " STATE
-        read -p "Enter City:                   " CITY
-        read -p "Enter Email:                  " EMAIL
-        read -p "Enter Organization:           " ORG_NAME
-        while true; do
-            echo "Enter Admin/LDAP Password:"
-            mask_password
-            ADMIN_PW=$password
-            echo "Confirm Admin/LDAP Password:"
-            mask_password
-            password2=$password
-            [ "$ADMIN_PW" = "$password2" ] && break || echo "Please try again"
-        done
 
-        case "$ADMIN_PW" in
-            * ) ;;
-            "") echo "Password cannot be empty"; exit 1;
-        esac
-
-        read -p "Continue with the above settings? [Y/n]" choiceCont
-
-        case "$choiceCont" in
-            y|Y ) ;;
-            n|N ) exit 1 ;;
-            * )   ;;
-        esac
-
-        INIT_CONFIG_CMD="generate"
+        # mount generate.json to mark for new config and secret
+        $DOCKER run \
+            --rm \
+            --network container:consul \
+            -v $CONFIG_DIR:/opt/config-init/db/ \
+            -v $PWD/vault_role_id.txt:/etc/certs/vault_role_id \
+            -v $PWD/vault_secret_id.txt:/etc/certs/vault_secret_id \
+            -v $PWD/generate.json:/opt/config-init/db/generate.json \
+            -e GLUU_CONFIG_CONSUL_HOST=consul \
+            -e GLUU_SECRET_VAULT_HOST=vault \
+            gluufederation/config-init:$GLUU_VERSION load
+        rm generate.json
     fi
 }
 
-load_config() {
-    echo "[I] Loading existing config."
-    $DOCKER run \
-        --rm \
-        --network container:consul \
-        -v $CONFIG_DIR:/opt/config-init/db/ \
-        -v $PWD/vault_role_id.txt:/etc/certs/vault_role_id \
-        -v $PWD/vault_secret_id.txt:/etc/certs/vault_secret_id \
-        -e GLUU_CONFIG_CONSUL_HOST=consul \
-        -e GLUU_SECRET_VAULT_HOST=vault \
-        gluufederation/config-init:$GLUU_VERSION \
-            load
-}
-
-generate_config() {
-    echo "[I] Generating configuration for the first time; this may take a moment"
-    $DOCKER run \
-        --rm \
-        --network container:consul \
-        -v $CONFIG_DIR:/opt/config-init/db/ \
-        -v $PWD/volumes/config-init/certs:/etc/certs \
-        -v $PWD/vault_role_id.txt:/etc/certs/vault_role_id \
-        -v $PWD/vault_secret_id.txt:/etc/certs/vault_secret_id \
-        -e GLUU_CONFIG_CONSUL_HOST=consul \
-        -e GLUU_SECRET_VAULT_HOST=vault \
-        gluufederation/config-init:$GLUU_VERSION \
-            generate \
-            --admin-pw $ADMIN_PW \
-            --email $EMAIL \
-            --domain $DOMAIN \
-            --org-name "$ORG_NAME" \
-            --country-code $COUNTRY_CODE \
-            --state $STATE \
-            --city "$CITY"
-}
-
-### unselaing the vault
+### unsealing the vault
 init_vault() {
     vault_initialized=$($DOCKER exec vault vault status -format=yaml | grep initialized | awk -F ': ' '{print $2}')
 
@@ -389,18 +393,5 @@ gather_ip
 until confirm_ip; do : ; done
 
 prepare_config_secret
-
 load_services
-
-setup_vault
-
-case $INIT_CONFIG_CMD in
-    "load")
-        load_config
-        ;;
-    "generate")
-        generate_config
-        ;;
-esac
-
 check_health
