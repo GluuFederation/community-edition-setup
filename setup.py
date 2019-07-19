@@ -265,10 +265,10 @@ class Setup(object):
         os.environ["OPENDJ_JAVA_HOME"] =  self.jre_home
 
         # Component ithversions
-        self.jre_version = '181'
-        self.jetty_version = '9.4.12.v20180830'
+        self.jre_version = '221'
+        self.jetty_version = '9.4.19.v20190610'
         self.jython_version = '2.7.2a'
-        self.node_version = '9.9.0'
+        self.node_version = '12.6.0'
         self.opendj_version_number = '3.0.1.gluu'
         self.apache_version = None
         self.opendj_version = None
@@ -331,7 +331,7 @@ class Setup(object):
         self.node_user_home = '/home/node'
         self.passport_initd_script = '%s/static/system/initd/passport' % self.install_dir
 
-        self.open_jdk_archive = 'OpenJDK11U-jdk_x64_linux_hotspot_11.0.2_7.tar.gz'
+        self.open_jdk_archive = 'OpenJDK11U-jdk_x64_linux_hotspot_11.0.3_7.tar.gz'
         self.java_type = 'jre'
 
 
