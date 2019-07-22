@@ -247,6 +247,10 @@ prepare_config_secret() {
 EOL
         fi
 
+        if [ -f generate.json ]; then
+            DOMAIN=$(cat generate.json |  awk ' /'hostname'/ {print $2} ' | sed 's/[",]//g')
+        fi
+
         # mount generate.json to mark for new config and secret
         $DOCKER run \
             --rm \
