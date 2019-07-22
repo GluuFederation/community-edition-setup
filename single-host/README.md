@@ -1,6 +1,6 @@
 # Gluu Server DE single-host test drive ![CDNJS](https://img.shields.io/badge/UNDERCONSTRUCTION-red.svg?style=for-the-badge)
 
-This is an example of running the Gluu Server Docker Edition demo on a single VM. It's just two steps:
+This is an example of running the Gluu Server Enterprise Edition demo on a single VM. It's just two steps:
 
 1. Get the run bash script   
 1. Run it!   
@@ -81,7 +81,7 @@ To uninstall the demo, follow these instructions:
 
 ## FAQ
 
-- **What network is Gluu Server Docker Edition running on?**
+- **What network is Gluu Server Enterprise Edition running on?**
 
 In this script, it launches consul using the `docker-compose up consul` command, where docker-compose creates a custom bridge network, based on the name of your current directory. So, for example, the network would be named `dockergluuserver_bridge`. You can assign a custom network in the `docker-compose.yaml`. Please see [the Docker-compose official documentation](https://docs.docker.com/compose/networking/#specify-custom-networks) for further understanding.
 
@@ -145,4 +145,4 @@ Currently all images, with the exception of the `consul` and `registrator` conta
 
 ## Documentation
 
-Please refer to the [Gluu Server Docker Edition Documentation](https://gluu.org/docs/de/4.0.0) for further reading on Docker image implementations.
+Please refer to the [Gluu Server Enterprise Edition Documentation](https://gluu.org/docs/de/4.0.0) for further reading on Docker image implementations.
