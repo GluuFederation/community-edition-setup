@@ -20,7 +20,7 @@ This is an example of running the Gluu Server Enterprise Edition demo on a singl
 
 1.  Obtain bash script for gluu single host installation:
 
-        wget https://raw.githubusercontent.com/GluuFederation/gluu-docker/4.0.0/test-drive/single-host/run_all.sh && chmod +x run_all.sh
+        wget https://raw.githubusercontent.com/GluuFederation/enterprise-edition/4.0.0/test-drive/single-host/run_all.sh && chmod +x run_all.sh
 
 1.  Run the following command inside the `/path/to/docker-gluu-server/` directory and follow the prompts:
 

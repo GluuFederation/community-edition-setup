@@ -25,10 +25,10 @@ get_files(){
     fi
 
     if [ ! -f docker-compose.yml ]; then
-        wget -q https://raw.githubusercontent.com/GluuFederation/gluu-docker/4.0.0/$folder/single-host/docker-compose.yml -O ./docker-compose.yml
+        wget -q https://raw.githubusercontent.com/GluuFederation/enterprise-edition/4.0.0/$folder/single-host/docker-compose.yml -O ./docker-compose.yml
     fi
     if [ ! -f vault_gluu_policy.hcl ]; then
-        wget -q https://raw.githubusercontent.com/GluuFederation/gluu-docker/4.0.0/$folder/single-host/vault_gluu_policy.hcl -O ./vault_gluu_policy.hcl
+        wget -q https://raw.githubusercontent.com/GluuFederation/enterprise-edition/4.0.0/$folder/single-host/vault_gluu_policy.hcl -O ./vault_gluu_policy.hcl
     fi
 }
 
