@@ -1964,7 +1964,13 @@ class Setup(object):
 
             # generate new keystore with AES symmetric key
             # there is one throuble with Shibboleth IDP 3.x - it doesn't load keystore from /etc/certs. It accepts %{idp.home}/credentials/sealer.jks  %{idp.home}/credentials/sealer.kver path format only.
-            self.run([self.cmd_java,'-classpath', self.distGluuFolder + '/idp3_cml_keygenerator.jar', 'org.xdi.oxshibboleth.keygenerator.KeyGenerator', self.idp3CredentialsFolder, self.shibJksPass], self.idp3CredentialsFolder)
+            cmd = [self.cmd_java,'-classpath', '"{}"'.format(os.path.join(self.idp3Folder,'webapp/WEB-INF/lib/*')),
+                    'net.shibboleth.utilities.java.support.security.BasicKeystoreKeyStrategyTool',
+                    '--storefile', os.path.join(self.idp3Folder,'credentials/sealer.jks'),
+                    '--versionfile',  os.path.join(self.idp3Folder, 'credentials/sealer.kver'),
+                    '--alias secret',
+                    '--storepass', self.shibJksPass]
+            self.run(' '.join(cmd), shell=True)
 
             jettyIdpServiceName = 'idp'
             jettyIdpServiceWebapps = '%s/%s/webapps' % (self.jetty_base, jettyIdpServiceName)
