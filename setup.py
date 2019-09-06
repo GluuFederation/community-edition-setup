@@ -1581,7 +1581,7 @@ class Setup(object):
         if self.persistence_type == 'couchbase' or 'default' in couchbase_mappings:
             changeTo = 'couchbase-server'
 
-        if self.remoteLdap and self.remoteCouchbase:
+        if self.remoteLdap or self.remoteCouchbase:
             changeTo = ''
 
         if changeTo != None:
@@ -4086,15 +4086,23 @@ class Setup(object):
         tmp_file = os.path.join(self.n1qlOutputFolder, 'index_%s.n1ql' % bucket)
 
         with open(tmp_file, 'w') as W:
-            index_list = couchbase_index.get(bucket,[])
+            index_list = couchbase_index.get(bucket,{})
 
             index_names = []
-            for ind in index_list:
+            for ind in index_list['attributes']:
                 index_name = 'def_{0}_{1}'.format(bucket, ind)
                 W.write('CREATE INDEX %s ON `%s`(%s) USING GSI WITH {"defer_build":true};\n' % (index_name, bucket, ind))
                 index_names.append(index_name)
 
-            W.write('BUILD INDEX ON `%s` (%s) USING GSI;\n' % (bucket, ', '.join(index_names)))
+            if index_names:
+                W.write('BUILD INDEX ON `%s` (%s) USING GSI;\n' % (bucket, ', '.join(index_names)))
+
+            sic = 1
+            for attribs, wherec in index_list['static']:
+                attrquoted = ['`{}`'.format(a) for a in attribs]
+                attrquoteds = ', '.join(attrquoted)
+                query = 'CREATE INDEX `{0}_static_{1:02d}` ON `{0}`({2}) WHERE ({3})\n'.format(bucket, sic, attrquoteds, wherec)
+                W.write(query)
 
         self.couchbaseExecQuery(tmp_file)
 
