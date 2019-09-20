@@ -1946,6 +1946,7 @@ class Setup(object):
             self.logIt("Preparing SAML templates...")
             self.removeDirs('%s/conf/shibboleth3' % self.gluuBaseFolder)
             self.createDirs('%s/conf/shibboleth3/idp' % self.gluuBaseFolder)
+            self.createDirs('%s/conf/shibboleth3/sp' % self.gluuBaseFolder)
 
             # Put IDP templates to oxTrust conf folder
             jettyIdentityServiceName = 'identity'
@@ -1975,6 +1976,15 @@ class Setup(object):
 
             self.idpWarFullPath = '%s/idp.war' % self.distGluuFolder
 
+            jettyIdpServiceName = 'idp'
+            jettyIdpServiceWebapps = '%s/%s/webapps' % (self.jetty_base, jettyIdpServiceName)
+
+            self.installJettyService(self.jetty_app_configuration[jettyIdpServiceName], True)
+            self.copyFile('%s/idp.war' % self.distGluuFolder, jettyIdpServiceWebapps)
+
+            # Prepare libraries needed to for command line IDP3 utilities
+            self.install_saml_libraries()
+
             # generate new keystore with AES symmetric key
             # there is one throuble with Shibboleth IDP 3.x - it doesn't load keystore from /etc/certs. It accepts %{idp.home}/credentials/sealer.jks  %{idp.home}/credentials/sealer.kver path format only.
             cmd = [self.cmd_java,'-classpath', '"{}"'.format(os.path.join(self.idp3Folder,'webapp/WEB-INF/lib/*')),
@@ -1983,17 +1993,8 @@ class Setup(object):
                     '--versionfile',  os.path.join(self.idp3Folder, 'credentials/sealer.kver'),
                     '--alias secret',
                     '--storepass', self.shibJksPass]
-
+                
             self.run(' '.join(cmd), shell=True)
-
-            jettyIdpServiceName = 'idp'
-            jettyIdpServiceWebapps = '%s/%s/webapps' % (self.jetty_base, jettyIdpServiceName)
-
-            self.installJettyService(self.jetty_app_configuration[jettyIdpServiceName])
-            self.copyFile('%s/idp.war' % self.distGluuFolder, jettyIdpServiceWebapps)
-
-            # Prepare libraries needed to for command line IDP3 utilities
-            self.install_saml_libraries()
 
             # chown -R jetty:jetty /opt/shibboleth-idp
             # self.run([self.cmd_chown,'-R', 'jetty:jetty', self.idp3Folder], '/opt')
