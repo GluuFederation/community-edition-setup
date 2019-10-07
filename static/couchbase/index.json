@@ -3,15 +3,14 @@
     "attributes": [
       ["objectClass"], 
       ["creationDate"], 
-      ["LOWER(`uid`)"], 
       ["sn"],
       ["uid"], 
       ["del","exp"] 
     ],
     "static" : [
+      [["LOWER(`uid`)"], "objectClass = \"gluuPerson\""], 
       [["DISTINCT(PAIRS(self))"], "objectClass = \"gluuPerson\""], 
       [["exp", "oxAuthExpiration"], "del=true"] 
-      
     ]
   },
 
