@@ -308,6 +308,7 @@ class Setup(object):
                                         'oxauthClient_2_inum': 'AB77-1A2B',
                                         'oxauthClient_3_inum': '3E20',
                                         'oxauthClient_4_inum': 'FF81-2D39',
+                                        'idp_attribute_resolver_ldap.search_filter': '(|(uid=$requestContext.principalName)(mail=$requestContext.principalName))',
                                      }
 
         # OS commands
@@ -1036,21 +1037,21 @@ class Setup(object):
         if not self.encode_salt:
             self.encode_salt= self.getPW() + self.getPW()
         if not self.oxauth_client_id:
-            self.oxauth_client_id = '0008-'+ str(uuid.uuid4())
+            self.oxauth_client_id = '1001.'+ str(uuid.uuid4())
         if not self.idp_client_id:
-            self.idp_client_id = '0008-'+ str(uuid.uuid4())
+            self.idp_client_id = '1101.'+ str(uuid.uuid4())
         if not self.scim_rs_client_id:
-            self.scim_rs_client_id = '0008-' + str(uuid.uuid4())
+            self.scim_rs_client_id = '1201.' + str(uuid.uuid4())
         if not self.scim_rp_client_id:
-            self.scim_rp_client_id = '0008-' + str(uuid.uuid4())
+            self.scim_rp_client_id = '1202.' + str(uuid.uuid4())
         if not self.scim_resource_oxid:
-            self.scim_resource_oxid = '0008-' + str(uuid.uuid4())
+            self.scim_resource_oxid = '1203.' + str(uuid.uuid4())
         if not self.oxtrust_resource_server_client_id:
-            self.oxtrust_resource_server_client_id = '0008-'  + str(uuid.uuid4())
+            self.oxtrust_resource_server_client_id = '1401.'  + str(uuid.uuid4())
         if not self.oxtrust_requesting_party_client_id:
-            self.oxtrust_requesting_party_client_id = '0008-'  + str(uuid.uuid4())
+            self.oxtrust_requesting_party_client_id = '1402.'  + str(uuid.uuid4())
         if not self.oxtrust_resource_id:
-            self.oxtrust_resource_id = '0008-'  + str(uuid.uuid4())
+            self.oxtrust_resource_id = '1403.'  + str(uuid.uuid4())
         if not self.admin_inum:
             self.admin_inum = str(uuid.uuid4())
 
@@ -1212,11 +1213,18 @@ class Setup(object):
         else:
             destFile = inFile
 
+        bc = 1
+        while True:
+            backupFile = destFile+'.gluu-{0}-{1}~'.format(self.currentGluuVersion, bc)
+            if not os.path.exists(backupFile):
+                break
+            bc += 1
+
+        if os.path.exists(destFile):
+            self.run(['cp', '-f', destFile, backupFile])
+
         if not destFile.startswith('/opt'):
-            backupFile = destFile+'.gluu-'+self.currentGluuVersion+'~'
-            if os.path.exists(destFile) and not os.path.exists(backupFile):
-                shutil.copy(destFile, backupFile)
-                self.logOSChanges("File %s was backed up as %s" % (destFile, backupFile))
+            self.logOSChanges("File %s was backed up as %s" % (destFile, backupFile))
 
     def copyFile(self, inFile, destFolder):
         self.backupFile(inFile, destFolder)
@@ -2100,6 +2108,10 @@ class Setup(object):
         self.templateRenderingDict['api_rp_client_base64_jwks'] = self.generate_base64_string(self.api_rp_client_jwks, 1)
 
 
+    def getDefaultOption(self, val):
+        return 'Yes' if val else 'No'
+        
+
     def getPrompt(self, prompt, defaultValue=None):
         try:
             if defaultValue:
@@ -2145,15 +2157,16 @@ class Setup(object):
         return ''.join(random_password)
 
 
-    def prepare_openid_keys_generator(self):
+    def prepare_openid_keys_generator(self, distOxAuthPath=None):
         self.logIt("Preparing files needed to run OpenId keys generator")
         # Unpack oxauth.war to get libs needed to run key generator
-        oxauthWar = 'oxauth.war'
-        distOxAuthPath = '%s/%s' % (self.distGluuFolder, oxauthWar)
+        if not distOxAuthPath:
+            oxauthWar = 'oxauth.war'
+            distOxAuthPath = '%s/%s' % (self.distGluuFolder, oxauthWar)
 
         tmpOxAuthDir = '%s/tmp_oxauth' % self.distGluuFolder
 
-        self.logIt("Unpacking %s..." % oxauthWar)
+        self.logIt("Unpacking %s..." % distOxAuthPath)
         self.removeDirs(tmpOxAuthDir)
         self.createDirs(tmpOxAuthDir)
 
@@ -2259,6 +2272,9 @@ class Setup(object):
             self.run([self.cmd_jar, 'xf', self.distGluuFolder + '/shibboleth-idp.jar'], '/opt')
             self.removeDirs('/opt/META-INF')
 
+            if self.mappingLocations['user'] == 'couchbase':
+                self.templateRenderingDict['idp_attribute_resolver_ldap.search_filter'] = '(&(|(lower(uid)=$requestContext.principalName)(mail=$requestContext.principalName))(objectClass=gluuPerson))'
+
             # Process templates
             self.renderTemplateInOut(self.idp3_configuration_properties, self.staticIDP3FolderConf, self.idp3ConfFolder)
             self.renderTemplateInOut(self.idp3_configuration_ldap_properties, self.staticIDP3FolderConf, self.idp3ConfFolder)
@@ -2305,6 +2321,7 @@ class Setup(object):
                 couchbase_mappings = self.getMappingType('couchbase')
                 if 'user' in couchbase_mappings:
                     self.saml_couchbase_settings()
+
 
     def install_saml_libraries(self):
         # Unpack oxauth.war to get bcprov-jdk16.jar
@@ -2373,13 +2390,13 @@ class Setup(object):
         self.passport_rs_client_jks_pass_encoded = self.obscure(self.passport_rs_client_jks_pass)
 
         if not self.passport_rs_client_id:
-            self.passport_rs_client_id = '0008-' + str(uuid.uuid4())
+            self.passport_rs_client_id = '1501.' + str(uuid.uuid4())
         if not self.passport_rp_client_id:
-            self.passport_rp_client_id = '0008-' + str(uuid.uuid4())
+            self.passport_rp_client_id = '1502.' + str(uuid.uuid4())
         if not self.passport_rp_ii_client_id:
-            self.passport_rp_ii_client_id = '0008-'  + str(uuid.uuid4())
+            self.passport_rp_ii_client_id = '1503.'  + str(uuid.uuid4())
         if not self.passport_resource_id:
-            self.passport_resource_id = '0008-'  + str(uuid.uuid4())
+            self.passport_resource_id = '1504.'  + str(uuid.uuid4())
 
         self.templateRenderingDict['passport_oxtrust_config'] = '''
                 "passportUmaClientId":"%(passport_rs_client_id)s",
@@ -2943,13 +2960,17 @@ class Setup(object):
                 self.java_type = 'jdk'
                 self.defaultTrustStoreFN = '%s/lib/security/cacerts' % self.jre_home
                 
-        promptForOxAuth = self.getPrompt("Install oxAuth OAuth2 Authorization Server?", "Yes")[0].lower()
+        promptForOxAuth = self.getPrompt("Install oxAuth OAuth2 Authorization Server?", 
+                                        self.getDefaultOption(self.installOxAuth)
+                                            )[0].lower()
         if promptForOxAuth == 'y':
             self.installOxAuth = True
         else:
             self.installOxAuth = False
 
-        promptForOxTrust = self.getPrompt("Install oxTrust Admin UI?", "Yes")[0].lower()
+        promptForOxTrust = self.getPrompt("Install oxTrust Admin UI?",
+                                            self.getDefaultOption(self.installOxTrust)
+                                            )[0].lower()
         if promptForOxTrust == 'y':
             self.installOxTrust = True
         else:
@@ -3018,14 +3039,18 @@ class Setup(object):
                 self.promptForBackendMappings(backend_types)
 
 
-        promptForHTTPD = self.getPrompt("Install Apache HTTPD Server", "Yes")[0].lower()
+        promptForHTTPD = self.getPrompt("Install Apache HTTPD Server", 
+                                        self.getDefaultOption(self.installHTTPD)
+                                        )[0].lower()
         if promptForHTTPD == 'y':
             self.installHttpd = True
         else:
             self.installHttpd = False
 
 
-        promptForShibIDP = self.getPrompt("Install Shibboleth SAML IDP?", "No")[0].lower()
+        promptForShibIDP = self.getPrompt("Install Shibboleth SAML IDP?",
+                                            self.getDefaultOption(self.installSaml)
+                                            )[0].lower()
         if promptForShibIDP == 'y':
             self.shibboleth_version = 'v3'
             self.installSaml = True
@@ -3035,20 +3060,26 @@ class Setup(object):
         else:
             self.installSaml = False
 
-        promptForOxAuthRP = self.getPrompt("Install oxAuth RP?", "No")[0].lower()
+        promptForOxAuthRP = self.getPrompt("Install oxAuth RP?",
+                                            self.getDefaultOption(self.installOxAuthRP)
+                                            )[0].lower()
         if promptForOxAuthRP == 'y':
             self.installOxAuthRP = True
         else:
             self.installOxAuthRP = False
 
-        promptForPassport = self.getPrompt("Install Passport?", "No")[0].lower()
+        promptForPassport = self.getPrompt("Install Passport?", 
+                                            self.getDefaultOption(self.installPassport)
+                                            )[0].lower()
         if promptForPassport == 'y':
             self.installPassport = True
             self.gluuPassportEnabled = 'true'
         else:
             self.installPassport = False
 
-        promptForGluuRadius = self.getPrompt("Install Gluu Radius?", "No")[0].lower()
+        promptForGluuRadius = self.getPrompt("Install Gluu Radius?", 
+                                            self.getDefaultOption(self.installGluuRadius)
+                                            )[0].lower()
         if promptForGluuRadius == 'y':
             self.installGluuRadius = True
             self.oxauth_legacyIdTokenClaims = 'true'
@@ -3358,6 +3389,8 @@ class Setup(object):
         setupPropsFN = os.path.join(self.ldapBaseFolder, 'opendj-setup.properties')
         shutil.copy("%s/opendj-setup.properties" % self.outputFolder, setupPropsFN)
         self.set_ownership()
+        self.run(['chown', 'ldap:ldap', setupPropsFN])
+
         try:
             ldapSetupCommand = '%s/setup' % self.ldapBaseFolder
             setupCmd = "cd /opt/opendj ; export OPENDJ_JAVA_HOME=" + self.jre_home + " ; " + " ".join([ldapSetupCommand,
@@ -4676,9 +4709,7 @@ class Setup(object):
     def install_gluu_radius(self):
         
         if not self.gluu_radius_client_id:
-            self.gluu_radius_client_id = '0008-'  + str(uuid.uuid4())
-        if not self.ox_radius_client_id:
-            self.ox_radius_client_id = '0008-'  + str(uuid.uuid4())
+            self.gluu_radius_client_id = '1701.'  + str(uuid.uuid4())
 
         source_dir = os.path.join(self.staticFolder, 'radius')
         radius_dir = '/opt/gluu/radius'
