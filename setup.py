@@ -4829,6 +4829,12 @@ class Setup(object):
 
             self.enable_service_at_start('gluu-radius')
 
+    def post_install_tasks(self):
+        print_version_fn = os.path.join(self.install_dir, 'pylib', 'printVersion.py')
+        show_version_fn = os.path.join(self.gluuOptBinFolder, 'show_version.py')
+        self.run(['cp', '-f', print_version_fn, show_version_fn])
+        self.run(['chmod', '+x', show_version_fn])
+
 ############################   Main Loop   #################################################
 
 
@@ -5141,6 +5147,8 @@ if __name__ == '__main__':
                 installObject.import_custom_ldif(setupOptions['importLDIFDir'])
 
             installObject.deleteLdapPw()
+
+            installObject.post_install_tasks()
 
             installObject.pbar.progress("Completed")
             print
