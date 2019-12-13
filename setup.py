@@ -5352,6 +5352,9 @@ if __name__ == '__main__':
     
     argsp = parser.parse_args()
 
+    # Disable tui for version 4.1.0
+
+    """
     if (not argsp.c) and istty and (int(tty_rows) > 24) and ((tty_columns) > 79):
         try:
             import npyscreen
@@ -5361,6 +5364,7 @@ if __name__ == '__main__':
             from pylib import tui
             thread_queue = tui.queue
             from pylib.tui import *
+    """
 
     if not argsp.n and not thread_queue:
         resource_checkings()
