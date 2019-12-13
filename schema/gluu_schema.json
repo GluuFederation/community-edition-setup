@@ -4557,61 +4557,6 @@
             "substr": "caseIgnoreSubstringsMatch", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
             "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "oxAuth Backchannel Token Delivery Mode",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "oxAuthBackchannelTokenDeliveryMode"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "oxAuth Backchannel Client Notification Endpoint",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "oxAuthBackchannelClientNotificationEndpoint"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "oxAuth Backchannel Authentication Request Signing Alg",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "oxAuthBackchannelAuthenticationRequestSigningAlg"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "oxAuth Backchannel User Code Parameter",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "oxAuthBackchannelUserCodeParameter"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "oxAuth Backchannel Device Registration Token",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "oxAuthBackchannelDeviceRegistrationToken"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
         }
     ], 
     "objectClasses": [
@@ -4716,8 +4661,7 @@
                 "oxMobileDevices", 
                 "oxStrongAuthPolicy", 
                 "oxTrustedDevicesInfo", 
-                "oxUnlinkedExternalUids",
-                "oxAuthBackchannelDeviceRegistrationToken"
+                "oxUnlinkedExternalUids"
             ], 
             "must": [
                 "objectclass"
@@ -5260,12 +5204,8 @@
                 "oxSoftwareVersion", 
                 "oxSoftwareStatement", 
                 "oxRptAsJwt", 
-                "oxAttributes",
-                "oxAuthBackchannelTokenDeliveryMode",
-                "oxAuthBackchannelClientNotificationEndpoint",
-                "oxAuthBackchannelAuthenticationRequestSigningAlg",
-                "oxAuthBackchannelUserCodeParameter"
-            ],
+                "oxAttributes"
+            ], 
             "must": [
                 "objectclass"
             ], 
