@@ -1544,9 +1544,7 @@ class Setup(object):
                         if not module in mods_enabled:
                             mod_load_content[i] = l.replace('LoadModule', '#LoadModule')
                             modified = True
-                        
-                        else:
-                            print module
+
 
                 if modified:
                     with open(mod_load_fn, 'w') as w:
