@@ -85,7 +85,7 @@ ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
 re_split_host = re.compile(r'[^,\s,;]+')
 
 istty = False
-
+thread_queue = None
 try:
     tty_rows, tty_columns = os.popen('stty size', 'r').read().split()
     istty = True
@@ -5323,8 +5323,6 @@ def resource_checkings():
 if __name__ == '__main__':
 
     cur_dir = os.path.dirname(os.path.realpath(__file__))
-
-    thread_queue = None
 
     parser_description='''Use setup.py to configure your Gluu Server and to add initial data required for
     oxAuth and oxTrust to start. If setup.properties is found in this folder, these
