@@ -2856,12 +2856,16 @@ class Setup(object):
 
         if ldap_mappings:
             gluu_hybrid_roperties.append('storage.ldap.mapping: {0}'.format(', '.join(ldap_mappings)))
+
         if couchbase_mappings:
-            gluu_hybrid_roperties.append('storage.couchbase.mapping: {0}'.format(', '.join(couchbase_mappings)))
-        
+            cb_map_list = []
+            for m in couchbase_mappings:
+                if not m == 'default':
+                    cb_map_list.append(self.couchbaseBucketDict[m]['mapping'])
+            cb_map_str = ', '.join(cb_map_list)
+            gluu_hybrid_roperties.append('storage.couchbase.mapping: {0}'.format(cb_map_str))
+
         self.gluu_hybrid_roperties_content = '\n'.join(gluu_hybrid_roperties)
-        
-        self.gluu_hybrid_roperties_content  = self.gluu_hybrid_roperties_content.replace('user','people, groups')
 
         self.writeFile(self.gluu_hybrid_roperties, self.gluu_hybrid_roperties_content)
 
