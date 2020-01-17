@@ -49,8 +49,12 @@ import multiprocessing
 import StringIO
 import zipfile
 import datetime
+import urllib2
 
 from collections import OrderedDict
+from xml.etree import ElementTree
+from urlparse import urlparse
+
 from pylib.ldif import LDIFParser, LDIFWriter
 from pylib.attribute_data_types import ATTRUBUTEDATATYPES
 from pylib import Properties
@@ -471,7 +475,12 @@ class Setup(object):
                           'node' : {},
                           'memory' : {'ratio' : 0.1, "max_allowed_mb" : 1024},
                           'installed' : False
-                           }
+                           },
+            'casa': {'name': 'casa',
+                     'jetty': {'modules': 'server,deploy,resources,http,http-forwarded,console-capture,jsp'},
+                     'memory': {'ratio': 0.1, "jvm_heap_ration": 0.7, "max_allowed_mb": 1024},
+                     'installed': False
+                     },
         }
 
         self.app_custom_changes = {
@@ -765,6 +774,15 @@ class Setup(object):
                             'query_manage_index']
         self.post_messages = []
         
+        #oxd install options
+        self.installOxd = False
+        self.oxd_package = ''
+
+        #casa install options
+        self.installCasa = False
+        self.twilio_version = '7.17.0'
+        self.jsmmp_version = '2.3.7'
+        self.oxd_server_https = 'https://localhost:8443'
 
         self.ldif_files = [self.ldif_base,
                            self.ldif_attributes,
@@ -929,6 +947,8 @@ class Setup(object):
             txt += 'Install Shibboleth SAML IDP'.ljust(30) + repr(self.installSaml).rjust(35) + "\n"
             txt += 'Install oxAuth RP'.ljust(30) + repr(self.installOxAuthRP).rjust(35) + "\n"
             txt += 'Install Passport '.ljust(30) + repr(self.installPassport).rjust(35) + "\n"
+            txt += 'Install Casa '.ljust(30) + repr(self.installCasa).rjust(35) + "\n"
+            txt += 'Install Oxd '.ljust(30) + repr(self.installOxd).rjust(35) + "\n"
             txt += 'Install Gluu Radius '.ljust(30) + repr(self.installGluuRadius).rjust(35) + "\n"
 
             return txt
@@ -1477,14 +1497,10 @@ class Setup(object):
     # ================================================================================
 
     def configure_httpd(self):
-        # Detect sevice path and apache service name
-        service_path = '/sbin/service'
-        apache_service_name = 'httpd'
-        if self.os_type in ['debian', 'ubuntu']:
-            service_path = '/usr/sbin/service'
-            apache_service_name = 'apache2'
+        # Detect apache service name
+        apache_service_name = self.get_apache_service_name()
 
-        self.run([service_path, apache_service_name, 'stop'])
+        self.run_service_command(apache_service_name, 'stop')
 
         # CentOS 7.* + systemd + apache 2.4
         if self.os_type in ['centos', 'red', 'fedora'] and self.os_initdaemon == 'systemd' and self.apache_version == "2.4":
@@ -1503,8 +1519,7 @@ class Setup(object):
             self.run([self.cmd_ln, '-s', '/etc/apache2/sites-available/https_gluu.conf',
                       '/etc/apache2/sites-enabled/https_gluu.conf'])
 
-        with open('/var/www/html/index.html','w') as w:
-            w.write('OK')
+        self.writeFile('/var/www/html/index.html', 'OK')
 
         if self.os_type in ['centos', 'red', 'fedora']:
             icons_conf_fn = '/etc/httpd/conf.d/autoindex.conf'
@@ -1518,16 +1533,15 @@ class Setup(object):
             if l.strip().startswith('Alias') and ('/icons/' in l.strip().split()):
                 icons_conf[i] =  l.replace('Alias', '#Alias')
 
-        with open(icons_conf_fn, 'w') as w:
-            w.write(''.join(icons_conf))
 
+        self.writeFile(icons_conf_fn, ''.join(icons_conf))
 
         error_templates = glob.glob(os.path.join(self.templateFolder,'apache/*'))
 
         for tmp_fn in error_templates:
             self.copyFile(tmp_fn, '/var/www/html')
 
-        self.run([service_path, apache_service_name, 'start'])
+        self.run_service_command(apache_service_name, 'start')
 
         # we only need these modules
         mods_enabled = ['env', 'proxy_http', 'access_compat', 'alias', 'authn_core', 'authz_core', 'authz_host', 'headers', 'mime', 'mpm_event', 'proxy', 'proxy_ajp', 'security2', 'reqtimeout', 'setenvif', 'socache_shmcb', 'ssl', 'unique_id']
@@ -1552,10 +1566,8 @@ class Setup(object):
                             mod_load_content[i] = l.replace('LoadModule', '#LoadModule')
                             modified = True
 
-
                 if modified:
-                    with open(mod_load_fn, 'w') as w:
-                        w.write(''.join(mod_load_content))
+                    self.writeFile(mod_load_fn, ''.join(mod_load_content))
         else:
 
             for mod_load_fn in glob.glob('/etc/apache2/mods-enabled/*'):
@@ -1565,6 +1577,7 @@ class Setup(object):
                 if not f_name in mods_enabled:
                     self.run(['unlink', mod_load_fn])
 
+        self.enable_service_at_start(apache_service_name)
 
     def copy_output(self):
         self.logIt("Copying rendered templates to final destination")
@@ -2692,7 +2705,15 @@ class Setup(object):
         if self.installPassport:
             self.pbar.progress("passport", "Installing Gluu components: Passport", False)
             self.install_passport()
-    
+
+        if self.installOxd:
+            self.pbar.progress("oxd", "Installing Gluu components: oxd", False)
+            self.install_oxd()
+
+        if self.installCasa:
+            self.pbar.progress("casa", "Installing Gluu components: Casa", False)
+            self.install_casa()
+
         self.install_gluu_radius()
 
 
@@ -3036,6 +3057,27 @@ class Setup(object):
         
         return result
 
+    def check_oxd_server(self, oxd_url, error_out=True):
+
+        oxd_url = os.path.join(oxd_url, 'health-check')
+        try:
+            result = urllib2.urlopen(
+                        oxd_url,
+                        timeout = 2,
+                        context=ssl._create_unverified_context()
+                    )
+            if result.code == 200:
+                oxd_status = json.loads(result.read())
+                if oxd_status['status'] == 'running':
+                    return True
+        except Exception as e:
+            if error_out:
+                print colors.DANGER
+                print "Can't connect to oxd-server with url {}".format(oxd_url)
+                print "Reason: ", e
+                print colors.ENDC
+
+
     def promptForProperties(self):
 
         if self.noPrompt:
@@ -3277,6 +3319,49 @@ class Setup(object):
             self.enable_scim_access_policy = 'true'
         else:
             self.installPassport = False
+
+        oxd_package_list = glob.glob(os.path.join(self.distGluuFolder, 'oxd-server*.tgz'))
+        
+        if oxd_package_list:
+            self.oxd_package = max(oxd_package_list)
+
+        if os.path.exists(os.path.join(self.distGluuFolder, 'casa.war')):
+
+            promptForCasa = self.getPrompt("Install Casa?", 
+                                                self.getDefaultOption(self.installCasa)
+                                                )[0].lower()
+            if promptForCasa == 'y':
+                self.installCasa = True
+                self.couchbaseBucketDict['default']['ldif'].append(self.ldif_scripts_casa)
+            else:
+                self.installCasa = False
+
+            if self.installCasa:
+                print "Please enter URL of oxd-server if you have one, for example: https://oxd.mygluu.org:8443"
+                if self.oxd_package:
+                    print "Else leave blank to install oxd server locally."
+
+                while True:
+                    oxd_server_https = raw_input("oxd Server URL: ").lower()
+                    
+                    if (not oxd_server_https) and self.oxd_package:
+                        self.installOxd = True
+                        break
+
+                    print "Checking oxd server ..."
+                    if self.check_oxd_server(oxd_server_https):
+                        self.oxd_server_https = oxd_server_https
+                        break
+
+        if (not self.installOxd) and self.oxd_package:
+            promptForOxd = self.getPrompt("Install Oxd?", 
+                                                self.getDefaultOption(self.installOxd)
+                                                )[0].lower()
+            if promptForOxd == 'y':
+                self.installOxd = True
+            else:
+                self.installOxd = False
+
 
         promptForGluuRadius = self.getPrompt("Install Gluu Radius?", 
                                             self.getDefaultOption(self.installGluuRadius)
@@ -3979,25 +4064,19 @@ class Setup(object):
             self.logIt("Error starting service '%s'" % operation)
             self.logIt(traceback.format_exc(), True)
 
+    def get_apache_service_name(self):
+        # Detect apache service name
+        if self.os_type in ('centos', 'red', 'fedora') and self.os_initdaemon == 'systemd':
+            return 'httpd'
+
+        return 'apache2'
+
     def start_services(self):
 
+        # Apache HTTPD
         if self.installHttpd:
             self.pbar.progress("gluu", "Starting httpd")
-
-            # Detect service path and apache service name
-            service_path = self.detect_service_path()
-            apache_service_name = 'httpd'
-            if self.os_type in ['centos', 'red', 'fedora'] and self.os_initdaemon == 'systemd':
-                apache_service_name = 'httpd'
-            elif self.os_type in ['debian', 'ubuntu']:
-                apache_service_name = 'apache2'
-
-            # Apache HTTPD
-            if self.os_type in ['centos', 'red', 'fedora'] and self.os_initdaemon == 'systemd':
-                self.run([service_path, 'enable', apache_service_name])
-                self.run([service_path, 'start', apache_service_name])
-            else:
-                self.run([service_path, apache_service_name, 'start'])
+            self.run_service_command(self.get_apache_service_name(), 'restart')
 
         # LDAP services
         if self.wrends_install == LOCAL:
@@ -4012,12 +4091,44 @@ class Setup(object):
                 self.pbar.progress("gluu", "Starting Gluu Jetty {} Service".format(applicationName))
                 self.run_service_command(applicationName, 'start')
 
-        
         # Passport service
         if self.installPassport:
             self.pbar.progress("gluu", "Starting Passport Service")
             self.run_service_command('passport', 'start')
+
+        # oxd service
+        if self.installOxd:
+            self.pbar.progress("gluu", "Starting oxd Service")
+            self.run_service_command('oxd-server', 'start')
+
+        # casa service
+        if self.installCasa:
             
+            # import_oxd_certificate2javatruststore:
+            self.logIt("Importing oxd certificate")
+
+            try:
+
+                oxd_hostname, oxd_port = self.parse_url(self.oxd_server_https)
+                if not oxd_port: oxd_port=8443
+
+                oxd_cert = ssl.get_server_certificate((oxd_hostname, oxd_port))
+                oxd_alias = 'oxd_' + self.oxd_hostname.replace('.','_')
+                oxd_cert_tmp_fn = '/tmp/{}.crt'.format(oxd_alias)
+
+                with open(oxd_cert_tmp_fn,'w') as w:
+                    w.write(oxd_cert)
+
+                self.run(['/opt/jre/jre/bin/keytool', '-import', '-trustcacerts', '-keystore', 
+                                '/opt/jre/jre/lib/security/cacerts', '-storepass', 'changeit', 
+                                '-noprompt', '-alias', oxd_alias, '-file', oxd_cert_tmp_fn])
+                        
+            except:
+                self.logIt(traceback.format_exc(), True)
+
+            self.pbar.progress("gluu", "Starting Casa Service")
+            self.run_service_command('casa', 'start')
+
         # Radius service
         if self.installGluuRadius:
             self.pbar.progress("gluu", "Starting Gluu Radius Service")
@@ -4170,6 +4281,8 @@ class Setup(object):
             installedComponents.append(self.jetty_app_configuration['idp'])
         if self.installOxAuthRP:
             installedComponents.append(self.jetty_app_configuration['oxauth-rp'])
+        if self.installCasa:
+            installedComponents.append(self.jetty_app_configuration['casa'])
 
         # Node apps
         if self.installPassport:
@@ -5025,6 +5138,123 @@ class Setup(object):
                 self.run([self.systemctl, 'daemon-reload'])
 
 
+    def install_oxd(self):
+        self.logIt("Installing oxd server...")
+        oxd_root = '/opt/oxd-server/'
+        self.run(['tar', '-zxf', self.oxd_package, '-C', '/opt'])
+        self.run(['chown', '-R', 'jetty:jetty', oxd_root])
+        self.run(['cp', os.path.join(oxd_root, 'oxd-server.service'), '/lib/systemd/system'])
+        self.run(['mkdir', '/var/log/oxd-server'])
+        self.run(['chown', 'jetty:jetty', '/var/log/oxd-server'])
+        
+        for fn in glob.glob(os.path.join(oxd_root,'bin/*')):
+            self.run(['chmod', '+x', fn])
+
+        self.enable_service_at_start('oxd-server')
+
+    def install_casa(self):
+        self.logIt("Installing Casa...")
+        
+        self.copyFile(
+                    os.path.join(self.outputFolder, 'casa.json'), 
+                    self.configFolder
+                    )
+        self.run(['chmod', 'g+w', '/opt/gluu/python/libs'])
+        self.logIt("Copying casa.war into jetty webapps folder...")
+        self.installJettyService(self.jetty_app_configuration['casa'])
+
+        jettyServiceWebapps = os.path.join(self.jetty_base,
+                                            'casa',
+                                            'webapps'
+                                            )
+
+        self.copyFile(
+                    os.path.join(self.distGluuFolder, 'casa.war'),
+                    jettyServiceWebapps
+                    )
+
+        jettyServiceOxAuthCustomLibsPath = os.path.join(self.jetty_base,
+                                                        "oxauth", 
+                                                        "custom/libs"
+                                                        )
+        
+        self.copyFile(
+                os.path.join(self.distGluuFolder, 
+                'twilio-{0}.jar'.format(self.twilio_version)), 
+                jettyServiceOxAuthCustomLibsPath
+                )
+        
+        self.copyFile(
+                os.path.join(self.distGluuFolder, 'jsmpp-{}.jar'.format(self.jsmmp_version)), 
+                jettyServiceOxAuthCustomLibsPath
+                )
+        
+        self.run([self.cmd_chown, '-R', 'jetty:jetty', jettyServiceOxAuthCustomLibsPath])
+
+        # Make necessary Directories for Casa
+        for path in ('/opt/gluu/jetty/casa/static/', '/opt/gluu/jetty/casa/plugins'):
+            if not os.path.exists(path):
+                self.run(['mkdir', '-p', path])
+                self.run(['chown', '-R', 'jetty:jetty', path])
+        
+        #Adding twilio jar path to oxauth.xml
+        oxauth_xml_fn = '/opt/gluu/jetty/oxauth/webapps/oxauth.xml'
+        if os.path.exists(oxauth_xml_fn):
+            
+            class CommentedTreeBuilder(ElementTree.TreeBuilder):
+                def comment(self, data):
+                    self.start(ElementTree.Comment, {})
+                    self.data(data)
+                    self.end(ElementTree.Comment)
+
+            parser = ElementTree.XMLParser(target=CommentedTreeBuilder())
+            tree = ElementTree.parse(oxauth_xml_fn, parser)
+            root = tree.getroot()
+
+            xml_headers = '<?xml version="1.0"  encoding="ISO-8859-1"?>\n<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">\n\n'
+
+            for element in root:
+                if element.tag == 'Set' and element.attrib.get('name') == 'extraClasspath':
+                    break
+            else:
+                element = ElementTree.SubElement(root, 'Set', name='extraClasspath')
+                element.text = ''
+
+            extraClasspath_list = element.text.split(',')
+
+            for ecp in extraClasspath_list[:]:
+                if (not ecp) or re.search('twilio-(.*)\.jar', ecp) or re.search('jsmpp-(.*)\.jar', ecp):
+                    extraClasspath_list.remove(ecp)
+
+            extraClasspath_list.append('./custom/libs/twilio-{}.jar'.format(self.twilio_version))
+            extraClasspath_list.append('./custom/libs/jsmpp-{}.jar'.format(self.jsmmp_version))
+            element.text = ','.join(extraClasspath_list)
+
+            self.writeFile(oxauth_xml_fn, xml_headers+ElementTree.tostring(root))
+
+        
+        casa_config = os.path.join(self.configFolder, 'casa.json')
+        self.run(['chown', 'jetty:jetty', casa_config])
+        self.run(['chmod', 'g+w', casa_config])
+
+        data = self.readFile(casa_config)
+        datastore = json.loads(data)
+
+        oxd_hostname, oxd_port = self.parse_url(self.oxd_server_https)
+        if not oxd_port: oxd_port=8443
+
+        datastore['oxd_config']['host'] = oxd_hostname
+        datastore['oxd_config']['port'] = oxd_port
+
+        datastore_str = json.dumps(datastore, indent=2)
+        self.writeFile(casa_config, datastore_str)
+
+        self.enable_service_at_start('casa')
+
+    def parse_url(self, url):
+        o = urlparse(url)
+        return o.hostname, o.port
+
 
     def install_gluu_radius(self):
         
@@ -5359,7 +5589,8 @@ if __name__ == '__main__':
     parser.add_argument('--remote-couchbase', help="Enables using remote couchbase server", action='store_true')
     parser.add_argument('--no-data', help="Do not import any data to database backend, used for clustering", action='store_true')
     parser.add_argument('-properties-password', help="Encoded setup.properties file password")
-    
+    parser.add_argument('--install-casa', help="Install Casa", action='store_true')
+    parser.add_argument('--install-oxd', help="Install Oxd Server", action='store_true')
     argsp = parser.parse_args()
 
     # Disable tui for version 4.1.0
@@ -5394,6 +5625,8 @@ if __name__ == '__main__':
         'installOxAuthRP': False,
         'installPassport': False,
         'installGluuRadius': False,
+        'installCasa': False,
+        'installOxd': False,
         'loadTestData': False,
         'allowPreReleasedFeatures': False,
         'listenAllInterfaces': False,
@@ -5431,7 +5664,10 @@ if __name__ == '__main__':
     setupOptions['loadTestDataExit'] = argsp.x
     setupOptions['allowPreReleasedFeatures'] = argsp.allow_pre_released_features
     setupOptions['listenAllInterfaces'] = argsp.listen_all_interfaces
-    
+    setupOptions['installCasa'] = argsp.install_casa
+    setupOptions['installOxd'] = argsp.install_oxd
+
+
     if argsp.remote_ldap:
         setupOptions['wrends_install'] = REMOTE
     
