@@ -4088,6 +4088,11 @@ class Setup(object):
         # Jetty services
         # Iterate through all components and start installed
         for applicationName, applicationConfiguration in self.jetty_app_configuration.iteritems():
+
+            # we will start casa later, after importing oxd certificate
+            if applicationName == 'casa':
+                continue
+                
             if applicationConfiguration['installed']:
                 self.pbar.progress("gluu", "Starting Gluu Jetty {} Service".format(applicationName))
                 self.run_service_command(applicationName, 'start')
@@ -4129,17 +4134,9 @@ class Setup(object):
             except:
                 self.logIt(traceback.format_exc(), True)
 
-            # Ensure oxd is running
-            self.pbar.progress("gluu", "Checking oxd Service")
-            for i in range(5):
-                if self.check_oxd_server(self.oxd_server_https, False):
-                    self.pbar.progress("gluu", "Starting Casa Service")
-                    self.run_service_command('casa', 'start')
-                    break
-                else:
-                    time.sleep(2)
-            else:
-                self.post_messages.append("{}Can't start casa since oxd server did not respond.\nPlease ensure oxd server is up and restart casa.{}".format(colors.ERROR, colors.ENDC))
+
+            self.pbar.progress("gluu", "Starting Casa Service")
+            self.run_service_command('casa', 'start')
 
         # Radius service
         if self.installGluuRadius:
