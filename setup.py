@@ -4101,6 +4101,8 @@ class Setup(object):
         if self.installOxd:
             self.pbar.progress("gluu", "Starting oxd Service")
             self.run_service_command('oxd-server', 'start')
+            #wait 2 seconds for oxd server is up
+            time.sleep(2)
 
         # casa service
         if self.installCasa:
@@ -4114,7 +4116,7 @@ class Setup(object):
                 if not oxd_port: oxd_port=8443
 
                 oxd_cert = ssl.get_server_certificate((oxd_hostname, oxd_port))
-                oxd_alias = 'oxd_' + self.oxd_hostname.replace('.','_')
+                oxd_alias = 'oxd_' + oxd_hostname.replace('.','_')
                 oxd_cert_tmp_fn = '/tmp/{}.crt'.format(oxd_alias)
 
                 with open(oxd_cert_tmp_fn,'w') as w:
@@ -4127,8 +4129,17 @@ class Setup(object):
             except:
                 self.logIt(traceback.format_exc(), True)
 
-            self.pbar.progress("gluu", "Starting Casa Service")
-            self.run_service_command('casa', 'start')
+            # Ensure oxd is running
+            self.pbar.progress("gluu", "Checking oxd Service")
+            for i in range(5):
+                if self.check_oxd_server(self.oxd_server_https, False):
+                    self.pbar.progress("gluu", "Starting Casa Service")
+                    self.run_service_command('casa', 'start')
+                    break
+                else:
+                    time.sleep(2)
+            else:
+                self.post_messages.append("{}Can't start casa since oxd server did not respond.\nPlease ensure oxd server is up and restart casa.{}".format(colors.ERROR, colors.ENDC))
 
         # Radius service
         if self.installGluuRadius:
