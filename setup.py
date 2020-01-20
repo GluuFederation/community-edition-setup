@@ -5265,6 +5265,9 @@ class Setup(object):
         datastore_str = json.dumps(datastore, indent=2)
         self.writeFile(casa_config, datastore_str)
 
+        for script_fn in glob.glob(os.path.join(self.staticFolder, 'casa/scripts/*.*')):
+            self.run(['cp', script_fn, self.gluuOptPythonFolder])
+
         self.enable_service_at_start('casa')
 
     def parse_url(self, url):
