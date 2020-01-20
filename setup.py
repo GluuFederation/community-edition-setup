@@ -5257,7 +5257,8 @@ class Setup(object):
         datastore = json.loads(data)
 
         oxd_hostname, oxd_port = self.parse_url(self.oxd_server_https)
-        if not oxd_port: oxd_port=8443
+        if not oxd_port: 
+            oxd_port=8443
 
         datastore['oxd_config']['host'] = oxd_hostname
         datastore['oxd_config']['port'] = oxd_port
@@ -5265,8 +5266,9 @@ class Setup(object):
         datastore_str = json.dumps(datastore, indent=2)
         self.writeFile(casa_config, datastore_str)
 
+        pylib_folder = os.path.join(self.gluuOptPythonFolder, 'libs')
         for script_fn in glob.glob(os.path.join(self.staticFolder, 'casa/scripts/*.*')):
-            self.run(['cp', script_fn, self.gluuOptPythonFolder])
+            self.run(['cp', script_fn, pylib_folder])
 
         self.enable_service_at_start('casa')
 
