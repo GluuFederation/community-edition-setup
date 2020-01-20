@@ -10,7 +10,7 @@
       ["oxStatus"], 
       ["oxApplication"], 
       ["oxDeviceHashCode"], 
-      ["oxDeviceKeyHandle"], 
+      ["oxDeviceKeyHandle"]
 
     ],
     "static" : [
