@@ -41,6 +41,9 @@ setupObj.setup = setupObj
 
 setupObj.load_properties('/install/community-edition-setup/setup.properties.last')
 
+setupObj.log = os.path.join(setupObj.install_dir, 'post_setup.log')
+setupObj.logError = os.path.join(setupObj.install_dir, 'post_setup_error.log')
+
 if not hasattr(setupObj, 'ldap_type'):
     setupObj.ldap_type = 'open_ldap'
 
