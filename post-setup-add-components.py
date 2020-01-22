@@ -49,6 +49,7 @@ attribDataTypes.startup('.')
 
 setupObj.cbm = CBM(setupObj.couchbase_hostname, setupObj.couchebaseClusterAdmin, setupObj.ldapPass)
 
+setupObj.createLdapPw()
 
 if not hasattr(setupObj, 'ldap_type'):
     setupObj.ldap_type = 'open_ldap'
@@ -200,5 +201,7 @@ if args.addpassport:
 
 if args.addradius:
     installRadius()
+
+setupObj.deleteLdapPw()
 
 print "Please exit container and restart Gluu Server"
