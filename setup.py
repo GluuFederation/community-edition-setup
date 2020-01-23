@@ -5159,12 +5159,25 @@ class Setup(object):
         oxd_root = '/opt/oxd-server/'
         self.run(['tar', '-zxf', self.oxd_package, '-C', '/opt'])
         self.run(['chown', '-R', 'jetty:jetty', oxd_root])
-        self.run(['cp', os.path.join(oxd_root, 'oxd-server.service'), '/lib/systemd/system'])
+        
+        service_file = os.path.join(oxd_root, 'oxd-server.service')
+        if os.path.exists(service_file):
+            self.run(['cp', service_file, '/lib/systemd/system'])
+        else:
+            service_file = os.path.join(oxd_root, 'oxd-server.init.d')
+            target_file = '/etc/init.d/oxd-server'
+            self.run(['cp', service_file, target_file])
+            self.run(['chmod', '+x', target_file])
+            self.run(['update-rc.d', 'oxd-server', 'defaults'])
+
+        self.run(['cp', os.path.join(oxd_root, 'oxd-server-default'),  '/etc/default/oxd-server'])
+
         self.run(['mkdir', '/var/log/oxd-server'])
         self.run(['chown', 'jetty:jetty', '/var/log/oxd-server'])
         
         for fn in glob.glob(os.path.join(oxd_root,'bin/*')):
             self.run(['chmod', '+x', fn])
+
 
         self.enable_service_at_start('oxd-server')
 
