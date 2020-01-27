@@ -4,6 +4,7 @@ import argparse
 import sys
 import subprocess
 import json
+import zipfile
 
 if not os.path.exists('setup.py'):
     print "This script should be run from /install/community-edition-setup/"
@@ -33,13 +34,86 @@ if  len(sys.argv)<2:
     parser.exit(1)
 
 
-from setup import Setup
+oxVersion = 0
+setup_properties_fn = '/install/community-edition-setup/setup.properties.last'
+install_dir = '.'
 
-setupObj = Setup('.')
+#Determine setup version
+with open(setup_properties_fn) as f:
+    for l in f:
+        ls = l.strip()
+        if ls.startswith('oxVersion'):
+            n = ls.find('=')
+            oxVersion_setup = ls[n+1:].strip()
+
+#Determine gluu version
+war_zip = zipfile.ZipFile('/opt/gluu/jetty/oxauth/webapps/oxauth.war', 'r')
+menifest = war_zip.read('META-INF/MANIFEST.MF')
+
+for l in menifest.splitlines():
+    ls = l.strip()
+    n = ls.find(':')
+
+    if ls[:n].strip() == 'Implementation-Version':
+        oxVersion_current = ls[n+1:].strip()
+        gluu_version_list = oxVersion_current.split('.')
+        if not gluu_version_list[-1].isdigit():
+            gluu_version_list.pop(-1)
+
+        gluu_version = '.'.join(gluu_version_list)
+
+print "Current Gluu Version", gluu_version
+
+if oxVersion_setup != oxVersion_current:
+
+    if os.path.exists('ces_current.back'):
+        os.system('rm -r -f ces_current.back')
+
+    if os.path.exists('ces_current'):
+        os.system('mv ces_current ces_current.back')
+
+    ces_url = 'https://github.com/GluuFederation/community-edition-setup/archive/version_{}.zip'.format(oxVersion_current)
+
+    print "Downloading Community Edition Setup {}".format(oxVersion_current)
+
+    os.system('wget {} -O version_{}.zip'.format(ces_url, oxVersion_current))
+    print "Extracting package"
+    os.system('unzip -o -qq version_{}.zip'.format(oxVersion_current))
+    os.system('mv community-edition-setup-version_{} ces_current'.format(oxVersion_current))
+
+    open('ces_current/__init__.py','w').close()
+
+    sys.path.append('ces_current')
+
+    from ces_current.setup import Setup
+    install_dir = 'ces_current'
+
+setupObj = Setup(install_dir)
 
 setupObj.setup = setupObj
 
+setupObj.os_type, setupObj.os_version = setupObj.detect_os_type()
+setupObj.os_initdaemon = setupObj.detect_initd()
+
+if oxVersion != gluu_version:
+
+    keep_keys = ['idp3_war', 'idp3_cml_keygenerator', 'idp3_dist_jar', 'idp3Folder',
+                'idp3MetadataFolder', 'idp3MetadataCredentialsFolder', 'idp3LogsFolder',
+                'idp3LibFolder', 'idp3ConfFolder', 'idp3ConfAuthnFolder', 
+                'idp3CredentialsFolder', 'idp3WebappFolder', 'oxVersion',
+                ]
+    keep_dict = {}
+
+    for k in keep_keys:
+        v = getattr(setupObj, k)
+        if v:
+            keep_dict[k] = v
+
 setupObj.load_properties('/install/community-edition-setup/setup.properties.last')
+
+if oxVersion != gluu_version:
+    for k in keep_dict:
+        setattr(setupObj, k, keep_dict[k])
 
 setupObj.log = os.path.join(setupObj.install_dir, 'post_setup.log')
 setupObj.logError = os.path.join(setupObj.install_dir, 'post_setup_error.log')
@@ -56,11 +130,20 @@ setupObj.ldapCertFn = setupObj.opendj_cert_fn
 
 def installSaml():
 
+
+    setupObj.run(['cp', '-f', os.path.join(setupObj.gluuOptFolder, 'jetty/identity/webapps/identity.war'), 
+                setupObj.distGluuFolder])
+
+    if not os.path.exists(setupObj.idp3Folder):
+        os.mkdir(setupObj.idp3Folder)
+
     if setupObj.idp3_metadata[0] == '/':
         setupObj.idp3_metadata = setupObj.idp3_metadata[1:]
 
     metadata_file = os.path.join(setupObj.idp3MetadataFolder, setupObj.idp3_metadata)
 
+    setupObj.run(['cp', '-f', './ces_current/templates/jetty.conf.tmpfiles.d',
+                            setupObj.templateFolder])
 
     if os.path.exists(metadata_file):
         print "Shibboleth is already installed on this system"
@@ -117,6 +200,11 @@ def installSaml():
         F.write(metadata)
     
     setupObj.run([setupObj.cmd_chown, '-R', 'jetty:jetty', setupObj.idp3Folder])
+    if not os.path.exists('/var/run/jetty'):
+        os.mkdir('/var/run/jetty')
+    setupObj.run([setupObj.cmd_chown, '-R', 'jetty:jetty', '/var/run/jetty'])
+    setupObj.enable_service_at_start('idp')
+
     print "Shibboleth installation done"
 
 
