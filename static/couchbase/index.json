@@ -47,7 +47,6 @@
       ["oxTicket"], 
       ["mail"], 
       ["oxId"], 
-      ["oxTicket"], 
       ["del"],
       ["ssnId"],
       ["oxAuthClientId"],
