@@ -1198,7 +1198,7 @@ class Setup(object):
         try:
             f = open(inFilePath)
             inFilePathText = f.read()
-            f.close
+            f.close()
         except:
             if logError:
                 self.logIt("Error reading %s" % inFilePathText, True)
