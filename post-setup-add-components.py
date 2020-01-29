@@ -76,7 +76,7 @@ if oxVersion_setup != oxVersion_current:
 
     print "Downloading Community Edition Setup {}".format(oxVersion_current)
 
-    os.system('wget {} -O version_{}.zip'.format(ces_url, oxVersion_current))
+    os.system('wget -nv {} -O version_{}.zip'.format(ces_url, oxVersion_current))
     print "Extracting package"
     os.system('unzip -o -qq version_{}.zip'.format(oxVersion_current))
     os.system('mv community-edition-setup-version_{} ces_current'.format(oxVersion_current))
@@ -101,6 +101,7 @@ if oxVersion != gluu_version:
                 'idp3MetadataFolder', 'idp3MetadataCredentialsFolder', 'idp3LogsFolder',
                 'idp3LibFolder', 'idp3ConfFolder', 'idp3ConfAuthnFolder', 
                 'idp3CredentialsFolder', 'idp3WebappFolder', 'oxVersion',
+                'node_version',
                 ]
     keep_dict = {}
 
@@ -184,10 +185,11 @@ def installSaml():
     setupObj.run([setupObj.cmd_mkdir, '-p', setupObj.idp3CredentialsFolder])
     setupObj.run([setupObj.cmd_mkdir, '-p', setupObj.idp3WebappFolder])
     
+    if oxVersion != gluu_version:    
+        setupObj.run(['/usr/bin/wget', setupObj.idp3_war, '--no-verbose', '-c', '--retry-connrefused', '--tries=10', '-O', '%s/idp.war' % setupObj.distGluuFolder])
+        setupObj.run(['/usr/bin/wget', setupObj.idp3_cml_keygenerator, '--no-verbose', '-c', '--retry-connrefused', '--tries=10', '-O', setupObj.distGluuFolder + '/idp3_cml_keygenerator.jar'])
+        setupObj.run(['/usr/bin/wget', setupObj.idp3_dist_jar, '--no-verbose', '-c', '--retry-connrefused', '--tries=10', '-O', setupObj.distGluuFolder + '/shibboleth-idp.jar'])
 
-    setupObj.run(['/usr/bin/wget', setupObj.idp3_war, '--no-verbose', '-c', '--retry-connrefused', '--tries=10', '-O', '%s/idp.war' % setupObj.distGluuFolder])
-    setupObj.run(['/usr/bin/wget', setupObj.idp3_cml_keygenerator, '--no-verbose', '-c', '--retry-connrefused', '--tries=10', '-O', setupObj.distGluuFolder + '/idp3_cml_keygenerator.jar'])
-    setupObj.run(['/usr/bin/wget', setupObj.idp3_dist_jar, '--no-verbose', '-c', '--retry-connrefused', '--tries=10', '-O', setupObj.distGluuFolder + '/shibboleth-idp.jar'])
     setupObj.installSaml = True
     setupObj.install_saml()
     
@@ -215,8 +217,39 @@ def installPassport():
         print "Passport is already installed on this system"
         sys.exit()
 
-    
+    if oxVersion != gluu_version:
+
+        node_url = 'https://nodejs.org/dist/v{0}/node-v{0}-linux-x64.tar.xz'.format(setupObj.node_version)
+        nod_archive_fn = os.path.basename(node_url)
+        
+        print "Downloading {}".format(nod_archive_fn)
+        setupObj.run(['wget', '-nv', node_url, '-O', os.path.join(setupObj.distAppFolder, nod_archive_fn)])
+        cur_node_dir = os.readlink('/opt/node')
+        setupObj.run(['unlink', '/opt/node'])
+        setupObj.run(['mv', cur_node_dir, cur_node_dir+'.back'])
+        
+        print "Installing", nod_archive_fn
+        setupObj.installNode()
+        
+        passport_url = 'https://ox.gluu.org/npm/passport/passport-{}.tgz'.format(gluu_version)
+        passport_modules_url = 'https://ox.gluu.org/npm/passport/passport-version_{}-node_modules.tar.gz'.format(gluu_version)
+        passport_fn = os.path.basename(passport_url)
+        passport_modules_fn = os.path.basename(passport_modules_url)
+        
+        print "Downloading {}".format(passport_fn)
+        setupObj.run(['wget', '-nv', passport_url, '-O', os.path.join(setupObj.distGluuFolder, 'passport.tgz')])
+
+        print "Downloading {}".format(passport_modules_fn)
+        setupObj.run(['wget', '-nv', passport_modules_url, '-O', os.path.join(setupObj.distGluuFolder, 'passport-node_modules.tar.gz')])
+
+
     print "Installing Passport ..."
+
+    print os.path.exists(os.path.join(setupObj.configFolder, 'passport-inbound-idp-initiated.json'))
+
+    if not os.path.exists(os.path.join(setupObj.configFolder, 'passport-inbound-idp-initiated.json')):
+        setupObj.run(['cp', 'ces_current/templates/passport-inbound-idp-initiated.json', setupObj.configFolder])
+
     proc = subprocess.Popen('echo "" | /opt/jre/bin/keytool -list -v -keystore /etc/certs/passport-rp.jks', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     alias_l=''
 
