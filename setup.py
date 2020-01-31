@@ -360,7 +360,7 @@ class Setup(object):
 
         # Component ithversions
         self.jre_version = '8.222.10.1'
-        self.jetty_version = '9.4.24.v20191120'
+        self.jetty_version = '9.4.26.v20200117'
         self.jython_version = '2.7.2a'
         self.node_version = '12.6.0'
         self.apache_version = None
