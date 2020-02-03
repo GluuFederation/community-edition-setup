@@ -6,6 +6,8 @@ import subprocess
 import json
 import zipfile
 
+cur_dir = os.path.dirname(os.path.realpath(__file__))
+
 if not os.path.exists('setup.py'):
     print "This script should be run from /install/community-edition-setup/"
     sys.exit()
@@ -68,41 +70,35 @@ for l in menifest.splitlines():
 
 print "Current Gluu Version", gluu_version
 
-if oxVersion_setup != oxVersion_current:
+ces_version_l = []
+for ci in oxVersion_current.split('.'):
+    if ci.lower() == 'final' or ci.lower().startswith('sp') or ci.lower().startswith('patch'):
+        continue
+    ces_version_l.append(ci)
+    
+ces_version = '.'.join(ces_version_l)
 
+if os.path.exists('ces_current.back'):
+    os.system('rm -r -f ces_current.back')
 
-    ces_version_l = []
-    for ci in oxVersion_current.split('.'):
-        if ci.lower() == 'final' or ci.lower().startswith('sp') or ci.lower().startswith('patch'):
-            continue
-        ces_version_l.append(ci)
-        
-    ces_version = '.'.join(ces_version_l)
+if os.path.exists('ces_current'):
+    os.system('mv ces_current ces_current.back')
 
-    if os.path.exists('ces_current.back'):
-        os.system('rm -r -f ces_current.back')
+ces_url = 'https://github.com/GluuFederation/community-edition-setup/archive/version_{}.zip'.format(ces_version)
 
-    if os.path.exists('ces_current'):
-        os.system('mv ces_current ces_current.back')
+print "Downloading Community Edition Setup {}".format(ces_version)
 
-    ces_url = 'https://github.com/GluuFederation/community-edition-setup/archive/version_{}.zip'.format(ces_version)
+os.system('wget -nv {} -O version_{}.zip'.format(ces_url, ces_version))
+print "Extracting package"
+os.system('unzip -o -qq version_{}.zip'.format(ces_version))
+os.system('mv community-edition-setup-version_{} ces_current'.format(ces_version))
 
-    print "Downloading Community Edition Setup {}".format(ces_version)
+open('ces_current/__init__.py','w').close()
 
-    os.system('wget -q {} -O version_{}.zip'.format(ces_url, ces_version))
-    print "Extracting package"
-    os.system('unzip -o -qq version_{}.zip'.format(ces_version))
-    os.system('mv community-edition-setup-version_{} ces_current'.format(ces_version))
+sys.path.append('ces_current')
 
-    open('ces_current/__init__.py','w').close()
-
-    sys.path.append('ces_current')
- 
-    from ces_current.setup import *
-    install_dir = 'ces_current'
-
-else:
-    import Setup    
+from ces_current.setup import *
+install_dir = 'ces_current'
 
 setupObj = Setup(install_dir)
 
@@ -118,6 +114,8 @@ if oxVersion != gluu_version:
                 'idp3MetadataFolder', 'idp3MetadataCredentialsFolder', 'idp3LogsFolder',
                 'idp3LibFolder', 'idp3ConfFolder', 'idp3ConfAuthnFolder', 
                 'idp3CredentialsFolder', 'idp3WebappFolder', 'oxVersion',
+                'templateFolder', 'outputFolder',
+                'ldif_passport_config', 'ldif_passport', 'ldif_passport_clients',
                 ]
     keep_dict = {}
 
@@ -131,6 +129,9 @@ setupObj.load_properties('/install/community-edition-setup/setup.properties.last
 if oxVersion != gluu_version:
     for k in keep_dict:
         setattr(setupObj, k, keep_dict[k])
+
+
+setupObj.githubBranchName = oxVersion
 
 setupObj.log = os.path.join(setupObj.install_dir, 'post_setup.log')
 setupObj.logError = os.path.join(setupObj.install_dir, 'post_setup_error.log')
@@ -154,8 +155,6 @@ else:
 setupObj.ldapCertFn = setupObj.opendj_cert_fn
 
 def installSaml():
-
-
 
     setupObj.run(['cp', '-f', os.path.join(setupObj.gluuOptFolder, 'jetty/identity/webapps/identity.war'), 
                 setupObj.distGluuFolder])
@@ -241,9 +240,62 @@ def installPassport():
         print "Passport is already installed on this system"
         sys.exit()
 
+    if oxVersion != gluu_version:
+
+        node_url = 'https://nodejs.org/dist/v{0}/node-v{0}-linux-x64.tar.xz'.format(setupObj.node_version)
+        nod_archive_fn = os.path.basename(node_url)
+
+        print "Downloading {}".format(nod_archive_fn)
+        setupObj.run(['wget', '-nv', node_url, '-O', os.path.join(setupObj.distAppFolder, nod_archive_fn)])
+        cur_node_dir = os.readlink('/opt/node')
+        setupObj.run(['unlink', '/opt/node'])
+        setupObj.run(['mv', cur_node_dir, cur_node_dir+'.back'])
+
+        print "Installing", nod_archive_fn
+        setupObj.installNode()
+
+        passport_url = 'https://ox.gluu.org/npm/passport/passport-{}.tgz'.format(gluu_version)
+        passport_modules_url = 'https://ox.gluu.org/npm/passport/passport-version_{}-node_modules.tar.gz'.format(gluu_version)
+        passport_fn = os.path.basename(passport_url)
+        passport_modules_fn = os.path.basename(passport_modules_url)
+
+        print "Downloading {}".format(passport_fn)
+        setupObj.run(['wget', '-nv', passport_url, '-O', os.path.join(setupObj.distGluuFolder, 'passport.tgz')])
+
+        print "Downloading {}".format(passport_modules_fn)
+        setupObj.run(['wget', '-nv', passport_modules_url, '-O', os.path.join(setupObj.distGluuFolder, 'passport-node_modules.tar.gz')])
+
+        if setupObj.os_initdaemon == 'systemd':
+            passport_syatemd_url = 'https://raw.githubusercontent.com/GluuFederation/community-edition-package/master/package/systemd/passport.service'
+            passport_syatemd_fn = os.path.basename(passport_syatemd_url)
+            
+            print "Downloading {}".format(passport_syatemd_fn)
+            setupObj.run(['wget', '-nv', passport_syatemd_url, '-O', '/usr/lib/systemd/system/passport.service'])
+
+
+
+    setupObj.installPassport = True
+    setupObj.calculate_selected_aplications_memory()
+    
+    setupObj.renderTemplateInOut(
+                    os.path.join(cur_dir, 'ces_current/templates/node/passport'),
+                    os.path.join(cur_dir, 'ces_current/templates/node'),
+                    os.path.join(cur_dir, 'ces_current/output/node')
+                    )
+
+
     print "Installing Passport ..."
+
+    if not os.path.exists(os.path.join(setupObj.configFolder, 'passport-inbound-idp-initiated.json')) and os.path.exists('ces_current/templates/passport-inbound-idp-initiated.json'):
+        setupObj.run(['cp', 'ces_current/templates/passport-inbound-idp-initiated.json', setupObj.configFolder])
+
+    proc = subprocess.Popen('echo "" | /opt/jre/bin/keytool -list -v -keystore /etc/certs/passport-rp.jks', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    alias_l=''
+    
     setupObj.generate_passport_configuration()
     setupObj.install_passport()
+    
+    
     print "Passport installation done"
 
 
