@@ -5186,7 +5186,9 @@ class Setup(object):
             self.run(['chmod', '+x', target_file])
             self.run(['update-rc.d', 'oxd-server', 'defaults'])
 
-        self.run(['cp', os.path.join(oxd_root, 'oxd-server-default'),  '/etc/default/oxd-server'])
+        default_file = os.path.join(oxd_root, 'oxd-server-default')
+        if os.path.exists(default_file):
+            self.run(['cp', default_file, '/etc/default/oxd-server'])
 
         self.run(['mkdir', '/var/log/oxd-server'])
         self.run(['chown', 'jetty:jetty', '/var/log/oxd-server'])
