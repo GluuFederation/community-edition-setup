@@ -29,6 +29,7 @@ else:
 parser = argparse.ArgumentParser()
 parser.add_argument("-addshib", help="Install Shibboleth SAML IDP", action="store_true")
 parser.add_argument("-addpassport", help="Install Passport", action="store_true")
+parser.add_argument("-addoxd", help="Install Oxd Server", action="store_true")
 args = parser.parse_args()
 
 if  len(sys.argv)<2:
@@ -78,6 +79,7 @@ for ci in oxVersion_current.split('.'):
     
 ces_version = '.'.join(ces_version_l)
 
+
 if os.path.exists('ces_current.back'):
     os.system('rm -r -f ces_current.back')
 
@@ -92,6 +94,7 @@ os.system('wget -nv {} -O version_{}.zip'.format(ces_url, ces_version))
 print "Extracting package"
 os.system('unzip -o -qq version_{}.zip'.format(ces_version))
 os.system('mv community-edition-setup-version_{} ces_current'.format(ces_version))
+
 
 open('ces_current/__init__.py','w').close()
 
@@ -298,11 +301,46 @@ def installPassport():
     
     print "Passport installation done"
 
+def installOxd():
+    
+    if os.path.exists('/opt/oxd-server'):
+        print "Oxd server was already installed"
+        return
+    
+    print "Installing Oxd Server"
+    
+    if oxVersion != gluu_version:
+
+        oxd_url = 'https://ox.gluu.org/maven/org/gluu/oxd-server/{0}/oxd-server-{0}-distribution.zip'.format(oxVersion_current)
+
+        print "Downloading {} and preparing package".format(os.path.basename(oxd_url))
+        oxd_zip_fn = '/tmp/oxd-server.zip'
+        oxd_tmp_dir = '/tmp/oxd-server'
+
+        setupObj.run(['wget', '-nv', oxd_url, '-O', oxd_zip_fn])
+        setupObj.run(['unzip', '-qqo', '/tmp/oxd-server.zip', '-d', oxd_tmp_dir])
+
+        default_url = 'https://raw.githubusercontent.com/GluuFederation/oxd/version_{}/debian/oxd-server-default'.format(ces_version)
+        setupObj.run(['wget', '-nv', default_url, '-O', os.path.join(oxd_tmp_dir, 'oxd-server-default')])
+
+        service_file = 'oxd-server.init.d' if setupObj.os_type + setupObj.os_version in ('ubuntu18','debian9') else 'oxd-server.service'
+        service_url = 'https://raw.githubusercontent.com/GluuFederation/oxd/version_{}/debian/{}.file'.format(ces_version, service_file)
+        setupObj.run(['wget', '-nv', service_url, '-O', os.path.join(oxd_tmp_dir, service_file)])
+        setupObj.run(['tar', '-zcf', os.path.join(setupObj.distGluuFolder, 'oxd-server.tgz'), 'oxd-server'], cwd='/tmp')
+    
+        oxd_server_sh_url = 'https://raw.githubusercontent.com/GluuFederation/oxd/version_{}/debian/oxd-server.sh'.format(ces_version)
+        setupObj.run(['wget', '-nv', oxd_server_sh_url, '-O', os.path.join(oxd_tmp_dir, 'bin/oxd-server.sh')])
+
+    setupObj.oxd_package = os.path.join(setupObj.distGluuFolder, 'oxd-server.tgz')
+    setupObj.install_oxd()
 
 if args.addshib:
     installSaml()
 
 if args.addpassport:
     installPassport()
+
+if args.addoxd:
+    installOxd()
 
 print "Please exit container and restart Gluu Server"
