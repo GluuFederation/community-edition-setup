@@ -30,6 +30,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-addshib", help="Install Shibboleth SAML IDP", action="store_true")
 parser.add_argument("-addpassport", help="Install Passport", action="store_true")
 parser.add_argument("-addoxd", help="Install Oxd Server", action="store_true")
+parser.add_argument("-addcasa", help="Install Gluu Casa", action="store_true")
+
 args = parser.parse_args()
 
 if  len(sys.argv)<2:
@@ -293,7 +295,6 @@ def installPassport():
         setupObj.run(['cp', 'ces_current/templates/passport-inbound-idp-initiated.json', setupObj.configFolder])
 
     proc = subprocess.Popen('echo "" | /opt/jre/bin/keytool -list -v -keystore /etc/certs/passport-rp.jks', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    alias_l=''
     
     setupObj.generate_passport_configuration()
     setupObj.install_passport()
@@ -319,6 +320,7 @@ def installOxd():
 
         setupObj.run(['wget', '-nv', oxd_url, '-O', oxd_zip_fn])
         setupObj.run(['unzip', '-qqo', '/tmp/oxd-server.zip', '-d', oxd_tmp_dir])
+        setupObj.run(['mkdir', os.path.join(oxd_tmp_dir,'data')])
 
         if setupObj.os_type + setupObj.os_version in ('ubuntu18','debian9'):
             default_url = 'https://raw.githubusercontent.com/GluuFederation/oxd/version_{}/debian/oxd-server-default'.format(ces_version)
@@ -327,13 +329,35 @@ def installOxd():
         service_file = 'oxd-server.init.d' if setupObj.os_type + setupObj.os_version in ('ubuntu18','debian9') else 'oxd-server.service'
         service_url = 'https://raw.githubusercontent.com/GluuFederation/oxd/version_{}/debian/{}.file'.format(ces_version, service_file)
         setupObj.run(['wget', '-nv', service_url, '-O', os.path.join(oxd_tmp_dir, service_file)])
-        setupObj.run(['tar', '-zcf', os.path.join(setupObj.distGluuFolder, 'oxd-server.tgz'), 'oxd-server'], cwd='/tmp')
-    
+
         oxd_server_sh_url = 'https://raw.githubusercontent.com/GluuFederation/oxd/version_{}/debian/oxd-server.sh'.format(ces_version)
         setupObj.run(['wget', '-nv', oxd_server_sh_url, '-O', os.path.join(oxd_tmp_dir, 'bin/oxd-server.sh')])
 
+        setupObj.run(['tar', '-zcf', os.path.join(setupObj.distGluuFolder, 'oxd-server.tgz'), 'oxd-server'], cwd='/tmp')
+    
+
     setupObj.oxd_package = os.path.join(setupObj.distGluuFolder, 'oxd-server.tgz')
     setupObj.install_oxd()
+
+def installCasa():
+
+    print "Installing Gluu Casa"
+
+    setupObj.promptForCasaInstallation(promptForCasa='y')
+
+    if setupObj.installOxd:
+        installOxd()
+        setupObj.run_service_command('oxd-server', 'restart')
+
+    setupObj.import_oxd_certificate()
+
+    setupObj.renderTemplateInOut(
+                    os.path.join(cur_dir, 'ces_current/templates/casa.json'),
+                    os.path.join(cur_dir, 'ces_current/templates'),
+                    os.path.join(cur_dir, 'ces_current/output'),
+                    )
+    setupObj.calculate_selected_aplications_memory()
+    setupObj.install_casa()
 
 if args.addshib:
     installSaml()
@@ -343,5 +367,8 @@ if args.addpassport:
 
 if args.addoxd:
     installOxd()
+
+if args.addcasa:
+    installCasa()
 
 print "Please exit container and restart Gluu Server"

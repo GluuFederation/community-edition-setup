@@ -4123,29 +4123,7 @@ class Setup(object):
 
         # casa service
         if self.installCasa:
-            
-            # import_oxd_certificate2javatruststore:
-            self.logIt("Importing oxd certificate")
-
-            try:
-
-                oxd_hostname, oxd_port = self.parse_url(self.oxd_server_https)
-                if not oxd_port: oxd_port=8443
-
-                oxd_cert = ssl.get_server_certificate((oxd_hostname, oxd_port))
-                oxd_alias = 'oxd_' + oxd_hostname.replace('.','_')
-                oxd_cert_tmp_fn = '/tmp/{}.crt'.format(oxd_alias)
-
-                with open(oxd_cert_tmp_fn,'w') as w:
-                    w.write(oxd_cert)
-
-                self.run(['/opt/jre/jre/bin/keytool', '-import', '-trustcacerts', '-keystore', 
-                                '/opt/jre/jre/lib/security/cacerts', '-storepass', 'changeit', 
-                                '-noprompt', '-alias', oxd_alias, '-file', oxd_cert_tmp_fn])
-                        
-            except:
-                self.logIt(traceback.format_exc(), True)
-
+            self.import_oxd_certificate()
 
             self.pbar.progress("gluu", "Starting Casa Service")
             self.run_service_command('casa', 'start')
@@ -4154,7 +4132,31 @@ class Setup(object):
         if self.installGluuRadius:
             self.pbar.progress("gluu", "Starting Gluu Radius Service")
             self.run_service_command('gluu-radius', 'start')
-        
+
+    def import_oxd_certificate(self):
+
+        # import_oxd_certificate2javatruststore:
+        self.logIt("Importing oxd certificate")
+
+        try:
+
+            oxd_hostname, oxd_port = self.parse_url(self.oxd_server_https)
+            if not oxd_port: oxd_port=8443
+
+            oxd_cert = ssl.get_server_certificate((oxd_hostname, oxd_port))
+            oxd_alias = 'oxd_' + oxd_hostname.replace('.','_')
+            oxd_cert_tmp_fn = '/tmp/{}.crt'.format(oxd_alias)
+
+            with open(oxd_cert_tmp_fn,'w') as w:
+                w.write(oxd_cert)
+
+            self.run(['/opt/jre/jre/bin/keytool', '-import', '-trustcacerts', '-keystore', 
+                            '/opt/jre/jre/lib/security/cacerts', '-storepass', 'changeit', 
+                            '-noprompt', '-alias', oxd_alias, '-file', oxd_cert_tmp_fn])
+                    
+        except:
+            self.logIt(traceback.format_exc(), True)
+
 
     def update_hostname(self):
         self.logIt("Copying hosts and hostname to final destination")
