@@ -3086,6 +3086,36 @@ class Setup(object):
                 print colors.ENDC
 
 
+    def promptForCasaInstallation(self, promptForCasa='n'):
+        
+        if promptForCasa == 'n':
+            promptForCasa = self.getPrompt("Install Casa?", 
+                                            self.getDefaultOption(self.installCasa)
+                                            )[0].lower()
+        if promptForCasa == 'y':
+            self.installCasa = True
+            self.couchbaseBucketDict['default']['ldif'].append(self.ldif_scripts_casa)
+        else:
+            self.installCasa = False
+
+        if self.installCasa:
+            print "Please enter URL of oxd-server if you have one, for example: https://oxd.mygluu.org:8443"
+            if self.oxd_package:
+                print "Else leave blank to install oxd server locally."
+
+            while True:
+                oxd_server_https = raw_input("oxd Server URL: ").lower()
+                
+                if (not oxd_server_https) and self.oxd_package:
+                    self.installOxd = True
+                    break
+
+                print "Checking oxd server ..."
+                if self.check_oxd_server(oxd_server_https):
+                    self.oxd_server_https = oxd_server_https
+                    break
+
+
     def promptForProperties(self):
 
         if self.noPrompt:
@@ -3334,32 +3364,7 @@ class Setup(object):
             self.oxd_package = max(oxd_package_list)
 
         if os.path.exists(os.path.join(self.distGluuFolder, 'casa.war')):
-
-            promptForCasa = self.getPrompt("Install Casa?", 
-                                                self.getDefaultOption(self.installCasa)
-                                                )[0].lower()
-            if promptForCasa == 'y':
-                self.installCasa = True
-                self.couchbaseBucketDict['default']['ldif'].append(self.ldif_scripts_casa)
-            else:
-                self.installCasa = False
-
-            if self.installCasa:
-                print "Please enter URL of oxd-server if you have one, for example: https://oxd.mygluu.org:8443"
-                if self.oxd_package:
-                    print "Else leave blank to install oxd server locally."
-
-                while True:
-                    oxd_server_https = raw_input("oxd Server URL: ").lower()
-                    
-                    if (not oxd_server_https) and self.oxd_package:
-                        self.installOxd = True
-                        break
-
-                    print "Checking oxd server ..."
-                    if self.check_oxd_server(oxd_server_https):
-                        self.oxd_server_https = oxd_server_https
-                        break
+            self.promptForCasaInstallation()
 
         if (not self.installOxd) and self.oxd_package:
             promptForOxd = self.getPrompt("Install Oxd?", 
