@@ -343,6 +343,24 @@ def installCasa():
 
     print "Installing Gluu Casa"
 
+    setupObj.createLdapPw()
+
+    setupObj.prepare_base64_extension_scripts()
+
+    casa_script_name = os.path.basename(setupObj.ldif_scripts_casa)
+
+    setupObj.renderTemplateInOut(
+                    os.path.join(cur_dir, 'ces_current/templates/', casa_script_name),
+                    os.path.join(cur_dir, 'ces_current/templates'),
+                    os.path.join(cur_dir, 'ces_current/output'),
+                    )
+
+    setupObj.import_ldif_template_opendj(
+            os.path.join(cur_dir, 'ces_current/output', casa_script_name)
+            )
+    
+    setupObj.deleteLdapPw()
+
     setupObj.promptForCasaInstallation(promptForCasa='y')
 
     if setupObj.installOxd:
