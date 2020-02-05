@@ -16,16 +16,6 @@ if not os.path.exists('/install/community-edition-setup/setup.properties.last'):
     print "setup.properties.last is missing can't continue"
     sys.exit()
 
-f=open('setup.py').readlines()
-
-for l in f:
-    if l.startswith('from pyDes import *'):
-        break
-else:
-    f.insert(1, 'from pyDes import *\n')
-    with open('setup.py','w') as w:
-        w.write(''.join(f))
-
 parser = argparse.ArgumentParser()
 parser.add_argument("-addshib", help="Install Shibboleth SAML IDP", action="store_true")
 parser.add_argument("-addpassport", help="Install Passport", action="store_true")
@@ -38,6 +28,11 @@ if  len(sys.argv)<2:
     parser.print_help()
     parser.exit(1)
 
+def get_properties(prop_fn):
+    p = Properties.Properties()
+    with open(prop_fn) as file_object:
+        p.load(file_object)
+    return p
 
 oxVersion = 0
 setup_properties_fn = '/install/community-edition-setup/setup.properties.last'
@@ -159,7 +154,31 @@ else:
 
 setupObj.ldapCertFn = setupObj.opendj_cert_fn
 
+
+# Determine persistence type
+gluu_prop = get_properties(setupObj.gluu_properties_fn)
+persistence_type = gluu_prop['persistence.type']
+
+if persistence_type == 'hybrid':
+    hybrid_prop = get_properties(setupObj.gluu_hybrid_roperties)    
+    persistence_type = hybrid_prop['storage.default']
+
+if persistence_type == 'couchbase':
+    gluu_cb_prop = get_properties(setupObj.gluuCouchebaseProperties)
+    cb_serevr = gluu_cb_prop['servers'].split(',')[0].strip()
+    cb_admin = gluu_cb_prop['auth.userName']
+    encoded_cb_password = gluu_cb_prop['auth.userPassword']
+    cb_passwd = os.popen('/opt/gluu/bin/encode.py -D ' + encoded_cb_password).read().strip()
+
+    from ces_current.pylib.cbm import CBM
+    setupObj.cbm = CBM(cb_serevr, cb_admin, cb_passwd)
+
+
 def installSaml():
+
+    if os.path.exists('/opt//shibboleth-idp'):
+        print "SAML is already installed on this system"
+        return
 
     setupObj.run(['cp', '-f', os.path.join(setupObj.gluuOptFolder, 'jetty/identity/webapps/identity.war'), 
                 setupObj.distGluuFolder])
@@ -243,7 +262,7 @@ def installPassport():
     
     if os.path.exists('/opt/gluu/node/passport'):
         print "Passport is already installed on this system"
-        sys.exit()
+        return
 
     if oxVersion != gluu_version:
 
@@ -341,27 +360,34 @@ def installOxd():
 
 def installCasa():
 
+    if os.path.exists('/opt/gluu/jetty/casa'):
+        print "Casa is already installed on this system"
+        return
+
     print "Installing Gluu Casa"
 
-    setupObj.createLdapPw()
+
+    setupObj.promptForCasaInstallation(promptForCasa='y')
+    if not setupObj.installCasa:
+        print "Casa installation cancelled"
 
     setupObj.prepare_base64_extension_scripts()
 
-    casa_script_name = os.path.basename(setupObj.ldif_scripts_casa)
-
+    casa_script_fn = os.path.basename(setupObj.ldif_scripts_casa)
+    casa_script_fp = os.path.join(cur_dir, 'ces_current/output', casa_script_fn)
+    
     setupObj.renderTemplateInOut(
-                    os.path.join(cur_dir, 'ces_current/templates/', casa_script_name),
+                    os.path.join(cur_dir, 'ces_current/templates/', casa_script_fn),
                     os.path.join(cur_dir, 'ces_current/templates'),
                     os.path.join(cur_dir, 'ces_current/output'),
                     )
 
-    setupObj.import_ldif_template_opendj(
-            os.path.join(cur_dir, 'ces_current/output', casa_script_name)
-            )
-    
-    setupObj.deleteLdapPw()
-
-    setupObj.promptForCasaInstallation(promptForCasa='y')
+    if persistence_type == 'ldap':
+        setupObj.createLdapPw()
+        setupObj.import_ldif_template_opendj(casa_script_fp)
+        setupObj.deleteLdapPw()
+    else:
+        setupObj.import_ldif_couchebase(ldif_file_list=[casa_script_fp], bucket='gluu')
 
     if setupObj.installOxd:
         installOxd()
