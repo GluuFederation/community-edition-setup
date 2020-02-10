@@ -360,7 +360,7 @@ class Setup(object):
 
         # Component ithversions
         self.jre_version = '8.222.10.1'
-        self.jetty_version = '9.4.24.v20191120'
+        self.jetty_version = '9.4.26.v20200117'
         self.jython_version = '2.7.2a'
         self.node_version = '12.6.0'
         self.apache_version = None
@@ -966,6 +966,18 @@ class Setup(object):
             print "Please ensure that you are running this script inside Gluu container."
             sys.exit(1)
 
+    def get_ssl_subject(self, ssl_fn):
+        retDict = {}
+        cmd = 'openssl x509  -noout -subject -nameopt RFC2253 -in {}'.format(ssl_fn)
+        s = self.run(cmd, shell=True)
+        s = s.strip() + ','
+
+        for k in ('emailAddress', 'CN', 'O', 'L', 'ST', 'C'):
+            rex = re.search('{}=(.*?),'.format(k), s)
+            retDict[k] = rex.groups()[0] if rex else ''
+
+        return retDict
+
 
     def set_ownership(self):
         self.logIt("Changing ownership")
@@ -1483,6 +1495,8 @@ class Setup(object):
                         ):
             if getattr(self, si):
                 setattr(self, se, 'true')
+
+        return p
 
     def load_json(self, fn):
         self.logIt('Loading JSON from %s' % fn)
@@ -3086,6 +3100,52 @@ class Setup(object):
                 print colors.ENDC
 
 
+    def promptForCasaInstallation(self, promptForCasa='n'):
+        
+        if promptForCasa == 'n':
+            promptForCasa = self.getPrompt("Install Casa?", 
+                                            self.getDefaultOption(self.installCasa)
+                                            )[0].lower()
+        if promptForCasa == 'y':
+            self.installCasa = True
+            self.couchbaseBucketDict['default']['ldif'].append(self.ldif_scripts_casa)
+        else:
+            self.installCasa = False
+
+        if self.installCasa:
+            print "Please enter URL of oxd-server if you have one, for example: https://oxd.mygluu.org:8443"
+            if self.oxd_package:
+                print "Else leave blank to install oxd server locally."
+
+            while True:
+                oxd_server_https = raw_input("oxd Server URL: ").lower()
+                
+                if (not oxd_server_https) and self.oxd_package:
+                    self.installOxd = True
+                    break
+
+                print "Checking oxd server ..."
+                if self.check_oxd_server(oxd_server_https):
+                    oxd_hostname, oxd_port = self.parse_url(oxd_server_https)
+                    oxd_cert = ssl.get_server_certificate((oxd_hostname, oxd_port))
+                    oxd_crt_fn = '/tmp/oxd_{}.crt'.format(str(uuid.uuid4()))
+                    self.writeFile(oxd_crt_fn, oxd_cert)
+                    ssl_subjects = self.get_ssl_subject(oxd_crt_fn)
+                    
+                    if not ssl_subjects['CN'] == oxd_hostname:
+                        print ('Hostname of oxd ssl certificate is {0}{1}{2} '
+                                'which does not match {0}{3}{2}, \ncasa won\'t start '
+                                'properly').format(
+                                        colors.DANGER,
+                                        ssl_subjects['CN'],
+                                        colors.ENDC,
+                                        oxd_hostname
+                                        )
+                    else:
+                        self.oxd_server_https = oxd_server_https
+                        break
+
+
     def promptForProperties(self):
 
         if self.noPrompt:
@@ -3334,32 +3394,7 @@ class Setup(object):
             self.oxd_package = max(oxd_package_list)
 
         if os.path.exists(os.path.join(self.distGluuFolder, 'casa.war')):
-
-            promptForCasa = self.getPrompt("Install Casa?", 
-                                                self.getDefaultOption(self.installCasa)
-                                                )[0].lower()
-            if promptForCasa == 'y':
-                self.installCasa = True
-                self.couchbaseBucketDict['default']['ldif'].append(self.ldif_scripts_casa)
-            else:
-                self.installCasa = False
-
-            if self.installCasa:
-                print "Please enter URL of oxd-server if you have one, for example: https://oxd.mygluu.org:8443"
-                if self.oxd_package:
-                    print "Else leave blank to install oxd server locally."
-
-                while True:
-                    oxd_server_https = raw_input("oxd Server URL: ").lower()
-                    
-                    if (not oxd_server_https) and self.oxd_package:
-                        self.installOxd = True
-                        break
-
-                    print "Checking oxd server ..."
-                    if self.check_oxd_server(oxd_server_https):
-                        self.oxd_server_https = oxd_server_https
-                        break
+            self.promptForCasaInstallation()
 
         if (not self.installOxd) and self.oxd_package:
             promptForOxd = self.getPrompt("Install Oxd?", 
@@ -4118,29 +4153,7 @@ class Setup(object):
 
         # casa service
         if self.installCasa:
-            
-            # import_oxd_certificate2javatruststore:
-            self.logIt("Importing oxd certificate")
-
-            try:
-
-                oxd_hostname, oxd_port = self.parse_url(self.oxd_server_https)
-                if not oxd_port: oxd_port=8443
-
-                oxd_cert = ssl.get_server_certificate((oxd_hostname, oxd_port))
-                oxd_alias = 'oxd_' + oxd_hostname.replace('.','_')
-                oxd_cert_tmp_fn = '/tmp/{}.crt'.format(oxd_alias)
-
-                with open(oxd_cert_tmp_fn,'w') as w:
-                    w.write(oxd_cert)
-
-                self.run(['/opt/jre/jre/bin/keytool', '-import', '-trustcacerts', '-keystore', 
-                                '/opt/jre/jre/lib/security/cacerts', '-storepass', 'changeit', 
-                                '-noprompt', '-alias', oxd_alias, '-file', oxd_cert_tmp_fn])
-                        
-            except:
-                self.logIt(traceback.format_exc(), True)
-
+            self.import_oxd_certificate()
 
             self.pbar.progress("gluu", "Starting Casa Service")
             self.run_service_command('casa', 'start')
@@ -4149,7 +4162,31 @@ class Setup(object):
         if self.installGluuRadius:
             self.pbar.progress("gluu", "Starting Gluu Radius Service")
             self.run_service_command('gluu-radius', 'start')
-        
+
+    def import_oxd_certificate(self):
+
+        # import_oxd_certificate2javatruststore:
+        self.logIt("Importing oxd certificate")
+
+        try:
+
+            oxd_hostname, oxd_port = self.parse_url(self.oxd_server_https)
+            if not oxd_port: oxd_port=8443
+
+            oxd_cert = ssl.get_server_certificate((oxd_hostname, oxd_port))
+            oxd_alias = 'oxd_' + oxd_hostname.replace('.','_')
+            oxd_cert_tmp_fn = '/tmp/{}.crt'.format(oxd_alias)
+
+            with open(oxd_cert_tmp_fn,'w') as w:
+                w.write(oxd_cert)
+
+            self.run(['/opt/jre/jre/bin/keytool', '-import', '-trustcacerts', '-keystore', 
+                            '/opt/jre/jre/lib/security/cacerts', '-storepass', 'changeit', 
+                            '-noprompt', '-alias', oxd_alias, '-file', oxd_cert_tmp_fn])
+                    
+        except:
+            self.logIt(traceback.format_exc(), True)
+
 
     def update_hostname(self):
         self.logIt("Copying hosts and hostname to final destination")
@@ -5186,7 +5223,9 @@ class Setup(object):
             self.run(['chmod', '+x', target_file])
             self.run(['update-rc.d', 'oxd-server', 'defaults'])
 
-        self.run(['cp', os.path.join(oxd_root, 'oxd-server-default'),  '/etc/default/oxd-server'])
+        default_file = os.path.join(oxd_root, 'oxd-server-default')
+        if os.path.exists(default_file):
+            self.run(['cp', default_file, '/etc/default/oxd-server'])
 
         self.run(['mkdir', '/var/log/oxd-server'])
         self.run(['chown', 'jetty:jetty', '/var/log/oxd-server'])
