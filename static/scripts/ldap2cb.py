@@ -14,8 +14,6 @@ sys.path.append(cur_dir)
 package_type = None
 setup_properties_fn = '/install/community-edition-setup/setup.properties.last'
 
-#TODO: migrate o=site
-
 #Determine gluu version
 war_zip = zipfile.ZipFile('/opt/gluu/jetty/oxauth/webapps/oxauth.war', 'r')
 menifest = war_zip.read('META-INF/MANIFEST.MF')
