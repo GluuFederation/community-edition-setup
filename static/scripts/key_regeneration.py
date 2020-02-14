@@ -19,7 +19,18 @@ handler.setFormatter(formatter)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(handler)
 
-parser = argparse.ArgumentParser(description="This script upgrades OpenDJ gluu-servers (>3.0) to 4.0")
+parser_description = """This script generates oxauth keys and update ldap/couchbase.
+Default expiration duration is 365 days. To specify duration use -expiration
+argument (examples: 7D, 14H). Created jks and json file are written to current 
+directory with name oxauth-keys.jks and oxauth-keys.json. Previously created 
+files are backed up in the current directory. Once jks and json are validated, 
+ldap/couchbase is updated and previous keys are backed up in backup_ldap_keys 
+under current directory. Current /etc/certs/oxauth-keys.jks file is also 
+backed up as /etc/certs/oxauth-keys.jks.n where n is consecutive number.
+The scrip logs everything to key_renegeration.log in the current directory
+
+"""
+parser = argparse.ArgumentParser(description=parser_description)
 parser.add_argument('-y', help="Yes to all", action='store_true')
 parser.add_argument('-expiration', help="Expiration, examples: 7D, 14H", default='365D')
 argsp = parser.parse_args()
