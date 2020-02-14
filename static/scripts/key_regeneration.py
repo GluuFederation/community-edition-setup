@@ -19,6 +19,24 @@ handler.setFormatter(formatter)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(handler)
 
+parser = argparse.ArgumentParser(description="This script upgrades OpenDJ gluu-servers (>3.0) to 4.0")
+parser.add_argument('-y', help="Yes to all", action='store_true')
+parser.add_argument('-expiration', help="Expiration, examples: 7D, 14H", default='365D')
+argsp = parser.parse_args()
+
+exp_duration = argsp.expiration[:-1]
+
+if argsp.expiration.lower().endswith('h'):
+    exp_arg = '-expiration_hours'
+elif argsp.expiration.lower().endswith('d'):
+    exp_arg = '-expiration'
+else:
+    print "Expiration must end with H or D"
+    sys.exit(1)
+
+if not exp_duration.isdigit():
+    print "Invalid expirition"
+
 defaul_storage = 'ldap'
 conf_dir = '/etc/gluu/conf'
 gluu_hybrid_roperties_fn = os.path.join(conf_dir, 'gluu-hybrid.properties')
@@ -75,7 +93,12 @@ except:
 
 if missing_packages:
     packages_str = ' '.join(missing_packages)
-    result = raw_input("Missing package(s): {0}. Install now? (Y|n): ".format(packages_str))
+
+    if argsp.y:
+        result = 'y'
+    else:
+        result = raw_input("Missing package(s): {0}. Install now? (Y|n): ".format(packages_str))
+
     if result.strip() and result.strip().lower()[0] == 'n':
         print "Can't continue without installing these packages. Exiting ..."
         sys.exit(False)
@@ -300,7 +323,7 @@ else:
     args += ['-sig_keys', ' '.join(key_algs), '-enc_keys', ' '.join(key_algs)]
     
 args += ['-dnname', "'CN=oxAuth CA Certificates'",
-    '-expiration', '365','>', oxauth_keys_json_fn]
+    exp_arg, exp_duration, '>', oxauth_keys_json_fn]
 
 output = run_command(args)
 
