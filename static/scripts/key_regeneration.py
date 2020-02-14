@@ -37,6 +37,9 @@ else:
 if not exp_duration.isdigit():
     print "Invalid expirition"
 
+if not os.path.exists('backup_ldap_keys'):
+    os.mkdir('backup_ldap_keys')
+
 defaul_storage = 'ldap'
 conf_dir = '/etc/gluu/conf'
 gluu_hybrid_roperties_fn = os.path.join(conf_dir, 'gluu-hybrid.properties')
@@ -379,6 +382,15 @@ else:
     exit_with_error("Validation failed, not updating db")
 
 print "Updating oxAuthConfWebKeys in db"
+
+
+ldap_keys_backup_list = glob.glob('backup_ldap_keys/'+oxauth_keys_json_fn+'.*')
+nlb = len(ldap_keys_backup_list)
+nlb += 1
+ldap_key_back_fn = 'backup_ldap_keys/'+oxauth_keys_json_fn+'.'+str(nlb)
+logger.info("Backing up current keys in ldap to %s", ldap_key_back_fn)
+with open(ldap_key_back_fn, 'w') as w:
+    w.write(json.dumps(oxAuthConfWebKeys))
 
 with open(oxauth_keys_json_fn) as f:
     oxauth_oxAuthConfWebKeys = f.read()
