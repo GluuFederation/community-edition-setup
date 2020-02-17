@@ -20,17 +20,6 @@
     ]
   },
 
-  "gluu_authorization": {
-     "attributes": [
-        ["oxAuthExpiration"],
-        ["del"],
-        ["oxAuthClientId"],
-        ["oxAuthUserId"]
-      ],
-    "static" : [
-    ]
-  },
-
   "gluu": {
     "attributes": [
       ["objectClass"],
