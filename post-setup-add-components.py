@@ -24,6 +24,8 @@ else:
     with open('setup.py','w') as w:
         w.write(''.join(f))
 
+from setup import Setup
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-addshib", help="Install Shibboleth SAML IDP", action="store_true")
 parser.add_argument("-addpassport", help="Install Passport", action="store_true")
