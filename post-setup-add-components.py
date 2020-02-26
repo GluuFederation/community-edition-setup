@@ -5,6 +5,7 @@ import sys
 import subprocess
 import json
 import zipfile
+from pylib.Properties import Properties as JProperties
 
 cur_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -36,17 +37,20 @@ if  len(sys.argv)<2:
     parser.exit(1)
 
 
+def get_properties(prop_fn):
+    jprop = JProperties()
+    with open(prop_fn) as f:
+        jprop.load(f)
+
+    return jprop
+
 oxVersion = 0
 setup_properties_fn = '/install/community-edition-setup/setup.properties.last'
 install_dir = '.'
 
 #Determine setup version
-with open(setup_properties_fn) as f:
-    for l in f:
-        ls = l.strip()
-        if ls.startswith('oxVersion'):
-            n = ls.find('=')
-            oxVersion_setup = ls[n+1:].strip()
+setup_prop = get_properties(setup_properties_fn)
+oxVersion_setup = setup_prop['oxVersion']
 
 run_oxauth_war_fn = '/opt/gluu/jetty/oxauth/webapps/oxauth.war'
 
@@ -140,9 +144,20 @@ print "Log Files:", setupObj.log, setupObj.logError
 
 attribDataTypes.startup(install_dir)
 
-if oxVersion == gluu_version:
-    setupObj.cbm = CBM(setupObj.couchbase_hostname, setupObj.couchebaseClusterAdmin, setupObj.ldapPass)
 
+gluu_cb_prop_fn = '/etc/gluu/conf/gluu-couchbase.properties'
+
+if os.path.exists(gluu_cb_prop_fn):
+    gluu_cb_prop = get_properties(gluu_cb_prop_fn)
+
+    cb_hostname = gluu_cb_prop['servers'].split(',')[0].strip()
+    cb_userName = gluu_cb_prop['auth.userName']
+    cb_userPassword_e = gluu_cb_prop['auth.userPassword']
+    cb_bindPassword = os.popen('/opt/gluu/bin/encode.py -D ' + cb_userPassword_e).read().strip()
+
+    setupObj.cbm = CBM(cb_hostname, cb_userName, cb_bindPassword)
+else:
+    setupObj.cbm = None
 
 if not hasattr(setupObj, 'ldap_type'):
     setupObj.ldap_type = 'open_ldap'
@@ -229,6 +244,54 @@ def installSaml():
         os.mkdir('/var/run/jetty')
     setupObj.run([setupObj.cmd_chown, '-R', 'jetty:jetty', '/var/run/jetty'])
     setupObj.enable_service_at_start('idp')
+
+
+    default_storage = 'ldap'
+
+    gluu_hybrid_prop_fn = '/etc/gluu/conf/gluu-hybrid.properties'
+
+    if os.path.exists(gluu_hybrid_prop_fn):
+        gluu_hybrid_prop = get_properties(gluu_hybrid_prop_fn)
+        default_storage = gluu_hybrid_prop['storage.default']
+    elif setupObj.cbm:
+        default_storage = 'couchbase'
+
+    gluu_prop = get_properties('/etc/gluu/conf/gluu.properties')
+
+    if default_storage == 'ldap':
+        ox_ldap_prop = get_properties('/etc/gluu/conf/gluu-ldap.properties')
+
+        bindDN = ox_ldap_prop['bindDN']
+        bindPassword_e = ox_ldap_prop['bindPassword']
+        cmd = '/opt/gluu/bin/encode.py -D ' + bindPassword_e    
+        bindPassword = os.popen(cmd).read().strip()
+        ldap_host_port = ox_ldap_prop['servers'].split(',')[0].strip()
+
+        ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
+        ldap_conn = ldap.initialize('ldaps://'+ldap_host_port)
+        ldap_conn.simple_bind_s(bindDN, bindPassword)
+
+        result = ldap_conn.search_s(
+                        'o=gluu',
+                        ldap.SCOPE_SUBTREE,
+                        '(objectClass=oxTrustConfiguration)',
+                        ['oxTrustConfApplication']
+                        )
+
+        dn = result[0][0]
+        oxTrustConfApplication = json.loads(result[0][1]['oxTrustConfApplication'][0])
+        
+        oxTrustConfApplication['configGeneration'] = True
+        oxTrustConfApplication_js = json.dumps(oxTrustConfApplication, indent=2)
+
+        ldap_conn.modify_s(
+                        dn,
+                        [( ldap.MOD_REPLACE, 'oxTrustConfApplication',  oxTrustConfApplication_js)]
+                    )
+
+    else:
+        bucket = gluu_cb_prop['bucket.default']
+        setupObj.cbm.exec_query('UPDATE `{}` USE KEYS "configuration_oxtrust" SET configGeneration=true'.format(bucket))
 
     print "Shibboleth installation done"
 
