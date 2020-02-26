@@ -5,6 +5,7 @@ import sys
 import subprocess
 import json
 import zipfile
+from Properties import Properties
 
 if not os.path.exists('setup.py'):
     print "This script should be run from /install/community-edition-setup/"
@@ -133,6 +134,45 @@ setupObj.ldapCertFn = setupObj.opendj_cert_fn
 
 def installSaml():
 
+    if os.path.exists('/etc/yum.repos.d/'):
+        package_type = 'rpm'
+    elif os.path.exists('/etc/apt/sources.list'):
+        package_type = 'deb'
+
+    missing_packages = []
+
+    needs_restart = False
+    dev_env = True if os.environ.get('update_dev') else False
+
+    try:
+        import ldap
+    except:
+        missing_packages.append('python-ldap')
+
+    if missing_packages:
+        needs_restart = True
+        packages_str = ' '.join(missing_packages)
+        result = raw_input("Missing package(s): {0}. Install now? (Y|n): ".format(packages_str))
+        if result.strip() and result.strip().lower()[0] == 'n':
+            sys.exit("Can't continue without installing these packages. Exiting ...")
+                
+
+        if package_type == 'rpm':
+            cmd = 'yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm'
+            os.system(cmd)
+            cmd = 'yum clean all'
+            os.system(cmd)
+            cmd = "yum install -y {0}".format(packages_str)
+        else:
+            os.system('apt-get update')
+            cmd = "apt-get install -y {0}".format(packages_str)
+
+        print "Installing package(s) with command: "+ cmd
+        os.system(cmd)
+
+    if needs_restart:
+        python_ = sys.executable
+        os.execl(python_, python_, * sys.argv)
 
     setupObj.run(['cp', '-f', os.path.join(setupObj.gluuOptFolder, 'jetty/identity/webapps/identity.war'), 
                 setupObj.distGluuFolder])
@@ -154,6 +194,7 @@ def installSaml():
 
     print "Installing Shibboleth ..."
     setupObj.oxTrustConfigGeneration = "true"
+
 
     if not setupObj.application_max_ram:
         setupObj.application_max_ram = setupObj.getPrompt("Enter maximum RAM for applications in MB", '3072')
@@ -209,10 +250,46 @@ def installSaml():
     setupObj.run([setupObj.cmd_chown, '-R', 'jetty:jetty', '/var/run/jetty'])
     setupObj.enable_service_at_start('idp')
 
+
+    ox_ldap_prop_fn = '/etc/gluu/conf/ox-ldap.properties'
+    if not os.path.exists(ox_ldap_prop_fn):
+        print "ERROR: Can't find", ox_ldap_prop_fn
+        return
+
+    p = Properties()
+    p.load(open(ox_ldap_prop_fn))
+
+    bindDN = p['bindDN']
+    bindPassword_e = p['bindPassword']
+    cmd = '/opt/gluu/bin/encode.py -D ' + bindPassword_e    
+    bindPassword = os.popen(cmd).read().strip()
+    ldap_host_port = p['servers'].split(',')[0].strip()
+
+    ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
+    ldap_conn = ldap.initialize('ldaps://'+ldap_host_port)
+    ldap_conn.simple_bind_s(bindDN, bindPassword)
+
+    result = ldap_conn.search_s(
+                    'o=gluu',
+                    ldap.SCOPE_SUBTREE,
+                    '(objectClass=oxTrustConfiguration)',
+                    ['oxTrustConfApplication']
+                    )
+
+    dn = result[0][0]
+    oxTrustConfApplication = json.loads(result[0][1]['oxTrustConfApplication'][0])
+    
+    oxTrustConfApplication['configGeneration'] = True
+    oxTrustConfApplication_js = json.dumps(oxTrustConfApplication, indent=2)
+
+    ldap_conn.modify_s(
+                    dn,
+                    [( ldap.MOD_REPLACE, 'oxTrustConfApplication',  oxTrustConfApplication_js)]
+                )
+
     print "Shibboleth installation done"
 
 
-    
 def installPassport():
     
     if os.path.exists('/opt/gluu/node/passport'):
