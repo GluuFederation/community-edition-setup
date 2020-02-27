@@ -1477,6 +1477,8 @@ class Setup(object):
                 self.wrends_install = REMOTE
             elif p['installLdap'].lower() == 'true':
                 self.wrends_install = LOCAL
+            elif p['wrends_install']:
+                self.wrends_install = p['wrends_install']
             else:
                 self.wrends_install = NONE
 
@@ -1486,6 +1488,8 @@ class Setup(object):
         if 'couchbase' in map_db:
             if 'remoteCouchbase' in properties_list and p['remoteCouchbase'].lower() == 'true':
                 self.cb_install = REMOTE
+            elif p['cb_install']:
+                self.cb_install = p['cb_install']
             elif 'persistence_type' in properties_list and p['persistence_type'] in ('couchbase', 'hybrid'):
                 self.cb_install = LOCAL
             else:
@@ -3288,7 +3292,7 @@ class Setup(object):
                         print("Password must be at least 6 characters and include one uppercase letter, one lowercase letter, one digit, and one special character.")
 
                 self.cb_password = cbPass
-            self.cbm = CBM(self.hostname, self.couchebaseClusterAdmin, self.cb_password)
+            self.cbm = CBM(self.couchbase_hostname, self.couchebaseClusterAdmin, self.cb_password)
 
         if not (self.wrends_install or self.cb_install):
             print "{}You must have at least one DB backend. Exiting...{}".format(colors.WARNING, colors.ENDC)
@@ -4955,7 +4959,7 @@ class Setup(object):
         self.prepare_multivalued_list()
 
         if not self.cbm:
-             self.cbm = CBM(self.hostname, self.couchebaseClusterAdmin, self.cb_password)
+             self.cbm = CBM(self.couchbase_hostname, self.couchebaseClusterAdmin, self.cb_password)
 
         if self.cb_install == LOCAL:
             self.couchbaseInstall()
