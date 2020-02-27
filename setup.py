@@ -3840,7 +3840,7 @@ class Setup(object):
             config_changes.insert(2, ['set-attribute-syntax-prop', '--syntax-name', '"Directory String"',   '--set', 'allow-zero-length-values:true'])
 
 
-        if not self.listenAllInterfaces:
+        if (not self.listenAllInterfaces) and (self.wrends_install == LOCAL):
             config_changes.append(['set-connection-handler-prop', '--handler-name', '"LDAPS Connection Handler"', '--set', 'enabled:true', '--set', 'listen-address:127.0.0.1'])
             config_changes.append(['set-administration-connector-prop', '--set', 'listen-address:127.0.0.1'])
                           
@@ -4264,37 +4264,37 @@ class Setup(object):
         
         try:
             self.pbar.progress("opendj", "OpenDJ: installing", False)
-            if self.wrends_install == LOCAL:
-                self.install_opendj()
+            self.install_opendj()
     
-            if self.ldap_type == 'opendj':
+            if self.ldap_type == 'opendj' and self.wrends_install == LOCAL:
                 self.pbar.progress("opendj", "OpenDJ: preparing schema", False)
                 self.prepare_opendj_schema()
                 self.pbar.progress("opendj", "OpenDJ: setting up service", False)
                 self.setup_opendj_service()
-                self.pbar.progress("opendj", "OpenDJ: configuring", False)
-                self.configure_opendj()
-                self.pbar.progress("opendj", "OpenDJ:  exporting certificate", False)
-                self.export_opendj_public_cert()
-                self.pbar.progress("opendj", "OpenDJ: creating indexes", False)
-                self.index_opendj()
-                self.pbar.progress("opendj", "OpenDJ: importing Ldif files", False)
-                
-                ldif_files = []
 
-                if self.mappingLocations['default'] == 'ldap':
-                    ldif_files += self.couchbaseBucketDict['default']['ldif']
+            self.pbar.progress("opendj", "OpenDJ: configuring", False)
+            self.configure_opendj()
+            self.pbar.progress("opendj", "OpenDJ:  exporting certificate", False)
+            self.export_opendj_public_cert()
+            self.pbar.progress("opendj", "OpenDJ: creating indexes", False)
+            self.index_opendj()
+            self.pbar.progress("opendj", "OpenDJ: importing Ldif files", False)
+            
+            ldif_files = []
 
-                ldap_mappings = self.getMappingType('ldap')
-  
-                for group in ldap_mappings:
-                    ldif_files +=  self.couchbaseBucketDict[group]['ldif']
-  
-                if not self.ldif_base in ldif_files:
-                    ldif_files.insert(0, self.ldif_base)
+            if self.mappingLocations['default'] == 'ldap':
+                ldif_files += self.couchbaseBucketDict['default']['ldif']
 
-                self.import_ldif_opendj(ldif_files)
-                
+            ldap_mappings = self.getMappingType('ldap')
+
+            for group in ldap_mappings:
+                ldif_files +=  self.couchbaseBucketDict[group]['ldif']
+
+            if not self.ldif_base in ldif_files:
+                ldif_files.insert(0, self.ldif_base)
+
+            self.import_ldif_opendj(ldif_files)
+            
             self.pbar.progress("opendj", "OpenDJ: post installation", False)
             if self.wrends_install == LOCAL:
                 self.post_install_opendj()
