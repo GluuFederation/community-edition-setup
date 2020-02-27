@@ -75,8 +75,8 @@ class colors:
 
 #install types
 NONE = 0
-LOCAL = 1
-REMOTE = 2
+LOCAL = '1'
+REMOTE = '2'
 
 COMPLETED = -99
 ERROR = -101
@@ -1444,13 +1444,20 @@ class Setup(object):
         properties_list = p.keys()
         no_update += ['jre_version', 'node_version', 'jetty_version', 'jython_version', 'jreDestinationPath']
 
+        cb_install = False
+        map_db = []
         for prop in properties_list:
             if prop in no_update:
                 continue
             try:
                 self.__dict__[prop] = p[prop]
                 if prop == 'mappingLocations':
-                    self.__dict__[prop] = json.loads(p[prop])                    
+                    mappingLocations = json.loads(p[prop])
+                    self.__dict__[prop] = mappingLocations
+                    for l in mappingLocations:
+                        if not mappingLocations[l] in map_db:
+                            map_db.append(mappingLocations[l])
+
                 if p[prop] == 'True':
                     self.__dict__[prop] = True
                 elif p[prop] == 'False':
@@ -1465,7 +1472,7 @@ class Setup(object):
         if not 'oxtrust_admin_password' in properties_list:
             self.oxtrust_admin_password = p['ldapPass']
             
-        if not 'wrends_install' in properties_list:
+        if p['ldap_hostname'] != 'localhost':
             if p['remoteLdap'].lower() == 'true':
                 self.wrends_install = REMOTE
             elif p['installLdap'].lower() == 'true':
@@ -1473,7 +1480,10 @@ class Setup(object):
             else:
                 self.wrends_install = NONE
 
-        if not 'cb_install' in properties_list:
+        if map_db and not 'ldap' in map_db:
+            self.wrends_install = NONE
+
+        if 'couchbase' in map_db:
             if 'remoteCouchbase' in properties_list and p['remoteCouchbase'].lower() == 'true':
                 self.cb_install = REMOTE
             elif 'persistence_type' in properties_list and p['persistence_type'] in ('couchbase', 'hybrid'):
@@ -1481,12 +1491,18 @@ class Setup(object):
             else:
                 self.cb_install = NONE
 
+        if self.cb_install == LOCAL:
+            available_backends = self.getBackendTypes()
+            if not 'couchbase' in available_backends:
+                print "Couchbase package is not available exiting."
+                sys.exit(1)
+
         if (not 'cb_password' in properties_list) and self.cb_install:
             self.cb_password = p['ldapPass']
 
         for si, se in ( 
                         ('installPassport', 'gluuPassportEnabled'),
-                        ('gluuRadiusEnabled', 'installGluuRadius'),
+                        ('installGluuRadius', 'gluuRadiusEnabled'),
                         ('installSaml', 'gluuSamlEnabled'),
                         ):
             if getattr(self, si):
@@ -4938,6 +4954,9 @@ class Setup(object):
         # prepare multivalued list
         self.prepare_multivalued_list()
 
+        if not self.cbm:
+             self.cbm = CBM(self.hostname, self.couchebaseClusterAdmin, self.cb_password)
+
         if self.cb_install == LOCAL:
             self.couchbaseInstall()
             self.checkIfGluuBucketReady()
@@ -5834,24 +5853,28 @@ if __name__ == '__main__':
 
     installObject.logIt("Installing Gluu Server", True)
 
+    setup_loaded = None
+
     if setupOptions['setup_properties']:
         installObject.logIt('%s Properties found!\n' % setupOptions['setup_properties'])
-        installObject.load_properties(setupOptions['setup_properties'])
+        setup_loaded = installObject.load_properties(setupOptions['setup_properties'])
     elif os.path.isfile(installObject.setup_properties_fn):
         installObject.logIt('%s Properties found!\n' % installObject.setup_properties_fn)
-        installObject.load_properties(installObject.setup_properties_fn)
+        setup_loaded = installObject.load_properties(installObject.setup_properties_fn)
     elif os.path.isfile(installObject.setup_properties_fn+'.enc'):
         installObject.logIt('%s Properties found!\n' % installObject.setup_properties_fn+'.enc')
-        installObject.load_properties(installObject.setup_properties_fn+'.enc')
+        setup_loaded = installObject.load_properties(installObject.setup_properties_fn+'.enc')
     
-    if not thread_queue:
+    if not setup_loaded:
         installObject.logIt("{0} or {0}.enc Properties not found. Interactive setup commencing...".format(installObject.setup_properties_fn))
         installObject.promptForProperties()
 
         # Validate Properties
         installObject.check_properties()
 
-        proceed = True
+    proceed = True
+
+    if not thread_queue:
 
         # Show to properties for approval
         print '\n%s\n' % `installObject`
@@ -5860,12 +5883,14 @@ if __name__ == '__main__':
             if proceed_prompt and proceed_prompt[0] !='y':
                 proceed = False
 
-        if setupOptions['noPrompt'] or proceed:
-            installObject.do_installation()
-            print "\n\n Gluu Server installation successful! Point your browser to https://%s\n\n" % installObject.hostname
-        else:
-            installObject.save_properties()
+    if setupOptions['noPrompt'] or proceed:
+        installObject.do_installation()
+        print "\n\n Gluu Server installation successful! Point your browser to https://%s\n\n" % installObject.hostname
     else:
+        installObject.save_properties()
+
+
+    if thread_queue:
 
             msg = tui.msg
             msg.storages = installObject.couchbaseBucketDict.keys()
