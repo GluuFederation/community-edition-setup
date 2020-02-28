@@ -242,6 +242,7 @@ def installSaml():
                         dn,
                         [( ldap.MOD_REPLACE, 'oxTrustConfApplication',  oxTrustConfApplication_js)]
                     )
+        ldap_conn.modify_s('ou=configuration,o=gluu', [( ldap.MOD_REPLACE, 'gluuSamlEnabled',  'true')])
 
     else:
         bucket = gluu_cb_prop['bucket.default']
@@ -318,6 +319,8 @@ def installPassport():
 
     setupObj.install_passport()
     
+    scripts_enable = ['2FDB-CF02', 'D40C-1CA4', '2DAF-F9A5']
+    
     if persistence_type == 'ldap':
 
         dn, oxTrustConfApplication = get_oxTrustConfiguration_ldap()
@@ -330,7 +333,14 @@ def installPassport():
                         dn,
                         [( ldap.MOD_REPLACE, 'oxTrustConfApplication',  oxTrustConfApplication_js)]
                     )
-
+        ldap_conn.modify_s('ou=configuration,o=gluu', [( ldap.MOD_REPLACE, 'gluuPassportEnabled',  'true')])
+        
+        for scr in scripts_enable:
+            ldap_conn.modify_s(
+                        'inum={},ou=scripts,o=gluu'.format(scr),
+                        [( ldap.MOD_REPLACE, 'oxEnabled',  'true')]
+                    )
+        
     else:
         bucket = gluu_cb_prop['bucket.default']
         
