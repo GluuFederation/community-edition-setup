@@ -123,6 +123,33 @@ if persistence_type == 'couchbase':
     from ces_current.pylib.cbm import CBM
     setupObj.cbm = CBM(cb_serevr, cb_admin, cb_passwd)
 
+else:
+    setupObj.createLdapPw()
+
+    ox_ldap_prop = get_properties('/etc/gluu/conf/gluu-ldap.properties')
+
+    bindDN = ox_ldap_prop['bindDN']
+    bindPassword_e = ox_ldap_prop['bindPassword']
+    cmd = '/opt/gluu/bin/encode.py -D ' + bindPassword_e    
+    bindPassword = os.popen(cmd).read().strip()
+    ldap_host_port = ox_ldap_prop['servers'].split(',')[0].strip()
+
+    ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
+    ldap_conn = ldap.initialize('ldaps://'+ldap_host_port)
+    ldap_conn.simple_bind_s(bindDN, bindPassword)
+
+
+def get_oxTrustConfiguration_ldap():
+    result = ldap_conn.search_s(
+                        'o=gluu',
+                        ldap.SCOPE_SUBTREE,
+                        '(objectClass=oxTrustConfiguration)',
+                        ['oxTrustConfApplication']
+                        )
+    dn = result[0][0]
+    oxTrustConfApplication = json.loads(result[0][1]['oxTrustConfApplication'][0])
+
+    return dn, oxTrustConfApplication
 
 def installSaml():
 
@@ -205,28 +232,9 @@ def installSaml():
     setupObj.enable_service_at_start('idp')
 
     if persistence_type == 'ldap':
-        ox_ldap_prop = get_properties('/etc/gluu/conf/gluu-ldap.properties')
 
-        bindDN = ox_ldap_prop['bindDN']
-        bindPassword_e = ox_ldap_prop['bindPassword']
-        cmd = '/opt/gluu/bin/encode.py -D ' + bindPassword_e    
-        bindPassword = os.popen(cmd).read().strip()
-        ldap_host_port = ox_ldap_prop['servers'].split(',')[0].strip()
+        dn, oxTrustConfApplication = get_oxTrustConfiguration_ldap()
 
-        ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
-        ldap_conn = ldap.initialize('ldaps://'+ldap_host_port)
-        ldap_conn.simple_bind_s(bindDN, bindPassword)
-
-        result = ldap_conn.search_s(
-                        'o=gluu',
-                        ldap.SCOPE_SUBTREE,
-                        '(objectClass=oxTrustConfiguration)',
-                        ['oxTrustConfApplication']
-                        )
-
-        dn = result[0][0]
-        oxTrustConfApplication = json.loads(result[0][1]['oxTrustConfApplication'][0])
-        
         oxTrustConfApplication['configGeneration'] = True
         oxTrustConfApplication_js = json.dumps(oxTrustConfApplication, indent=2)
 
@@ -249,8 +257,6 @@ def installPassport():
     if os.path.exists('/opt/gluu/node/passport'):
         print "Passport is already installed on this system"
         return
-
-    setupObj.createLdapPw()
 
     node_url = 'https://nodejs.org/dist/v{0}/node-v{0}-linux-x64.tar.xz'.format(setupObj.node_version)
     nod_archive_fn = os.path.basename(node_url)
@@ -282,8 +288,6 @@ def installPassport():
         print "Downloading {}".format(passport_syatemd_fn)
         setupObj.run(['wget', '-nv', passport_syatemd_url, '-O', '/usr/lib/systemd/system/passport.service'])
 
-
-
     setupObj.installPassport = True
     setupObj.calculate_selected_aplications_memory()
     
@@ -303,9 +307,38 @@ def installPassport():
     proc = subprocess.Popen('echo "" | /opt/jre/bin/keytool -list -v -keystore /etc/certs/passport-rp.jks', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
     setupObj.generate_passport_configuration()
+    
+    passport_oxtrust_config_tmp = []
+    for l in setupObj.templateRenderingDict['passport_oxtrust_config'].splitlines():
+        ls = l.strip()
+        if ls:
+            passport_oxtrust_config_tmp.append(ls.rstrip(','))
+
+    passport_oxtrust_config = json.loads('{'+','.join(passport_oxtrust_config_tmp)+'}')
+
     setupObj.install_passport()
     
-    setupObj.deleteLdapPw()
+    if persistence_type == 'ldap':
+
+        dn, oxTrustConfApplication = get_oxTrustConfiguration_ldap()
+
+        for k in passport_oxtrust_config:
+            oxTrustConfApplication[k] = passport_oxtrust_config[k]
+        
+        oxTrustConfApplication_js = json.dumps(oxTrustConfApplication, indent=2)
+        ldap_conn.modify_s(
+                        dn,
+                        [( ldap.MOD_REPLACE, 'oxTrustConfApplication',  oxTrustConfApplication_js)]
+                    )
+
+    else:
+        bucket = gluu_cb_prop['bucket.default']
+        
+        for k in passport_oxtrust_config:
+            n1ql = 'UPDATE `{}` USE KEYS "configuration_oxtrust" SET {}="{}"'.format(bucket)
+            setupObj.cbm.exec_query(n1ql)
+    
+    
     
     print "Passport installation done"
 
@@ -368,9 +401,8 @@ def installCasa():
                     )
 
     if persistence_type == 'ldap':
-        setupObj.createLdapPw()
         setupObj.import_ldif_template_opendj(casa_script_fp)
-        setupObj.deleteLdapPw()
+        
     else:
         setupObj.import_ldif_couchebase(ldif_file_list=[casa_script_fp], bucket='gluu')
 
@@ -399,5 +431,8 @@ if args.addoxd:
 
 if args.addcasa:
     installCasa()
+
+if persistence_type == 'ldap':
+    setupObj.deleteLdapPw()
 
 print "Please exit container and restart Gluu Server"
