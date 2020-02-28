@@ -250,6 +250,8 @@ def installPassport():
         print "Passport is already installed on this system"
         return
 
+    setupObj.createLdapPw()
+
     node_url = 'https://nodejs.org/dist/v{0}/node-v{0}-linux-x64.tar.xz'.format(setupObj.node_version)
     nod_archive_fn = os.path.basename(node_url)
 
@@ -285,6 +287,7 @@ def installPassport():
     setupObj.installPassport = True
     setupObj.calculate_selected_aplications_memory()
     
+    
     setupObj.renderTemplateInOut(
                     os.path.join(cur_dir, 'ces_current/templates/node/passport'),
                     os.path.join(cur_dir, 'ces_current/templates/node'),
@@ -302,6 +305,7 @@ def installPassport():
     setupObj.generate_passport_configuration()
     setupObj.install_passport()
     
+    setupObj.deleteLdapPw()
     
     print "Passport installation done"
 
