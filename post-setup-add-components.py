@@ -108,18 +108,19 @@ setupObj.ldapCertFn = setupObj.opendj_cert_fn
 # Determine persistence type
 gluu_prop = get_properties(setupObj.gluu_properties_fn)
 persistence_type = gluu_prop['persistence.type']
+setupObj.persistence_type = persistence_type
 
 if persistence_type == 'hybrid':
     hybrid_prop = get_properties(setupObj.gluu_hybrid_roperties)    
     persistence_type = hybrid_prop['storage.default']
-
 if persistence_type == 'couchbase':
     gluu_cb_prop = get_properties(setupObj.gluuCouchebaseProperties)
     cb_serevr = gluu_cb_prop['servers'].split(',')[0].strip()
     cb_admin = gluu_cb_prop['auth.userName']
     encoded_cb_password = gluu_cb_prop['auth.userPassword']
     cb_passwd = os.popen('/opt/gluu/bin/encode.py -D ' + encoded_cb_password).read().strip()
-
+    setupObj.ldap_binddn = setupObj.opendj_ldap_binddn
+    
     from ces_current.pylib.cbm import CBM
     setupObj.cbm = CBM(cb_serevr, cb_admin, cb_passwd)
 
@@ -177,6 +178,16 @@ def installSaml():
 
     print "Installing Shibboleth ..."
     setupObj.oxTrustConfigGeneration = "true"
+
+
+
+    if setupObj.persistence_type == 'couchbase':
+        if 'user' in setupObj.getMappingType('couchbase'):
+            setupObj.renderTemplateInOut(
+                            os.path.join(ces_dir, 'templates', setupObj.data_source_properties),
+                            os.path.join(ces_dir, 'templates'),
+                            os.path.join(ces_dir, 'output'),
+                            )
 
     if not setupObj.application_max_ram:
         setupObj.application_max_ram = setupObj.getPrompt("Enter maximum RAM for applications in MB", '3072')
@@ -246,8 +257,12 @@ def installSaml():
 
     else:
         bucket = gluu_cb_prop['bucket.default']
-        setupObj.cbm.exec_query('UPDATE `{}` USE KEYS "configuration_oxtrust" SET configGeneration=true'.format(bucket))
         
+        n1ql = 'UPDATE `{}` USE KEYS "configuration_oxtrust" SET configGeneration=true'.format(bucket)
+        setupObj.cbm.exec_query(n1ql)
+        
+        n1ql = 'UPDATE `{}` USE KEYS "configuration" SET gluuSamlEnabled=true'.format(bucket)
+        setupObj.cbm.exec_query(n1ql)
 
     print "Shibboleth installation done"
 
@@ -343,12 +358,17 @@ def installPassport():
         
     else:
         bucket = gluu_cb_prop['bucket.default']
+
+        n1ql = 'UPDATE `{}` USE KEYS "configuration" SET gluuPassportEnabled=true'.format(bucket)
+        setupObj.cbm.exec_query(n1ql)
         
         for k in passport_oxtrust_config:
-            n1ql = 'UPDATE `{}` USE KEYS "configuration_oxtrust" SET {}="{}"'.format(bucket)
+            n1ql = 'UPDATE `{}` USE KEYS "configuration_oxtrust" SET {}="{}"'.format(bucket, k, passport_oxtrust_config[k])
             setupObj.cbm.exec_query(n1ql)
     
-    
+        for scr in scripts_enable:
+            n1ql = 'UPDATE `{}` USE KEYS "scripts_{}" SET oxEnabled=true'.format(bucket, scr)
+            setupObj.cbm.exec_query(n1ql)
     
     print "Passport installation done"
 
