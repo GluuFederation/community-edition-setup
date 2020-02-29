@@ -1757,6 +1757,10 @@ class Setup(object):
         realLdapBaseFolder = os.path.realpath(self.ldapBaseFolder)
         self.run([self.cmd_chown, '-R', 'ldap:ldap', realLdapBaseFolder])
 
+        if self.wrends_install == REMOTE:
+            self.run(['ln', '-s', '/opt/opendj/template/config/', '/opt/opendj/config'])
+
+
     def installJetty(self):
         self.logIt("Installing jetty %s..." % self.jetty_version)
 
@@ -4263,10 +4267,9 @@ class Setup(object):
         self.createLdapPw()
         
         try:
-            self.pbar.progress("opendj", "OpenDJ: installing", False)
-            self.install_opendj()
-    
             if self.ldap_type == 'opendj' and self.wrends_install == LOCAL:
+                self.pbar.progress("opendj", "OpenDJ: installing", False)
+                self.install_opendj()
                 self.pbar.progress("opendj", "OpenDJ: preparing schema", False)
                 self.prepare_opendj_schema()
                 self.pbar.progress("opendj", "OpenDJ: setting up service", False)
@@ -4298,7 +4301,8 @@ class Setup(object):
             self.pbar.progress("opendj", "OpenDJ: post installation", False)
             if self.wrends_install == LOCAL:
                 self.post_install_opendj()
-        except:
+        except Exception as e:
+            self.logIt(str(e), True)
             pass
 
 
