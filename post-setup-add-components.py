@@ -7,6 +7,8 @@ import json
 import zipfile
 from Properties import Properties
 
+cur_dir = os.path.dirname(os.path.realpath(__file__))
+
 if not os.path.exists('setup.py'):
     print "This script should be run from /install/community-edition-setup/"
     sys.exit()
@@ -122,6 +124,7 @@ if oxVersion != gluu_version:
 setupObj.log = os.path.join(setupObj.install_dir, 'post_setup.log')
 setupObj.logError = os.path.join(setupObj.install_dir, 'post_setup_error.log')
 
+
 if not hasattr(setupObj, 'ldap_type'):
     setupObj.ldap_type = 'open_ldap'
 
@@ -173,6 +176,20 @@ def installSaml():
     if needs_restart:
         python_ = sys.executable
         os.execl(python_, python_, * sys.argv)
+
+
+    if oxVersion_setup != oxVersion_current:
+
+        print "Downloading latest Shibboleth components ..."
+        for download_link, out_file in ( 
+                            ('https://ox.gluu.org/maven/org/xdi/oxshibbolethIdp/{0}/oxshibbolethIdp-{0}.war'.format(oxVersion_current), os.path.join(setupObj.distGluuFolder, 'idp.war')),
+                            ('https://ox.gluu.org/maven/org/xdi/oxShibbolethStatic//{0}/oxShibbolethStatic-{0}.jar'.format(oxVersion_current), os.path.join(setupObj.distGluuFolder, 'shibboleth-idp.jar')),
+                            ('https://ox.gluu.org/maven/org/xdi/oxShibbolethKeyGenerator/{0}/oxShibbolethKeyGenerator-{0}.jar'.format(oxVersion_current), os.path.join(setupObj.distGluuFolder, 'idp3_cml_keygenerator.jar')),
+                            ):
+
+            print "Downloading", download_link
+            setupObj.run(['wget', '-nv', download_link, '-O', out_file])
+
 
     setupObj.run(['cp', '-f', os.path.join(setupObj.gluuOptFolder, 'jetty/identity/webapps/identity.war'), 
                 setupObj.distGluuFolder])
@@ -228,6 +245,20 @@ def installSaml():
     setupObj.run([setupObj.cmd_mkdir, '-p', setupObj.idp3CredentialsFolder])
     setupObj.run([setupObj.cmd_mkdir, '-p', setupObj.idp3WebappFolder])
     
+    print "Create fido folders"
+    # Fido2 directories
+    for ffb in ('', '/authenticator_cert', '/mds/cert', '/mds/toc', '/server_metadata'):
+        nf = os.path.join(setupObj.fido2ConfigFolder, ffb)
+        if not os.path.exists(nf):            
+            setupObj.run([setupObj.cmd_mkdir, '-p', nf])
+    
+    # Fido2 authenticators
+    for fnb in ('yubico-u2f-ca-certs.crt', 'yubico-u2f-ca-certs.txt', 'yubico-u2f-ca-certs.json'):
+        sfn = os.path.join(cur_dir, 'ces_current/static/auth/fido2/authenticator_cert', fnb)
+        setupObj.run(['cp', sfn, setupObj.fido2ConfigFolder])
+    
+    setupObj.run([setupObj.cmd_chown, '-R', 'root:gluu', '/etc/gluu'])    
+
     if oxVersion != gluu_version:    
         setupObj.run(['/usr/bin/wget', setupObj.idp3_war, '--no-verbose', '-c', '--retry-connrefused', '--tries=10', '-O', '%s/idp.war' % setupObj.distGluuFolder])
         setupObj.run(['/usr/bin/wget', setupObj.idp3_cml_keygenerator, '--no-verbose', '-c', '--retry-connrefused', '--tries=10', '-O', setupObj.distGluuFolder + '/idp3_cml_keygenerator.jar'])
