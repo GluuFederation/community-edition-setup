@@ -5870,8 +5870,8 @@ if __name__ == '__main__':
         installObject.logIt("{0} or {0}.enc Properties not found. Interactive setup commencing...".format(installObject.setup_properties_fn))
         installObject.promptForProperties()
 
-        # Validate Properties
-        installObject.check_properties()
+    # Validate Properties
+    installObject.check_properties()
 
     proceed = True
 
