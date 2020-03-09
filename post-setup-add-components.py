@@ -91,7 +91,7 @@ if oxVersion_setup != oxVersion_current:
     sys.path.append('ces_current')
 
     from ces_current.setup import Setup
-    install_dir = 'ces_current'
+    install_dir = os.path.join(cur_dir, 'ces_current')
 
 setupObj = Setup(install_dir)
 
@@ -106,7 +106,8 @@ if oxVersion != gluu_version:
                 'idp3MetadataFolder', 'idp3MetadataCredentialsFolder', 'idp3LogsFolder',
                 'idp3LibFolder', 'idp3ConfFolder', 'idp3ConfAuthnFolder', 
                 'idp3CredentialsFolder', 'idp3WebappFolder', 'oxVersion',
-                'node_version',
+                'node_version', 'staticFolder', 'templateFolder', 'outputFolder', 'install_dir',
+                'staticIDP3FolderConf',
                 ]
     keep_dict = {}
 
@@ -117,6 +118,8 @@ if oxVersion != gluu_version:
 
 setupObj.load_properties('/install/community-edition-setup/setup.properties.last')
 
+
+
 if oxVersion != gluu_version:
     for k in keep_dict:
         setattr(setupObj, k, keep_dict[k])
@@ -124,6 +127,7 @@ if oxVersion != gluu_version:
 setupObj.log = os.path.join(setupObj.install_dir, 'post_setup.log')
 setupObj.logError = os.path.join(setupObj.install_dir, 'post_setup_error.log')
 
+print 
 
 if not hasattr(setupObj, 'ldap_type'):
     setupObj.ldap_type = 'open_ldap'
@@ -247,22 +251,35 @@ def installSaml():
     
     print "Create fido folders"
     # Fido2 directories
-    for ffb in ('', '/authenticator_cert', '/mds/cert', '/mds/toc', '/server_metadata'):
+    for ffb in ('', 'authenticator_cert', 'mds/cert', 'mds/toc', 'server_metadata', 'authenticator_cert'):
         nf = os.path.join(setupObj.fido2ConfigFolder, ffb)
         if not os.path.exists(nf):            
             setupObj.run([setupObj.cmd_mkdir, '-p', nf])
     
     # Fido2 authenticators
+    target_dir = os.path.join(setupObj.fido2ConfigFolder, 'authenticator_cert')
     for fnb in ('yubico-u2f-ca-certs.crt', 'yubico-u2f-ca-certs.txt', 'yubico-u2f-ca-certs.json'):
         sfn = os.path.join(cur_dir, 'ces_current/static/auth/fido2/authenticator_cert', fnb)
-        setupObj.run(['cp', sfn, setupObj.fido2ConfigFolder])
-    
+        setupObj.run(['cp', sfn, target_dir])
+
     setupObj.run([setupObj.cmd_chown, '-R', 'root:gluu', '/etc/gluu'])    
 
     if oxVersion != gluu_version:    
         setupObj.run(['/usr/bin/wget', setupObj.idp3_war, '--no-verbose', '-c', '--retry-connrefused', '--tries=10', '-O', '%s/idp.war' % setupObj.distGluuFolder])
         setupObj.run(['/usr/bin/wget', setupObj.idp3_cml_keygenerator, '--no-verbose', '-c', '--retry-connrefused', '--tries=10', '-O', setupObj.distGluuFolder + '/idp3_cml_keygenerator.jar'])
         setupObj.run(['/usr/bin/wget', setupObj.idp3_dist_jar, '--no-verbose', '-c', '--retry-connrefused', '--tries=10', '-O', setupObj.distGluuFolder + '/shibboleth-idp.jar'])
+
+    ox_ldap_prop_fn = '/etc/gluu/conf/ox-ldap.properties'
+    if not os.path.exists(ox_ldap_prop_fn):
+        print "ERROR: Can't find", ox_ldap_prop_fn
+        return
+
+    p = Properties()
+    p.load(open(ox_ldap_prop_fn))
+
+    setupObj.ldap_binddn = p['bindDN']
+    
+    setupObj.ldapCertFn = '/etc/certs/opendj.crt' if setupObj.ldap_type == 'opendj' else '/etc/certs/ openldap.crt'
 
     setupObj.installSaml = True
     setupObj.install_saml()
@@ -282,13 +299,7 @@ def installSaml():
     setupObj.enable_service_at_start('idp')
 
 
-    ox_ldap_prop_fn = '/etc/gluu/conf/ox-ldap.properties'
-    if not os.path.exists(ox_ldap_prop_fn):
-        print "ERROR: Can't find", ox_ldap_prop_fn
-        return
 
-    p = Properties()
-    p.load(open(ox_ldap_prop_fn))
 
     bindDN = p['bindDN']
     bindPassword_e = p['bindPassword']
