@@ -56,11 +56,17 @@ from collections import OrderedDict
 from xml.etree import ElementTree
 from urllib.parse import urlparse
 
-from pylib import gluu_utils
-from pylib.ldif import LDIFWriter
-from pylib.jproperties import Properties
 from ldap.schema import ObjectClass
-from pylib.printVersion import get_war_info
+from ldap.dn import str2dn
+
+from .pylib.pyDes import *
+from .pylib.cbm import CBM
+from .pylib import gluu_utils
+from .pylib.ldif import LDIFWriter
+from .pylib.jproperties import Properties
+
+from .pylib.printVersion import get_war_info
+
 
 cur_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -101,29 +107,6 @@ try:
 except:
     tty_rows = 60
     tty_columns = 120
-
-
-try:
-    from pyDes import *
-except:
-    site_libdir = site.getsitepackages()[0]
-    shutil.copy(
-            os.path.join(cur_dir, 'pylib/pyDes.py'),
-            site_libdir
-            )
-    from pyDes import *
-
-try:    
-    from pylib.cbm import CBM
-except:
-    pass
-
-try:
-    from ldap.dn import str2dn
-except:
-    pass
-
-
 
 class ProgressBar:
 
@@ -166,17 +149,17 @@ class Setup(object):
         self.thread_queue = None
         self.properties_password = None
         self.noPrompt = False
+        self.snap = os.environ['SNAP']
 
         self.distFolder = '/opt/dist'
         self.distAppFolder = '%s/app' % self.distFolder
         self.distGluuFolder = '%s/gluu' % self.distFolder
         self.distTmpFolder = '%s/tmp' % self.distFolder
-        
-        oxauth_info = get_war_info(os.path.join(self.distGluuFolder, 'oxauth.war'))
 
-        self.oxVersion = oxauth_info['version']
-        self.currentGluuVersion = re.search('([\d.]+)', oxauth_info['version']).group().strip('.')
-        self.githubBranchName = oxauth_info['branch']
+        #TO DO: These are defaults up to we figure out snap setup
+        self.oxVersion = 4.2
+        self.currentGluuVersion = 4.2
+        self.githubBranchName = 'snap'
 
         # Used only if -w (get wars) options is given to setup.py
         self.oxauth_war = 'https://ox.gluu.org/maven/org/gluu/oxauth-server/%s/oxauth-server-%s.war' % (self.oxVersion, self.oxVersion)
@@ -1505,7 +1488,7 @@ class Setup(object):
         return open(os.path.join('/proc/1/status'), 'r').read().split()[1]
 
     def determineApacheVersion(self, apache_cmd):
-        cmd = "/usr/sbin/%s -v | egrep '^Server version'" % apache_cmd
+        cmd = "{} -v | egrep '^Server version'".format(apache_cmd)
         output = self.run(cmd, shell=True)
         apache_version = output.split(' ')[2].split('/')[1]
 
@@ -1524,117 +1507,6 @@ class Setup(object):
         else:
             return self.determineApacheVersion("apache2")
 
-    def installJRE(self):
-
-        jre_arch_list = glob.glob(os.path.join(self.distAppFolder, 'amazon-corretto-*-linux-x64.tar.gz'))
-
-        if not jre_arch_list:
-            self.logIt("JRE packgage not found in {}. Will download jdk".format(self.distAppFolder))
-            self.java_type = 'jdk'
-        else:
-            self.java_type = 'jre'
-
-        if self.java_type != 'jre':
-            self.logIt("Downloading " + self.open_jdk_archive_link)
-            jdk_fn = os.path.basename(self.open_jdk_archive_link)
-            jreArchive = os.path.join(self.distAppFolder, jdk_fn)
-            self.run(['wget', '-nv', self.open_jdk_archive_link, '-O', jreArchive])
-        else:
-            jreArchive = max(jre_arch_list)
-
-
-        self.logIt("Installing server JRE {} ...".format(os.path.basename(jreArchive)))
-
-        try:
-            self.logIt("Extracting %s into /opt/" % os.path.basename(jreArchive))
-            self.run(['tar', '-xzf', jreArchive, '-C', '/opt/', '--no-xattrs', '--no-same-owner', '--no-same-permissions'])
-        except:
-            self.logIt("Error encountered while extracting archive %s" % jreArchive)
-            self.logIt(traceback.format_exc(), True)
-
-        if self.java_type == 'jdk':
-            jreDestinationPath = max(glob.glob('/opt/jdk-11*'))
-        else:
-            jreDestinationPath = max(glob.glob('/opt/amazon-corretto-*'))
-
-        self.run([self.cmd_ln, '-sf', jreDestinationPath, self.jre_home])
-        self.run([self.cmd_chmod, '-R', "755", "%s/bin/" % jreDestinationPath])
-        self.run([self.cmd_chown, '-R', 'root:root', jreDestinationPath])
-        self.run([self.cmd_chown, '-h', 'root:root', self.jre_home])
-        
-        if self.java_type == 'jre':
-            self.run(['sed', '-i', '/^#crypto.policy=unlimited/s/^#//', '%s/jre/lib/security/java.security' % self.jre_home])
-
-
-    def extractOpenDJ(self):        
-
-        openDJArchive = max(glob.glob(os.path.join(self.distFolder, 'app/opendj-server-*4*.zip')))
-
-        try:
-            self.logIt("Unzipping %s in /opt/" % openDJArchive)
-            self.run(['unzip', '-n', '-q', '%s' % (openDJArchive), '-d', '/opt/' ])
-        except:
-            self.logIt("Error encountered while doing unzip %s -d /opt/" % (openDJArchive))
-            self.logIt(traceback.format_exc(), True)
-
-        realLdapBaseFolder = os.path.realpath(self.ldapBaseFolder)
-        self.run([self.cmd_chown, '-R', 'ldap:ldap', realLdapBaseFolder])
-
-        if self.wrends_install == REMOTE:
-            self.run(['ln', '-s', '/opt/opendj/template/config/', '/opt/opendj/config'])
-
-    def installJetty(self):
-        self.logIt("Installing jetty %s...")
-
-        jetty_archive_list = glob.glob(os.path.join(self.distAppFolder, 'jetty-distribution-*.tar.gz'))
-
-        if not jetty_archive_list:
-            self.logIt("Jetty archive not found in {}. Exiting...".format(self.distAppFolder), True, True)
-
-        jettyArchive = max(jetty_archive_list)
-
-        jettyArchive_fn = os.path.basename(jettyArchive)
-        jetty_regex = re.search('jetty-distribution-(\d*\.\d*)', jettyArchive_fn)
-        
-        if not jetty_regex:
-            self.logIt("Can't determine Jetty version", True, True)
-
-        jetty_dist = '/opt/jetty-' + jetty_regex.groups()[0]
-        self.templateRenderingDict['jetty_dist'] = jetty_dist
-        jettyTemp = os.path.join(jetty_dist, 'temp')
-        self.run([self.cmd_mkdir, '-p', jettyTemp])
-        self.run([self.cmd_chown, '-R', 'jetty:jetty', jettyTemp])
-
-        try:
-            self.logIt("Extracting %s into /opt/jetty" % jettyArchive)
-            self.run(['tar', '-xzf', jettyArchive, '-C', jetty_dist, '--no-xattrs', '--no-same-owner', '--no-same-permissions'])
-        except:
-            self.logIt("Error encountered while extracting archive %s" % jettyArchive)
-            self.logIt(traceback.format_exc(), True)
-
-
-        jettyDestinationPath = max(glob.glob(os.path.join(jetty_dist, 'jetty-distribution-*')))
-
-        self.run([self.cmd_ln, '-sf', jettyDestinationPath, self.jetty_home])
-        self.run([self.cmd_chmod, '-R', "755", "%s/bin/" % jettyDestinationPath])
-
-        self.applyChangesInFiles(self.app_custom_changes['jetty'])
-
-        self.run([self.cmd_chown, '-R', 'jetty:jetty', jettyDestinationPath])
-        self.run([self.cmd_chown, '-h', 'jetty:jetty', self.jetty_home])
-
-        self.run([self.cmd_mkdir, '-p', self.jetty_base])
-        self.run([self.cmd_chown, '-R', 'jetty:jetty', self.jetty_base])
-
-        jettyRunFolder = '/var/run/jetty'
-        self.run([self.cmd_mkdir, '-p', jettyRunFolder])
-        self.run([self.cmd_chmod, '-R', '775', jettyRunFolder])
-        self.run([self.cmd_chgrp, '-R', 'jetty', jettyRunFolder])
-
-        self.run(['rm', '-rf', '/opt/jetty/bin/jetty.sh'])
-        self.copyFile("%s/system/initd/jetty.sh" % self.staticFolder, "%s/bin/jetty.sh" % self.jetty_home)
-        self.run([self.cmd_chown, '-R', 'jetty:jetty', "%s/bin/jetty.sh" % self.jetty_home])
-        self.run([self.cmd_chmod, '-R', '755', "%s/bin/jetty.sh" % self.jetty_home])
 
     def installNode(self):
         self.logIt("Installing node %s..." )
@@ -4214,73 +4086,7 @@ class Setup(object):
             
         return install_command, update_command, query_command, check_text
 
-    def check_and_install_packages(self):
 
-        install_command, update_command, query_command, check_text = self.get_install_commands()
-
-
-        install_list = {'mondatory': [], 'optional': []}
-
-        package_list = {
-                'debian 10': {'mondatory': 'apache2 curl wget tar xz-utils unzip facter python3 rsyslog python3-ldap python3-requests bzip2', 'optional': 'memcached'},
-                'debian 9': {'mondatory': 'apache2 curl wget tar xz-utils unzip facter python3 rsyslog python3-ldap python3-requests bzip2', 'optional': 'memcached'},
-                'debian 8': {'mondatory': 'apache2 curl wget tar xz-utils unzip facter python3 rsyslog python3-ldap python3-requests bzip2', 'optional': 'memcached'},
-                'ubuntu 16': {'mondatory': 'apache2 curl wget xz-utils unzip facter python3 rsyslog python3-ldap python3-requests bzip2', 'optional': 'memcached'},
-                'ubuntu 18': {'mondatory': 'apache2 curl wget xz-utils unzip facter python3 rsyslog python3-ldap net-tools python3-requests bzip2', 'optional': 'memcached'},
-                'centos 7': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip facter python3 rsyslog python3-ldap python3-requests bzip2', 'optional': 'memcached'},
-                'red 7': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip facter python3 rsyslog python3-ldap python3-requests bzip2', 'optional': 'memcached'},
-                'fedora 22': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip facter python3 rsyslog python3-ldap python3-requests bzip2', 'optional': 'memcached'},
-                }
-
-        os_type_version = self.os_type+' '+self.os_version
-
-        for install_type in install_list:
-            for package in package_list[os_type_version][install_type].split():
-                sout, serr = self.run(query_command.format(package), shell=True, get_stderr=True)
-                if check_text in sout+serr:
-                    self.logIt('Package {0} was not installed'.format(package))
-                    install_list[install_type].append(package)
-                else:
-                    self.logIt('Package {0} was installed'.format(package))
-
-        install = {'mondatory': True, 'optional': False}
-
-        for install_type in install_list:
-            if install_list[install_type]:
-                packages = " ".join(install_list[install_type])
-
-                if not setupOptions['noPrompt']:
-                    if install_type == 'mondatory':
-                        print("The following packages are required for Gluu Server")
-                        print(packages)
-                        r = input("Do you want to install these now? [Y/n] ")
-                        if r and r.lower()=='n':
-                            install[install_type] = False
-                            if install_type == 'mondatory':
-                                print("Can not proceed without installing required packages. Exiting ...")
-                                sys.exit()
-
-                    elif install_type == 'optional':
-                        print("You may need the following packages")
-                        print(packages)
-                        r = input("Do you want to install these now? [y/N] ")
-                        if r and r.lower()=='y':
-                            install[install_type] = True
-
-                if install[install_type]:
-                    self.logIt("Installing packages " + packages)
-                    print("Installing packages", packages)
-                    if not self.os_type == 'fedora':
-                        sout, serr = self.run(update_command, shell=True)
-                    self.run(install_command.format(packages), shell=True)
-
-        if self.os_type in ('ubuntu', 'debian'):
-            self.run('a2enmod ssl headers proxy proxy_http proxy_ajp', shell=True)
-            default_site = '/etc/apache2/sites-enabled/000-default.conf'
-            if os.path.exists(default_site):
-                os.remove(default_site)
-
-    
     #Couchbase Functions
 
     def installPackage(self, packageName):
@@ -5362,69 +5168,7 @@ class Setup(object):
 ############################   Main Loop   #################################################
 
 
-
-
-file_max = int(open("/proc/sys/fs/file-max").read().strip())
-
-current_mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
-current_mem_size = round(current_mem_bytes / (1024.**3), 1) #in GB
-
-current_number_of_cpu = multiprocessing.cpu_count()
-
-disk_st = os.statvfs('/')
-available_disk_space = disk_st.f_bavail * disk_st.f_frsize / (1024 * 1024 *1024)
-
-def resource_checkings():
-
-    if file_max < 64000:
-        print(("{0}Maximum number of files that can be opened on this computer is "
-                  "less than 64000. Please increase number of file-max on the "
-                  "host system and re-run setup.py{1}".format(gluu_utils.colors.DANGER,
-                                                                gluu_utils.colors.ENDC)))
-        sys.exit(1)
-
-    if current_mem_size < suggested_mem_size:
-        print(("{0}Warning: RAM size was determined to be {1:0.1f} GB. This is less "
-               "than the suggested RAM size of {2} GB.{3}").format(gluu_utils.colors.WARNING,
-                                                        current_mem_size, 
-                                                        suggested_mem_size,
-                                                        gluu_utils.colors.ENDC))
-
-
-        result = input("Proceed anyways? [Y|n] ")
-        if result and result[0].lower() == 'n':
-            sys.exit()
-
-    if current_number_of_cpu < suggested_number_of_cpu:
-
-        print(("{0}Warning: Available CPU Units found was {1}. "
-            "This is less than the required amount of {2} CPU Units.{3}".format(
-                                                        gluu_utils.colors.WARNING,
-                                                        current_number_of_cpu, 
-                                                        suggested_number_of_cpu,
-                                                        gluu_utils.colors.ENDC)))
-                                                        
-        result = input("Proceed anyways? [Y|n] ")
-        if result and result[0].lower() == 'n':
-            sys.exit()
-
-
-
-    if available_disk_space < suggested_free_disk_space:
-        print(("{0}Warning: Available free disk space was determined to be {1} "
-            "GB. This is less than the required disk space of {2} GB.{3}".format(
-                                                        gluu_utils.colors.WARNING,
-                                                        available_disk_space,
-                                                        suggested_free_disk_space,
-                                                        gluu_utils.colors.ENDC)))
-
-        result = input("Proceed anyways? [Y|n] ")
-        if result and result[0].lower() == 'n':
-            sys.exit()
-
-
-if __name__ == '__main__':
-
+def begin_setup():
     cur_dir = os.path.dirname(os.path.realpath(__file__))
 
     thread_queue = None
@@ -5485,13 +5229,9 @@ if __name__ == '__main__':
         except:
             print("Can't start TUI, continuing command line")
         else:
-            from pylib import tui
+            from .pylib import tui
             thread_queue = tui.queue
-            from pylib.tui import *
 
-    if not argsp.n and not thread_queue:
-        resource_checkings()
-    
     #key_shortcuter_rules = gluu_utils.get_key_shortcuter_rules()
 
     setupOptions = {
@@ -5633,12 +5373,6 @@ if __name__ == '__main__':
     installObject.os_type, installObject.os_version = installObject.detect_os_type()
     # Get the init type
     installObject.os_initdaemon = installObject.detect_initd()
-    
-    installObject.check_and_install_packages()
-    #it is time to import pyDes library
-    from pyDes import *
-    from pylib.cbm import CBM
-    from ldap.dn import str2dn
 
     # Get apache version
     installObject.apache_version = installObject.determineApacheVersionForOS()
@@ -5717,6 +5451,7 @@ if __name__ == '__main__':
             print("\n\n Gluu Server installation successful! Point your browser to https://%s\n\n" % installObject.hostname)
         else:
             installObject.save_properties()
-    
 
+if __name__ == '__main__':
+    begin_setup()
 # END
