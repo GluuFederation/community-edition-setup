@@ -149,7 +149,8 @@ class Setup(object):
         self.thread_queue = None
         self.properties_password = None
         self.noPrompt = False
-        self.snap = os.environ['SNAP']
+        self.snap_dir = os.environ['SNAP']
+        self.snap_common_dir = os.environ['SNAP_COMMON']
 
         self.distFolder = '/opt/dist'
         self.distAppFolder = '%s/app' % self.distFolder
@@ -181,17 +182,14 @@ class Setup(object):
                                      }
 
         # OS commands
-        self.cmd_ln = '/bin/ln'
-        self.cmd_chmod = '/bin/chmod'
-        self.cmd_chown = '/bin/chown'
-        self.cmd_chgrp = '/bin/chgrp'
-        self.cmd_mkdir = '/bin/mkdir'
-        self.cmd_rpm = '/bin/rpm'
-        self.cmd_dpkg = '/usr/bin/dpkg'
-        self.opensslCommand = '/usr/bin/openssl'
+        self.cmd_ln = os.path.join(self.snap_dir, 'bin/ln')
+        self.cmd_chmod = os.path.join(self.snap_dir, 'bin/chmod')
+        self.cmd_chgrp = os.path.join(self.snap_dir, 'bin/chgrp')
+        self.cmd_mkdir = os.path.join(self.snap_dir, 'bin/mkdir')
+        self.cmd_rpm = os.path.join(self.snap_dir, 'bin/rpm')
+        self.cmd_dpkg = os.path.join(self.snap_dir, 'usr/bin/dpkg')
+        self.opensslCommand = os.path.join(self.snap_dir, 'usr/bin/openssl')
         self.systemctl = os.popen('which systemctl').read().strip()
-
-        self.sysemProfile = "/etc/profile"
 
         # java commands
         self.jre_home = '/opt/jre'
@@ -263,8 +261,6 @@ class Setup(object):
         self.oxTrustCacheRefreshFolder = "/var/gluu/identity/cr-snapshots"
         self.cache_provider_type = 'NATIVE_PERSISTENCE'
 
-        self.etc_hosts = '/etc/hosts'
-        self.etc_hostname = '/etc/hostname'
         # OS /etc/default folder
         self.osDefault = '/etc/default'
 
@@ -416,8 +412,7 @@ class Setup(object):
         self.ldapDsCreateRcCommand = "%s/bin/create-rc-script" % self.ldapBaseFolder
         self.ldapDsJavaPropCommand = "%s/bin/dsjavaproperties" % self.ldapBaseFolder
         
-        self.ldap_user_home = '/home/ldap'
-        self.ldapPassFn = '%s/.pw' % self.ldap_user_home
+        self.ldapPassFn = '/tmp/ldap.pw'
         self.ldap_backend_type = 'je'
         self.importLdifCommand = '%s/bin/import-ldif' % self.ldapBaseFolder
         self.ldapModifyCommand = '%s/bin/ldapmodify' % self.ldapBaseFolder
@@ -426,7 +421,7 @@ class Setup(object):
                                 '%s/static/scripts/testBind.py' % self.install_dir]
 
         self.openDjIndexJson = '%s/static/opendj/index.json' % self.install_dir
-        self.openDjSchemaFolder = "%s/config/schema" % self.ldapBaseFolder
+        self.openDjSchemaFolder = os.path.join(self.snap_common_dir, 'opendj/config/schema')
         self.openDjschemaFiles = ["%s/static/opendj/96-eduperson.ldif" % self.install_dir,
                             "%s/static/opendj/101-ox.ldif" % self.install_dir,
                             "%s/static/opendj/77-customAttributes.ldif" % self.install_dir]
@@ -439,7 +434,7 @@ class Setup(object):
 
         self.apache_start_script = '/etc/init.d/httpd'
 
-        self.defaultTrustStoreFN = '%s/jre/lib/security/cacerts' % self.jre_home
+        self.defaultTrustStoreFN = os.path.join(self.certFolder, 'java-cacerts')
         self.defaultTrustStorePW = 'changeit'
 
         self.passportSpKeyPass = None
@@ -488,8 +483,6 @@ class Setup(object):
         self.passport_config = '%s/passport-config.json' % self.configFolder
         self.encode_script = '%s/bin/encode.py' % self.gluuOptFolder
         self.network = "/etc/sysconfig/network"
-        self.system_profile_update_init = '%s/system_profile_init' % self.outputFolder
-        self.system_profile_update_systemd = '%s/system_profile_systemd' % self.outputFolder
 
         self.staticIDP3FolderConf = '%s/static/idp3/conf' % self.install_dir
         self.staticIDP3FolderMetadata = '%s/static/idp3/metadata' % self.install_dir
@@ -641,7 +634,6 @@ class Setup(object):
                              self.apache2_ssl_conf: False,
                              self.apache2_24_conf: False,
                              self.apache2_ssl_24_conf: False,
-                             self.etc_hostname: False,
                              self.ldif_base: False,
                              self.ldif_attributes: False,
                              self.ldif_scopes: False,
@@ -832,29 +824,24 @@ class Setup(object):
         realConfigFolder = os.path.realpath(self.configFolder)
         realOptPythonFolderFolder = os.path.realpath(self.gluuOptPythonFolder)
 
-        self.run([self.cmd_chown, '-R', 'root:gluu', realCertFolder])
-        self.run([self.cmd_chown, '-R', 'root:gluu', realConfigFolder])
-        self.run([self.cmd_chown, '-R', 'root:gluu', realOptPythonFolderFolder])
-        self.run([self.cmd_chown, '-R', 'root:gluu', self.oxBaseDataFolder])
+        #TODO LATER
+        return
 
         # Set right permissions
         self.run([self.cmd_chmod, '-R', '440', realCertFolder])
         self.run([self.cmd_chmod, 'a+X', realCertFolder])
 
         if self.installOxAuth:
-            self.run([self.cmd_chown, '-R', 'jetty:jetty', self.oxauth_openid_jks_fn])
             self.run([self.cmd_chmod, '660', self.oxauth_openid_jks_fn])
 
         if self.installSaml:
             realIdp3Folder = os.path.realpath(self.idp3Folder)
-            self.run([self.cmd_chown, '-R', 'jetty:jetty', realIdp3Folder])
 
         for fn in (
                 os.path.join(self.jetty_base, 'oxauth/webapps/oxauth.xml'),
                 os.path.join(self.jetty_base, 'identity/webapps/identity.xml'),
                 ):
             if os.path.exists(fn):
-                cmd = [self.cmd_chown, 'jetty:jetty', fn]
                 self.run(cmd)
 
     def set_permissions(self):
@@ -870,12 +857,6 @@ class Setup(object):
 
         self.run(['find', "%s" % self.osDefault, '-perm', '700', '-exec', self.cmd_chmod, "755", '{}', ';'])
         self.run(['find', "%s" % self.osDefault, '-perm', '600', '-exec', self.cmd_chmod, "644", '{}', ';'])
-
-        self.run(['/bin/chmod', '-R', '644', self.etc_hosts])
-
-        if self.os_type in ['debian', 'ubuntu']:
-            self.run(['/bin/chmod', '-f', '644', self.etc_hostname])
-
 
         if self.installSaml:
             realIdp3Folder = os.path.realpath(self.idp3Folder)
@@ -1203,6 +1184,7 @@ class Setup(object):
             self.logIt("Error loading file %s" % fileName)
 
     def set_ulimits(self):
+        #TODO MOVE TO install hook
         try:
             if self.os_type in ['centos', 'red', 'fedora']:
                 apache_user = 'apache'
@@ -1539,50 +1521,7 @@ class Setup(object):
         self.run([self.cmd_chmod, '-R', "755", "%s/node" % self.gluuOptSystemFolder])
         self.run([self.cmd_chmod, '-R', "755", "%s/passport" % self.gluuOptSystemFolder])
 
-        self.run([self.cmd_chown, '-R', 'node:node', nodeDestinationPath])
-        self.run([self.cmd_chown, '-h', 'node:node', self.node_home])
-
         self.run([self.cmd_mkdir, '-p', self.node_base])
-        self.run([self.cmd_chown, '-R', 'node:node', self.node_base])
-
-    def fix_init_scripts(self, serviceName, initscript_fn):
-
-        changeTo = None
-        os_ = self.os_type + self.os_version
-
-        couchbase_mappings = self.getMappingType('couchbase')
-
-        if self.persistence_type == 'couchbase' or 'default' in couchbase_mappings:
-            changeTo = 'couchbase-server'
-
-        if self.wrends_install == REMOTE or self.cb_install == REMOTE:
-            changeTo = ''
-
-        if changeTo != None:
-            for service in self.service_requirements:
-                self.service_requirements[service][0] = self.service_requirements[service][0].replace('opendj', changeTo)
-
-        initscript = open(initscript_fn).readlines()
-        
-        for i,l in enumerate(initscript):
-            if l.startswith('# Provides:'):
-                initscript[i] = '# Provides:          {0}\n'.format(serviceName)
-            elif l.startswith('# description:'):
-                initscript[i] = '# description: Jetty 9 {0}\n'.format(serviceName)
-            elif l.startswith('# Required-Start:'):
-                initscript[i] = '# Required-Start:    $local_fs $network {0}\n'.format(self.service_requirements[serviceName][0])
-            elif l.startswith('# chkconfig:'):
-                initscript[i] = '# chkconfig: 345 {0} {1}\n'.format(self.service_requirements[serviceName][1], 100 - self.service_requirements[serviceName][1])
-
-        if (self.os_type in ['centos', 'red', 'fedora'] and self.os_initdaemon == 'systemd') or (self.os_type+self.os_version in ('ubuntu18','debian9','debian10')):
-            service_init_script_fn = os.path.join(self.distFolder, 'scripts', serviceName)
-        else:
-            service_init_script_fn = os.path.join('/etc/init.d', serviceName)
-
-        with open(service_init_script_fn, 'w') as W:
-            W.write(''.join(initscript))
-
-        self.run([self.cmd_chmod, '+x', service_init_script_fn])
 
     def installJettyService(self, serviceConfiguration, supportCustomizations=False, supportOnlyPageCustomizations=False):
         serviceName = serviceConfiguration['name']
@@ -1614,7 +1553,6 @@ class Setup(object):
         jettyEnv['PATH'] = '%s/bin:' % self.jre_home + jettyEnv['PATH']
 
         self.run([self.cmd_java, '-jar', '%s/start.jar' % self.jetty_home, 'jetty.home=%s' % self.jetty_home, 'jetty.base=%s' % jettyServiceBase, '--add-to-start=%s' % jettyModules], None, jettyEnv)
-        self.run([self.cmd_chown, '-R', 'jetty:jetty', jettyServiceBase])
 
         try:
             self.renderTemplateInOut(serviceName, '%s/jetty' % self.templateFolder, '%s/jetty' % self.outputFolder)
@@ -1624,7 +1562,6 @@ class Setup(object):
 
         jettyServiceConfiguration = '%s/jetty/%s' % (self.outputFolder, serviceName)
         self.copyFile(jettyServiceConfiguration, "/etc/default")
-        self.run([self.cmd_chown, 'root:root', "/etc/default/%s" % serviceName])
 
         # Render web eources file
         try:
@@ -1647,7 +1584,6 @@ class Setup(object):
             self.logIt(traceback.format_exc(), True)
 
         initscript_fn = os.path.join(self.jetty_home, 'bin/jetty.sh')
-        self.fix_init_scripts(serviceName, initscript_fn)
         
         self.enable_service_at_start(serviceName)
         
@@ -1657,7 +1593,6 @@ class Setup(object):
             jetty_tmpfiles_src = '%s/jetty.conf.tmpfiles.d' % self.templateFolder
             jetty_tmpfiles_dst = '%s/jetty.conf' % tmpfiles_base
             self.copyFile(jetty_tmpfiles_src, jetty_tmpfiles_dst)
-            self.run([self.cmd_chown, 'root:root', jetty_tmpfiles_dst])
             self.run([self.cmd_chmod, '644', jetty_tmpfiles_dst])
 
         serviceConfiguration['installed'] = True
@@ -1670,40 +1605,7 @@ class Setup(object):
 
         nodeServiceConfiguration = '%s/node/%s' % (self.outputFolder, serviceName)
         self.copyFile(nodeServiceConfiguration, '/etc/default')
-        self.run([self.cmd_chown, 'root:root', '/etc/default/%s' % serviceName])
 
-        if serviceName == 'passport':
-            initscript_fn = os.path.join(self.gluuOptSystemFolder, serviceName)
-            self.fix_init_scripts(serviceName, initscript_fn)
-        else:
-            self.run([self.cmd_ln, '-sf', '%s/node' % self.gluuOptSystemFolder, '/etc/init.d/%s' % serviceName])
-
-    def installJython(self):
-        self.logIt("Installing Jython")
-
-        jython_installer_list = glob.glob(os.path.join(self.distAppFolder, 'jython-installer-*'))
-
-        if not jython_installer_list:
-            self.logIt("Jython installer not found in. Exiting...", True, True)
-
-        jython_installer = max(jython_installer_list)
-        jython_version_regex = re.search('jython-installer-(.*)\.jar', jython_installer)
-        
-        if not jython_version_regex:
-            self.logIt("Jython installer not found in. Exiting...", True, True)
-
-        jython_version = jython_version_regex.groups()[0]
-
-        try:
-            self.run(['rm', '-rf', '/opt*-%s' % jython_version])
-            self.run([self.cmd_java, '-jar', jython_installer, '-v', '-s', '-d', '/opt/jython-%s' % jython_version, '-t', 'standard', '-e', 'ensurepip'])
-        except:
-            self.logIt("Error installing jython-installer-%s.jar" % jython_version)
-            self.logIt(traceback.format_exc(), True)
-
-        self.run([self.cmd_ln, '-sf', '/opt/jython-%s' % jython_version, self.jython_home])
-        self.run([self.cmd_chown, '-R', 'root:root', '/opt/jython-%s' % jython_version])
-        self.run([self.cmd_chown, '-h', 'root:root', self.jython_home])
 
     def downloadWarFiles(self):
         if self.downloadWars:
@@ -1819,9 +1721,7 @@ class Setup(object):
                   '-out',
                   public_certificate
                   ])
-        self.run([self.cmd_chown, '%s:%s' % (user, user), key_with_password])
         self.run([self.cmd_chmod, '700', key_with_password])
-        self.run([self.cmd_chown, '%s:%s' % (user, user), key])
         self.run([self.cmd_chmod, '700', key])
 
         self.run([self.cmd_keytool, "-import", "-trustcacerts", "-alias", "%s_%s" % (self.hostname, suffix), \
@@ -1845,9 +1745,9 @@ class Setup(object):
                               '%s/shibIDP.crt' % self.certFolder,
                               'jetty')
 
+            #TODO LATER
             # permissions
-            self.run([self.cmd_chown, '-R', 'jetty:jetty', self.certFolder])
-            self.run([self.cmd_chmod, '-R', '500', self.certFolder])
+            #self.run([self.cmd_chmod, '-R', '500', self.certFolder])
 
         except:
             self.logIt("Error generating cyrpto")
@@ -1890,9 +1790,7 @@ class Setup(object):
                   'RSA',
                   '-noprompt'
                   ])
-        self.run([self.cmd_chown, '%s:%s' % (user, user), pkcs_fn])
         self.run([self.cmd_chmod, '700', pkcs_fn])
-        self.run([self.cmd_chown, '%s:%s' % (user, user), keystoreFN])
         self.run([self.cmd_chmod, '700', keystoreFN])
 
     def gen_openid_jwks_jks_keys(self, jks_path, jks_pwd, jks_create = True, key_expiration = None, dn_name = None, key_algs = None):
@@ -1924,7 +1822,7 @@ class Setup(object):
                             jks_pwd,
                             '-dname',
                             '"%s"' % dn_name])
-            self.run(['/bin/sh', '-c', cmd])
+            self.run(cmd, shell=True)
 
             # Delete dummy key from JKS
             cmd = " ".join([self.cmd_keytool,
@@ -1939,7 +1837,7 @@ class Setup(object):
                             jks_pwd,
                             '-dname',
                             '"%s"' % dn_name])
-            self.run(['/bin/sh', '-c', cmd])
+            self.run(cmd, shell=True)
 
         cmd = " ".join([self.cmd_java,
                         "-Dlog4j.defaultInitOverride=true",
@@ -1958,11 +1856,7 @@ class Setup(object):
                         "-expiration",
                         "%s" % key_expiration])
 
-        args = ['/bin/sh', '-c', cmd]
-
-        self.logIt("Runnning: %s" % " ".join(args))
-
-        output = self.run(args)
+        output = self.run(cmd, shell=True)
         if output:
             return output.splitlines()
 
@@ -1982,7 +1876,7 @@ class Setup(object):
                         cert_alias,
                         "-exportfile",
                         cert_path])
-        self.run(['/bin/sh', '-c', cmd])
+        output = self.run(cmd, shell=True)
 
     def write_openid_keys(self, fn, jwks):
         self.logIt("Writing oxAuth OpenID Connect keys")
@@ -1997,7 +1891,6 @@ class Setup(object):
             f = open(fn, 'w')
             f.write(jwks_text)
             f.close()
-            self.run([self.cmd_chown, 'jetty:jetty', fn])
             self.run([self.cmd_chmod, '600', fn])
             self.logIt("Wrote oxAuth OpenID Connect key to %s" % fn)
         except:
@@ -2215,11 +2108,6 @@ class Setup(object):
                 
             self.run(' '.join(cmd), shell=True)
 
-            # chown -R jetty:jetty /opt/shibboleth-idp
-            # self.run([self.cmd_chown,'-R', 'jetty:jetty', self.idp3Folder], '/opt')
-            self.run([self.cmd_chown, '-R', 'jetty:jetty', jettyIdpServiceWebapps], '/opt')
-
-
             if self.persistence_type == 'couchbase':
                 self.saml_couchbase_settings()
             elif self.persistence_type == 'hybrid':
@@ -2369,7 +2257,6 @@ class Setup(object):
         log_file = os.path.join(self.gluu_passport_base, 'server/logs/start.log')
         open(log_file,'w')
 
-        self.run([self.cmd_chown, '-R', 'node:node', self.gluu_passport_base])
 
         self.logIt("Preparing Passport OpenID RP certificate...")
 
@@ -2402,7 +2289,8 @@ class Setup(object):
 
         if self.installHttpd:
             self.pbar.progress("httpd", "Installing Gluu components: HTTPD", False)
-            self.configure_httpd()
+            #DO LATER
+            #self.configure_httpd()
 
         if self.installOxAuth:
             self.pbar.progress("oxauth", "Installing Gluu components: OxAuth", False)
@@ -2457,63 +2345,9 @@ class Setup(object):
         encrypted_password = '{{SSHA}}{0}'.format(b64encoded)
         return encrypted_password
 
-    def createUser(self, userName, homeDir, shell='/bin/bash'):
-        
-        try:
-            useradd = '/usr/sbin/useradd'
-            cmd = [useradd, '--system', '--user-group', '--shell', shell, userName]
-            if homeDir:
-                cmd.insert(-1, '--create-home')
-                cmd.insert(-1, '--home-dir')
-                cmd.insert(-1, homeDir)
-            else:
-                cmd.insert(-1, '--no-create-home')
-            self.run(cmd)
-            if homeDir:
-                self.logOSChanges("User %s with homedir %s was created" % (userName, homeDir))
-            else:
-                self.logOSChanges("User %s without homedir was created" % (userName))
-        except:
-            self.logIt("Error adding user", True)
-            self.logIt(traceback.format_exc(), True)
-
-    def createGroup(self, groupName):
-        try:
-            groupadd = '/usr/sbin/groupadd'
-            self.run([groupadd, groupName])
-            self.logOSChanges("Group %s was created" % (groupName))
-        except:
-            self.logIt("Error adding group", True)
-            self.logIt(traceback.format_exc(), True)
-
-    def addUserToGroup(self, groupName, userName):
-        try:
-            usermod = '/usr/sbin/usermod'
-            self.run([usermod, '-a', '-G', groupName, userName])
-            self.logOSChanges("User %s was added to group %s" % (userName,groupName))
-        except:
-            self.logIt("Error adding group", True)
-            self.logIt(traceback.format_exc(), True)
-
-    def createUsers(self):
-        self.createUser('ldap', self.ldap_user_home)
-        self.createUser('jetty', self.jetty_user_home)
-        self.createUser('node', self.node_user_home)
-        self.createUser('radius', homeDir=self.radius_dir, shell='/bin/false')
-
-        self.createGroup('gluu')
-
-        self.addUserToGroup('gluu', 'ldap')
-        self.addUserToGroup('gluu', 'jetty')
-        self.addUserToGroup('gluu', 'node')
-        self.addUserToGroup('gluu', 'radius')
-        self.addUserToGroup('adm', 'ldap')
-
     def makeFolders(self):
-        try:
-            # Allow write to /tmp
-            self.run([self.cmd_chmod, 'ga+w', "/tmp"])
-
+        if 1:
+        #try:
             # Create these folder on all instances
             self.run([self.cmd_mkdir, '-p', self.gluuOptFolder])
             self.run([self.cmd_mkdir, '-p', self.gluuOptBinFolder])
@@ -2540,10 +2374,6 @@ class Setup(object):
                 self.run([self.cmd_mkdir, '-m', '775', '-p', self.oxTrustRemovedFolder])
                 self.run([self.cmd_mkdir, '-m', '775', '-p', self.oxTrustCacheRefreshFolder])
 
-                self.run([self.cmd_chown, '-R', 'root:gluu', self.oxPhotosFolder])
-                self.run([self.cmd_chown, '-R', 'root:gluu', self.oxTrustRemovedFolder])
-                self.run([self.cmd_chown, '-R', 'root:gluu', self.oxTrustCacheRefreshFolder])
-
             if self.installSaml:
                 self.run([self.cmd_mkdir, '-p', self.idp3Folder])
                 self.run([self.cmd_mkdir, '-p', self.idp3MetadataFolder])
@@ -2554,33 +2384,11 @@ class Setup(object):
                 self.run([self.cmd_mkdir, '-p', self.idp3ConfAuthnFolder])
                 self.run([self.cmd_mkdir, '-p', self.idp3CredentialsFolder])
                 self.run([self.cmd_mkdir, '-p', self.idp3WebappFolder])
-                # self.run([self.cmd_mkdir, '-p', self.idp3WarFolder])
-                self.run([self.cmd_chown, '-R', 'jetty:jetty', self.idp3Folder])
 
-        except:
-            self.logIt("Error making folders", True)
-            self.logIt(traceback.format_exc(), True)
 
-    def customiseSystem(self):
-        if self.os_initdaemon == 'init':
-            system_profile_update = self.system_profile_update_init
-        else:
-            system_profile_update = self.system_profile_update_systemd
-
-        # Render customized part
-        self.renderTemplate(system_profile_update)
-        renderedSystemProfile = self.readFile(system_profile_update)
-
-        # Read source file
-        currentSystemProfile = self.readFile(self.sysemProfile)
-
-        # Write merged file
-        self.backupFile(self.sysemProfile)
-        resultSystemProfile = "\n".join((currentSystemProfile, renderedSystemProfile))
-        self.writeFile(self.sysemProfile, resultSystemProfile)
-
-        # Fix new file permissions
-        self.run([self.cmd_chmod, '644', self.sysemProfile])
+        #except:
+        #    self.logIt("Error making folders", True)
+        #    self.logIt(traceback.format_exc(), True)
 
 
     def getMappingType(self, mtype):
@@ -2630,10 +2438,7 @@ class Setup(object):
         self.writeFile(self.gluu_hybrid_roperties, self.gluu_hybrid_roperties_content)
 
     def configureSystem(self):
-        self.customiseSystem()
-        self.createUsers()
         self.makeFolders()
-
         if self.persistence_type == 'hybrid':
             self.writeHybridProperties()
 
@@ -2880,6 +2685,18 @@ class Setup(object):
 
     def promptForProperties(self):
 
+        #dummy installation defaults
+        self.city = 'myCity'
+        self.state = 'myState'
+        self.countryCode = 'MY'
+        self.orgName = 'myOrg'
+        self.oxtrust_admin_password = 'myPassword'
+        self.ldapPass = self.oxtrust_admin_password
+        self.ip = self.detect_ip()
+        self.hostname = self.detect_hostname()
+        
+        return 
+
         if self.noPrompt:
             return
 
@@ -3021,22 +2838,9 @@ class Setup(object):
             self.promptForBackendMappings()
             self.persistence_type = 'hybrid'
 
-        if setupOptions['allowPreReleasedFeatures']:
-            while True:
-                java_type = self.getPrompt("Select Java type: 1.Jre-1.8   2.OpenJDK-11", '1')
-                if not java_type:
-                    java_type = 1
-                    break
-                if java_type in '12':
-                    break
-                else:
-                    print("Please enter 1 or 2")
-
-            if java_type == '1':
-                self.java_type = 'jre'
-            else:
-                self.java_type = 'jdk'
-                self.defaultTrustStoreFN = '%s/lib/security/cacerts' % self.jre_home
+        if self.allowPreReleasedFeatures:
+            #we don't have such option
+            pass
                 
         promptForOxAuth = self.getPrompt("Install oxAuth OAuth2 Authorization Server?", 
                                         self.getDefaultOption(self.installOxAuth)
@@ -3361,11 +3165,13 @@ class Setup(object):
         log_arg = ' '.join(args) if type(args) is list else args
         self.logIt('Running: %s' % log_arg)
         
-        if args[0] == self.cmd_chown:
-            argsc = self.get_clean_args(args)
-            if not argsc[2].startswith('/opt'):
-                self.logOSChanges('Making owner of %s to %s' % (', '.join(argsc[2:]), argsc[1]))
-        elif args[0] == self.cmd_chmod:
+        #NO CHOWN FOR SNAP
+        #if args[0] == self.cmd_chown:
+        #    argsc = self.get_clean_args(args)
+        #    if not argsc[2].startswith('/opt'):
+        #        self.logOSChanges('Making owner of %s to %s' % (', '.join(argsc[2:]), argsc[1]))
+                
+        if args[0] == self.cmd_chmod:
             argsc = self.get_clean_args(args)
             if not argsc[2].startswith('/opt'):
                 self.logOSChanges('Setting permission of %s to %s' % (', '.join(argsc[2:]), argsc[1]))
@@ -3454,7 +3260,6 @@ class Setup(object):
             f = open(self.ldapPassFn, 'w')
             f.write(self.ldapPass)
             f.close()
-            self.run([self.cmd_chown, 'ldap:ldap', self.ldapPassFn])
         except:
             self.logIt("Error writing temporary LDAP password.")
             self.logIt(traceback.format_exc(), True)
@@ -3466,44 +3271,45 @@ class Setup(object):
     def install_opendj(self):
         self.logIt("Running OpenDJ Setup")
 
-        # Copy opendj-setup.properties so user ldap can find it in /opt/opendj
-        setupPropsFN = os.path.join(self.ldapBaseFolder, 'opendj-setup.properties')
-        shutil.copy("%s/opendj-setup.properties" % self.outputFolder, setupPropsFN)
-        self.set_ownership()
-        self.run(['chown', 'ldap:ldap', setupPropsFN])
+        prop_fn = os.path.basename(self.ldap_setup_properties)
+        setupPropsFN = os.path.join('/tmp', prop_fn)
+        self.run([
+                'cp', 
+                os.path.join(self.outputFolder,prop_fn),
+                setupPropsFN
+                 ])
 
-        try:
-            ldapSetupCommand = '%s/setup' % self.ldapBaseFolder
-            setupCmd = " ".join([ldapSetupCommand,
-                                '--no-prompt',
-                                '--cli',
-                                '--propertiesFilePath',
-                                setupPropsFN,
-                                '--acceptLicense'])
-            self.run(['/bin/su',
-                      'ldap',
-                      '-c',
-                      setupCmd],
-                      cwd='/opt/opendj',
-                      )
-        except:
-            self.logIt("Error running LDAP setup script", True)
-            self.logIt(traceback.format_exc(), True)
+        ldapSetupCommand = '%s/setup' % self.ldapBaseFolder
+        cmd = " ".join([ldapSetupCommand,
+                            '--no-prompt',
+                            '--cli',
+                            '--propertiesFilePath',
+                            setupPropsFN,
+                            '--acceptLicense'])
+
+        self.run(cmd, shell=True)
+
 
         #Append self.jre_home to OpenDj java.properties        
-        opendj_java_properties_fn = os.path.join(self.ldapBaseFolder, 'config/java.properties')
+        opendj_java_properties_fn = os.path.join(self.snap_common_dir, 'opendj/config/java.properties')
 
         self.logIt("append self.jre_home to OpenDj %s" % opendj_java_properties_fn)
         with open(opendj_java_properties_fn,'a') as f:
             f.write('\ndefault.java-home={}\n'.format(self.jre_home))
 
-        try:
-            self.logIt('Stopping opendj server')
-            cmd = os.path.join(self.ldapBaseFolder, 'bin/stop-ds')
-            self.run(['/bin/su','ldap', '-c', cmd], cwd='/opt/opendj/bin')
-        except:
-            self.logIt("Error stopping opendj", True)
-            self.logIt(traceback.format_exc(), True)
+        cmd = os.path.join(self.ldapBaseFolder, 'bin/stop-ds')
+        self.logIt('Stopping opendj server')
+        self.run(cmd, shell=True)
+
+        self.run(['rm', setupPropsFN])
+
+        self.logIt("Copying OpenDJ schema")
+        for schemaFile in self.openDjschemaFiles:
+            self.copyFile(schemaFile, self.openDjSchemaFolder)
+            
+        cmd = os.path.join(self.ldapBaseFolder, 'bin/start-ds')
+        self.logIt('Starting opendj server')
+        self.run(cmd, shell=True)
 
     def post_install_opendj(self):
         try:
@@ -3544,8 +3350,7 @@ class Setup(object):
             config_changes.append(['set-administration-connector-prop', '--set', 'listen-address:127.0.0.1'])
                           
         for changes in config_changes:
-            cwd = os.path.join(self.ldapBaseFolder, 'bin')
-            dsconfigCmd = " ".join([
+            cmd = " ".join([
                                     self.ldapDsconfigCommand,
                                     '--trustAll',
                                     '--no-prompt',
@@ -3557,10 +3362,7 @@ class Setup(object):
                                     '"%s"' % self.ldap_binddn,
                                     '--bindPasswordFile',
                                     self.ldapPassFn] + changes)
-            self.run(['/bin/su',
-                      'ldap',
-                      '-c',
-                      dsconfigCmd], cwd=cwd)
+            self.run(cmd, shell=True)
 
     def export_opendj_public_cert(self):
         # Load password to acces OpenDJ truststore
@@ -3624,10 +3426,7 @@ class Setup(object):
         if createPwFile:
             self.createLdapPw()
         
-        self.run(['/bin/su',
-                  'ldap',
-                  '-c',
-                  '%s' % importCmd], cwd=cwd)
+        self.run(importCmd, shell=True)
 
         if createPwFile:
             self.deleteLdapPw()
@@ -3668,10 +3467,7 @@ class Setup(object):
 
             importCmd = " ".join(importParams)
 
-            self.run(['/bin/su',
-                      'ldap',
-                      '-c',
-                      '%s' % importCmd], cwd=cwd)
+            self.run(importCmd, shell=True)
 
     def index_opendj_backend(self, backend):
         index_command = 'create-backend-index'
@@ -3715,10 +3511,8 @@ class Setup(object):
                                                  '--trustAll',
                                                  '--noPropertiesFile',
                                                  '--no-prompt'])
-                            self.run(['/bin/su',
-                                      'ldap',
-                                      '-c',
-                                      indexCmd], cwd=cwd)
+                            
+                            self.run(indexCmd, shell=True)
 
         except:
             self.logIt("Error occured during backend " + backend + " LDAP indexing", True)
@@ -3728,77 +3522,6 @@ class Setup(object):
         self.index_opendj_backend('userRoot')
         if self.mappingLocations['site'] == 'ldap':
             self.index_opendj_backend('site')
-
-
-    def prepare_opendj_schema(self):
-        self.logIt("Copying OpenDJ schema")
-        for schemaFile in self.openDjschemaFiles:
-            self.copyFile(schemaFile, self.openDjSchemaFolder)
-
-
-        self.run([self.cmd_chmod, '-R', 'a+rX', self.ldapBaseFolder])
-        self.run([self.cmd_chown, '-R', 'ldap:ldap', self.ldapBaseFolder])
-
-    def setup_opendj_service(self):
-        service_path = self.detect_service_path()
-
-        if (self.os_type in ['centos', 'red', 'fedora'] and self.os_initdaemon == 'systemd') or (self.os_type+self.os_version in ('ubuntu18','debian9','debian10')):
-            opendj_script_name = os.path.split(self.opendj_service_centos7)[-1]
-            opendj_dest_folder = "/etc/systemd/system"
-            try:
-                self.copyFile(self.opendj_service_centos7, opendj_dest_folder)
-                self.run([service_path, 'daemon-reload'])
-                self.run([service_path, 'enable', 'opendj.service'])
-                self.run([service_path, 'start', 'opendj.service'])
-            except:
-                self.logIt("Error copying script file %s to %s" % (opendj_script_name, opendj_dest_folder))
-                self.logIt(traceback.format_exc(), True)
-        else:
-            self.run([self.ldapDsCreateRcCommand, "--outputFile", "/etc/init.d/opendj", "--userName",  "ldap"])
-            # Make the generated script LSB compliant
-            lsb_str=(
-                    '### BEGIN INIT INFO\n'
-                    '# Provides:          opendj\n'
-                    '# Required-Start:    $remote_fs $syslog\n'
-                    '# Required-Stop:     $remote_fs $syslog\n'
-                    '# Default-Start:     2 3 4 5\n'
-                    '# Default-Stop:      0 1 6\n'
-                    '# Short-Description: Start daemon at boot time\n'
-                    '# Description:       Enable service provided by daemon.\n'
-                    '### END INIT INFO\n'
-                    )
-            self.insertLinesInFile("/etc/init.d/opendj", 1, lsb_str)
-
-            if self.os_type in ['ubuntu', 'debian']:
-                self.run(["/usr/sbin/update-rc.d", "-f", "opendj", "remove"])
-
-            self.fix_init_scripts('opendj', '/etc/init.d/opendj')
-            self.enable_service_at_start('opendj')
-
-            self.run([service_path, 'opendj', 'stop'])
-            self.run([service_path, 'opendj', 'start'])
-
-    def setup_init_scripts(self):
-        if self.os_initdaemon == 'initd':
-            for init_file in self.init_files:
-                try:
-                    script_name = os.path.split(init_file)[-1]
-                    self.copyFile(init_file, "/etc/init.d")
-                    self.run([self.cmd_chmod, "755", "/etc/init.d/%s" % script_name])
-                except:
-                    self.logIt("Error copying script file %s to /etc/init.d" % init_file)
-                    self.logIt(traceback.format_exc(), True)
-
-        if self.os_type in ['centos', 'fedora']:
-            for service in self.redhat_services:
-                self.run(["/sbin/chkconfig", service, "on"])
-        elif self.os_type in ['red']:
-            for service in self.redhat_services:
-                self.run(["/sbin/chkconfig", service, "on"])
-        elif self.os_type in ['ubuntu', 'debian']:
-            for service in self.debian_services:
-                self.run(["/usr/sbin/update-rc.d", service, 'defaults'])
-                self.run(["/usr/sbin/update-rc.d", service, 'enable'])
 
     def detect_service_path(self):
         service_path = '/sbin/service'
@@ -3907,36 +3630,6 @@ class Setup(object):
             self.logIt(traceback.format_exc(), True)
 
 
-
-    def update_hostname(self):
-        self.logIt("Copying hosts and hostname to final destination")
-
-        if self.os_initdaemon == 'systemd' and self.os_type in ['centos', 'red', 'fedora']:
-            self.run(['/usr/bin/hostnamectl', 'set-hostname', self.hostname])
-        else:
-            if self.os_type in ['debian', 'ubuntu']:
-                self.copyFile("%s/hostname" % self.outputFolder, self.etc_hostname)
-                self.run(['/bin/chmod', '-f', '644', self.etc_hostname])
-
-            if self.os_type in ['centos', 'red', 'fedora']:
-                self.copyFile("%s/network" % self.outputFolder, self.network)
-
-            self.run(['/bin/hostname', self.hostname])
-
-        if not os.path.exists(self.etc_hosts):
-            self.writeFile(self.etc_hosts, '{}\t{}\n'.format(self.ip, self.hostname))
-        else:
-            hostname_file_content = self.readFile(self.etc_hosts)
-            with open(self.etc_hosts,'w') as w:
-                for l in hostname_file_content.splitlines():
-                    if not self.hostname in l.split():
-                        w.write(l+'\n')
-
-                w.write('{}\t{}\n'.format(self.ip, self.hostname))
-
-        self.run(['/bin/chmod', '-R', '644', self.etc_hosts])
-
-
     def import_custom_ldif(self, fullPath):
         output_dir = os.path.join(fullPath, '.output')
         self.logIt("Importing Custom LDIF files")
@@ -3952,21 +3645,13 @@ class Setup(object):
 
     def install_ldap_server(self):
         self.logIt("Running OpenDJ Setup")
-        
-        self.pbar.progress("opendj", "Extracting OpenDJ", False)
-        self.extractOpenDJ()
 
         self.createLdapPw()
-        
+
         try:
             self.pbar.progress("opendj", "OpenDJ: installing", False)
             if self.wrends_install == LOCAL:
                 self.install_opendj()
-
-                self.pbar.progress("opendj", "OpenDJ: preparing schema", False)
-                self.prepare_opendj_schema()
-                self.pbar.progress("opendj", "OpenDJ: setting up service", False)
-                self.setup_opendj_service()
 
             if self.wrends_install:
                 self.pbar.progress("opendj", "OpenDJ: configuring", False)
@@ -4617,7 +4302,6 @@ class Setup(object):
         self.run(['wget', '--no-check-certificate', 'https://raw.githubusercontent.com/GluuFederation/oxAuth/master/Client/src/test/resources/oxauth_test_client_keys.zip', '-O', '/var/www/html/oxauth_test_client_keys.zip'])
         self.run(['unzip', '-o', '/var/www/html/oxauth_test_client_keys.zip', '-d', '/var/www/html/'])
         self.run(['rm', '-rf', 'oxauth_test_client_keys.zip'])
-        self.run(['chown', '-R', 'root:'+apache_user, '/var/www/html/oxauth-client'])
 
 
         oxAuthConfDynamic_changes = (
@@ -4705,7 +4389,7 @@ class Setup(object):
                         self.ldap_binddn
                     )
             
-            self.run(['/bin/su', 'ldap', '-c', dsconfigCmd], cwd=cwd)
+            self.run(dsconfigCmd, shell=True)
             
             ldap_conn.unbind()
             
@@ -4725,7 +4409,7 @@ class Setup(object):
                     )
                 
                 dsconfigCmd = '{1} {2}'.format(self.ldapBaseFolder, self.ldapDsconfigCommand, cmd)
-                self.run(['/bin/su', 'ldap', '-c', dsconfigCmd], cwd=cwd)
+                self.run(dsconfigCmd, shell=True)
             
             
             ldap_conn = self.getLdapConnection()
@@ -4822,7 +4506,6 @@ class Setup(object):
         self.logIt("Installing oxd server...")
         oxd_root = '/opt/oxd-server/'
         self.run(['tar', '-zxf', self.oxd_package, '-C', '/opt'])
-        self.run(['chown', '-R', 'jetty:jetty', oxd_root])
         
         service_file = os.path.join(oxd_root, 'oxd-server.service')
         if os.path.exists(service_file):
@@ -4837,7 +4520,6 @@ class Setup(object):
         self.run(['cp', os.path.join(oxd_root, 'oxd-server-default'),  '/etc/default/oxd-server'])
 
         self.run(['mkdir', '/var/log/oxd-server'])
-        self.run(['chown', 'jetty:jetty', '/var/log/oxd-server'])
         
         for fn in glob.glob(os.path.join(oxd_root,'bin/*')):
             self.run(['chmod', '+x', fn])
@@ -4877,14 +4559,11 @@ class Setup(object):
                 os.path.join(self.distGluuFolder, 'jsmpp-{}.jar'.format(self.jsmmp_version)), 
                 jettyServiceOxAuthCustomLibsPath
                 )
-        
-        self.run([self.cmd_chown, '-R', 'jetty:jetty', jettyServiceOxAuthCustomLibsPath])
 
         # Make necessary Directories for Casa
         for path in ('/opt/gluu/jetty/casa/static/', '/opt/gluu/jetty/casa/plugins'):
             if not os.path.exists(path):
                 self.run(['mkdir', '-p', path])
-                self.run(['chown', '-R', 'jetty:jetty', path])
         
         #Adding twilio jar path to oxauth.xml
         oxauth_xml_fn = '/opt/gluu/jetty/oxauth/webapps/oxauth.xml'
@@ -5027,24 +4706,13 @@ class Setup(object):
             #create empty gluu-radius.private-key.pem
             gluu_radius_private_key_fn = os.path.join(self.certFolder, 'gluu-radius.private-key.pem')
             self.writeFile(gluu_radius_private_key_fn, '')
-            
-            self.run([self.cmd_chown, '-R', 'radius:gluu', self.radius_dir])
-            self.run([self.cmd_chown, '-R', 'root:gluu', conf_dir])
-            self.run([self.cmd_chown, 'root:gluu', os.path.join(self.gluuOptPythonFolder, 'libs/gluu_common.py')])
-            
-            self.run([self.cmd_chown, 'radius:gluu', os.path.join(self.certFolder, 'gluu-radius.jks')])
-            self.run([self.cmd_chown, 'radius:gluu', os.path.join(self.certFolder, 'gluu-radius.private-key.pem')])
 
-            self.run([self.cmd_chmod, '660', os.path.join(self.certFolder, 'gluu-radius.jks')])
-            self.run([self.cmd_chmod, '660', os.path.join(self.certFolder, 'gluu-radius.private-key.pem')])
-            
             self.enable_service_at_start('gluu-radius')
 
     def post_install_tasks(self):
         super_gluu_lisence_renewer_fn = os.path.join(self.staticFolder, 'scripts', 'super_gluu_license_renewer.py')
         target_fn = '/etc/cron.daily/super_gluu_lisence_renewer'
         self.run(['cp', '-f', super_gluu_lisence_renewer_fn, target_fn])
-        self.run(['chown', 'root:root', target_fn])
         self.run(['chmod', '+x', target_fn])
         cron_service = 'cron'
 
@@ -5060,7 +4728,8 @@ class Setup(object):
 
 
     def do_installation(self, queue=None):
-        try:
+        if 1:
+        #try:
             self.thread_queue = queue
             self.pbar = ProgressBar(cols=tty_columns, queue=self.thread_queue)
             self.pbar.progress("gluu", "Initializing")
@@ -5071,14 +4740,6 @@ class Setup(object):
             self.downloadWarFiles()
             self.pbar.progress("gluu", "Calculating application memory")
             self.calculate_selected_aplications_memory()
-            self.pbar.progress("java", "Installing JRE")
-            self.installJRE()
-            self.pbar.progress("jetty", "Installing Jetty")
-            self.installJetty()
-            self.pbar.progress("jython", "Installing Jython")
-            self.installJython()
-            self.pbar.progress("node", "Installing Node")
-            self.installNode()
             self.pbar.progress("gluu", "Making salt")
             self.make_salt()
             self.pbar.progress("gluu", "Making oxauth salt")
@@ -5107,14 +4768,8 @@ class Setup(object):
             self.generate_base64_configuration()
             self.pbar.progress("gluu", "Rendering configuratipn template")
             self.render_configuration_template()
-            self.pbar.progress("gluu", "Updating hostname")
-            self.update_hostname()
-            self.pbar.progress("gluu", "Setting ulimits")
-            self.set_ulimits()
             self.pbar.progress("gluu", "Copying output")
             self.copy_output()
-            self.pbar.progress("gluu", "Setting up init scripts")
-            self.setup_init_scripts()
             self.pbar.progress("node", "Rendering node templates")
             self.render_node_templates()
             self.pbar.progress("gluu", "Installing Gluu components")
@@ -5151,14 +4806,14 @@ class Setup(object):
                 print()
                 self.print_post_messages()
 
-        except:
-            if self.thread_queue:
-                self.thread_queue.put((ERROR, "", str(traceback.format_exc())))
-            else:
-                installObject.logIt("***** Error caught in main loop *****", True)
-                installObject.logIt(traceback.format_exc(), True)
-                print("***** Error caught in main loop *****")
-                print(traceback.format_exc())
+        #except:
+        #    if self.thread_queue:
+        #        self.thread_queue.put((ERROR, "", str(traceback.format_exc())))
+        #    else:
+        #        self.logIt("***** Error caught in main loop *****", True)
+        #        self.logIt(traceback.format_exc(), True)
+        #        print("***** Error caught in main loop *****")
+        #        print(traceback.format_exc())
 
     def print_post_messages(self):
         print()
@@ -5455,3 +5110,4 @@ def begin_setup():
 if __name__ == '__main__':
     begin_setup()
 # END
+
