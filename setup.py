@@ -275,10 +275,12 @@ class Setup(object):
         self.open_jdk_archive_link = 'https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.4%2B11/OpenJDK11U-jdk_x64_linux_hotspot_11.0.4_11.tar.gz'
         self.java_type = 'jre'
 
+        self.jetty_user = 'root'
         self.jetty_home = '/opt/jetty'
         self.jetty_base = '%s/jetty' % self.gluuOptFolder
         self.jetty_user_home = '/home/jetty'
         self.jetty_user_home_lib = '%s/lib' % self.jetty_user_home
+        
         self.jetty_app_configuration = OrderedDict((
                 ('oxauth', {'name' : 'oxauth',
                             'jetty' : {'modules' : 'server,deploy,annotations,resources,http,http-forwarded,threadpool,console-capture,jsp,websocket'},
@@ -806,6 +808,9 @@ class Setup(object):
             self.couchbaseBucketDict['default']['ldif'].append(self.ldif_scripts_casa)
             self.couchbaseBucketDict['default']['ldif'].append(self.ldif_casa)
 
+        if not os.path.exists('/tmp/jetty_temp'):
+            self.run(['mkdir', '/tmp/jetty_temp'])
+
     def get_ssl_subject(self, ssl_fn):
         retDict = {}
         cmd = 'openssl x509  -noout -subject -nameopt RFC2253 -in {}'.format(ssl_fn)
@@ -1218,7 +1223,12 @@ class Setup(object):
     def load_properties(self, fn, no_update=[]):
         self.logIt('Loading Properties %s' % fn)
 
-        no_update += ['jre_version', 'node_version', 'jetty_version', 'jython_version', 'jreDestinationPath']
+        no_update += [
+                    'jre_version', 'node_version', 'jetty_version', 
+                    'jython_version', 'jreDestinationPath', 'snap_dir', 
+                    'snap_common_dir', 'cmd_chgrp', 'cmd_chmod', 'cmd_dpkg',
+                    'cmd_ln', 'cmd_mkdir', 'cmd_rpm', 'opensslCommand',
+                    ]
 
         cb_install = False
         map_db = []
@@ -1583,10 +1593,9 @@ class Setup(object):
             self.logIt("Error rendering service '%s' context xml" % serviceName, True)
             self.logIt(traceback.format_exc(), True)
 
-        initscript_fn = os.path.join(self.jetty_home, 'bin/jetty.sh')
-        
-        self.enable_service_at_start(serviceName)
-        
+
+        #TODO: check this later
+        """
         tmpfiles_base = '/usr/lib/tmpfiles.d'
         if self.os_initdaemon == 'systemd' and os.path.exists(tmpfiles_base):
             self.logIt("Creating 'jetty.conf' tmpfiles daemon file")
@@ -1595,10 +1604,12 @@ class Setup(object):
             self.copyFile(jetty_tmpfiles_src, jetty_tmpfiles_dst)
             self.run([self.cmd_chmod, '644', jetty_tmpfiles_dst])
 
-        serviceConfiguration['installed'] = True
-
         # don't send header to server
         self.set_jetty_param(serviceName, 'jetty.httpConfig.sendServerVersion', 'false')
+
+        """
+
+        serviceConfiguration['installed'] = True
 
     def installNodeService(self, serviceName):
         self.logIt("Installing node service %s..." % serviceName)
@@ -2052,8 +2063,9 @@ class Setup(object):
         jettyServiceWebapps = '%s/%s/webapps' % (self.jetty_base, jettyServiceName)
         self.copyFile('%s/identity.war' % self.distGluuFolder, jettyServiceWebapps)
 
+        #TODO Check later
         # don't send header to server
-        self.set_jetty_param(jettyServiceName, 'jetty.httpConfig.sendServerVersion', 'false')
+        #self.set_jetty_param(jettyServiceName, 'jetty.httpConfig.sendServerVersion', 'false')
 
     def install_saml(self):
         if self.installSaml:
@@ -2278,7 +2290,7 @@ class Setup(object):
         self.enable_service_at_start('passport')
 
     def install_gluu_components(self):
-        
+        """
         if self.wrends_install:
             self.pbar.progress("ldap", "Installing Gluu components: LDAP", False)
             self.install_ldap_server()
@@ -2291,6 +2303,11 @@ class Setup(object):
             self.pbar.progress("httpd", "Installing Gluu components: HTTPD", False)
             #DO LATER
             #self.configure_httpd()
+
+        """
+        #TODO LATER
+        #wee need setup.properties asap for testing. remove this after it is stable
+        self.save_properties(encoded=False)
 
         if self.installOxAuth:
             self.pbar.progress("oxauth", "Installing Gluu components: OxAuth", False)
@@ -3207,7 +3224,7 @@ class Setup(object):
 
         return output
 
-    def save_properties(self, prop_fn=None, obj=None):
+    def save_properties(self, prop_fn=None, obj=None, encoded=True):
         
         if not prop_fn:
             prop_fn = self.savedProperties
@@ -3242,6 +3259,9 @@ class Setup(object):
 
             with open(prop_fn, 'wb') as f:
                 p.store(f, encoding="utf-8")
+            
+            if not encoded:
+                return
             
             self.run(['openssl', 'enc', '-aes-256-cbc', '-in', prop_fn, '-out', prop_fn+'.enc', '-k', self.oxtrust_admin_password])
             
@@ -3310,13 +3330,8 @@ class Setup(object):
         cmd = os.path.join(self.ldapBaseFolder, 'bin/start-ds')
         self.logIt('Starting opendj server')
         self.run(cmd, shell=True)
+        self.run(['rm', opendj_java_properties_fn])
 
-    def post_install_opendj(self):
-        try:
-            os.remove(os.path.join(self.ldapBaseFolder, 'opendj-setup.properties'))
-        except:
-            self.logIt("Error deleting OpenDJ properties. Make sure %s/opendj-setup.properties is deleted" % self.ldapBaseFolder)
-            self.logIt(traceback.format_exc(), True)
 
     def configure_opendj(self):
         self.logIt("Configuring OpenDJ")
@@ -3676,10 +3691,7 @@ class Setup(object):
                     ldif_files.insert(0, self.ldif_base)
 
                 self.import_ldif_opendj(ldif_files)
-                
-                self.pbar.progress("opendj", "OpenDJ: post installation", False)
-                if self.wrends_install == LOCAL:
-                    self.post_install_opendj()
+
         except:
             self.logIt(traceback.format_exc(), True)
 
@@ -4479,28 +4491,6 @@ class Setup(object):
         print("Test data loaded. Exiting ...")
         sys.exit()
 
-    def fix_systemd_script(self):
-        oxauth_systemd_script_fn = '/lib/systemd/system/oxauth.service'
-        if os.path.exists(oxauth_systemd_script_fn):
-            oxauth_systemd_script = open(oxauth_systemd_script_fn).read()
-            changed = False
-            
-            if self.cb_install == LOCAL:
-                oxauth_systemd_script = oxauth_systemd_script.replace('After=opendj.service', 'After=couchbase-server.service')
-                oxauth_systemd_script = oxauth_systemd_script.replace('Requires=opendj.service', 'Requires=couchbase-server.service')
-                changed = True
-            
-            elif self.wrends_install != LOCAL:
-                oxauth_systemd_script = oxauth_systemd_script.replace('After=opendj.service', '')
-                oxauth_systemd_script = oxauth_systemd_script.replace('Requires=opendj.service', '')
-                changed = True
-                
-            if changed:
-                with open(oxauth_systemd_script_fn, 'w') as w:
-                    w.write(oxauth_systemd_script)
-                self.run(['rm', '-f', '/lib/systemd/system/opendj.service'])
-                self.run([self.systemctl, 'daemon-reload'])
-
 
     def install_oxd(self):
         self.logIt("Installing oxd server...")
@@ -4728,12 +4718,20 @@ class Setup(object):
 
 
     def do_installation(self, queue=None):
+        
+        #TODO remove after test install
+        print ("Loading  properties")
+        self.load_properties(self.savedProperties)
+        
         if 1:
         #try:
+            print ("Starting")
             self.thread_queue = queue
             self.pbar = ProgressBar(cols=tty_columns, queue=self.thread_queue)
             self.pbar.progress("gluu", "Initializing")
             self.initialize()
+            self.calculate_selected_aplications_memory()
+            """
             self.pbar.progress("gluu", "Configuring system")
             self.configureSystem()
             self.pbar.progress("download", "Downloading War files")
@@ -4772,6 +4770,7 @@ class Setup(object):
             self.copy_output()
             self.pbar.progress("node", "Rendering node templates")
             self.render_node_templates()
+            """
             self.pbar.progress("gluu", "Installing Gluu components")
             self.install_gluu_components()
             self.pbar.progress("gluu", "Rendering test templates")
@@ -4822,6 +4821,29 @@ class Setup(object):
 
 ############################   Main Loop   #################################################
 
+setupOptions = {
+    'install_dir': cur_dir,
+    'setup_properties': None,
+    'noPrompt': False,
+    'downloadWars': False,
+    'installOxAuth': True,
+    'installOxTrust': True,
+    'wrends_install': LOCAL,
+    'installHTTPD': True,
+    'installSaml': False,
+    'installOxAuthRP': False,
+    'installPassport': False,
+    'installGluuRadius': False,
+    'installCasa': False,
+    'installOxd': False,
+    'loadTestData': False,
+    'allowPreReleasedFeatures': False,
+    'listenAllInterfaces': False,
+    'cb_install': NONE,
+    'loadTestDataExit': False,
+    'loadData': True,
+}
+
 
 def begin_setup():
     cur_dir = os.path.dirname(os.path.realpath(__file__))
@@ -4833,7 +4855,6 @@ def begin_setup():
     properties will automatically be used instead of the interactive setup.
     '''
 
-    parser = argparse.ArgumentParser(description=parser_description)
     parser = argparse.ArgumentParser(description=parser_description)
     parser.add_argument('-c', help="Use command line instead of tui", action='store_true')
     parser.add_argument('-d', help="Installation directory")
@@ -4888,30 +4909,6 @@ def begin_setup():
             thread_queue = tui.queue
 
     #key_shortcuter_rules = gluu_utils.get_key_shortcuter_rules()
-
-    setupOptions = {
-        'install_dir': cur_dir,
-        'setup_properties': None,
-        'noPrompt': False,
-        'downloadWars': False,
-        'installOxAuth': True,
-        'installOxTrust': True,
-        'wrends_install': LOCAL,
-        'installHTTPD': True,
-        'installSaml': False,
-        'installOxAuthRP': False,
-        'installPassport': False,
-        'installGluuRadius': False,
-        'installCasa': False,
-        'installOxd': False,
-        'loadTestData': False,
-        'allowPreReleasedFeatures': False,
-        'listenAllInterfaces': False,
-        'cb_install': NONE,
-        'loadTestDataExit': False,
-        'loadData': True,
-    }
-
 
     if argsp.install_local_wrends:
         setupOptions['wrends_install'] = LOCAL
@@ -4987,6 +4984,7 @@ def begin_setup():
     setupOptions['installOxd'] = argsp.install_oxd
     setupOptions['couchbase_bucket_prefix'] = argsp.couchbase_bucket_prefix
 
+
     if argsp.remote_ldap:
         setupOptions['wrends_install'] = REMOTE
     
@@ -5007,6 +5005,7 @@ def begin_setup():
             print('The custom LDIF import directory %s does not exist. Exiting...' % (argsp.import_ldif))
             sys.exit(2)
 
+
     installObject = Setup(setupOptions['install_dir'])
 
     installObject.properties_password = argsp.properties_password
@@ -5015,14 +5014,21 @@ def begin_setup():
         installObject.initialize()
         installObject.load_test_data_exit()
 
+    
+
     if installObject.check_installed():
-        print("\nThis instance already configured. If you need to install new one you should reinstall package first.")
-        sys.exit(2)
+        pass
+        #TODO LATER: enable check
+        #print("\nThis instance already configured. If you need to install new one you should reinstall package first.")
+        #sys.exit(2)
 
     installObject.downloadWars = setupOptions['downloadWars']
 
     for option in setupOptions:
         setattr(installObject, option, setupOptions[option])
+
+    
+
 
     # Get the OS type
     installObject.os_type, installObject.os_version = installObject.detect_os_type()
@@ -5100,7 +5106,7 @@ def begin_setup():
             if proceed_prompt and proceed_prompt[0] !='y':
                 proceed = False
 
-
+        print(setupOptions['noPrompt'])
         if setupOptions['noPrompt'] or proceed:
             installObject.do_installation()
             print("\n\n Gluu Server installation successful! Point your browser to https://%s\n\n" % installObject.hostname)
