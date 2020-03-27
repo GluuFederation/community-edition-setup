@@ -1346,8 +1346,6 @@ class Setup(object):
         # Detect apache service name
         apache_service_name = self.get_apache_service_name()
 
-        self.run_service_command(apache_service_name, 'stop')
-
         # CentOS 7.* + systemd + apache 2.4
         if self.os_type in ['centos', 'red', 'fedora'] and self.os_initdaemon == 'systemd' and self.apache_version == "2.4":
             self.copyFile(self.apache2_24_conf, '/etc/httpd/conf/httpd.conf')
@@ -1357,12 +1355,38 @@ class Setup(object):
             self.copyFile(self.apache2_conf, '/etc/httpd/conf/httpd.conf')
             self.copyFile(self.apache2_ssl_conf, '/etc/httpd/conf.d/https_gluu.conf')
         if self.os_type in ['debian', 'ubuntu']:
-            self.copyFile(self.apache2_ssl_conf, '/etc/apache2/sites-available/https_gluu.conf')
-            self.run([self.cmd_ln, '-s', '/etc/apache2/sites-available/https_gluu.conf',
-                      '/etc/apache2/sites-enabled/https_gluu.conf'])
 
-        self.writeFile('/var/www/html/index.html', 'OK')
+            source_fn = os.path.join(self.snap_common_dir, 'etc/apache2/sites-available/https_gluu.conf')
+            self.copyFile(
+                        self.apache2_ssl_conf,
+                        source_fn
+                        )
+            target_fn = os.path.join(self.snap_common_dir, 'etc/apache2/sites-enabled/https_gluu.conf')
 
+            if not os.path.exists(target_fn):
+                os.symlink(source_fn, target_fn)
+            
+            mod_enable = ['ssl', 'alias', 'authz_core', 'headers', 'reqtimeout', 'setenvif', 'proxy', 'mime', 'proxy_http', 'proxy_ajp', 'authn_core', 'access_compat', 'socache_shmcb', 'mpm_event', 'env', 'authz_host']
+            
+            mods_enabled_dir = os.path.join(self.snap_common_dir, 'etc/apache2/mods-enabled')
+            mods_available_dir = os.path.join(self.snap_common_dir, 'etc/apache2/mods-available')
+
+            for m in mod_enable:
+                load_fn = os.path.join(mods_available_dir, m +'.load')
+                conf_fn = os.path.join(mods_available_dir, m +'.conf')
+                if os.path.exists(load_fn):
+                    target_fn = os.path.join(mods_enabled_dir, m+'.load')
+                    if not os.path.exists(target_fn):
+                        os.symlink(load_fn, target_fn)
+                if os.path.exists(conf_fn):
+                    target_fn = os.path.join(mods_enabled_dir, m+'.conf')
+                    if not os.path.exists(target_fn):
+                        os.symlink(conf_fn, target_fn)
+
+        os.system('snapctl start gluu-server.apache')
+
+        #TODO LATER
+        """
         if self.os_type in ['centos', 'red', 'fedora']:
             icons_conf_fn = '/etc/httpd/conf.d/autoindex.conf'
         else:
@@ -1418,8 +1442,7 @@ class Setup(object):
                 if not f_name in mods_enabled:
                     self.run(['unlink', mod_load_fn])
 
-        self.enable_service_at_start(apache_service_name)
-
+        """
     def copy_output(self):
         self.logIt("Copying rendered templates to final destination")
 
@@ -2054,6 +2077,8 @@ class Setup(object):
         jettyServiceWebapps = '%s/%s/webapps' % (self.jetty_base, jettyServiceName)
         self.copyFile('%s/oxauth.war' % self.distGluuFolder, jettyServiceWebapps)
 
+        os.system('snapctl start gluu-server.oxauth')
+
     def install_oxtrust(self):
         self.logIt("Copying identity.war into jetty webapps folder...")
 
@@ -2062,6 +2087,8 @@ class Setup(object):
 
         jettyServiceWebapps = '%s/%s/webapps' % (self.jetty_base, jettyServiceName)
         self.copyFile('%s/identity.war' % self.distGluuFolder, jettyServiceWebapps)
+
+        os.system('snapctl start gluu-server.identity')
 
         #TODO Check later
         # don't send header to server
@@ -2290,7 +2317,6 @@ class Setup(object):
         self.enable_service_at_start('passport')
 
     def install_gluu_components(self):
-        """
         if self.wrends_install:
             self.pbar.progress("ldap", "Installing Gluu components: LDAP", False)
             self.install_ldap_server()
@@ -2299,15 +2325,15 @@ class Setup(object):
             self.pbar.progress("couchbase", "Installing Gluu components: Couchbase", False)
             self.install_couchbase_server()
 
+
         if self.installHttpd:
             self.pbar.progress("httpd", "Installing Gluu components: HTTPD", False)
-            #DO LATER
-            #self.configure_httpd()
+            self.configure_httpd()
 
-        """
+
         #TODO LATER
         #wee need setup.properties asap for testing. remove this after it is stable
-        self.save_properties(encoded=False)
+        #self.save_properties(encoded=False)
 
         if self.installOxAuth:
             self.pbar.progress("oxauth", "Installing Gluu components: OxAuth", False)
@@ -2702,6 +2728,7 @@ class Setup(object):
 
     def promptForProperties(self):
 
+        """
         #dummy installation defaults
         self.city = 'myCity'
         self.state = 'myState'
@@ -2711,8 +2738,8 @@ class Setup(object):
         self.ldapPass = self.oxtrust_admin_password
         self.ip = self.detect_ip()
         self.hostname = self.detect_hostname()
-        
-        return 
+        """
+         
 
         if self.noPrompt:
             return
@@ -3326,10 +3353,9 @@ class Setup(object):
         self.logIt("Copying OpenDJ schema")
         for schemaFile in self.openDjschemaFiles:
             self.copyFile(schemaFile, self.openDjSchemaFolder)
-            
-        cmd = os.path.join(self.ldapBaseFolder, 'bin/start-ds')
+
         self.logIt('Starting opendj server')
-        self.run(cmd, shell=True)
+        os.system('snapctl start gluu-server.opendj')
         self.run(['rm', opendj_java_properties_fn])
 
 
@@ -4720,18 +4746,17 @@ class Setup(object):
     def do_installation(self, queue=None):
         
         #TODO remove after test install
-        print ("Loading  properties")
-        self.load_properties(self.savedProperties)
+        #print ("Loading  properties")
+        #self.load_properties(self.savedProperties)
         
         if 1:
         #try:
-            print ("Starting")
             self.thread_queue = queue
             self.pbar = ProgressBar(cols=tty_columns, queue=self.thread_queue)
             self.pbar.progress("gluu", "Initializing")
             self.initialize()
             self.calculate_selected_aplications_memory()
-            """
+
             self.pbar.progress("gluu", "Configuring system")
             self.configureSystem()
             self.pbar.progress("download", "Downloading War files")
@@ -4770,13 +4795,14 @@ class Setup(object):
             self.copy_output()
             self.pbar.progress("node", "Rendering node templates")
             self.render_node_templates()
-            """
+
             self.pbar.progress("gluu", "Installing Gluu components")
             self.install_gluu_components()
             self.pbar.progress("gluu", "Rendering test templates")
             self.render_test_templates()
             self.pbar.progress("gluu", "Copying static")
             self.copy_static()
+            """
             self.fix_systemd_script()
             self.pbar.progress("gluu", "Setting ownerships")
             self.set_ownership()
@@ -4795,7 +4821,7 @@ class Setup(object):
                 self.pbar.progress("gluu", "Importing LDIF files")
                 self.render_custom_templates(setupOptions['importLDIFDir'])
                 self.import_custom_ldif(setupOptions['importLDIFDir'])
-
+            """
             self.deleteLdapPw()
 
             self.post_install_tasks()
