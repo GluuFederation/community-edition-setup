@@ -78,17 +78,14 @@
     "attributes":[
     ],
     "static" : [
-      [["exp"], "objectClass = \"cache\" and del=true"]
     ]
   },
 
   "gluu_token": {
     "attributes": [
-      ["del","exp"],
       ["authzCode"]
     ],
     "static" : [
-      [["exp", "oxAuthExpiration"], "del=true"],
       [["grtId"], "objectClass = \"token\""],
       [["ssnId"], "objectClass = \"token\""]
     ]
