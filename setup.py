@@ -2393,42 +2393,38 @@ class Setup(object):
         if 1:
         #try:
             # Create these folder on all instances
-            self.run([self.cmd_mkdir, '-p', self.gluuOptFolder])
-            self.run([self.cmd_mkdir, '-p', self.gluuOptBinFolder])
-            self.run([self.cmd_mkdir, '-p', self.gluuOptSystemFolder])
-            self.run([self.cmd_mkdir, '-p', self.gluuOptPythonFolder])
-            self.run([self.cmd_mkdir, '-p', self.configFolder])
-            self.run([self.cmd_mkdir, '-p', self.certFolder])
-            self.run([self.cmd_mkdir, '-p', self.outputFolder])
-            self.run([self.cmd_mkdir, '-p', self.jetty_user_home_lib])
+            dirs = [(self.osDefault, None), (self.gluuOptBinFolder, None), 
+                    (self.gluuOptSystemFolder, None), (self.gluuOptSystemFolder, None),
+                    (self.gluuOptPythonFolder, None), (self.configFolder, None),
+                    (self.certFolder, None), (self.outputFolder, None),
+                    #(self.jetty_user_home_lib, None),
+                    ]
 
             # Create Fido2 folders
             if self.installOxAuth:
-                self.run([self.cmd_mkdir, '-p', self.fido2ConfigFolder])
-                self.run([self.cmd_mkdir, '-p', '%s/%s' % (self.fido2ConfigFolder, '/authenticator_cert')])
-                self.run([self.cmd_mkdir, '-p', '%s/%s' % (self.fido2ConfigFolder, '/mds/cert')])
-                self.run([self.cmd_mkdir, '-p', '%s/%s' % (self.fido2ConfigFolder, '/mds/toc')])
-                self.run([self.cmd_mkdir, '-p', '%s/%s' % (self.fido2ConfigFolder, '/server_metadata')])
-
-            if not os.path.exists(self.osDefault):
-                self.run([self.cmd_mkdir, '-p', self.osDefault])
+                dirs.append((self.fido2ConfigFolder, None))
+                for d in ('authenticator_cert', 'mds/cert', 'mds/toc', 'server_metadata'):
+                    dirs.append((os.path.join(self.fido2ConfigFolder, d), None))
 
             if self.installOxTrust | self.installOxAuth:
-                self.run([self.cmd_mkdir, '-m', '775', '-p', self.oxPhotosFolder])
-                self.run([self.cmd_mkdir, '-m', '775', '-p', self.oxTrustRemovedFolder])
-                self.run([self.cmd_mkdir, '-m', '775', '-p', self.oxTrustCacheRefreshFolder])
+                for d in (self.oxPhotosFolder, self.oxTrustRemovedFolder, self.oxTrustCacheRefreshFolder):
+                    dirs.append((d, '775'))
 
             if self.installSaml:
-                self.run([self.cmd_mkdir, '-p', self.idp3Folder])
-                self.run([self.cmd_mkdir, '-p', self.idp3MetadataFolder])
-                self.run([self.cmd_mkdir, '-p', self.idp3MetadataCredentialsFolder])
-                self.run([self.cmd_mkdir, '-p', self.idp3LogsFolder])
-                self.run([self.cmd_mkdir, '-p', self.idp3LibFolder])
-                self.run([self.cmd_mkdir, '-p', self.idp3ConfFolder])
-                self.run([self.cmd_mkdir, '-p', self.idp3ConfAuthnFolder])
-                self.run([self.cmd_mkdir, '-p', self.idp3CredentialsFolder])
-                self.run([self.cmd_mkdir, '-p', self.idp3WebappFolder])
-
+                dirs += [(self.idp3Folder, None), (self.idp3MetadataFolder, None), 
+                         (self.idp3MetadataCredentialsFolder, None), (self.idp3LogsFolder, None), 
+                         (self.idp3LibFolder, None), (self.idp3ConfFolder , None), 
+                         (self.idp3ConfAuthnFolder, None), (self.idp3CredentialsFolder ,None), 
+                         (self.idp3WebappFolder, None)
+                         ]
+                         
+            for d in dirs:
+                if not os.path.exists(d[0]):
+                    cmd = [self.cmd_mkdir]
+                    if d[1]:
+                        cmd += ['-m', '775']
+                    cmd += ['-p', d[0]]
+                    self.run(cmd)
 
         #except:
         #    self.logIt("Error making folders", True)
