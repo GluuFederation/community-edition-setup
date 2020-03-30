@@ -51,6 +51,7 @@ import io
 import zipfile
 import datetime
 import urllib.request, urllib.error, urllib.parse
+import yaml
 
 from collections import OrderedDict
 from xml.etree import ElementTree
@@ -4725,17 +4726,40 @@ class Setup(object):
 
             self.enable_service_at_start('gluu-radius')
 
+    def add_yacron_job(self, command, schedule, name=None, args={}):
+        if not name:
+            name = command
+
+        yacron_yaml_fn = os.path.join(self.snap_common_dir, 'etc/cron-jobs.yaml')
+        with open(yacron_yaml_fn) as f:
+            yacron_yaml = yaml.load(f.read(), Loader=yaml.SafeLoader)
+
+        if not yacron_yaml:
+            yacron_yaml = {'jobs': []}
+
+        if 'jobs' not in yacron_yaml:
+            yacron_yaml['jobs'] = []
+
+        job = { 'command': command, 'schedule': schedule, 'name': name }
+        job.update(args)
+        
+        yacron_yaml['jobs'].append(job)
+
+        with open(yacron_yaml_fn, 'w') as w:
+            w.write(yaml.dump(yacron_yaml, Dumper=yaml.SafeDumper))
+
+
     def post_install_tasks(self):
         super_gluu_lisence_renewer_fn = os.path.join(self.staticFolder, 'scripts', 'super_gluu_license_renewer.py')
-        target_fn = '/etc/cron.daily/super_gluu_lisence_renewer'
+        target_fn = os.path.join(self.gluuOptBinFolder, 'super_gluu_license_renewer.py')
         self.run(['cp', '-f', super_gluu_lisence_renewer_fn, target_fn])
         self.run(['chmod', '+x', target_fn])
-        cron_service = 'cron'
 
-        if self.os_type in ['centos', 'red', 'fedora']:
-            cron_service = 'crond'
-
-        self.run_service_command(cron_service, 'restart')
+        #renew license at 2AM each day
+        self.add_yacron_job(target_fn, '0 2 * * *', name='super-gluu-license-renewer', args={'captureStderr': True})
+        
+        os.system('snapctl stop gluu-server.yacron')
+        os.system('snapctl start gluu-server.yacron')
 
         print_version_fn = os.path.join(self.install_dir, 'pylib', 'printVersion.py')
         show_version_fn = os.path.join(self.gluuOptBinFolder, 'show_version.py')
