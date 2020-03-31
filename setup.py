@@ -2838,7 +2838,7 @@ class Setup(object):
         if self.allowPreReleasedFeatures:
             #we don't have such option
             pass
-                
+        
         promptForOxAuth = self.getPrompt("Install oxAuth OAuth2 Authorization Server?", 
                                         self.getDefaultOption(self.installOxAuth)
                                             )[0].lower()
@@ -2886,6 +2886,7 @@ class Setup(object):
         else:
             self.installHttpd = False
 
+        """
 
         promptForShibIDP = self.getPrompt("Install Shibboleth SAML IDP?",
                                             self.getDefaultOption(self.installSaml)
@@ -2949,6 +2950,7 @@ class Setup(object):
         else:
             self.installGluuRadius = False
 
+        """
 
     def get_filepaths(self, directory):
         file_paths = []
