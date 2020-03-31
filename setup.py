@@ -830,25 +830,18 @@ class Setup(object):
         realConfigFolder = os.path.realpath(self.configFolder)
         realOptPythonFolderFolder = os.path.realpath(self.gluuOptPythonFolder)
 
-        #TODO LATER
-        return
-
         # Set right permissions
-        self.run([self.cmd_chmod, '-R', '440', realCertFolder])
-        self.run([self.cmd_chmod, 'a+X', realCertFolder])
+        self.run([self.cmd_chmod, '700', realCertFolder])
+        for f in glob.glob(os.path.join(realCertFolder, '*')):
+            self.run([self.cmd_chmod, '400', f])
 
         if self.installOxAuth:
-            self.run([self.cmd_chmod, '660', self.oxauth_openid_jks_fn])
+            self.run([self.cmd_chmod, '600', self.oxauth_openid_jks_fn])
 
         if self.installSaml:
             realIdp3Folder = os.path.realpath(self.idp3Folder)
-
-        for fn in (
-                os.path.join(self.jetty_base, 'oxauth/webapps/oxauth.xml'),
-                os.path.join(self.jetty_base, 'identity/webapps/identity.xml'),
-                ):
-            if os.path.exists(fn):
-                self.run(cmd)
+            self.run([self.cmd_chmod, '-R', '600', realIdp3Folder])
+            self.run([self.cmd_chmod, '700', realIdp3Folder])
 
     def set_permissions(self):
         self.logIt("Changing permissions")
@@ -2886,8 +2879,6 @@ class Setup(object):
         else:
             self.installHttpd = False
 
-        """
-
         promptForShibIDP = self.getPrompt("Install Shibboleth SAML IDP?",
                                             self.getDefaultOption(self.installSaml)
                                             )[0].lower()
@@ -2900,6 +2891,7 @@ class Setup(object):
         else:
             self.installSaml = False
 
+        """
         promptForOxAuthRP = self.getPrompt("Install oxAuth RP?",
                                             self.getDefaultOption(self.installOxAuthRP)
                                             )[0].lower()
@@ -4780,10 +4772,13 @@ class Setup(object):
             self.render_test_templates()
             self.pbar.progress("gluu", "Copying static")
             self.copy_static()
-            """
-            self.fix_systemd_script()
+            
+            #self.fix_systemd_script()
+
             self.pbar.progress("gluu", "Setting ownerships")
             self.set_ownership()
+
+            """
             self.pbar.progress("gluu", "Setting permissions")
             self.set_permissions()
             self.pbar.progress("gluu", "Starting services")
