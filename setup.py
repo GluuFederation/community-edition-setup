@@ -1347,6 +1347,8 @@ class Setup(object):
         # Detect apache service name
         apache_service_name = self.get_apache_service_name()
 
+        mod_enable = ['env', 'proxy_http', 'access_compat', 'alias', 'authn_core', 'authz_core', 'authz_host', 'headers', 'mime', 'mpm_event', 'proxy', 'proxy_ajp', 'security2', 'reqtimeout', 'setenvif', 'socache_shmcb', 'ssl', 'unique_id']
+
         # CentOS 7.* + systemd + apache 2.4
         if self.os_type in ['centos', 'red', 'fedora'] and self.os_initdaemon == 'systemd' and self.apache_version == "2.4":
             self.copyFile(self.apache2_24_conf, '/etc/httpd/conf/httpd.conf')
@@ -1366,11 +1368,18 @@ class Setup(object):
 
             if not os.path.exists(target_fn):
                 os.symlink(source_fn, target_fn)
-            
-            mod_enable = ['ssl', 'alias', 'authz_core', 'headers', 'reqtimeout', 'setenvif', 'proxy', 'mime', 'proxy_http', 'proxy_ajp', 'authn_core', 'access_compat', 'socache_shmcb', 'mpm_event', 'env', 'authz_host']
-            
+
+        if self.os_type in ['centos', 'red', 'fedora']:
+            #TODO LATER
+            pass
+        else:
             mods_enabled_dir = os.path.join(self.snap_common_dir, 'etc/apache2/mods-enabled')
             mods_available_dir = os.path.join(self.snap_common_dir, 'etc/apache2/mods-available')
+
+            for em in os.listdir(mods_enabled_dir):
+                em_n, em_e = os.path.splitext(em)
+                if not em_n in mod_enable:
+                    os.unlink(os.path.join(mods_enabled_dir, em))
 
             for m in mod_enable:
                 load_fn = os.path.join(mods_available_dir, m +'.load')
@@ -1384,66 +1393,13 @@ class Setup(object):
                     if not os.path.exists(target_fn):
                         os.symlink(conf_fn, target_fn)
 
-        os.system('snapctl start gluu-server.apache')
-
-        #TODO LATER
-        """
-        if self.os_type in ['centos', 'red', 'fedora']:
-            icons_conf_fn = '/etc/httpd/conf.d/autoindex.conf'
-        else:
-            icons_conf_fn = '/etc/apache2/mods-available/alias.conf'
-
-        with open(icons_conf_fn[:]) as f:
-            icons_conf = f.readlines()
-
-        for i, l in enumerate(icons_conf[:]):
-            if l.strip().startswith('Alias') and ('/icons/' in l.strip().split()):
-                icons_conf[i] =  l.replace('Alias', '#Alias')
-
-        self.writeFile(icons_conf_fn, ''.join(icons_conf))
-
         error_templates = glob.glob(os.path.join(self.templateFolder,'apache/*'))
 
         for tmp_fn in error_templates:
             self.copyFile(tmp_fn, '/var/www/html')
 
-        self.run_service_command(apache_service_name, 'start')
+        os.system('snapctl start gluu-server.apache')
 
-        # we only need these modules
-        mods_enabled = ['env', 'proxy_http', 'access_compat', 'alias', 'authn_core', 'authz_core', 'authz_host', 'headers', 'mime', 'mpm_event', 'proxy', 'proxy_ajp', 'security2', 'reqtimeout', 'setenvif', 'socache_shmcb', 'ssl', 'unique_id']
-
-        if self.os_type in ['centos', 'red', 'fedora']:
-
-            for mod_load_fn in glob.glob('/etc/httpd/conf.modules.d/*'):
-
-                with open(mod_load_fn) as f:
-                    mod_load_content = f.readlines()
-
-                modified = False
-                
-                for i, l in enumerate(mod_load_content[:]):
-                    ls = l.strip()
-                    
-                    if ls and not ls.startswith('#'):
-                        lsl = ls.split('/')
-                        module =  lsl[-1][4:-3]
-                        
-                        if not module in mods_enabled:
-                            mod_load_content[i] = l.replace('LoadModule', '#LoadModule')
-                            modified = True
-
-                if modified:
-                    self.writeFile(mod_load_fn, ''.join(mod_load_content))
-        else:
-
-            for mod_load_fn in glob.glob('/etc/apache2/mods-enabled/*'):
-                mod_load_base_name = os.path.basename(mod_load_fn)
-                f_name, f_ext = os.path.splitext(mod_load_base_name)
-
-                if not f_name in mods_enabled:
-                    self.run(['unlink', mod_load_fn])
-
-        """
     def copy_output(self):
         self.logIt("Copying rendered templates to final destination")
 
