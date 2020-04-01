@@ -187,6 +187,7 @@ class Setup(object):
         self.cmd_chmod = os.path.join(self.snap_dir, 'bin/chmod')
         self.cmd_chgrp = os.path.join(self.snap_dir, 'bin/chgrp')
         self.cmd_mkdir = os.path.join(self.snap_dir, 'bin/mkdir')
+        self.cmd_cp = os.path.join(self.snap_dir, 'bin/cp')
         self.cmd_rpm = os.path.join(self.snap_dir, 'bin/rpm')
         self.cmd_dpkg = os.path.join(self.snap_dir, 'usr/bin/dpkg')
         self.opensslCommand = os.path.join(self.snap_dir, 'usr/bin/openssl')
@@ -1222,6 +1223,7 @@ class Setup(object):
                     'jython_version', 'jreDestinationPath', 'snap_dir', 
                     'snap_common_dir', 'cmd_chgrp', 'cmd_chmod', 'cmd_dpkg',
                     'cmd_ln', 'cmd_mkdir', 'cmd_rpm', 'opensslCommand',
+                    'cmd_cp',
                     ]
 
         cb_install = False
@@ -2055,9 +2057,14 @@ class Setup(object):
             self.createDirs('%s/identity/conf/shibboleth3/idp' % self.jetty_base)
             self.createDirs('%s/identity/conf/shibboleth3/sp' % self.jetty_base)
 
-            # unpack IDP3 JAR with static configs
-            self.run([self.cmd_jar, 'xf', self.distGluuFolder + '/shibboleth-idp.jar'], '/opt')
-            self.removeDirs('/opt/META-INF')
+            shib_tmp_dir = '/tmp/shib_install'
+
+            if not os.path.exists(shib_tmp_dir):
+                self.run([self.cmd_mkdir, shib_tmp_dir])
+
+            self.logIt("Unpacking IDP3 JAR with static configs to", shib_tmp_dir)
+            self.run([self.cmd_jar, 'xf', self.distGluuFolder + '/shibboleth-idp.jar'], shib_tmp_dir)
+            self.run(' '.join([self.cmd_cp, '-r', os.path.join(shib_tmp_dir, 'shibboleth-idp/*'), self.idp3Folder]), shell=True)
 
             if self.mappingLocations['user'] == 'couchbase':
                 self.templateRenderingDict['idp_attribute_resolver_ldap.search_filter'] = '(&(|(lower(uid)=$requestContext.principalName)(mail=$requestContext.principalName))(objectClass=gluuPerson))'
@@ -2094,7 +2101,7 @@ class Setup(object):
                     '--versionfile',  os.path.join(self.idp3Folder, 'credentials/sealer.kver'),
                     '--alias secret',
                     '--storepass', self.shibJksPass]
-                
+
             self.run(' '.join(cmd), shell=True)
 
             if self.persistence_type == 'couchbase':
@@ -2104,13 +2111,14 @@ class Setup(object):
                 if 'user' in couchbase_mappings:
                     self.saml_couchbase_settings()
 
+            os.system('snapctl start gluu-server.idp')
 
     def install_saml_libraries(self):
         # Unpack oxauth.war to get bcprov-jdk16.jar
         idpWar = 'idp.war'
         distIdpPath = '%s/idp.war' % self.distGluuFolder
 
-        tmpIdpDir = '%s/tmp/tmp_idp' % self.distFolder
+        tmpIdpDir = '/tmp/tmp_idp'
 
         self.logIt("Unpacking %s..." % idpWar)
         self.removeDirs(tmpIdpDir)
@@ -2283,7 +2291,7 @@ class Setup(object):
 
         #TODO LATER
         #wee need setup.properties asap for testing. remove this after it is stable
-        #self.save_properties(encoded=False)
+        self.save_properties(encoded=False)
 
         if self.installOxAuth:
             self.pbar.progress("oxauth", "Installing Gluu components: OxAuth", False)
