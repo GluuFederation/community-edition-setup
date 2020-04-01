@@ -5034,13 +5034,17 @@ def begin_setup():
     for option in setupOptions:
         setattr(installObject, option, setupOptions[option])
 
-    
-
 
     # Get the OS type
-    installObject.os_type, installObject.os_version = installObject.detect_os_type()
+    #installObject.os_type, installObject.os_version = installObject.detect_os_type()
+    #for snap it is always ubuntu18
+    installObject.os_type, installObject.os_version = ('ubuntu', '18')
+    
+    
     # Get the init type
-    installObject.os_initdaemon = installObject.detect_initd()
+    #installObject.os_initdaemon = installObject.detect_initd()
+    #for snap it is always systemd
+    installObject.os_initdaemon = 'systemd'
 
     # Get apache version
     installObject.apache_version = installObject.determineApacheVersionForOS()
