@@ -786,7 +786,6 @@ class Setup(object):
 
         self.logIt("Determining key generator path")
         oxauth_client_jar_zf = zipfile.ZipFile(self.non_setup_properties['oxauth_client_jar_fn'])
-        menifest = oxauth_client_jar_zf.read('META-INF/MANIFEST.MF')
 
         for f in oxauth_client_jar_zf.namelist():
             if os.path.basename(f) == 'KeyGenerator.class':
