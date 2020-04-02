@@ -148,7 +148,7 @@ class Setup(object):
         self.allowPreReleasedApplications = False
         self.allowDeprecatedApplications = False
 
-        self.currentGluuVersion = '3.1.7'
+        self.currentGluuVersion = '3.1.8'
 
         self.jreDestinationPath = '/opt/amazon-corretto-%s-linux-x64' % self.jre_version
 
