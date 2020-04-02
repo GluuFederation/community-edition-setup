@@ -7,6 +7,7 @@ NODE_APP=app.js
 NODE_OPTIONS="PORT=8090 NODE_ENV=unknown NODE_CONFIG_DIR=$NODE_BASE HOSTNAME=localhost"
 NODE_ARGS="--max-old-space-size=%(passport_max_mem)s"
 APP_ARGS=""
+NODE_PID_FILE=${NODE_BASE}/passport.pid
 
-NODE_USER=node
-TMPDIR=%(node_home)s/temp
+NODE_USER=root
+TMPDIR=${NODE_BASE}/temp

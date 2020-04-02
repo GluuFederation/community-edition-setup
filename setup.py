@@ -1475,39 +1475,6 @@ class Setup(object):
             return self.determineApacheVersion("apache2")
 
 
-    def installNode(self):
-        self.logIt("Installing node %s..." )
-
-        node_archieve_list = glob.glob(os.path.join(self.distAppFolder, 'node-*-linux-x64.tar.xz'))
-
-        if not node_archieve_list:
-            self.logIt("Can't find node archive", True, True)
-
-        nodeArchive = max(node_archieve_list)
-
-        try:
-            self.logIt("Extracting %s into /opt" % nodeArchive)
-            self.run(['tar', '-xJf', nodeArchive, '-C', '/opt/', '--no-xattrs', '--no-same-owner', '--no-same-permissions'])
-        except:
-            self.logIt("Error encountered while extracting archive %s" % nodeArchive)
-            self.logIt(traceback.format_exc(), True)
-
-        nodeDestinationPath = max(glob.glob('/opt/node-*-linux-x64'))
-
-        self.run([self.cmd_ln, '-sf', nodeDestinationPath, self.node_home])
-        self.run([self.cmd_chmod, '-R', "755", "%s/bin/" % nodeDestinationPath])
-
-        # Create temp folder
-        self.run([self.cmd_mkdir, '-p', "%s/temp" % self.node_home])
-
-        # Copy init.d script
-        self.copyFile(self.node_initd_script, self.gluuOptSystemFolder)
-        self.copyFile(self.passport_initd_script, self.gluuOptSystemFolder)
-        self.run([self.cmd_chmod, '-R', "755", "%s/node" % self.gluuOptSystemFolder])
-        self.run([self.cmd_chmod, '-R', "755", "%s/passport" % self.gluuOptSystemFolder])
-
-        self.run([self.cmd_mkdir, '-p', self.node_base])
-
     def installJettyService(self, serviceConfiguration, supportCustomizations=False, supportOnlyPageCustomizations=False):
         serviceName = serviceConfiguration['name']
         self.logIt("Installing jetty service %s..." % serviceName)
@@ -2227,7 +2194,7 @@ class Setup(object):
             self.logIt("Error encountered while extracting archive %s" % passportArchive)
             self.logIt(traceback.format_exc(), True)
         
-        passport_modules_archive = os.path.join(self.distGluuFolder, 'passport-%s-node_modules.tar.gz' % self.githubBranchName)
+        passport_modules_archive = os.path.join(self.distGluuFolder, 'passport-node_modules.tar.gz')
         modules_target_dir = os.path.join(self.gluu_passport_base, 'node_modules')
         self.run([self.cmd_mkdir, '-p', modules_target_dir])
 
@@ -2247,8 +2214,11 @@ class Setup(object):
                 self.logIt("Error encountered running npm install in %s" % self.gluu_passport_base)
                 self.logIt(traceback.format_exc(), True)
 
-        # Create logs folder
-        self.run([self.cmd_mkdir, '-p', '%s/server/logs' % self.gluu_passport_base])
+        # Create directories
+        for d in ('logs', 'temp'):
+            d_path = os.path.join(self.gluu_passport_base, 'server', d)
+            if not os.path.exists(d_path):
+                self.run([self.cmd_mkdir, '-p', d_path])
         
         #create empty log file
         log_file = os.path.join(self.gluu_passport_base, 'server/logs/start.log')
@@ -2271,8 +2241,7 @@ class Setup(object):
         # Install passport system service script
         self.installNodeService('passport')
 
-        # enable service at startup
-        self.enable_service_at_start('passport')
+        os.system('snapctl start gluu-server.passport')
 
     def install_gluu_components(self):
         if self.wrends_install:
@@ -2907,6 +2876,7 @@ class Setup(object):
             self.installOxAuthRP = True
         else:
             self.installOxAuthRP = False
+        """
 
         promptForPassport = self.getPrompt("Install Passport?", 
                                             self.getDefaultOption(self.installPassport)
@@ -2918,6 +2888,7 @@ class Setup(object):
         else:
             self.installPassport = False
 
+        """
         if os.path.exists(os.path.join(self.distGluuFolder, 'casa.war')):
             self.promptForCasaInstallation()
 
