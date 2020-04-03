@@ -19,6 +19,7 @@
 ##################################################
 NAME=$(echo $(basename $0) | sed -e 's/^[SK][0-9]*//' -e 's/\.sh$//')
 
+
 # To get the service to restart correctly on reboot, uncomment below (3 lines):
 # ========================
 # chkconfig: 345 72 28
@@ -205,9 +206,10 @@ fi
 #####################################################
 # Find a location for the pid file
 #####################################################
+
 if [ -z "$RADIUS_RUN" ]
 then
-  RADIUS_RUN=$(findDirectory -w /var/run /usr/var/run /tmp $GLUU_RADIUS_PID_DIR)/radius
+  RADIUS_RUN=$GLUU_RADIUS_PID_DIR/radius
   [ -d "$RADIUS_RUN" ] || mkdir $RADIUS_RUN
 fi
 
@@ -286,6 +288,7 @@ fi
 case "$ACTION" in
   	start)
     		echo -n "Starting Gluu Radius: "
+
 
     		if (( NO_START )); then
       			echo "Not starting ${NAME} - NO_START=1";
