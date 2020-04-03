@@ -1,21 +1,23 @@
+# oxAuth is available under the MIT License (2008). See http://opensource.org/licenses/MIT for full text.
+# Copyright (c) 2019, Gluu
+#
 # Author: Jose Gonzalez
 
 from java.util import Collections, HashMap, HashSet, ArrayList, Arrays, Date
+
 from java.nio.charset import Charset
 
 from org.apache.http.params import CoreConnectionPNames
 
 from org.oxauth.persistence.model.configuration import GluuConfiguration
 from org.gluu.oxauth.security import Identity
-from org.gluu.oxauth.service import AppInitializer, AuthenticationService, EncryptionService, UserService
+from org.gluu.oxauth.service import AuthenticationService, UserService, EncryptionService, AppInitializer
 from org.gluu.oxauth.service.custom import CustomScriptService
 from org.gluu.oxauth.service.net import HttpService
 from org.gluu.oxauth.util import ServerUtil
 from org.gluu.model import SimpleCustomProperty
-from org.gluu.model.casa import ApplicationConfiguration
 from org.gluu.model.custom.script import CustomScriptType
 from org.gluu.model.custom.script.type.auth import PersonAuthenticationType
-from org.gluu.service import CacheService
 from org.gluu.service.cdi.util import CdiUtil
 from org.gluu.util import StringHelper
 
@@ -30,14 +32,17 @@ class PersonAuthentication(PersonAuthenticationType):
     def __init__(self, currentTimeMillis):
         self.currentTimeMillis = currentTimeMillis
         self.ACR_SG = "super_gluu"
+        self.ACR_SMS = "twilio_sms"
+        self.ACR_OTP = "otp"
         self.ACR_U2F = "u2f"
 
         self.modulePrefix = "casa-external_"
 
-    def init(self, customScript, configurationAttributes):
+    def init(self, configurationAttributes):
 
         print "Casa. init called"
         self.authenticators = {}
+        self.configFileLocation = "/etc/gluu/conf/casa.json"
         self.uid_attr = self.getLocalPrimaryKey()
 
         custScriptService = CdiUtil.bean(CustomScriptService)
@@ -85,7 +90,7 @@ class PersonAuthentication(PersonAuthenticationType):
 
 
     def getApiVersion(self):
-        return 11
+        return 2
 
 
     def isValidAuthenticationMethod(self, usageType, configurationAttributes):
@@ -98,7 +103,7 @@ class PersonAuthentication(PersonAuthenticationType):
 
 
     def authenticate(self, configurationAttributes, requestParameters, step):
-        print "Casa. authenticate for step %s" % str(step)
+        print "Casa. authenticate %s" % str(step)
 
         userService = CdiUtil.bean(UserService)
         authenticationService = CdiUtil.bean(AuthenticationService)
@@ -190,12 +195,10 @@ class PersonAuthentication(PersonAuthenticationType):
 
     def prepareForStep(self, configurationAttributes, requestParameters, step):
         print "Casa. prepareForStep %s" % str(step)
-        identity = CdiUtil.bean(Identity)
-        
         if step == 1:
-            self.prepareUIParams(identity)
             return True
         else:
+            identity = CdiUtil.bean(Identity)
             session_attributes = identity.getSessionId().getSessionAttributes()
 
             authenticationService = CdiUtil.bean(AuthenticationService)
@@ -218,9 +221,9 @@ class PersonAuthentication(PersonAuthenticationType):
 
     def getExtraParametersForStep(self, configurationAttributes, step):
         print "Casa. getExtraParametersForStep %s" % str(step)
-        list = ArrayList()
 
         if step > 1:
+            list = ArrayList()
             acr = CdiUtil.bean(Identity).getWorkingParameter("ACR")
 
             if acr in self.authenticators:
@@ -230,10 +233,10 @@ class PersonAuthentication(PersonAuthenticationType):
                     list.addAll(params)
 
             list.addAll(Arrays.asList("ACR", "methods", "trustedDevicesInfo"))
+            print "extras are %s" % list
+            return list
 
-        list.addAll(Arrays.asList("casa_contextPath", "casa_prefix", "casa_faviconUrl", "casa_extraCss", "casa_logoUrl"))
-        print "extras are %s" % list
-        return list
+        return None
 
 
     def getCountAuthenticationSteps(self, configurationAttributes):
@@ -265,7 +268,7 @@ class PersonAuthentication(PersonAuthenticationType):
 
             return page
 
-        return "/casa/login.xhtml"
+        return ""
 
 
     def getNextStep(self, configurationAttributes, requestParameters, step):
@@ -298,33 +301,25 @@ class PersonAuthentication(PersonAuthenticationType):
         return uid_attr
 
 
-    def getSettings(self):
-        entryManager = CdiUtil.bean(AppInitializer).createPersistenceEntryManager()
-        config = ApplicationConfiguration()
-        config = entryManager.find(config.getClass(), "ou=casa,ou=configuration,o=gluu")
-        settings = None
-        try:
-            settings = json.loads(config.getSettings())
-        except:
-            print "Casa. getSettings. Failed to parse casa settings from DB"
-        return settings
-
-
     def computeMethods(self, scriptList):
 
         methods = []
-        mapping = {}
-        cmConfigs = self.getSettings()
+        f = open(self.configFileLocation, 'r')
+        try:
+            cmConfigs = json.loads(f.read())
+            if 'acr_plugin_mapping' in cmConfigs:
+                mapping = cmConfigs['acr_plugin_mapping']
+            else:
+                mapping = {}
 
-        if cmConfigs != None and 'acr_plugin_mapping' in cmConfigs:
-            mapping = cmConfigs['acr_plugin_mapping']
-
-        for m in mapping:
-            for customScript in scriptList:
-                if customScript.getName() == m and customScript.isEnabled():
-                    methods.append(m)
-
-        print "Casa. computeMethods. %s" % methods
+            for m in mapping:
+                for customScript in scriptList:
+                    if customScript.getName() == m and customScript.isEnabled():
+                        methods.append(m)
+        except:
+            print "Casa. computeMethods. Failed to read configuration file"
+        finally:
+            f.close()
         return methods
 
 
@@ -361,43 +356,6 @@ class PersonAuthentication(PersonAuthenticationType):
 
         print "Casa. getAvailMethodsUser %s" % methods.toString()
         return methods
-
-
-    def prepareUIParams(self, identity):
-        
-        print "Casa. prepareUIParams. Reading UI branding params"
-        cacheService = CdiUtil.bean(CacheService)
-        casaAssets = cacheService.get("casa_assets")
-            
-        if casaAssets == None:
-            #This may happen when cache type is IN_MEMORY, where actual cache is merely a local variable 
-            #(a expiring map) living inside Casa webapp, not oxAuth webapp
-            
-            sets = self.getSettings()
-            
-            custPrefix = "/custom"
-            logoUrl = "/images/logo.png"
-            faviconUrl = "/images/favicon.ico"
-            if ("extra_css" in sets and sets["extra_css"] != None) or sets["use_branding"]:
-                logoUrl = custPrefix + logoUrl
-                faviconUrl = custPrefix + faviconUrl
-            
-            prefix = custPrefix if sets["use_branding"] else ""
-            
-            casaAssets = {
-                "contextPath": "/casa",
-                "prefix" : prefix,
-                "faviconUrl" : faviconUrl,
-                "extraCss": sets["extra_css"] if "extra_css" in sets else None,
-                "logoUrl": logoUrl
-            }
-        
-        #Setting a single variable with the whole map does not work...
-        identity.setWorkingParameter("casa_contextPath", casaAssets['contextPath'])
-        identity.setWorkingParameter("casa_prefix", casaAssets['prefix'])
-        identity.setWorkingParameter("casa_faviconUrl", casaAssets['contextPath'] + casaAssets['faviconUrl'])
-        identity.setWorkingParameter("casa_extraCss", casaAssets['extraCss'])
-        identity.setWorkingParameter("casa_logoUrl", casaAssets['contextPath'] + casaAssets['logoUrl'])
 
 
     def simulateFirstStep(self, requestParameters, acr):
@@ -450,26 +408,20 @@ class PersonAuthentication(PersonAuthenticationType):
         print "Casa. getSuitableAcr. %s was selected for user %s" % (acr, id)
         return acr
 
-
     def determineSkip2FA(self, userService, identity, foundUser, deviceInf):
 
-        cmConfigs = self.getSettings()
-
-        if cmConfigs == None:
-            print "Casa. determineSkip2FA. Failed to read policy_2fa"
+        f = open(self.configFileLocation, 'r')
+        try:
+            cmConfigs = json.loads(f.read())
+            if 'policy_2fa' in cmConfigs:
+                policy2FA = ','.join(cmConfigs['policy_2fa'])
+            else:
+                policy2FA = 'EVERY_LOGIN'
+        except:
+            print "Casa. determineSkip2FA. Failed to read policy_2fa from configuration file"
             return False
-
-        missing = False
-        if not 'plugins_settings' in cmConfigs:
-            missing = True
-        elif not 'strong-authn-settings' in cmConfigs['plugins_settings']:
-            missing = True
-        else:
-            cmConfigs = cmConfigs['plugins_settings']['strong-authn-settings']
-
-        policy2FA = 'EVERY_LOGIN'
-        if not missing and 'policy_2fa' in cmConfigs:
-            policy2FA = ','.join(cmConfigs['policy_2fa'])
+        finally:
+            f.close()
 
         print "Casa. determineSkip2FA with general policy %s" % policy2FA
         policy2FA += ','
