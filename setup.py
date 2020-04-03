@@ -836,6 +836,8 @@ class Setup(object):
         for f in glob.glob(os.path.join(realCertFolder, '*')):
             self.run([self.cmd_chmod, '400', f])
 
+        self.run([self.cmd_chmod, '600', os.path.join(self.certFolder, 'gluu-radius.private-key.pem')])
+
         if self.installOxAuth:
             self.run([self.cmd_chmod, '600', self.oxauth_openid_jks_fn])
 
