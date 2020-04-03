@@ -4447,28 +4447,31 @@ class Setup(object):
 
     def install_oxd(self):
         self.logIt("Installing oxd server...")
-        oxd_root = '/opt/oxd-server/'
-        self.run(['tar', '-zxf', self.oxd_package, '-C', '/opt'])
         
-        service_file = os.path.join(oxd_root, 'oxd-server.service')
-        if os.path.exists(service_file):
-            self.run(['cp', service_file, '/lib/systemd/system'])
-        else:
-            service_file = os.path.join(oxd_root, 'oxd-server.init.d')
-            target_file = '/etc/init.d/oxd-server'
-            self.run(['cp', service_file, target_file])
-            self.run(['chmod', '+x', target_file])
-            self.run(['update-rc.d', 'oxd-server', 'defaults'])
+        oxd_yaml_fn = os.path.join(self.snap_common_dir, 'gluu/oxd-server/conf/oxd-server.yml')
 
-        self.run(['cp', os.path.join(oxd_root, 'oxd-server-default'),  '/etc/default/oxd-server'])
+        oxd_yaml_changes = {
+                'dbFileLocation': 'gluu/oxd-server/data/oxd_db',
+                'keyStorePath': 'gluu/oxd-server/conf/oxd-server.keystore',
+                'currentLogFilename': 'gluu/oxd-server/log/oxd-server.log',
+                'archivedLogFilenamePattern': 'gluu/oxd-server/log/oxd-server/-%d{yyyy-MM-dd}-%i.log.gz'
+            }
 
-        self.run(['mkdir', '/var/log/oxd-server'])
-        
-        for fn in glob.glob(os.path.join(oxd_root,'bin/*')):
-            self.run(['chmod', '+x', fn])
+        with open(oxd_yaml_fn) as f:
+            oxd_yaml = f.readlines()
 
+        for i, l in enumerate(oxd_yaml):
+            n = l.find(':')
+            if n > 0:
+                k = l[:n]
+                ks = k.strip()
+                if ks in oxd_yaml_changes:
+                    oxd_yaml[i] = k + ': ' + os.path.join(self.snap_common_dir, oxd_yaml_changes[ks])+'\n'
 
-        self.enable_service_at_start('oxd-server')
+        with open(oxd_yaml_fn, 'w') as w:
+            w.write(''.join(oxd_yaml))
+
+        os.system('snapctl start gluu-server.oxd-server')
 
     def install_casa(self):
         self.logIt("Installing Casa...")
