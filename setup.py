@@ -4447,7 +4447,12 @@ class Setup(object):
 
     def install_oxd(self):
         self.logIt("Installing oxd server...")
-        
+
+        self.copyFile(
+            os.path.join(self.staticFolder, 'oxd-server/oxd-server.default'),
+            '/etc/default/oxd-server'
+            )
+
         oxd_yaml_fn = os.path.join(self.snap_common_dir, 'gluu/oxd-server/conf/oxd-server.yml')
 
         oxd_yaml_changes = {
