@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Startup script for oxd-server under *nix systems (it works under NT/cygwin too).
-JAVA_HOME=/opt/jre
-JAVA=$JAVA_HOME/bin/java
-LIB=$OXD_HOME/lib
-JAVA_OPTIONS="-server -Xms256m -Xmx512m -XX:MaxMetaspaceSize=256m -XX:+DisableExplicitGC -Djava.net.preferIPv4Stack=true -cp $OXD_HOME/lib/bcprov-jdk15on-1.64.jar:$OXD_HOME/lib/oxd-server.jar org.gluu.oxd.server.OxdServerApplication server $CONF/oxd-server.yml"
+
+# Read config
+source /etc/default/oxd-server
+
 ##################################################
 # Set the name which is used by other variables.
 # Defaults to the file name without extension.
@@ -65,8 +65,6 @@ NAME=$(echo $(basename $0) | sed -e 's/^[SK][0-9]*//' -e 's/\.sh$//')
 #   have shell access, e.g. /bin/false
 #
 # OXD_INIT_LOG
-SERVICE_NAME="oxd-server"
-OXD_INIT_LOG=$OXD_LOGS/oxd-server.log
 
 usage()
 {

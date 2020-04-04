@@ -1,0 +1,16 @@
+SERVICE_NAME=oxd-server
+JAVA_HOME=/opt/jre
+JAVA=$JAVA_HOME/bin/java
+OXD_LOGS=$SNAP_COMMON/gluu/oxd-server/log
+CONF=$SNAP_COMMON/gluu/oxd-server/conf
+OXD_HOME=/opt/oxd-server
+OXD_USER=root
+LIB=$OXD_HOME/lib
+OXD_PID_FILE=$SNAP_COMMON/gluu/oxd-server/run/oxd-server.pid
+OXD_RUN=$SNAP_COMMON/run
+OXD_STATE=$SNAP_COMMON/gluu/oxd-server/run/oxd-server.state
+OXD_INIT_LOG=$OXD_LOGS/oxd-server.log
+
+BCPROV=`ls $LIB/bcprov-jdk* -t | sort -r | head -n 1`
+
+JAVA_OPTIONS="-server -Xms256m -Xmx512m -XX:MaxMetaspaceSize=256m -XX:+DisableExplicitGC -Djava.net.preferIPv4Stack=true -cp $BCPROV:$OXD_HOME/lib/oxd-server.jar org.gluu.oxd.server.OxdServerApplication server $CONF/oxd-server.yml"
