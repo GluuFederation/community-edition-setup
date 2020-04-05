@@ -590,7 +590,6 @@ class Setup(object):
         
         #oxd install options
         self.installOxd = False
-        self.oxd_package = ''
 
         #casa install options
         self.installCasa = False
@@ -791,14 +790,6 @@ class Setup(object):
 
         if (not 'key_gen_path' in self.non_setup_properties) or (not 'key_export_path' in self.non_setup_properties):
             self.logIt("Can't determine key generator and/or key exporter path form {}".format(self.non_setup_properties['oxauth_client_jar_fn']), True, True)
-
-        self.logIt("Determining oxd server package")
-        oxd_package_list = glob.glob(os.path.join(self.distGluuFolder, 'oxd-server*.tgz'))
-
-        if oxd_package_list:
-            self.oxd_package = max(oxd_package_list)
-
-        self.logIt("oxd server package was determined as " + self.oxd_package)
 
         if self.installCasa:
             self.couchbaseBucketDict['default']['ldif'].append(self.ldif_scripts_casa)
@@ -2597,13 +2588,12 @@ class Setup(object):
 
         if self.installCasa:
             print ("Please enter URL of oxd-server if you have one, for example: https://oxd.mygluu.org:8443")
-            if self.oxd_package:
-                print ("Else leave blank to install oxd server locally.")
+            print ("Else leave blank to install oxd server locally.")
 
             while True:
                 oxd_server_https = input("oxd Server URL: ").lower()
                 
-                if (not oxd_server_https) and self.oxd_package:
+                if not oxd_server_https:
                     self.installOxd = True
                     break
 
@@ -2876,8 +2866,9 @@ class Setup(object):
 
         self.templateRenderingDict['oxd_hostname'] = oxd_hostname
         self.templateRenderingDict['oxd_port'] = str(oxd_port)
+        """
 
-        if (not self.installOxd) and self.oxd_package:
+        if not self.installOxd:
             promptForOxd = self.getPrompt("Install Oxd?", 
                                                 self.getDefaultOption(self.installOxd)
                                                 )[0].lower()
@@ -2885,7 +2876,7 @@ class Setup(object):
                 self.installOxd = True
             else:
                 self.installOxd = False
-        """
+
 
         promptForGluuRadius = self.getPrompt("Install Gluu Radius?", 
                                             self.getDefaultOption(self.installGluuRadius)
@@ -4423,7 +4414,12 @@ class Setup(object):
 
     def install_oxd(self):
         self.logIt("Installing oxd server...")
-        
+
+        self.copyFile(
+            os.path.join(self.staticFolder, 'oxd-server/oxd-server.default'),
+            '/etc/default/oxd-server'
+            )
+
         oxd_yaml_fn = os.path.join(self.snap_common_dir, 'gluu/oxd-server/conf/oxd-server.yml')
 
         oxd_yaml_changes = {
