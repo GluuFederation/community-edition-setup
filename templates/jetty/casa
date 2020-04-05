@@ -6,7 +6,8 @@ JETTY_HOME=%(jetty_home)s
 JETTY_BASE=%(jetty_base)s/casa
 JETTY_USER=%(jetty_user)s
 JETTY_ARGS="jetty.http.host=localhost jetty.http.port=8099"
-TMPDIR=/tmp/jetty_temp
+TMPDIR=$JETTY_BASE/temp
+JETTY_RUN=$JETTY_BASE/run
 
 export PYTHON_HOME=%(jython_home)s
 

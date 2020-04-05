@@ -56,6 +56,7 @@ import yaml
 from collections import OrderedDict
 from xml.etree import ElementTree
 from urllib.parse import urlparse
+from urllib.request import urlretrieve
 
 from ldap.schema import ObjectClass
 from ldap.dn import str2dn
@@ -159,20 +160,13 @@ class Setup(object):
         self.distTmpFolder = '%s/tmp' % self.distFolder
 
         #TO DO: These are defaults up to we figure out snap setup
-        self.oxVersion = 4.2
-        self.currentGluuVersion = 4.2
+        self.oxVersion = '4.1.0'
+        self.currentGluuVersion = '4.1.0'
         self.githubBranchName = 'snap'
+        self.oxBranchName = '.Final'
 
-        # Used only if -w (get wars) options is given to setup.py
-        self.oxauth_war = 'https://ox.gluu.org/maven/org/gluu/oxauth-server/%s/oxauth-server-%s.war' % (self.oxVersion, self.oxVersion)
-        self.oxauth_rp_war = 'https://ox.gluu.org/maven/org/gluu/oxauth-rp/%s/oxauth-rp-%s.war' % (self.oxVersion, self.oxVersion)
-        self.oxtrust_war = 'https://ox.gluu.org/maven/org/gluu/oxtrust-server/%s/oxtrust-server-%s.war' % (self.oxVersion, self.oxVersion)
-        self.idp3_war = 'https://ox.gluu.org/maven/org/gluu/oxshibbolethIdp/%s/oxshibbolethIdp-%s.war' % (self.oxVersion, self.oxVersion)
-        self.idp3_dist_jar = 'https://ox.gluu.org/maven/org/gluu/oxShibbolethStatic/%s/oxShibbolethStatic-%s.jar' % (self.oxVersion, self.oxVersion)
-        self.idp3_cml_keygenerator = 'https://ox.gluu.org/maven/org/gluu/oxShibbolethKeyGenerator/%s/oxShibbolethKeyGenerator-%s.jar' % (self.oxVersion, self.oxVersion)
-        self.ce_setup_zip = 'https://github.com/GluuFederation/community-edition-setup/archive/%s.zip' % self.githubBranchName
+        self.oxauth_rp_war = 'https://ox.gluu.org/maven/org/gluu/oxauth-rp/{0}{1}/oxauth-rp-{0}{1}.war'.format(self.oxVersion, self.oxBranchName)
 
-        self.downloadWars = None
         self.templateRenderingDict = {
                                         'oxauthClient_2_inum': 'AB77-1A2B',
                                         'oxauthClient_3_inum': '3E20',
@@ -813,6 +807,13 @@ class Setup(object):
         if not os.path.exists('/tmp/jetty_temp'):
             self.run(['mkdir', '/tmp/jetty_temp'])
 
+    def download(self, url, target):
+        self.logIt("Downloading {} as {}".format(url, target))
+        try:
+            urlretrieve(url, target)
+        except Exception as e:
+            self.logIt("Error downloading {}. Reason: {}".format(url, str(e)), True, True)
+
     def get_ssl_subject(self, ssl_fn):
         retDict = {}
         cmd = 'openssl x509  -noout -subject -nameopt RFC2253 -in {}'.format(ssl_fn)
@@ -1170,7 +1171,7 @@ class Setup(object):
         f.close()
 
         if fatal:
-            print("FATAL:", errorLog)
+            print("FATAL:", msg)
             sys.exit(1)
 
 
@@ -1225,7 +1226,7 @@ class Setup(object):
                     'jython_version', 'jreDestinationPath', 'snap_dir', 
                     'snap_common_dir', 'cmd_chgrp', 'cmd_chmod', 'cmd_dpkg',
                     'cmd_ln', 'cmd_mkdir', 'cmd_rpm', 'opensslCommand',
-                    'cmd_cp',
+                    'cmd_cp', 'oxauth_rp_war',
                     ]
 
         cb_install = False
@@ -1486,6 +1487,8 @@ class Setup(object):
 
         self.logIt("Preparing %s service base folders" % serviceName)
         self.run([self.cmd_mkdir, '-p', jettyServiceBase])
+        self.run([self.cmd_mkdir, '-p', os.path.join(jettyServiceBase, 'temp')])
+        self.run([self.cmd_mkdir, '-p', os.path.join(jettyServiceBase, 'r')])
 
         # Create ./ext/lib folder for custom libraries only if installed Jetty "ext" module
         if "ext" in jettyModulesList:
@@ -1560,31 +1563,6 @@ class Setup(object):
 
         nodeServiceConfiguration = '%s/node/%s' % (self.outputFolder, serviceName)
         self.copyFile(nodeServiceConfiguration, '/etc/default')
-
-
-    def downloadWarFiles(self):
-        if self.downloadWars:
-            self.pbar.progress("download", "Downloading oxAuth war file")
-            
-            self.run(['/usr/bin/wget', self.oxauth_war, '--no-verbose', '--retry-connrefused', '--tries=10', '-O', '%s/oxauth.war' % self.distGluuFolder])
-            self.pbar.progress("download", "Downloading oxTrust war file", False)
-            self.run(['/usr/bin/wget', self.oxtrust_war, '--no-verbose', '--retry-connrefused', '--tries=10', '-O', '%s/identity.war' % self.distGluuFolder])
-
-        if self.installOxAuthRP:
-            # oxAuth RP is not part of CE package. We need to download it if needed
-            distOxAuthRpPath = '%s/%s' % (self.distGluuFolder, "oxauth-rp.war")
-            if not os.path.exists(distOxAuthRpPath):
-                self.pbar.progress("download", "Downloading oxAuth RP war file", False)
-                self.run(['/usr/bin/wget', self.oxauth_rp_war, '--no-verbose', '--retry-connrefused', '--tries=10', '-O', '%s/oxauth-rp.war' % self.distGluuFolder])
-
-        if self.downloadWars and self.installSaml:
-            
-            self.pbar.progress("download", "Downloading Shibboleth IDP v3 war file", False)
-            self.run(['/usr/bin/wget', self.idp3_war, '--no-verbose', '-c', '--retry-connrefused', '--tries=10', '-O', '%s/idp.war' % self.distGluuFolder])
-            self.pbar.progress("download", "Downloading Shibboleth IDP v3 keygenerator", False)
-            self.run(['/usr/bin/wget', self.idp3_cml_keygenerator, '--no-verbose', '-c', '--retry-connrefused', '--tries=10', '-O', self.distGluuFolder + '/idp3_cml_keygenerator.jar'])
-            self.pbar.progress("download", "Downloading Shibboleth IDP v3 binary distributive file", False)
-            self.run(['/usr/bin/wget', self.idp3_dist_jar, '--no-verbose', '-c', '--retry-connrefused', '--tries=10', '-O', self.distGluuFolder + '/shibboleth-idp.jar'])
 
 
     def encode_passwords(self):
@@ -2133,16 +2111,14 @@ class Setup(object):
 
 
     def install_oxauth_rp(self):
-        oxAuthRPWar = 'oxauth-rp.war'
-        distOxAuthRpPath = '%s/%s' % (self.distGluuFolder, oxAuthRPWar)
-
-        self.logIt("Copying oxauth-rp.war into jetty webapps folder...")
-
+        self.logIt("Installing OxAuthRP")
         jettyServiceName = 'oxauth-rp'
         self.installJettyService(self.jetty_app_configuration[jettyServiceName])
+        oxauth_rp_fn = os.path.join(self.jetty_base, jettyServiceName, 'webapps/oxauth-rp.war')
+        self.download(self.oxauth_rp_war, oxauth_rp_fn)
 
-        jettyServiceWebapps = '%s/%s/webapps' % (self.jetty_base, jettyServiceName)
-        self.copyFile('%s/oxauth-rp.war' % self.distGluuFolder, jettyServiceWebapps)
+        os.system('snapctl start gluu-server.oxauth-rp')
+
 
     def generate_passport_configuration(self):
         self.passport_rs_client_jks_pass = self.getPW()
@@ -2870,7 +2846,6 @@ class Setup(object):
         else:
             self.installSaml = False
 
-        """
         promptForOxAuthRP = self.getPrompt("Install oxAuth RP?",
                                             self.getDefaultOption(self.installOxAuthRP)
                                             )[0].lower()
@@ -2878,7 +2853,7 @@ class Setup(object):
             self.installOxAuthRP = True
         else:
             self.installOxAuthRP = False
-        """
+
 
         promptForPassport = self.getPrompt("Install Passport?", 
                                             self.getDefaultOption(self.installPassport)
@@ -4447,12 +4422,7 @@ class Setup(object):
 
     def install_oxd(self):
         self.logIt("Installing oxd server...")
-
-        self.copyFile(
-            os.path.join(self.staticFolder, 'oxd-server/oxd-server.default'),
-            '/etc/default/oxd-server'
-            )
-
+        
         oxd_yaml_fn = os.path.join(self.snap_common_dir, 'gluu/oxd-server/conf/oxd-server.yml')
 
         oxd_yaml_changes = {
@@ -4709,8 +4679,6 @@ class Setup(object):
 
             self.pbar.progress("gluu", "Configuring system")
             self.configureSystem()
-            self.pbar.progress("download", "Downloading War files")
-            self.downloadWarFiles()
             self.pbar.progress("gluu", "Calculating application memory")
             self.calculate_selected_aplications_memory()
             self.pbar.progress("gluu", "Making salt")
