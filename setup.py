@@ -1488,7 +1488,7 @@ class Setup(object):
         self.logIt("Preparing %s service base folders" % serviceName)
         self.run([self.cmd_mkdir, '-p', jettyServiceBase])
         self.run([self.cmd_mkdir, '-p', os.path.join(jettyServiceBase, 'temp')])
-        self.run([self.cmd_mkdir, '-p', os.path.join(jettyServiceBase, 'r')])
+        self.run([self.cmd_mkdir, '-p', os.path.join(jettyServiceBase, 'logs')])
 
         # Create ./ext/lib folder for custom libraries only if installed Jetty "ext" module
         if "ext" in jettyModulesList:
