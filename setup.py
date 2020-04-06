@@ -159,7 +159,7 @@ class Setup(object):
         self.distGluuFolder = '%s/gluu' % self.distFolder
         self.distTmpFolder = '%s/tmp' % self.distFolder
 
-        #TO DO: These are defaults up to we figure out snap setup
+        #TO DO: we can get the followings from app_versions.json which is used by download_apps.py,
         self.oxVersion = '4.1.0'
         self.currentGluuVersion = '4.1.0'
         self.githubBranchName = 'snap'
@@ -828,7 +828,9 @@ class Setup(object):
         for f in glob.glob(os.path.join(realCertFolder, '*')):
             self.run([self.cmd_chmod, '400', f])
 
-        self.run([self.cmd_chmod, '600', os.path.join(self.certFolder, 'gluu-radius.private-key.pem')])
+        gluu_radius_private_key_fn = os.path.join(self.certFolder, 'gluu-radius.private-key.pem')
+        if os.path.exists(gluu_radius_private_key_fn):
+            self.run([self.cmd_chmod, '600', gluu_radius_private_key_fn])
 
         if self.installOxAuth:
             self.run([self.cmd_chmod, '600', self.oxauth_openid_jks_fn])
@@ -2856,7 +2858,7 @@ class Setup(object):
         else:
             self.installPassport = False
 
-        """
+
         if os.path.exists(os.path.join(self.distGluuFolder, 'casa.war')):
             self.promptForCasaInstallation()
 
@@ -2866,7 +2868,7 @@ class Setup(object):
 
         self.templateRenderingDict['oxd_hostname'] = oxd_hostname
         self.templateRenderingDict['oxd_port'] = str(oxd_port)
-        """
+
 
         if not self.installOxd:
             promptForOxd = self.getPrompt("Install Oxd?", 
@@ -3488,57 +3490,6 @@ class Setup(object):
 
         return 'apache2'
 
-    def start_services(self):
-
-        # Apache HTTPD
-        if self.installHttpd:
-            self.pbar.progress("gluu", "Starting httpd")
-            self.run_service_command(self.get_apache_service_name(), 'restart')
-
-        # LDAP services
-        if self.wrends_install == LOCAL:
-            self.pbar.progress("gluu", "Starting WrenDS")
-            self.run_service_command('opendj', 'stop')
-            self.run_service_command('opendj', 'start')
-
-        # Jetty services
-        # Iterate through all components and start installed
-        for applicationName, applicationConfiguration in self.jetty_app_configuration.items():
-
-            # we will start casa later, after importing oxd certificate
-            if applicationName == 'casa':
-                continue
-                
-            if applicationConfiguration['installed']:
-                self.pbar.progress("gluu", "Starting Gluu Jetty {} Service".format(applicationName))
-                self.run_service_command(applicationName, 'start')
-
-        
-        # Passport service
-        if self.installPassport:
-            self.pbar.progress("gluu", "Starting Passport Service")
-            self.run_service_command('passport', 'start')
-
-        # oxd service
-        if self.installOxd:
-            self.pbar.progress("gluu", "Starting oxd Service")
-            self.run_service_command('oxd-server', 'start')
-            #wait 2 seconds for oxd server is up
-            time.sleep(2)
-
-        # casa service
-        if self.installCasa:
-            # import_oxd_certificate2javatruststore:
-            self.logIt("Importing oxd certificate")
-            self.import_oxd_certificate()
-
-            self.pbar.progress("gluu", "Starting Casa Service")
-            self.run_service_command('casa', 'start')
-
-        # Radius service
-        if self.installGluuRadius:
-            self.pbar.progress("gluu", "Starting Gluu Radius Service")
-            self.run_service_command('gluu-radius', 'start')
 
     def import_oxd_certificate(self):
 
@@ -4448,7 +4399,6 @@ class Setup(object):
     def install_casa(self):
         self.logIt("Installing Casa...")
 
-        self.run(['chmod', 'g+w', '/opt/gluu/python/libs'])
         self.logIt("Copying casa.war into jetty webapps folder...")
         self.installJettyService(self.jetty_app_configuration['casa'])
 
@@ -4516,13 +4466,19 @@ class Setup(object):
             extraClasspath_list.append('./custom/libs/jsmpp-{}.jar'.format(self.jsmmp_version))
             element.text = ','.join(extraClasspath_list)
 
-            self.writeFile(oxauth_xml_fn, xml_headers+ElementTree.tostring(root))
+            self.writeFile(oxauth_xml_fn, xml_headers+ElementTree.tostring(root).decode('utf-8'))
 
         pylib_folder = os.path.join(self.gluuOptPythonFolder, 'libs')
         for script_fn in glob.glob(os.path.join(self.staticFolder, 'casa/scripts/*.*')):
             self.run(['cp', script_fn, pylib_folder])
 
-        self.enable_service_at_start('casa')
+        #TODO LATER: we don't need casa.json in 4.2, remove casa.json and the following line for 4.2
+        self.renderTemplateInOut('casa.json', self.templateFolder, self.configFolder)
+
+        self.logIt("Importing oxd certificate")
+        self.import_oxd_certificate()
+
+        os.system('snapctl start gluu-server.casa')
 
     def parse_url(self, url):
         o = urlparse(url)
@@ -4726,8 +4682,6 @@ class Setup(object):
             """
             self.pbar.progress("gluu", "Setting permissions")
             self.set_permissions()
-            self.pbar.progress("gluu", "Starting services")
-            self.start_services()
             self.pbar.progress("gluu", "Saving properties")
             self.save_properties()
 
