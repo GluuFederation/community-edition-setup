@@ -1526,11 +1526,9 @@ class Setup(object):
             jetty_tmpfiles_dst = '%s/jetty.conf' % tmpfiles_base
             self.copyFile(jetty_tmpfiles_src, jetty_tmpfiles_dst)
             self.run([self.cmd_chmod, '644', jetty_tmpfiles_dst])
-
+        """
         # don't send header to server
         self.set_jetty_param(serviceName, 'jetty.httpConfig.sendServerVersion', 'false')
-
-        """
 
         serviceConfiguration['installed'] = True
 
@@ -1965,9 +1963,8 @@ class Setup(object):
 
         os.system('snapctl start gluu-server.identity')
 
-        #TODO Check later
         # don't send header to server
-        #self.set_jetty_param(jettyServiceName, 'jetty.httpConfig.sendServerVersion', 'false')
+        self.set_jetty_param(jettyServiceName, 'jetty.httpConfig.sendServerVersion', 'false')
 
     def install_saml(self):
         if self.installSaml:
@@ -4993,7 +4990,7 @@ def begin_setup():
         if setupOptions['noPrompt'] or proceed:
             installObject.do_installation()
             print("\n{}Please execute the following command to finish your setup:{}\n".format(gluu_utils.colors.WARNING, gluu_utils.colors.ENDC))
-            print(os.path.join(installObject.install_dir, 'post-setup.sh')
+            print(os.path.join(installObject.install_dir, 'post-setup.sh'))
             print("\n\n Gluu Server installation successful! Point your browser to https://%s\n\n" % installObject.hostname)
         else:
             installObject.save_properties()
