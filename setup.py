@@ -720,6 +720,7 @@ class Setup(object):
             'oxauth_client_jar_fn': os.path.join(self.distGluuFolder, 'oxauth-client-jar-with-dependencies.jar')
                 }
 
+
     def __repr__(self):
         try:
             txt = 'hostname'.ljust(30) + self.hostname.rjust(35) + "\n"
@@ -766,6 +767,7 @@ class Setup(object):
             return s
 
     def initialize(self):
+
         self.install_time_ldap = time.strftime('%Y%m%d%H%M%SZ', time.gmtime(time.time()))
         if not os.path.exists(self.distFolder):
             print("Please ensure that you are running this script inside Gluu container.")
@@ -4594,6 +4596,14 @@ class Setup(object):
         self.run(['cp', '-f', print_version_fn, show_version_fn])
         self.run(['chmod', '+x', show_version_fn])
 
+        #write post-install.py script
+        post_setup_script = self.readFile(os.path.join(self.templateFolder, 'post-setup.py'))
+        post_setup_script = post_setup_script.replace('{{SNAP_NAME}}', os.environ['SNAP_NAME']).replace('{{SNAP}}', os.environ['SNAP'])
+        post_setup_script_fn = os.path.join(self.install_dir, 'post-setup.py')
+        with open(post_setup_script_fn, 'w') as w:
+            w.write(post_setup_script)
+        self.run([self.cmd_chmod, '+x', post_setup_script_fn])
+
 
     def do_installation(self, queue=None):
         
@@ -4678,6 +4688,9 @@ class Setup(object):
             self.post_install_tasks()
 
             self.pbar.progress("gluu", "Completed")
+
+        
+
             if not self.thread_queue:
                 print()
                 self.print_post_messages()
@@ -4989,8 +5002,8 @@ def begin_setup():
 
         if setupOptions['noPrompt'] or proceed:
             installObject.do_installation()
-            print("\n{}Please execute the following command to finish your setup:{}\n".format(gluu_utils.colors.WARNING, gluu_utils.colors.ENDC))
-            print(os.path.join(installObject.install_dir, 'post-setup.sh'))
+            print("\n{}Please execute the following command to finish your setup:{}".format(gluu_utils.colors.WARNING, gluu_utils.colors.ENDC))
+            print('sudo ' + os.path.join(installObject.install_dir, 'post-setup.py'))
             print("\n\n Gluu Server installation successful! Point your browser to https://%s\n\n" % installObject.hostname)
         else:
             installObject.save_properties()
