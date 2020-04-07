@@ -1373,8 +1373,6 @@ class Setup(object):
         for tmp_fn in error_templates:
             self.copyFile(tmp_fn, '/var/www/html')
 
-        os.system('snapctl start gluu-server.apache')
-
     def copy_output(self):
         self.logIt("Copying rendered templates to final destination")
 
@@ -1952,7 +1950,6 @@ class Setup(object):
         jettyServiceWebapps = '%s/%s/webapps' % (self.jetty_base, jettyServiceName)
         self.copyFile('%s/oxauth.war' % self.distGluuFolder, jettyServiceWebapps)
 
-        os.system('snapctl start gluu-server.oxauth')
 
     def install_oxtrust(self):
         self.logIt("Copying identity.war into jetty webapps folder...")
@@ -1963,8 +1960,7 @@ class Setup(object):
         jettyServiceWebapps = '%s/%s/webapps' % (self.jetty_base, jettyServiceName)
         self.copyFile('%s/identity.war' % self.distGluuFolder, jettyServiceWebapps)
 
-        os.system('snapctl start gluu-server.identity')
-
+        
         # don't send header to server
         self.set_jetty_param(jettyServiceName, 'jetty.httpConfig.sendServerVersion', 'false')
 
@@ -2033,7 +2029,7 @@ class Setup(object):
                 if 'user' in couchbase_mappings:
                     self.saml_couchbase_settings()
 
-            os.system('snapctl start gluu-server.idp')
+            
 
     def install_saml_libraries(self):
         # Unpack oxauth.war to get bcprov-jdk16.jar
@@ -2092,7 +2088,6 @@ class Setup(object):
         oxauth_rp_fn = os.path.join(self.jetty_base, jettyServiceName, 'webapps/oxauth-rp.war')
         self.download(self.oxauth_rp_war, oxauth_rp_fn)
 
-        os.system('snapctl start gluu-server.oxauth-rp')
 
 
     def generate_passport_configuration(self):
@@ -2194,7 +2189,6 @@ class Setup(object):
         # Install passport system service script
         self.installNodeService('passport')
 
-        os.system('snapctl start gluu-server.passport')
 
     def install_gluu_components(self):
         if self.wrends_install:
@@ -4375,7 +4369,7 @@ class Setup(object):
         with open(oxd_yaml_fn, 'w') as w:
             w.write(''.join(oxd_yaml))
 
-        os.system('snapctl start gluu-server.oxd-server')
+        
 
     def install_casa(self):
         self.logIt("Installing Casa...")
@@ -4456,10 +4450,6 @@ class Setup(object):
         #TODO LATER: we don't need casa.json in 4.2, remove casa.json and the following line for 4.2
         self.renderTemplateInOut('casa.json', self.templateFolder, self.configFolder)
 
-        self.logIt("Importing oxd certificate")
-        self.import_oxd_certificate()
-
-        os.system('snapctl start gluu-server.casa')
 
     def parse_url(self, url):
         o = urlparse(url)
@@ -4554,7 +4544,6 @@ class Setup(object):
             gluu_radius_private_key_fn = os.path.join(self.certFolder, 'gluu-radius.private-key.pem')
             self.writeFile(gluu_radius_private_key_fn, '')
 
-            os.system('snapctl start gluu-server.gluu-radius')
 
     def add_yacron_job(self, command, schedule, name=None, args={}):
         if not name:
@@ -4577,6 +4566,52 @@ class Setup(object):
 
         with open(yacron_yaml_fn, 'w') as w:
             w.write(yaml.dump(yacron_yaml, Dumper=yaml.SafeDumper))
+
+    def start_services(self):
+
+        # Apache HTTPD
+        if self.installHttpd:
+            self.pbar.progress("gluu", "Starting httpd")
+            self.run(['snapctl', 'start', 'gluu-server.apache'])
+
+        # Jetty services
+        # Iterate through all components and start installed
+        for applicationName, applicationConfiguration in self.jetty_app_configuration.items():
+
+            # we will start casa later, after importing oxd certificate
+            if applicationName == 'casa':
+                continue
+                
+            if applicationConfiguration['installed']:
+                self.pbar.progress("gluu", "Starting Gluu Jetty {} Service".format(applicationName))
+                self.run(['snapctl', 'start', 'gluu-server.'+applicationName])
+
+        # Passport service
+        if self.installPassport:
+            self.pbar.progress("gluu", "Starting Passport Service")
+            self.run(['snapctl', 'start', 'gluu-server.passport'])
+
+        # oxd service
+        if self.installOxd:
+            self.pbar.progress("gluu", "Starting oxd Service")
+            self.run(['snapctl', 'start', 'gluu-server.oxd-server'])
+            #wait 2 seconds for oxd server is up
+            time.sleep(2)
+
+        # casa service
+        if self.installCasa:
+            # import_oxd_certificate2javatruststore:
+            self.logIt("Importing oxd certificate")
+            self.import_oxd_certificate()
+
+            self.pbar.progress("gluu", "Starting Casa Service")
+            self.run(['snapctl', 'start', 'gluu-server.casa'])
+
+        # Radius service
+        if self.installGluuRadius:
+            self.pbar.progress("gluu", "Starting Gluu Radius Service")
+            self.run(['snapctl', 'start', 'gluu-server.gluu-radius'])
+
 
 
     def post_install_tasks(self):
@@ -4667,6 +4702,9 @@ class Setup(object):
 
             self.pbar.progress("gluu", "Setting ownerships")
             self.set_ownership()
+
+            self.pbar.progress("gluu", "Starting services")
+            self.start_services()
 
             """
             self.pbar.progress("gluu", "Setting permissions")
