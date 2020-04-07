@@ -1179,24 +1179,6 @@ class Setup(object):
         except:
             self.logIt("Error loading file %s" % fileName)
 
-    def set_ulimits(self):
-        #TODO MOVE TO install hook
-        try:
-            if self.os_type in ['centos', 'red', 'fedora']:
-                apache_user = 'apache'
-            else:
-                apache_user = 'www-data'
-
-            self.appendLine("ldap       soft nofile     131072", "/etc/security/limits.conf")
-            self.appendLine("ldap       hard nofile     262144", "/etc/security/limits.conf")
-            self.appendLine("%s     soft nofile     131072" % apache_user, "/etc/security/limits.conf")
-            self.appendLine("%s     hard nofile     262144" % apache_user, "/etc/security/limits.conf")
-            self.appendLine("jetty      soft nofile     131072", "/etc/security/limits.conf")
-            self.appendLine("jetty      hard nofile     262144", "/etc/security/limits.conf")
-        except:
-            self.logIt("Could not set limits.")
-            self.logIt(traceback.format_exc(), True)
-
     def decrypt_properties(self, fn, passwd):
         out_file = fn[:-4] + '.' + uuid.uuid4().hex[:8] + '-DEC~'
         cmd = ['openssl', 'enc', '-d', '-aes-256-cbc', '-in',  fn, '-out', out_file, '-k', passwd]
@@ -5010,6 +4992,8 @@ def begin_setup():
 
         if setupOptions['noPrompt'] or proceed:
             installObject.do_installation()
+            print("\n{}Please execute the following command to finish your setup:{}\n".format(gluu_utils.colors.WARNING, gluu_utils.colors.ENDC))
+            print(os.path.join(installObject.install_dir, 'post-setup.sh')
             print("\n\n Gluu Server installation successful! Point your browser to https://%s\n\n" % installObject.hostname)
         else:
             installObject.save_properties()
