@@ -827,12 +827,21 @@ class Setup(object):
 
         # Set right permissions
         self.run([self.cmd_chmod, '700', realCertFolder])
-        for f in glob.glob(os.path.join(realCertFolder, '*')):
-            self.run([self.cmd_chmod, '400', f])
+        writeable_files = (
+                            'java-cacerts', 
+                            'gluu-radius.private-key.pem',  
+                            os.path.split(self.oxauth_openid_jks_fn)[1],
+                            )
 
-        gluu_radius_private_key_fn = os.path.join(self.certFolder, 'gluu-radius.private-key.pem')
-        if os.path.exists(gluu_radius_private_key_fn):
-            self.run([self.cmd_chmod, '600', gluu_radius_private_key_fn])
+        for f in glob.glob(os.path.join(realCertFolder, '*')):
+            fp, fn = os.path.split(f)
+            if fn in writeable_files:
+                mode_ = '600'
+            else:
+                mode_ = '400'
+
+            self.run([self.cmd_chmod, mode_, f])
+
 
         if self.installOxAuth:
             self.run([self.cmd_chmod, '600', self.oxauth_openid_jks_fn])
