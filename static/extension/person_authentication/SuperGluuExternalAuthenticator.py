@@ -131,7 +131,7 @@ class PersonAuthentication(PersonAuthenticationType):
             
             # Validate license
             try:
-                self.license_content = LicenseValidator.validate(license["public_key"], license["public_password"], license["license_password"], license["license"],
+                self.license_content = LicenseValidator.validate(license["public-key"], license["public-password"], license["license-password"], license["license"],
                                           Product.SUPER_GLUU, Date())
                 self.valid_license = self.license_content.isValid()
             except:
@@ -815,7 +815,7 @@ class PersonAuthentication(PersonAuthenticationType):
                             pushSnsService = CdiUtil.bean(PushSnsService)
                             targetEndpointArn = self.getTargetEndpointArn(deviceRegistrationService, pushSnsService, PushPlatform.APNS, user, u2f_device)
                             if targetEndpointArn == None:
-                            	return
+                                return
 
                             send_notification = True
     
@@ -868,7 +868,7 @@ class PersonAuthentication(PersonAuthenticationType):
                             pushSnsService = CdiUtil.bean(PushSnsService)
                             targetEndpointArn = self.getTargetEndpointArn(deviceRegistrationService, pushSnsService, PushPlatform.GCM, user, u2f_device)
                             if targetEndpointArn == None:
-                            	return
+                                return
 
                             send_notification = True
     
@@ -944,8 +944,8 @@ class PersonAuthentication(PersonAuthenticationType):
                 targetEndpointArn = registerDeviceResponse.getEndpointArn()
         
         if StringHelper.isEmpty(targetEndpointArn):
-	        print "Super-Gluu. Failed to get endpoint ARN for user: '%s'" % user.getUserId()
-        	return None
+            print "Super-Gluu. Failed to get endpoint ARN for user: '%s'" % user.getUserId()
+            return None
 
         print "Super-Gluu. Get target endpoint ARN. Create target endpoint ARN '%s' for user: '%s'" % (targetEndpointArn, user.getUserId())
         
