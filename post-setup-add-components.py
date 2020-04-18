@@ -5,6 +5,10 @@ import sys
 import subprocess
 import json
 import zipfile
+import ldap
+
+ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
+
 
 cur_dir = os.path.dirname(os.path.realpath(__file__))
 ces_dir = os.path.join(cur_dir, 'ces_current')
@@ -14,6 +18,7 @@ parser.add_argument("-addshib", help="Install Shibboleth SAML IDP", action="stor
 parser.add_argument("-addpassport", help="Install Passport", action="store_true")
 parser.add_argument("-addoxd", help="Install Oxd Server", action="store_true")
 parser.add_argument("-addcasa", help="Install Gluu Casa", action="store_true")
+parser.add_argument("-addradius", help="Install Gluu Radius Server", action="store_true")
 
 args = parser.parse_args()
 
@@ -27,6 +32,8 @@ def get_properties(prop_fn):
         jprop.load(f)
 
     return jprop
+
+
 
 run_oxauth_war_fn = '/opt/gluu/jetty/oxauth/webapps/oxauth.war'
 
@@ -73,9 +80,15 @@ from ces_current.pylib.cbm import CBM
 from ces_current.pylib.generate_properties import generate_properties
 from ces_current.pylib.Properties import Properties as JProperties
 
+
+class ProgressBar:
+    def progress(self, ptype, msg, incr=True):
+        print(msg)
+
 setup_porperties = generate_properties(True)
 
 setupObj = Setup(ces_dir)
+setupObj.pbar = ProgressBar()
 
 setupObj.setup = setupObj
 
@@ -151,6 +164,20 @@ def get_oxTrustConfiguration_ldap():
     oxTrustConfApplication = json.loads(result[0][1]['oxTrustConfApplication'][0])
 
     return dn, oxTrustConfApplication
+
+
+def get_oxAuthConfiguration_ldap():
+    result = ldap_conn.search_s(
+                        'o=gluu',
+                        ldap.SCOPE_SUBTREE,
+                        '(objectClass=oxAuthConfiguration)',
+                        ['oxAuthConfDynamic']
+                        )
+    dn = result[0][0]
+    oxAuthConfiguration = json.loads(result[0][1]['oxAuthConfDynamic'][0])
+
+    return dn, oxAuthConfiguration
+
 
 def installSaml():
 
@@ -450,6 +477,37 @@ def installCasa():
     setupObj.calculate_selected_aplications_memory()
     setupObj.install_casa()
 
+
+def installRadius():
+
+    outputFolder = setupObj.outputFolder
+    setupObj.outputFolder = os.path.join(cur_dir, 'output')
+    setupObj.install_gluu_radius()
+    setupObj.outputFolder = outputFolder
+
+    setupObj.run([setupObj.cmd_chown, 'radius:gluu', os.path.join(setupObj.certFolder, 'gluu-radius.private-key.pem')])
+    setupObj.run([setupObj.cmd_chmod, '660', os.path.join(setupObj.certFolder, 'gluu-radius.private-key.pem')])
+
+    dn, oxAuthConfiguration = get_oxAuthConfiguration_ldap()
+
+    oxAuthConfiguration['openidScopeBackwardCompatibility'] = True
+    oxAuthConfiguration['legacyIdTokenClaims'] = True
+    oxAuthConfiguration_js = json.dumps(oxAuthConfiguration, indent=2)
+
+    ldap_conn.modify_s(
+                        dn,
+                        [( ldap.MOD_REPLACE, 'oxAuthConfDynamic',  oxAuthConfiguration_js)]
+                    )
+
+    ldap_conn.modify_s('ou=configuration,o=gluu',
+                    [( ldap.MOD_REPLACE, 'gluuRadiusEnabled',  'true')]
+                    )
+
+    ldap_conn.modify_s('inum=B8FD-4C11,ou=scripts,o=gluu',
+                    [( ldap.MOD_REPLACE, 'oxEnabled',  'true')]
+                    )
+
+
 if args.addshib:
     installSaml()
 
@@ -461,6 +519,9 @@ if args.addoxd:
 
 if args.addcasa:
     installCasa()
+
+if args.addradius:
+    installRadius()
 
 if persistence_type == 'ldap':
     setupObj.deleteLdapPw()
