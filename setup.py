@@ -1138,6 +1138,9 @@ class Setup(object):
         if not self.application_max_ram:
             self.application_max_ram = 3072
 
+        if not self.couchbaseShibUserPassword:
+            self.couchbaseShibUserPassword = self.getPW()
+
     def choose_from_list(self, list_of_choices, choice_name="item", default_choice_index=0):
         return_value = None
         choice_map = {}
