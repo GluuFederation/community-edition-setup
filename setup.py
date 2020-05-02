@@ -962,6 +962,11 @@ class Setup(object):
             print "Please ensure that you are running this script inside Gluu container."
             sys.exit(1)
 
+        oxd_package_list = glob.glob(os.path.join(self.distGluuFolder, 'oxd-server*.tgz'))
+
+        if oxd_package_list:
+            self.oxd_package = max(oxd_package_list)
+
     def get_ssl_subject(self, ssl_fn):
         retDict = {}
         cmd = 'openssl x509  -noout -subject -nameopt RFC2253 -in {}'.format(ssl_fn)
@@ -3417,11 +3422,6 @@ class Setup(object):
             self.enable_scim_access_policy = 'true'
         else:
             self.installPassport = False
-
-        oxd_package_list = glob.glob(os.path.join(self.distGluuFolder, 'oxd-server*.tgz'))
-        
-        if oxd_package_list:
-            self.oxd_package = max(oxd_package_list)
 
         if os.path.exists(os.path.join(self.distGluuFolder, 'casa.war')):
             self.promptForCasaInstallation()
