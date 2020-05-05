@@ -5492,6 +5492,7 @@ class Setup(object):
         self.run([self.cmd_chown, 'radius:gluu', os.path.join(self.certFolder, 'gluu-radius.jks')])
         self.run([self.cmd_chown, 'radius:gluu', os.path.join(self.certFolder, 'gluu-radius.private-key.pem')])
 
+        self.run([self.cmd_chmod, '755', self.radius_dir])
         self.run([self.cmd_chmod, '660', os.path.join(self.certFolder, 'gluu-radius.jks')])
         self.run([self.cmd_chmod, '660', os.path.join(self.certFolder, 'gluu-radius.private-key.pem')])
         
