@@ -909,7 +909,9 @@ class Setup(object):
         
         self.mappingLocations = { group: 'ldap' for group in self.couchbaseBucketDict }  #default locations are OpenDJ
 
-        
+        oxd_package_list = glob.glob(os.path.join(self.distGluuFolder, 'oxd-server*.tgz'))
+        if oxd_package_list:
+            self.oxd_package = max(oxd_package_list)
 
     def __repr__(self):
         try:
@@ -962,10 +964,6 @@ class Setup(object):
             print "Please ensure that you are running this script inside Gluu container."
             sys.exit(1)
 
-        oxd_package_list = glob.glob(os.path.join(self.distGluuFolder, 'oxd-server*.tgz'))
-
-        if oxd_package_list:
-            self.oxd_package = max(oxd_package_list)
 
     def get_ssl_subject(self, ssl_fn):
         retDict = {}
