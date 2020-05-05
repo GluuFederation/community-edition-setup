@@ -543,9 +543,9 @@ description: URL of the End-User's profile picture
 displayName: Picture URL
 gluuAttributeEditType: user
 gluuAttributeEditType: admin
-gluuAttributeName: string
+gluuAttributeName: picture
 gluuAttributeOrigin: gluuPerson
-gluuAttributeType: binary
+gluuAttributeType: string
 gluuAttributeViewType: user
 gluuAttributeViewType: admin
 gluuSAML1URI: urn:mace:dir:attribute-def:picture
