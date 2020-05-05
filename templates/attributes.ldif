@@ -543,7 +543,7 @@ description: URL of the End-User's profile picture
 displayName: Picture URL
 gluuAttributeEditType: user
 gluuAttributeEditType: admin
-gluuAttributeName: picture
+gluuAttributeName: string
 gluuAttributeOrigin: gluuPerson
 gluuAttributeType: binary
 gluuAttributeViewType: user
