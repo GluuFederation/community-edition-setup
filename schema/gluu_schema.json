@@ -46,83 +46,6 @@
             "x_origin": "Gluu created attribute"
         },
         {
-            "desc": "oxd id field for Relying party object",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "id"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "oxd data field for Relying party object",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "data"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "oxd key field for Expired Object",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "key"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "oxd value field for Expired Object",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "value"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "oxd createdAt field for Expired Object",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "createdAt"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "oxd expiredAt field for Expired Object",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "expiredAt"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "oxd type field for Expired Object",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "type"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
             "desc": "Creation Date used for password reset requests", 
             "equality": "generalizedTimeMatch", 
             "names": [
@@ -6150,11 +6073,11 @@
         {
             "kind": "STRUCTURAL",
             "may": [
-                "key",
-                "value",
-                "createdAt",
-                "expiredAt",
-                "type"
+                "oxId",
+                "dat",
+                "iat",
+                "exp",
+                "oxType"
             ],
             "must": [
                 "objectclass"
@@ -6171,8 +6094,8 @@
         {
             "kind": "STRUCTURAL",
             "may": [
-                "id",
-                "data"
+                "oxId",
+                "dat"
             ],
             "must": [
                 "objectclass"
