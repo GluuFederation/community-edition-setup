@@ -8,6 +8,7 @@ from org.gluu.service.cdi.util import CdiUtil
 from org.gluu.oxauth.security import Identity
 from org.gluu.model.custom.script.type.auth import PersonAuthenticationType
 from org.gluu.oxauth.service import UserService, AuthenticationService
+from org.gluu.oxauth.service import SessionIdService
 from org.gluu.oxauth.util import ServerUtil
 from org.gluu.util import StringHelper, ArrayHelper
 from java.util import Arrays
@@ -29,6 +30,7 @@ class PersonAuthentication(PersonAuthenticationType):
         self.currentTimeMillis = currentTimeMillis
         self.mobile_number = None
         self.identity = CdiUtil.bean(Identity)
+        self.sessionIdService = CdiUtil.bean(SessionIdService)
 
     def init(self, configurationAttributes):
         print "Twilio SMS. Initialization"
@@ -66,6 +68,9 @@ class PersonAuthentication(PersonAuthenticationType):
 
     def getApiVersion(self):
         return 1
+
+    def getAuthenticationMethodClaims(self, requestParameters):
+        return None    
 
     def isValidAuthenticationMethod(self, usageType, configurationAttributes):
         return True
@@ -129,6 +134,8 @@ class PersonAuthentication(PersonAuthenticationType):
 
             # Get code and save it in LDAP temporarily with special session entry
             self.identity.setWorkingParameter("code", code)
+            sessionId = self.sessionIdService.getSessionId() # fetch from persistence
+            sessionId.getSessionAttributes().put("code", code)
 
             try:
                 Twilio.init(self.ACCOUNT_SID, self.AUTH_TOKEN);
@@ -137,6 +144,9 @@ class PersonAuthentication(PersonAuthenticationType):
                 print 'TwilioSMs, Message Sid: %s' % (message.getSid())
                 print 'TwilioSMs, User phone: %s' % (self.mobile_number)
                 print "++++++++++++++++++++++++++++++++++++++++++++++"
+                sessionId.getSessionAttributes().put("mobile_number", self.mobile_number)
+                sessionId.getSessionAttributes().put("mobile", self.mobile_number)
+                self.sessionIdService.updateSessionId(sessionId)
                 self.identity.setWorkingParameter("mobile_number", self.mobile_number)
                 self.identity.getSessionId().getSessionAttributes().put("mobile_number",self.mobile_number)
                 self.identity.setWorkingParameter("mobile", self.mobile_number)
@@ -156,6 +166,9 @@ class PersonAuthentication(PersonAuthenticationType):
             # Retrieve the session attribute
             print "TwilioSMS. Step 2 SMS/OTP Authentication"
             code = session_attributes.get("code")
+            sessionId = self.sessionIdService.getSessionId() # fetch from persistence
+            code = sessionId.getSessionAttributes().get("code")
+            self.identity.setSessionId(sessionId)
             print "----------------------------------"
             print "TwilioSMS. Code: %s" % str(code)
             print "----------------------------------"
