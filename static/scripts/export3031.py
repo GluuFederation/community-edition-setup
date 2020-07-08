@@ -525,7 +525,8 @@ class Exporter(object):
                          'ou=scripts',
                          'ou=uma',
                          'ou=hosts',
-                         'ou=u2f']
+                         'ou=u2f',
+						 'ou=sector_identifiers']
         self.propertiesFn = os.path.join(self.backupDir, 'setup.properties')
         self.os_types = ['centos', 'redhat', 'fedora', 'ubuntu', 'debian']
         self.os = self.detect_os_type()
