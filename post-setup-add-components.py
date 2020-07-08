@@ -5,7 +5,6 @@ import sys
 import subprocess
 import json
 import zipfile
-from pylib.Properties import Properties as JProperties
 
 cur_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -16,16 +15,6 @@ if not os.path.exists('setup.py'):
 if not os.path.exists('/install/community-edition-setup/setup.properties.last'):
     print "setup.properties.last is missing can't continue"
     sys.exit()
-
-f=open('setup.py').readlines()
-
-for l in f:
-    if l.startswith('from pyDes import *'):
-        break
-else:
-    f.insert(1, 'from pyDes import *\n')
-    with open('setup.py','w') as w:
-        w.write(''.join(f))
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-addshib", help="Install Shibboleth SAML IDP", action="store_true")
@@ -47,10 +36,6 @@ def get_properties(prop_fn):
 oxVersion = 0
 setup_properties_fn = '/install/community-edition-setup/setup.properties.last'
 install_dir = '.'
-
-#Determine setup version
-setup_prop = get_properties(setup_properties_fn)
-oxVersion_setup = setup_prop['oxVersion']
 
 run_oxauth_war_fn = '/opt/gluu/jetty/oxauth/webapps/oxauth.war'
 
@@ -102,9 +87,12 @@ open('ces_current/__init__.py','w').close()
 sys.path.append('ces_current')
 
 from ces_current.setup import *
+from ces_current.pylib.Properties import Properties as JProperties
+
 install_dir = 'ces_current'
 
 setupObj = Setup(install_dir)
+setupObj.oxVersion = ces_version
 
 setupObj.setup = setupObj
 
@@ -118,7 +106,8 @@ if oxVersion != gluu_version:
                 'idp3MetadataFolder', 'idp3MetadataCredentialsFolder', 'idp3LogsFolder',
                 'idp3LibFolder', 'idp3ConfFolder', 'idp3ConfAuthnFolder', 
                 'idp3CredentialsFolder', 'idp3WebappFolder', 'oxVersion',
-                'templateFolder', 'outputFolder',
+                'templateFolder', 'outputFolder', 'jetty_dist', 'jre_version', 'jetty_version',
+                'jython_version', 'node_version',
                 'ldif_passport_config', 'ldif_passport', 'ldif_passport_clients',
                 ]
     keep_dict = {}
@@ -170,6 +159,7 @@ else:
 setupObj.ldapCertFn = setupObj.opendj_cert_fn
 
 def installSaml():
+
 
     setupObj.run(['cp', '-f', os.path.join(setupObj.gluuOptFolder, 'jetty/identity/webapps/identity.war'), 
                 setupObj.distGluuFolder])
@@ -238,6 +228,11 @@ def installSaml():
     metadata = metadata.replace('md:ArtifactResolutionService', 'ArtifactResolutionService')
     with open(metadata_file,'w') as F:
         F.write(metadata)
+
+    if setupObj.os_initdaemon == 'systemd':
+        idp_service_fn = '/lib/systemd/system/idp.service'
+        if not os.path.exists(idp_service_fn):
+            setupObj.run(['wget', '-nv', 'https://raw.githubusercontent.com/GluuFederation/community-edition-package/master/package/systemd/idp.service', '-O', idp_service_fn])
     
     setupObj.run([setupObj.cmd_chown, '-R', 'jetty:jetty', setupObj.idp3Folder])
     if not os.path.exists('/var/run/jetty'):
@@ -317,7 +312,11 @@ def installPassport():
         print "Installing", nod_archive_fn
         setupObj.installNode()
 
-        passport_url = 'https://ox.gluu.org/npm/passport/passport-{}.tgz'.format(gluu_version)
+        passport_version = gluu_version
+        if passport_version == '4.0':
+            passport_version = '4.0.0'
+
+        passport_url = 'https://ox.gluu.org/npm/passport/passport-{}.tgz'.format(passport_version)
         passport_modules_url = 'https://ox.gluu.org/npm/passport/passport-version_{}-node_modules.tar.gz'.format(gluu_version)
         passport_fn = os.path.basename(passport_url)
         passport_modules_fn = os.path.basename(passport_modules_url)
