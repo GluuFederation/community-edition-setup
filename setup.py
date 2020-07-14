@@ -313,7 +313,7 @@ class Setup(object):
 
                 ('oxauth-rp', {'name' : 'oxauth-rp',
                                'jetty' : {'modules' : 'server,deploy,annotations,resources,http,http-forwarded,threadpool,console-capture,jsp,websocket'},
-                               'memory' : {'ratio' : 0.08, "jvm_heap_ration" : 0.7, "max_allowed_mb" : 384, 'metaspace_mb': 128},
+                               'memory' : {'ratio' : 0.08, "jvm_heap_ration" : 0.85, "max_allowed_mb" : 384, 'metaspace_mb': 64},
                                'installed' : False
                                }),
                 ('passport', {'name' : 'passport',
