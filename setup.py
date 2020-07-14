@@ -4376,7 +4376,7 @@ class Setup(object):
 
         for install_type in install_list:
             for package in package_list[os_type_version][install_type].split():
-                if os_type_version in ('centos 7', 'red 7', 'red 8') and package.startswith('python3-'):
+                if os_type_version in ('centos 7', 'red 7') and package.startswith('python3-'):
                     package_query = package.replace('python3-', 'python36-')
                 else:
                     package_query = package
