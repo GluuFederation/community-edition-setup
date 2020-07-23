@@ -4262,6 +4262,8 @@ class Setup(object):
     def calculate_aplications_memory(self, application_max_ram, jetty_app_configuration, installedComponents):
         self.logIt("Calculating memory setting for applications")
         allowedApplicationsMemory = {}
+        application_max_ram = int(application_max_ram)
+        application_max_ram -= len(installedComponents) * 128
         retVal = True
         usedRatio = 0.001
         for installedComponent in installedComponents:
@@ -4287,9 +4289,6 @@ class Setup(object):
                 applicationMemory = 256
 
             self.templateRenderingDict["%s_max_mem" % applicationName] = applicationMemory
-
-            self.templateRenderingDict["%s_max_meta_mem" % applicationName] = applicationConfiguration['memory']['metaspace_mb']
-            applicationMemory = applicationMemory - applicationConfiguration['memory']['metaspace_mb']
 
             if 'jvm_heap_ration' in applicationConfiguration['memory']:
                 jvmHeapRation = applicationConfiguration['memory']['jvm_heap_ration']
