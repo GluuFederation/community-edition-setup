@@ -80,19 +80,18 @@ os.system('unzip -o -qq {}'.format(ces_path))
 os.system('mv {}/{} {}/ces_current'.format(cur_dir, ces_folder, cur_dir))
 
 open(os.path.join(cur_dir, 'ces_current/__init__.py'),'w').close()
-
-
 sys.path.append(ces_dir)
+os.chdir(ces_dir)
 
 import ruamel.yaml
-from ces_current.setup import *
-from ces_current import setup
+from setup import *
+import setup
 
-from ces_current.pylib.cbm import CBM
-from ces_current.pylib.generate_properties import generate_properties
-from ces_current.pylib.jproperties import Properties as JProperties
-from ces_current.pylib.gluu_utils import read_properties_file
-from ces_current.pylib.dbutils import get_ldap_conn, get_cbm_conn
+from pylib.cbm import CBM
+from pylib.generate_properties import generate_properties
+from pylib.jproperties import Properties as JProperties
+from pylib.gluu_utils import read_properties_file
+from pylib.dbutils import get_ldap_conn, get_cbm_conn
 
 class ProgressBar:
     def progress(self, ptype, msg, incr=True):
