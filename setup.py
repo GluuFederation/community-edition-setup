@@ -158,6 +158,7 @@ class Setup(object):
         self.thread_queue = None
         self.properties_password = None
         self.noPrompt = False
+        self.reCreatePasswords = True
 
         self.distFolder = '/opt/dist'
         self.distAppFolder = '%s/app' % self.distFolder
@@ -986,17 +987,18 @@ class Setup(object):
             except:
                 tld = self.hostname
             self.admin_email = "support@%s" % tld
-        if not self.httpdKeyPass:
+
+        if not self.httpdKeyPass or self.reCreatePasswords:
             self.httpdKeyPass = self.getPW()
-        if not self.ldapPass:
+        if not self.ldapPass or self.reCreatePasswords:
             self.ldapPass = self.getPW()
-        if not self.shibJksPass:
+        if not self.shibJksPass or self.reCreatePasswords:
             self.shibJksPass = self.getPW()
-        if not self.oxauth_openid_jks_pass:
+        if not self.oxauth_openid_jks_pass or self.reCreatePasswords:
             self.oxauth_openid_jks_pass = self.getPW()
-        if not self.opendj_p12_pass:
+        if not self.opendj_p12_pass or self.reCreatePasswords:
             self.opendj_p12_pass = self.getPW()
-        if not self.passportSpKeyPass:
+        if not self.passportSpKeyPass or self.reCreatePasswords:
             self.passportSpKeyPass = self.getPW()
             self.passportSpJksPass = self.getPW()
         if not self.encode_salt:
@@ -1023,7 +1025,7 @@ class Setup(object):
         if not self.application_max_ram:
             self.application_max_ram = int(current_mem_size * .83 * 1000) # 83% of physical memory
 
-        if not self.couchbaseShibUserPassword:
+        if not self.couchbaseShibUserPassword or self.reCreatePasswords:
             self.couchbaseShibUserPassword = self.getPW()
 
         if self.installCasa:
@@ -1410,6 +1412,9 @@ class Setup(object):
         if not 'oxtrust_admin_password' in p:
             p['oxtrust_admin_password'] = p['ldapPass']
 
+
+        if '--load-passwords' in sys.argv:
+            self.reCreatePasswords = False
 
         return p
 
@@ -1933,11 +1938,11 @@ class Setup(object):
                 self.encoded_cb_password = self.obscure(self.cb_password)
             self.encoded_opendj_p12_pass = self.obscure(self.opendj_p12_pass)
 
-            if not self.get('oxauthClient_pw'):
+            if not self.get('oxauthClient_pw') or self.reCreatePasswords:
                 self.oxauthClient_pw = self.getPW()
             self.oxauthClient_encoded_pw = self.obscure(self.oxauthClient_pw)
 
-            if not self.get('idpClient_pw'):
+            if not self.get('idpClient_pw') or self.reCreatePasswords:
                 self.idpClient_pw = self.getPW()
             self.idpClient_encoded_pw = self.obscure(self.idpClient_pw)
 
@@ -2224,7 +2229,7 @@ class Setup(object):
                                                     + string.digits) for _ in range(N))
 
     def generate_scim_configuration(self):
-        if not self.get('scim_rs_client_jks_pass'):
+        if not self.get('scim_rs_client_jks_pass') or self.reCreatePasswords:
             self.scim_rs_client_jks_pass = self.getPW()
 
         self.scim_rs_client_jks_pass_encoded = self.obscure(self.scim_rs_client_jks_pass)
@@ -2510,7 +2515,7 @@ class Setup(object):
         self.copyFile('%s/oxauth-rp.war' % self.distGluuFolder, jettyServiceWebapps)
 
     def generate_passport_configuration(self):
-        if not self.get('passport_rs_client_jks_pass'):
+        if not self.get('passport_rs_client_jks_pass') or self.reCreatePasswords:
             self.passport_rs_client_jks_pass = self.getPW()
         self.passport_rs_client_jks_pass_encoded = self.obscure(self.passport_rs_client_jks_pass)
 
@@ -5397,7 +5402,7 @@ class Setup(object):
         conf_dir = os.path.join(self.gluuBaseFolder, 'conf/radius/')
         self.createDirs(conf_dir)
 
-        if not self.get('radius_jwt_pass'):
+        if not self.get('radius_jwt_pass') or self.reCreatePasswords:
             self.radius_jwt_pass = self.getPW()
         radius_jwt_pass = self.obscure(self.radius_jwt_pass)
         radius_jks_fn = os.path.join(self.certFolder, 'gluu-radius.jks')
@@ -5419,7 +5424,7 @@ class Setup(object):
             if k.get('alg') == 'RS512':
                 self.templateRenderingDict['radius_jwt_keyId'] = k['kid']
         
-        if not self.get('gluu_ro_pw'):
+        if not self.get('gluu_ro_pw') or self.reCreatePasswords:
             self.gluu_ro_pw = self.getPW()
         self.gluu_ro_encoded_pw = self.obscure(self.gluu_ro_pw)
 
@@ -5749,7 +5754,8 @@ if __name__ == '__main__':
     parser.add_argument('--oxd-use-gluu-storage', help="Use Gluu Storage for Oxd Server", action='store_true')
     parser.add_argument('-couchbase-bucket-prefix', help="Set prefix for couchbase buckets", default='gluu')
     parser.add_argument('--generate-oxd-certificate', help="Generate certificate for oxd based on hostname", action='store_true')
-
+    parser.add_argument('--load-passwords', help="Load password from setup.properties", action='store_true')
+    
     argsp = parser.parse_args()
 
     if (not argsp.c) and sys.stdout.isatty() and (int(terminal_size.lines) > 24) and (int(terminal_size.columns) > 79):
@@ -5868,6 +5874,7 @@ if __name__ == '__main__':
     setupOptions['installScimServer'] = argsp.install_scim
     setupOptions['installFido2'] = argsp.install_fido2
     setupOptions['couchbase_bucket_prefix'] = argsp.couchbase_bucket_prefix
+
 
     if argsp.remote_ldap:
         setupOptions['wrends_install'] = REMOTE
