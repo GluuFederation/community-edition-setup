@@ -818,6 +818,9 @@ class Setup(object):
                 s = s + "%s\n%s\n%s\n\n" % (key, "-" * len(key), val)
             return s
 
+    def get(self, attr, default=None):
+        return getattr(self, attr) if hasattr(self, attr) else default
+
     def initialize(self):
         self.install_time_ldap = time.strftime('%Y%m%d%H%M%SZ', time.gmtime(time.time()))
         if not os.path.exists(self.distFolder):
@@ -1930,10 +1933,12 @@ class Setup(object):
                 self.encoded_cb_password = self.obscure(self.cb_password)
             self.encoded_opendj_p12_pass = self.obscure(self.opendj_p12_pass)
 
-            self.oxauthClient_pw = self.getPW()
+            if not self.get('oxauthClient_pw'):
+                self.oxauthClient_pw = self.getPW()
             self.oxauthClient_encoded_pw = self.obscure(self.oxauthClient_pw)
 
-            self.idpClient_pw = self.getPW()
+            if not self.get('idpClient_pw'):
+                self.idpClient_pw = self.getPW()
             self.idpClient_encoded_pw = self.obscure(self.idpClient_pw)
 
             self.encoded_couchbaseTrustStorePass = self.obscure(self.couchbaseTrustStorePass)
@@ -2219,7 +2224,8 @@ class Setup(object):
                                                     + string.digits) for _ in range(N))
 
     def generate_scim_configuration(self):
-        self.scim_rs_client_jks_pass = self.getPW()
+        if not self.get('scim_rs_client_jks_pass'):
+            self.scim_rs_client_jks_pass = self.getPW()
 
         self.scim_rs_client_jks_pass_encoded = self.obscure(self.scim_rs_client_jks_pass)
 
@@ -2504,7 +2510,8 @@ class Setup(object):
         self.copyFile('%s/oxauth-rp.war' % self.distGluuFolder, jettyServiceWebapps)
 
     def generate_passport_configuration(self):
-        self.passport_rs_client_jks_pass = self.getPW()
+        if not self.get('passport_rs_client_jks_pass'):
+            self.passport_rs_client_jks_pass = self.getPW()
         self.passport_rs_client_jks_pass_encoded = self.obscure(self.passport_rs_client_jks_pass)
 
         if not self.passport_rs_client_id:
@@ -2872,8 +2879,11 @@ class Setup(object):
 
 
     def make_oxauth_salt(self):
-        self.pairwiseCalculationKey = self.genRandomString(random.randint(20,30))
-        self.pairwiseCalculationSalt = self.genRandomString(random.randint(20,30))
+        if not self.get('pairwiseCalculationKey'):
+            self.pairwiseCalculationKey = self.genRandomString(random.randint(20,30))
+
+        if not self.get('pairwiseCalculationSalt'):
+            self.pairwiseCalculationSalt = self.genRandomString(random.randint(20,30))
 
 
     def getBackendTypes(self):
@@ -3348,7 +3358,7 @@ class Setup(object):
             self.shibboleth_version = 'v3'
             self.installSaml = True
             self.gluuSamlEnabled = 'true'
-            if self.persistence_type in ('couchbase','hybrid'):
+            if self.persistence_type in ('couchbase','hybrid') and not self.get('couchbaseShibUserPassword'):
                 self.couchbaseShibUserPassword = self.getPW()
         else:
             self.installSaml = False
@@ -5387,7 +5397,8 @@ class Setup(object):
         conf_dir = os.path.join(self.gluuBaseFolder, 'conf/radius/')
         self.createDirs(conf_dir)
 
-        self.radius_jwt_pass = self.getPW()
+        if not self.get('radius_jwt_pass'):
+            self.radius_jwt_pass = self.getPW()
         radius_jwt_pass = self.obscure(self.radius_jwt_pass)
         radius_jks_fn = os.path.join(self.certFolder, 'gluu-radius.jks')
         
@@ -5408,7 +5419,8 @@ class Setup(object):
             if k.get('alg') == 'RS512':
                 self.templateRenderingDict['radius_jwt_keyId'] = k['kid']
         
-        self.gluu_ro_pw = self.getPW()
+        if not self.get('gluu_ro_pw'):
+            self.gluu_ro_pw = self.getPW()
         self.gluu_ro_encoded_pw = self.obscure(self.gluu_ro_pw)
 
         scripts_dir = os.path.join(source_dir,'scripts')
