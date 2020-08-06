@@ -1306,6 +1306,18 @@ class Setup(object):
             self.logIt("Error loading properties", True)
             self.logIt(traceback.format_exc(), True)
 
+        if p.get('cb_install'):
+            try:
+                p['cb_install'] = int(p['cb_install'])
+            except:
+                p['cb_install'] = NONE
+
+        if p.get('wrends_install'):
+            try:
+                p['wrends_install'] = int(p['wrends_install'])
+            except:
+                p['wrends_install'] = NONE
+
         if p.get('ldap_type') == 'openldap':
             self.logIt("ldap_type in setup.properties was changed from openldap to opendj")
             p['ldap_type'] = 'opendj'
