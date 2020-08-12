@@ -3764,20 +3764,31 @@ class Setup(object):
             self.logIt("Error running LDAP setup script", True)
             self.logIt(traceback.format_exc(), True)
 
-        #Append self.jre_home to OpenDj java.properties        
+        #Set memory and default.java-home in java.properties   
         opendj_java_properties_fn = os.path.join(self.ldapBaseFolder, 'config/java.properties')
 
-        self.logIt("append self.jre_home to WrenDS %s" % opendj_java_properties_fn)
-        with open(opendj_java_properties_fn,'a') as f:
-            f.write('\ndefault.java-home={}\n'.format(self.jre_home))
+        self.logIt("Setting memory and default.java-home in %s" % opendj_java_properties_fn)
+        opendj_java_properties = self.readFile(opendj_java_properties_fn).splitlines()
+        java_home_ln = 'default.java-home={}'.format(self.jre_home)
+        java_home_ln_w = False
+        xms = os.environ['ce_wrends_xms'] if os.environ.get('ce_wrends_xms') else '1'
+        xmx = os.environ['ce_wrends_xmx'] if os.environ.get('ce_wrends_xmx') else '2'
 
-        try:
-            self.logIt('Stopping opendj server')
-            cmd = os.path.join(self.ldapBaseFolder, 'bin/stop-ds')
-            self.run(['/bin/su','ldap', '-c', cmd], cwd='/opt/opendj/bin')
-        except:
-            self.logIt("Error stopping opendj", True)
-            self.logIt(traceback.format_exc(), True)
+        for i, l in enumerate(opendj_java_properties[:]):
+            n = l.find('=')
+            if n > -1:
+                k = l[:n].strip()
+                if k == 'default.java-home':
+                    opendj_java_properties[i] = java_home_ln
+                    java_home_ln_w = True
+                if k == 'start-ds.java-args':
+                    opendj_java_properties[i] = 'start-ds.java-args=-server -Xms{}g -Xmx{}g -XX:+UseCompressedOops'.format(xms, xmx)
+
+        if not java_home_ln_w:
+            opendj_java_properties.append(java_home_ln)
+
+        self.writeFile(opendj_java_properties_fn, '\n'.join(opendj_java_properties))
+
 
     def post_install_opendj(self):
         try:
