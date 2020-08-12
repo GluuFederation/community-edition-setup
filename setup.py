@@ -3764,6 +3764,18 @@ class Setup(object):
             self.logIt("Error running LDAP setup script", True)
             self.logIt(traceback.format_exc(), True)
 
+        self.fix_opendj_java_properties()
+
+        try:
+            self.logIt('Stopping opendj server')
+            cmd = os.path.join(self.ldapBaseFolder, 'bin/stop-ds')
+            self.run(['/bin/su','ldap', '-c', cmd], cwd='/opt/opendj/bin')
+        except:
+            self.logIt("Error stopping opendj", True)
+            self.logIt(traceback.format_exc(), True)
+
+    def fix_opendj_java_properties(self):
+
         #Set memory and default.java-home in java.properties   
         opendj_java_properties_fn = os.path.join(self.ldapBaseFolder, 'config/java.properties')
 
@@ -3788,14 +3800,6 @@ class Setup(object):
             opendj_java_properties.append(java_home_ln)
 
         self.writeFile(opendj_java_properties_fn, '\n'.join(opendj_java_properties))
-
-        try:
-            self.logIt('Stopping opendj server')
-            cmd = os.path.join(self.ldapBaseFolder, 'bin/stop-ds')
-            self.run(['/bin/su','ldap', '-c', cmd], cwd='/opt/opendj/bin')
-        except:
-            self.logIt("Error stopping opendj", True)
-            self.logIt(traceback.format_exc(), True)
 
     def post_install_opendj(self):
         try:
