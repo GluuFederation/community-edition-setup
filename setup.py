@@ -3789,6 +3789,13 @@ class Setup(object):
 
         self.writeFile(opendj_java_properties_fn, '\n'.join(opendj_java_properties))
 
+        try:
+            self.logIt('Stopping opendj server')
+            cmd = os.path.join(self.ldapBaseFolder, 'bin/stop-ds')
+            self.run(['/bin/su','ldap', '-c', cmd], cwd='/opt/opendj/bin')
+        except:
+            self.logIt("Error stopping opendj", True)
+            self.logIt(traceback.format_exc(), True)
 
     def post_install_opendj(self):
         try:
@@ -4182,7 +4189,7 @@ class Setup(object):
                 break
             time.sleep(5)
         else:
-            self.logIt("oxd server at  {} did not repond in 25 seconds".format(self.oxd_server_https), True)
+            self.logIt("oxd server at {} did not repond in 25 seconds".format(self.oxd_server_https), True)
 
         try:
 
@@ -4255,7 +4262,7 @@ class Setup(object):
         self.extractOpenDJ()
 
         self.createLdapPw()
-        
+
         try:
             self.pbar.progress("opendj", "WrenDS: installing", False)
             if self.wrends_install == LOCAL:
