@@ -11,7 +11,8 @@
       ["oxApplication"], 
       ["oxDeviceHashCode"], 
       ["oxDeviceKeyHandle"],
-      ["oxAuthClientId"]
+      ["oxAuthClientId"],
+      ["oxAuthUserId"]
     ],
     "static" : [
       [["LOWER(`uid`)"], "objectClass = \"gluuPerson\""], 
