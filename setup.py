@@ -994,17 +994,17 @@ class Setup(object):
                 tld = self.hostname
             self.admin_email = "support@%s" % tld
 
-        if not self.httpdKeyPass or self.reCreatePasswords:
+        if (not self.httpdKeyPass) & self.reCreatePasswords:
             self.httpdKeyPass = self.getPW()
-        if not self.ldapPass or self.reCreatePasswords:
+        if (not self.ldapPass) & self.reCreatePasswords:
             self.ldapPass = self.getPW()
-        if not self.shibJksPass or self.reCreatePasswords:
+        if (not self.shibJksPass) & self.reCreatePasswords:
             self.shibJksPass = self.getPW()
-        if not self.oxauth_openid_jks_pass or self.reCreatePasswords:
+        if (not self.oxauth_openid_jks_pass) & self.reCreatePasswords:
             self.oxauth_openid_jks_pass = self.getPW()
-        if not self.opendj_p12_pass or self.reCreatePasswords:
+        if (not self.opendj_p12_pass) & self.reCreatePasswords:
             self.opendj_p12_pass = self.getPW()
-        if not self.passportSpKeyPass or self.reCreatePasswords:
+        if (not self.passportSpKeyPass) & self.reCreatePasswords:
             self.passportSpKeyPass = self.getPW()
             self.passportSpJksPass = self.getPW()
         if not self.encode_salt:
@@ -1031,7 +1031,7 @@ class Setup(object):
         if not self.application_max_ram:
             self.application_max_ram = int(current_mem_size * .83 * 1000) # 83% of physical memory
 
-        if not self.couchbaseShibUserPassword or self.reCreatePasswords:
+        if (not self.couchbaseShibUserPassword) & self.reCreatePasswords:
             self.couchbaseShibUserPassword = self.getPW()
 
         if self.installCasa:
@@ -1938,11 +1938,11 @@ class Setup(object):
                 self.encoded_cb_password = self.obscure(self.cb_password)
             self.encoded_opendj_p12_pass = self.obscure(self.opendj_p12_pass)
 
-            if not self.get('oxauthClient_pw') or self.reCreatePasswords:
+            if (not self.get('oxauthClient_pw')) & self.reCreatePasswords:
                 self.oxauthClient_pw = self.getPW()
             self.oxauthClient_encoded_pw = self.obscure(self.oxauthClient_pw)
 
-            if not self.get('idpClient_pw') or self.reCreatePasswords:
+            if (not self.get('idpClient_pw')) & self.reCreatePasswords:
                 self.idpClient_pw = self.getPW()
             self.idpClient_encoded_pw = self.obscure(self.idpClient_pw)
 
@@ -2229,7 +2229,7 @@ class Setup(object):
                                                     + string.digits) for _ in range(N))
 
     def generate_scim_configuration(self):
-        if not self.get('scim_rs_client_jks_pass') or self.reCreatePasswords:
+        if (not self.get('scim_rs_client_jks_pass')) & self.reCreatePasswords:
             self.scim_rs_client_jks_pass = self.getPW()
 
         self.scim_rs_client_jks_pass_encoded = self.obscure(self.scim_rs_client_jks_pass)
@@ -2515,7 +2515,7 @@ class Setup(object):
         self.copyFile('%s/oxauth-rp.war' % self.distGluuFolder, jettyServiceWebapps)
 
     def generate_passport_configuration(self):
-        if not self.get('passport_rs_client_jks_pass') or self.reCreatePasswords:
+        if (not self.get('passport_rs_client_jks_pass')) & self.reCreatePasswords:
             self.passport_rs_client_jks_pass = self.getPW()
         self.passport_rs_client_jks_pass_encoded = self.obscure(self.passport_rs_client_jks_pass)
 
@@ -5424,7 +5424,7 @@ class Setup(object):
         conf_dir = os.path.join(self.gluuBaseFolder, 'conf/radius/')
         self.createDirs(conf_dir)
 
-        if not self.get('radius_jwt_pass') or self.reCreatePasswords:
+        if (not self.get('radius_jwt_pass')) & self.reCreatePasswords:
             self.radius_jwt_pass = self.getPW()
         radius_jwt_pass = self.obscure(self.radius_jwt_pass)
         radius_jks_fn = os.path.join(self.certFolder, 'gluu-radius.jks')
@@ -5446,7 +5446,7 @@ class Setup(object):
             if k.get('alg') == 'RS512':
                 self.templateRenderingDict['radius_jwt_keyId'] = k['kid']
         
-        if not self.get('gluu_ro_pw') or self.reCreatePasswords:
+        if (not self.get('gluu_ro_pw')) & self.reCreatePasswords:
             self.gluu_ro_pw = self.getPW()
         self.gluu_ro_encoded_pw = self.obscure(self.gluu_ro_pw)
 
