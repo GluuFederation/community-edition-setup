@@ -243,6 +243,9 @@ class HostForm(GluuSetupForm):
         if not self.parentApp.installObject.hostname:
             self.parentApp.installObject.hostname = self.parentApp.installObject.detect_hostname()
 
+        if self.parentApp.installObject.hostname.lower() == 'localhost':
+            self.parentApp.installObject.hostname = ''
+
         for k in self.myfields_:
             f = getattr(self, k)
             v = getattr(self.parentApp.installObject, k)
