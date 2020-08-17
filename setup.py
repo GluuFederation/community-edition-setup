@@ -333,7 +333,7 @@ class Setup(object):
                             'installed' : False
                             }),
                 ('scim', {'name': 'scim',
-                         'jetty': {'modules': 'server,deploy,resources,http,http-forwarded,console-capture,jsp'},
+                         'jetty': {'modules': 'server,deploy,resources,http,http-forwarded,console-capture,jsp,websocket'},
                          'memory': {'ratio': 0.08, "jvm_heap_ration": 0.7, "max_allowed_mb": 1024, 'metaspace_mb': 128},
                          'installed': False
                          }),
