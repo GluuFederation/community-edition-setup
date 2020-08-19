@@ -3,11 +3,10 @@ class msg:
     MAIN_label = "System Information"
     HostForm_label = "Gathering Information"
     ServicesForm_label = "Select Services to Install"
-    DBBackendForm_label = "Choose to Store in WrenDS"
+    DBBackendForm_label = "Backend Install Options"
     StorageSelectionForm_label = "Hybrid Storage Selection"
     InstallStepsForm_label = "Installing Gluu Server"
     DisplaySummaryForm_label = "Gluu Server Installation Summary"
-
     decription = "Use setup.py to configure your Gluu Server and to add initial data required for oxAuth and oxTrust to start. If setup.properties is found in this folder, these properties will automatically be used instead of the interactive setup."
 
     os_type_label = "Detected OS"
@@ -34,7 +33,7 @@ class msg:
     installOxAuthRP_label = "Install OxAuthRP" 
     installPassport_label = "Install Passport" 
     installGluuRadius_label = "Install Radius"
-    wrends_storages_label = "Store on WrenDS"
+    wrends_storages_label = "Choose to Store in WrenDS"
     installing_label = "Installing"
     installOxd_label = "Install Oxd"
     installCasa_label = "Install Casa"
@@ -93,6 +92,7 @@ class msg:
 
     ask_cb_install = "Couchbase Installation"
     cb_install_options = ["Don't Install","Install Locally","Use Remote Couchbase"]
+    cb_not_available = "Couchbase package is not found in /opt/dist/couchbase. Please put and retry."
     
     ask_use_gluu_storage_oxd = "By default oxd uses its own db. Do you want to use Gluu Storage for Oxd?"
     ask_use_gluu_storage_oxd_title = "Use Gluu Storage for Oxd?"

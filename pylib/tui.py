@@ -396,6 +396,7 @@ class DBBackendForm(GluuSetupForm):
         self.cb_option_changed(self.ask_cb)
 
     def do_beforeEditing(self):
+
         self.ask_wrends.value = [int(self.parentApp.installObject.wrends_install)]
 
         if self.parentApp.installObject.wrends_install == REMOTE:
@@ -475,6 +476,9 @@ class DBBackendForm(GluuSetupForm):
         self.parentApp.installObject.cb_install =  str(self.ask_cb.value[0]) if self.ask_cb.value[0] else 0
 
         if self.parentApp.installObject.cb_install == LOCAL:
+            if not 'couchbase' in self.parentApp.installObject.getBackendTypes():
+                npyscreen.notify_confirm(msg.cb_not_available, title="Warning")
+                return 
             self.parentApp.installObject.couchbase_hostname = 'localhost'
             self.parentApp.installObject.cb_password = self.cb_password.value
         elif self.parentApp.installObject.cb_install == REMOTE:
@@ -524,7 +528,7 @@ class DBBackendForm(GluuSetupForm):
             if not self.ask_wrends.value[0]:
                 self.wrends_password.hidden = True
                 self.wrends_hosts.hidden = True
-            elif str(self.ask_wrends.value[0]) == LOCAL:
+            elif str(self.ask_wrends.value[0]) == LOCAL:                    
                 self.wrends_password.hidden = False
                 self.wrends_hosts.hidden = True
             elif str(self.ask_wrends.value[0]) == REMOTE:
@@ -562,7 +566,7 @@ class StorageSelectionForm(GluuSetupForm):
     def create(self):
 
         self.wrends_storage = self.add(npyscreen.TitleMultiSelect, begin_entry_at=30, max_height=len(msg.storages), 
-            values=msg.storages, name=msg.DBBackendForm_label, scroll_exit=True)
+            values=msg.storages, name=msg.wrends_storages_label, scroll_exit=True)
 
         self.add(npyscreen.FixedText, value=msg.unselected_storages, rely=len(msg.storages)+4, editable=False, color='STANDOUT')
 
