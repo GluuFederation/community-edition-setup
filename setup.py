@@ -3920,10 +3920,7 @@ class Setup(object):
         if createPwFile:
             self.createLdapPw()
         
-        self.run(['/bin/su',
-                  'ldap',
-                  '-c',
-                  '%s' % importCmd], cwd=cwd)
+        self.run(importCmd, shell=True, cwd=cwd)
 
         if createPwFile:
             self.deleteLdapPw()
@@ -3964,10 +3961,7 @@ class Setup(object):
 
             importCmd = " ".join(importParams)
 
-            self.run(['/bin/su',
-                      'ldap',
-                      '-c',
-                      '%s' % importCmd], cwd=cwd)
+            self.run(importCmd, shell=True, cwd=cwd)
 
     def index_opendj_backend(self, backend):
         index_command = 'create-backend-index'
