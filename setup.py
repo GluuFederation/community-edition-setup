@@ -5522,7 +5522,7 @@ class Setup(object):
         if self.os_type+self.os_version == 'ubuntu16':
             self.run(['update-rc.d', 'gluu-radius', 'defaults'])
         else:
-            self.copyFile(os.path.join(source_dir, 'systemd/gluu-radius.service'), '/usr/lib/systemd/system')
+            self.copyFile(os.path.join(source_dir, 'systemd/gluu-radius.service'), '/etc/systemd/system')
             self.run([self.systemctl, 'daemon-reload'])
         
         #create empty gluu-radius.private-key.pem
