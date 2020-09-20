@@ -159,6 +159,7 @@ class Setup(object):
         self.properties_password = None
         self.noPrompt = False
         self.reCreatePasswords = True
+        self.clustering = False
 
         self.distFolder = '/opt/dist'
         self.distAppFolder = '%s/app' % self.distFolder
@@ -5264,15 +5265,17 @@ class Setup(object):
         yml_str = self.readFile(oxd_server_yml_fn)
         oxd_yaml = ruamel.yaml.load(yml_str, ruamel.yaml.RoundTripLoader)
 
+        bind_ip_addresses = '127.0.0.1' if self.clustering else self.ip
+
         if 'bind_ip_addresses' in oxd_yaml:
-            oxd_yaml['bind_ip_addresses'].append(self.ip)
+            oxd_yaml['bind_ip_addresses'].append(bind_ip_addresses)
         else:
             for i, k in enumerate(oxd_yaml):
                 if k == 'storage':
                     break
             else:
                 i = 1
-            oxd_yaml.insert(i, 'bind_ip_addresses',  [self.ip])
+            oxd_yaml.insert(i, 'bind_ip_addresses',  [bind_ip_addresses])
 
 
         if self.oxd_use_gluu_storage:
@@ -5295,44 +5298,46 @@ class Setup(object):
         yml_str = ruamel.yaml.dump(oxd_yaml, Dumper=ruamel.yaml.RoundTripDumper)
         self.writeFile(oxd_server_yml_fn, yml_str)
 
-        # generate oxd-server.keystore for the hostname
-        self.run([
-            self.opensslCommand,
-            'req', '-x509', '-newkey', 'rsa:4096', '-nodes',
-            '-out', '/tmp/oxd.crt',
-            '-keyout', '/tmp/oxd.key',
-            '-days', '3650',
-            '-subj', '/C={}/ST={}/L={}/O={}/CN={}/emailAddress={}'.format(self.countryCode, self.state, self.city, self.orgName, self.hostname, self.admin_email),
-            ])
+        if not self.clustering:
 
-        self.run([
-            self.opensslCommand,
-            'pkcs12', '-export',
-            '-in', '/tmp/oxd.crt',
-            '-inkey', '/tmp/oxd.key',
-            '-out', '/tmp/oxd.p12',
-            '-name', self.hostname,
-            '-passout', 'pass:example'
-            ])
+            # generate oxd-server.keystore for the hostname
+            self.run([
+                self.opensslCommand,
+                'req', '-x509', '-newkey', 'rsa:4096', '-nodes',
+                '-out', '/tmp/oxd.crt',
+                '-keyout', '/tmp/oxd.key',
+                '-days', '3650',
+                '-subj', '/C={}/ST={}/L={}/O={}/CN={}/emailAddress={}'.format(self.countryCode, self.state, self.city, self.orgName, self.hostname, self.admin_email),
+                ])
 
-        self.run([
-            self.cmd_keytool,
-            '-importkeystore',
-            '-deststorepass', 'example',
-            '-destkeypass', 'example',
-            '-destkeystore', '/tmp/oxd.keystore',
-            '-srckeystore', '/tmp/oxd.p12',
-            '-srcstoretype', 'PKCS12',
-            '-srcstorepass', 'example',
-            '-alias', self.hostname,
-            ])
+            self.run([
+                self.opensslCommand,
+                'pkcs12', '-export',
+                '-in', '/tmp/oxd.crt',
+                '-inkey', '/tmp/oxd.key',
+                '-out', '/tmp/oxd.p12',
+                '-name', self.hostname,
+                '-passout', 'pass:example'
+                ])
 
-        oxd_keystore_fn = os.path.join(oxd_root, 'conf/oxd-server.keystore')
-        self.run(['cp', '-f', '/tmp/oxd.keystore', oxd_keystore_fn])
-        self.run(['chown', 'jetty:jetty', oxd_keystore_fn])
-        
-        for f in ('/tmp/oxd.crt', '/tmp/oxd.key', '/tmp/oxd.p12', '/tmp/oxd.keystore'):
-            self.run(['rm', '-f', f])
+            self.run([
+                self.cmd_keytool,
+                '-importkeystore',
+                '-deststorepass', 'example',
+                '-destkeypass', 'example',
+                '-destkeystore', '/tmp/oxd.keystore',
+                '-srckeystore', '/tmp/oxd.p12',
+                '-srcstoretype', 'PKCS12',
+                '-srcstorepass', 'example',
+                '-alias', self.hostname,
+                ])
+
+            oxd_keystore_fn = os.path.join(oxd_root, 'conf/oxd-server.keystore')
+            self.run(['cp', '-f', '/tmp/oxd.keystore', oxd_keystore_fn])
+            self.run(['chown', 'jetty:jetty', oxd_keystore_fn])
+            
+            for f in ('/tmp/oxd.crt', '/tmp/oxd.key', '/tmp/oxd.p12', '/tmp/oxd.keystore'):
+                self.run(['rm', '-f', f])
 
 
         self.enable_service_at_start('oxd-server')
