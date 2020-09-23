@@ -1638,7 +1638,7 @@ class Setup(object):
 
     def extractOpenDJ(self):        
 
-        openDJArchive = max(glob.glob(os.path.join(self.distFolder, 'app/opendj-server-*4*.zip')))
+        openDJArchive = max(glob.glob(os.path.join(self.distFolder, 'app/opendj-server-*.zip')))
 
         try:
             self.logIt("Unzipping %s in /opt/" % openDJArchive)
