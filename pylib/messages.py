@@ -93,6 +93,7 @@ class msg:
     ask_cb_install = "Couchbase Installation"
     cb_install_options = ["Don't Install","Install Locally","Use Remote Couchbase"]
     cb_not_available = "Couchbase package is not found in /opt/dist/couchbase. Please put and retry."
+    cb_bucket_rolese = "Please check user {} has roles {} on bucket(s) {}"
     
     ask_use_gluu_storage_oxd = "By default oxd uses its own db. Do you want to use Gluu Storage for Oxd?"
     ask_use_gluu_storage_oxd_title = "Use Gluu Storage for Oxd?"

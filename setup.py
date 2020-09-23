@@ -4692,7 +4692,8 @@ class Setup(object):
     def checkCBRoles(self, buckets=[]):
         result = self.cbm.whoami()
         bc = buckets[:]
-        bucket_roles = {}
+        bucket_roles = { b:[] for b in bc }
+
         if 'roles' in result:
             
             for role in result['roles']:
@@ -4700,17 +4701,15 @@ class Setup(object):
                     self.isCouchbaseUserAdmin = True
                     return True, None
 
-                if not role['bucket_name'] in bucket_roles:
-                    bucket_roles[role['bucket_name']] = []
+                if ('bucket_name' in role) and (role['bucket_name'] in bucket_roles):
+                    bucket_roles[role['bucket_name']].append(role['role'])
 
-                bucket_roles[role['bucket_name']].append(role['role'])
-
-        for b_ in bc[:]:
-            for r_ in self.cb_bucket_roles:
-                if not r_ in bucket_roles[b_]:
+        for b in bc[:]:
+            for r in self.cb_bucket_roles:
+                if not r in bucket_roles[b]:
                     break
             else:
-                bc.remove(b_)
+                bc.remove(b)
 
         if bc:
             return False, bc

@@ -589,6 +589,7 @@ class StorageSelectionForm(GluuSetupForm):
         self.wrends_storage.update()
 
     def nextButtonPressed(self):
+
         storage_list = list(self.parentApp.installObject.couchbaseBucketDict.keys())
 
         for i, s in enumerate(storage_list):
@@ -651,6 +652,7 @@ class DisplaySummaryForm(GluuSetupForm):
 
 
     def do_beforeEditing(self):
+
         wrends_storages_widget = getattr(self, 'wrends_storages')
 
         for wn in self.myfields_1+self.myfields_2:
@@ -692,6 +694,23 @@ class DisplaySummaryForm(GluuSetupForm):
 
 
     def nextButtonPressed(self):
+        if self.parentApp.installObject.cb_install == REMOTE:
+            couchbase_mappings_ = self.parentApp.installObject.getMappingType('couchbase')
+            buckets_ = [ 'gluu_{}'.format(b) for b in couchbase_mappings_ ]
+            buckets_.append('gluu')
+            isCBRoleOK = self.parentApp.installObject.checkCBRoles(buckets_)
+
+            if not isCBRoleOK[0]:
+                warn_text = msg.cb_bucket_rolese.format(
+                                self.parentApp.installObject.cbm.auth.username,
+                                ', '.join(self.parentApp.installObject.cb_bucket_roles),
+                                ', '.join(isCBRoleOK[1]),
+                                )
+
+                npyscreen.notify_confirm(warn_text, title="Warning")
+                self.parentApp.switchForm('DBBackendForm')
+                return
+
         # Validate Properties
         self.parentApp.installObject.check_properties()
 
