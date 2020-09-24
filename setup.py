@@ -793,7 +793,7 @@ class Setup(object):
 
             bc = []
             if self.wrends_install:
-                t_ = 'wrends'
+                t_ = 'opendj'
                 if self.wrends_install == REMOTE:
                     t_ += '[R]'
                 bc.append(t_)
@@ -2902,7 +2902,7 @@ class Setup(object):
 
         backend_types = []
 
-        if glob.glob(self.distFolder+'/app/opendj-server-*4*.zip'):
+        if glob.glob(self.distFolder+'/app/opendj-server-*.zip'):
             backend_types.append('wrends')
 
         if glob.glob(self.distFolder+'/couchbase/couchbase-server-enterprise*.'+suffix):
@@ -2921,7 +2921,7 @@ class Setup(object):
             options_text.append('({0}) {1}'.format(i+1,m))
             options.append(str(i+1))
 
-        options_text = 'Use WrenDS to store {}'.format(' '.join(options_text))
+        options_text = 'Use OpenDJ to store {}'.format(' '.join(options_text))
 
         re_pattern = '^[1-{0}]+$'.format(len(self.couchbaseBucketDict))
 
@@ -3211,7 +3211,7 @@ class Setup(object):
             self.wrends_install = LOCAL
             
         elif self.wrends_install != REMOTE and (self.cb_install == REMOTE or 'couchbase' in available_backends):
-            promptForLDAP = self.getPrompt("Install Local WrenDS Server?", "Yes")[0].lower()
+            promptForLDAP = self.getPrompt("Install Local OpenDJ Server?", "Yes")[0].lower()
             if promptForLDAP[0] == 'y':
                 self.wrends_install = LOCAL
             else:
@@ -3739,7 +3739,7 @@ class Setup(object):
             os.remove(self.ldapPassFn)
 
     def install_opendj(self):
-        self.logIt("Running WrenDS Setup")
+        self.logIt("Running Opem Setup")
 
         # Copy opendj-setup.properties so user ldap can find it in /opt/opendj
         setupPropsFN = os.path.join(self.ldapBaseFolder, 'opendj-setup.properties')
@@ -3806,11 +3806,11 @@ class Setup(object):
         try:
             os.remove(os.path.join(self.ldapBaseFolder, 'opendj-setup.properties'))
         except:
-            self.logIt("Error deleting WrenDS properties. Make sure %s/opendj-setup.properties is deleted" % self.ldapBaseFolder)
+            self.logIt("Error deleting OpenDJ properties. Make sure %s/opendj-setup.properties is deleted" % self.ldapBaseFolder)
             self.logIt(traceback.format_exc(), True)
 
     def configure_opendj(self):
-        self.logIt("Configuring WrenDS")
+        self.logIt("Configuring OpenDJ")
 
         opendj_prop_name = 'global-aci:\'(targetattr!="userPassword||authPassword||debugsearchindex||changes||changeNumber||changeType||changeTime||targetDN||newRDN||newSuperior||deleteOldRDN")(version 3.0; acl "Anonymous read access"; allow (read,search,compare) userdn="ldap:///anyone";)\''
         config_changes = [
@@ -3861,14 +3861,14 @@ class Setup(object):
 
     def export_opendj_public_cert(self):
         # Load password to acces OpenDJ truststore
-        self.logIt("Getting WrenDS certificate")
+        self.logIt("Getting OpenDJ certificate")
 
         opendj_cert = ssl.get_server_certificate((self.ldap_hostname, self.ldaps_port))
         with open(self.opendj_cert_fn,'w') as w:
             w.write(opendj_cert)
 
         # Convert OpenDJ certificate to PKCS12
-        self.logIt("Importing WrenDS certificate to truststore")
+        self.logIt("Importing OpenDJ certificate to truststore")
         self.run([self.cmd_keytool,
                   '-importcert',
                   '-noprompt',
@@ -3885,14 +3885,14 @@ class Setup(object):
                   ])
 
         # Import OpenDJ certificate into java truststore
-        self.logIt("Import WrenDS certificate")
+        self.logIt("Import OpenDJ certificate")
 
         self.run([self.cmd_keytool, "-import", "-trustcacerts", "-alias", "%s_opendj" % self.hostname, \
                   "-file", self.opendj_cert_fn, "-keystore", self.defaultTrustStoreFN, \
                   "-storepass", "changeit", "-noprompt"])
 
     def import_ldif_template_opendj(self, ldif):
-        self.logIt("Importing LDIF file '%s' into WrenDS" % ldif)
+        self.logIt("Importing LDIF file '%s' into OpenDJ" % ldif)
         realInstallDir = os.path.realpath(self.outputFolder)
 
         ldif_file_fullpath = os.path.realpath(ldif)
@@ -4023,7 +4023,7 @@ class Setup(object):
 
 
     def prepare_opendj_schema(self):
-        self.logIt("Copying WrenDS schema")
+        self.logIt("Copying OpenDJ schema")
         for schemaFile in self.openDjschemaFiles:
             self.copyFile(schemaFile, self.openDjSchemaFolder)
 
@@ -4134,7 +4134,7 @@ class Setup(object):
 
         # LDAP services
         if self.wrends_install == LOCAL:
-            self.pbar.progress("gluu", "Starting WrenDS")
+            self.pbar.progress("gluu", "Starting OpenDJ")
             self.run_service_command('opendj', 'stop')
             self.run_service_command('opendj', 'start')
 
@@ -4255,31 +4255,31 @@ class Setup(object):
             self.logIt(traceback.format_exc(), True)
 
     def install_ldap_server(self):
-        self.logIt("Running WrenDS Setup")
+        self.logIt("Running OpenDJ Setup")
         
-        self.pbar.progress("opendj", "Extracting WrenDS", False)
+        self.pbar.progress("opendj", "Extracting OpenDJ", False)
         self.extractOpenDJ()
 
         self.createLdapPw()
 
         try:
-            self.pbar.progress("opendj", "WrenDS: installing", False)
+            self.pbar.progress("opendj", "OpenDJ: installing", False)
             if self.wrends_install == LOCAL:
                 self.install_opendj()
 
-                self.pbar.progress("opendj", "WrenDS: preparing schema", False)
+                self.pbar.progress("opendj", "OpenDJ: preparing schema", False)
                 self.prepare_opendj_schema()
-                self.pbar.progress("opendj", "WrenDS: setting up service", False)
+                self.pbar.progress("opendj", "OpenDJ: setting up service", False)
                 self.setup_opendj_service()
 
             if self.wrends_install:
-                self.pbar.progress("opendj", "WrenDS: configuring", False)
+                self.pbar.progress("opendj", "OpenDJ: configuring", False)
                 self.configure_opendj()
-                self.pbar.progress("opendj", "WrenDS:  exporting certificate", False)
+                self.pbar.progress("opendj", "OpenDJ:  exporting certificate", False)
                 self.export_opendj_public_cert()
-                self.pbar.progress("opendj", "WrenDS: creating indexes", False)
+                self.pbar.progress("opendj", "OpenDJ: creating indexes", False)
                 self.index_opendj()
-                self.pbar.progress("opendj", "WrenDS: importing Ldif files", False)
+                self.pbar.progress("opendj", "OpenDJ: importing Ldif files", False)
                 
                 ldif_files = []
 
@@ -4296,7 +4296,7 @@ class Setup(object):
 
                 self.import_ldif_opendj(ldif_files)
                 
-                self.pbar.progress("opendj", "WrenDS: post installation", False)
+                self.pbar.progress("opendj", "OpenDJ: post installation", False)
                 if self.wrends_install == LOCAL:
                     self.post_install_opendj()
         except:
@@ -5764,7 +5764,7 @@ if __name__ == '__main__':
 
     ldap_group = parser.add_mutually_exclusive_group()
     ldap_group.add_argument('--remote-ldap', help="Enables using remote LDAP server", action='store_true')
-    ldap_group.add_argument('--install-local-wrends', help="Installs local WrenDS", action='store_true')
+    ldap_group.add_argument('--install-local-opendj', help="Installs local OpenDJ", action='store_true')
 
     parser.add_argument('--remote-couchbase', help="Enables using remote couchbase server", action='store_true')
     parser.add_argument('--no-data', help="Do not import any data to database backend, used for clustering", action='store_true')
@@ -5834,7 +5834,7 @@ if __name__ == '__main__':
     }
 
 
-    if argsp.install_local_wrends:
+    if argsp.install_local_opendj:
         setupOptions['wrends_install'] = LOCAL
     
     if argsp.no_oxauth:

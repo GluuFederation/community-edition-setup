@@ -33,7 +33,8 @@ class msg:
     installOxAuthRP_label = "Install OxAuthRP" 
     installPassport_label = "Install Passport" 
     installGluuRadius_label = "Install Radius"
-    wrends_storages_label = "Choose to Store in WrenDS"
+    wrends_storage_selection_label = "Choose to Store in OpenDJ"
+    wrends_storages_label = "Store in OpenDJ"
     installing_label = "Installing"
     installOxd_label = "Install Oxd"
     installCasa_label = "Install Casa"
@@ -79,12 +80,12 @@ class msg:
     ask_installGluuRadius = "Install Gluu Radius"
     ask_installCasa = "Install Casa"
     ask_installOxd = "Install Oxd"
-    ask_wrends_install = "Install WrenDS"
+    ask_wrends_install = "Install OpenDJ"
     ask_installScimServer = "Install Scim Server"
     ask_installFido2 = "Install Fido2"
 
 
-    wrends_install_options = ["Don't Install","Install Locally","Use Remote WrenDS"]
+    wrends_install_options = ["Don't Install","Install Locally","Use Remote OpenDJ"]
     oxd_url_label = "oxd Server URL"
     install_oxd_or_url_warning = "Please either enter oxd Server URL or check Install Oxd"
     oxd_connection_error = "Can't connect to oxd-server with url {}. Reason: {}"
@@ -112,7 +113,7 @@ class msg:
     installation_completed = "Gluu Server installation successful! Point your browser to https://{}"
 
     installation_description_java = "Corretto is a build of the Open Java Development Kit (OpenJDK) with long-term support from Amazon. Corretto is certified using the Java Technical Compatibility Kit (TCK) to ensure it meets the Java SE standard."
-    installation_description_opendj = "WrenDS is an LDAPv3 compliant directory service, which has been developed for the Java platform, providing a high performance, highly available, and secure store for the identities managed by your organization."
+    installation_description_opendj = "OpenDJ is an LDAPv3 compliant directory service, which has been developed for the Java platform, providing a high performance, highly available, and secure store for the identities managed by your organization."
     installation_description_oxauth = "oxAuth is an open source OpenID Connect Provider (OP) and UMA Authorization Server (AS). The project also includes OpenID Connect Client code which can be used by websites to validate tokens."
     installation_description_oxtrust = "oxTrust is a Weld based web application for Gluu Server administration."
     installation_description_saml = "The Gluu Server acts as a SAML identity provider (IDP) to support outbound SAML single sign-on (SSO)."

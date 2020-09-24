@@ -499,7 +499,7 @@ class DBBackendForm(GluuSetupForm):
             self.parentApp.installObject.add_couchbase_post_messages()
 
         if self.parentApp.installObject.wrends_install  == LOCAL and not self.parentApp.installObject.checkPassword(self.parentApp.installObject.ldapPass):
-            npyscreen.notify_confirm(msg.weak_password.format('WrenDS'), title="Warning")
+            npyscreen.notify_confirm(msg.weak_password.format('OpenDJ'), title="Warning")
             return
 
         if self.parentApp.installObject.cb_install == LOCAL and not self.parentApp.installObject.checkPassword(self.parentApp.installObject.cb_password):
@@ -570,7 +570,7 @@ class StorageSelectionForm(GluuSetupForm):
     def create(self):
 
         self.wrends_storage = self.add(npyscreen.TitleMultiSelect, begin_entry_at=30, max_height=len(msg.storages), 
-            values=msg.storages, name=msg.wrends_storages_label, scroll_exit=True)
+            values=msg.storages, name=msg.wrends_storage_selection_label, scroll_exit=True)
 
         self.add(npyscreen.FixedText, value=msg.unselected_storages, rely=len(msg.storages)+4, editable=False, color='STANDOUT')
 
@@ -661,9 +661,9 @@ class DisplaySummaryForm(GluuSetupForm):
                 if wn == 'backend_types':
                     bt_ = []
                     if self.parentApp.installObject.wrends_install == LOCAL:
-                        bt_.append('wrends')
+                        bt_.append('opendj')
                     elif self.parentApp.installObject.wrends_install == REMOTE:
-                        bt_.append('wrends[R]')
+                        bt_.append('opendj[R]')
 
                     if self.parentApp.installObject.cb_install == LOCAL:
                         bt_.append('couchbase')
