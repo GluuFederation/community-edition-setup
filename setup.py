@@ -4427,11 +4427,10 @@ class Setup(object):
             except:
                 package_list[os_type_version]['mondatory'] += ' python3-ruamel-yaml'
 
-            if self.os_version == '7':
-                try:
-                    import requests
-                except:
-                    package_list[os_type_version]['mondatory'] += ' python3-requests'
+            try:
+                import requests
+            except:
+                package_list[os_type_version]['mondatory'] += ' python3-requests'
 
 
         for install_type in install_list:
