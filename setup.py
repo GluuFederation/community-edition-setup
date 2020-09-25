@@ -4409,28 +4409,30 @@ class Setup(object):
                 'ubuntu 18': {'mondatory': 'apache2 curl wget xz-utils unzip rsyslog python3-ldap3 net-tools python3-requests python3-ruamel.yaml bzip2', 'optional': ''},
                 'ubuntu 20': {'mondatory': 'apache2 curl wget xz-utils unzip rsyslog python3-ldap3 net-tools python3-requests python3-ruamel.yaml bzip2', 'optional': ''},
                 'centos 7': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog bzip2', 'optional': ''},
-                'centos 8': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip python3-ldap3 python3-ruamel-yaml rsyslog bzip2', 'optional': ''},
+                'centos 8': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog bzip2', 'optional': ''},
                 'red 7': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog bzip2', 'optional': ''},
                 'red 8': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog python3-ldap3 python3-requests python3-ruamel-yaml bzip2', 'optional': ''},
                 'fedora 22': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog python3-ldap3 python3-requests python3-ruamel-yaml bzip2', 'optional': ''},
                 }
 
         os_type_version = self.os_type+' '+self.os_version
-        if os_type_version in ('centos 7', 'red 7'):
+        if os_type_version in ('centos 7', 'red 7', 'centos 8', 'red 8'):
             try:
                 import ldap3
             except:
                 package_list[os_type_version]['mondatory'] += ' python3-ldap3'
-            try:
-                import requests
-            except:
-                package_list[os_type_version]['mondatory'] += ' python3-requests'
-                
+
             try:
                 import ruamel.yaml
             except:
                 package_list[os_type_version]['mondatory'] += ' python3-ruamel-yaml'
-            
+
+            if self.os_version == '7':
+                try:
+                    import requests
+                except:
+                    package_list[os_type_version]['mondatory'] += ' python3-requests'
+
 
         for install_type in install_list:
             for package in package_list[os_type_version][install_type].split():
