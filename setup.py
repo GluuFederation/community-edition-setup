@@ -27,8 +27,11 @@ try:
 except:
     pass
 
-import readline
+
 import sys
+sys.path.append('/usr/lib/python3.6/gluu-packaged/')
+
+import readline
 import os
 import os.path
 import site

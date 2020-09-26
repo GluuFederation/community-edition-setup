@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
+import sys
+sys.path.append('/usr/lib/python3.6/gluu-packaged/')
+
 import site
 import re
 import glob
-import sys
 import os
 import subprocess
 import argparse
