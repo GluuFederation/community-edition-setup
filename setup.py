@@ -5655,6 +5655,11 @@ class Setup(object):
             self.post_install_tasks()
 
             self.pbar.progress("gluu", "Completed")
+            
+            self.logIt('######### post setup messages #########')
+            post_messages_text = '\n'.join(self.post_messages)
+            self.logIt(post_messages_text.replace(self.oxtrust_admin_password, '<oxtrust_admin_password>'))
+
             if not self.thread_queue:
                 print()
                 self.print_post_messages()
@@ -5669,9 +5674,12 @@ class Setup(object):
                 print(traceback.format_exc())
 
     def print_post_messages(self):
+        
         print()
         for m in self.post_messages:
             print(m)
+            
+            
 
 ############################   Main Loop   #################################################
 
