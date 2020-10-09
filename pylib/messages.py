@@ -96,8 +96,8 @@ class msg:
     cb_not_available = "Couchbase package is not found in /opt/dist/couchbase. Please put and retry."
     cb_bucket_rolese = "Please check user {} has roles {} on bucket(s) {}"
     
-    ask_use_gluu_storage_oxd = "By default oxd uses its own db. Do you want to use Gluu Storage for Oxd?"
-    ask_use_gluu_storage_oxd_title = "Use Gluu Storage for Oxd?"
+    ask_use_gluu_storage_oxd = "oxd includes a built-in h2 database for persistence. Do you want to change it to the Authorization Server's native persistence mechanism (recommended for high load only)?"
+    ask_use_gluu_storage_oxd_title = "Use Authorization Server's native persistence for oxd?"
     
     notify_select_backend = "Please select one of the backends either local install or remote" 
     weak_password = "Password for {} must be at least 6 characters and include one uppercase letter, one lowercase letter, one digit, and one special character."

@@ -3405,7 +3405,7 @@ class Setup(object):
 
         if self.installOxd:
 
-            promptForOxdGluuStorage = self.getPrompt("  Use Gluu Storage for Oxd?",
+            promptForOxdGluuStorage = self.getPrompt("  Use Authorization Server's native persistence for oxd?",
                                                 self.getDefaultOption(self.oxd_use_gluu_storage)
                                                 )[0].lower()
             if promptForOxdGluuStorage == 'y':
