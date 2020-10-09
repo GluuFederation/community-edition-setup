@@ -69,6 +69,8 @@ from pylib.jproperties import Properties
 from pylib.printVersion import get_war_info
 from pylib.ldif3.ldif3 import LDIFWriter
 from pylib.schema import ObjectClass
+from pylib.messages import msg
+
 
 cur_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -3198,11 +3200,11 @@ class Setup(object):
 
         while True:
             oxtrust_admin_password = self.getPrompt("Enter oxTrust Admin Password", oxtrust_admin_password)
-            if len(oxtrust_admin_password) > 5:
+            if self.checkPassword(oxtrust_admin_password):
                 break
             else:
-                print("Password must be at least 6 characters")
-        
+                print(gluu_utils.colors.WARNING, msg.weak_password.format("oxTrust Admin"), gluu_utils.colors.ENDC)
+
         self.oxtrust_admin_password = oxtrust_admin_password
 
 
@@ -3230,7 +3232,7 @@ class Setup(object):
                 if self.checkPassword(ldapPass):
                     break
                 else:
-                    print("Password must be at least 6 characters and include one uppercase letter, one lowercase letter, one digit, and one special character.")
+                    print(gluu_utils.colors.WARNING, msg.weak_password.format("LDAP Admin"), gluu_utils.colors.ENDC)
 
             self.ldapPass = ldapPass
 
@@ -3262,7 +3264,7 @@ class Setup(object):
                     if self.checkPassword(cbPass):
                         break
                     else:
-                        print("Password must be at least 6 characters and include one uppercase letter, one lowercase letter, one digit, and one special character.")
+                        print(gluu_utils.colors.WARNING, msg.weak_password.format("Couchbase Admin"), gluu_utils.colors.ENDC)
 
                 self.cb_password = cbPass
             self.cbm = CBM(self.couchbase_hostname, self.couchebaseClusterAdmin, self.cb_password)

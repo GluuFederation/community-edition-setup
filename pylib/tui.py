@@ -226,8 +226,8 @@ class HostForm(GluuSetupForm):
             npyscreen.notify_confirm(msg.enter_valid_countryCode, title="Info")
             return
 
-        if len(self.oxtrust_admin_password.value) < 6:
-            npyscreen.notify_confirm(msg.oxtrust_admin_password_warning, title="Info")
+        if not self.parentApp.installObject.checkPassword(self.oxtrust_admin_password.value):
+            npyscreen.notify_confirm(msg.weak_password.format("oxTrust Admin"), title="Warning")
             return
 
         try:
@@ -235,6 +235,7 @@ class HostForm(GluuSetupForm):
         except:
             npyscreen.notify_confirm(msg.max_ram_int_warning, title="Info")
             return
+
 
         for k in self.myfields_:
             f = getattr(self, k)
