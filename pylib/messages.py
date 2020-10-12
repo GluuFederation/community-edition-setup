@@ -97,7 +97,7 @@ class msg:
     cb_bucket_rolese = "Please check user {} has roles {} on bucket(s) {}"
     
     ask_use_gluu_storage_oxd = "oxd includes a built-in h2 database for persistence. Do you want to change it to the Authorization Server's persistence mechanism instead (recommended for high load only)?"
-    ask_use_gluu_storage_oxd_title = "Use Authorization Server's native persistence for oxd?"
+    ask_use_gluu_storage_oxd_title = "Use Authorization Server's persistence for oxd?"
     
     notify_select_backend = "Please select one of the backends either local install or remote" 
     weak_password = "Password for {} must be at least 6 characters and include one uppercase letter, one lowercase letter, one digit, and one special character."
