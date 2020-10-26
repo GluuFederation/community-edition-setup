@@ -1610,7 +1610,7 @@ class Setup(object):
                    n = l.find('=')
                    k = l[:n].strip()
                    v = l[n+1:].strip()
-                   java_security[i] = k + '=' + 'TLSv1.3 ' + v + '\n'
+                   java_security[i] = k + '=' + 'TLSv1.3, ' + v + '\n'
                    break
 
         self.writeFile(java_security_fn, '\n'.join(java_security))
