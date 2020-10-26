@@ -1594,6 +1594,28 @@ class Setup(object):
         else:
             return self.determineApacheVersion("apache2")
 
+
+    def fix_java_security(self):
+        # https://github.com/OpenIdentityPlatform/OpenDJ/issues/78
+        java_security_fn = os.path.join(self.jre_home, 'conf/security/java.security')
+
+        p = Properties()
+        with open(java_security_fn, 'rb') as f:
+            p.load(f, 'utf-8')
+
+        if not 'TLSv1.3' in p['jdk.tls.disabledAlgorithms'].data:
+            java_security = self.readFile(java_security_fn).splitlines()
+            for i, l in enumerate(java_security[:]):
+                if l.strip().startswith('jdk.tls.disabledAlgorithms'):
+                   n = l.find('=')
+                   k = l[:n].strip()
+                   v = l[n+1:].strip()
+                   java_security[i] = k + '=' + 'TLSv1.3 ' + v + '\n'
+                   break
+
+        self.writeFile(java_security_fn, '\n'.join(java_security))
+
+
     def installJRE(self):
 
         jre_arch_list = glob.glob(os.path.join(self.distAppFolder, 'amazon-corretto-*.tar.gz'))
@@ -1640,6 +1662,8 @@ class Setup(object):
         if self.java_type == 'jre':
             for jsfn in Path('/opt/jre').rglob('java.security'):
                 self.run(['sed', '-i', '/^#crypto.policy=unlimited/s/^#//', jsfn._str])
+
+        self.fix_java_security()
 
     def extractOpenDJ(self):        
 
