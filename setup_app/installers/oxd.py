@@ -26,7 +26,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         self.logIt("Installing", pbar=self.service_name)
         self.run(['tar', '-zxf', Config.oxd_package, '--no-same-owner', '--strip-components=1', '-C', self.oxd_root])
         self.run(['chown', '-R', 'jetty:jetty', self.oxd_root])
-        
+
         if base.snap:
             self.log_dir = os.path.join(base.snap_common, 'gluu/oxd-server/log/')
         else:
@@ -40,11 +40,11 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         if not os.path.exists(self.log_dir):
             self.run([paths.cmd_mkdir, self.log_dir])
 
-        self.run([
-                'cp', 
-                os.path.join(Config.install_dir, 'static/oxd/oxd-server.default'), 
-                os.path.join(Config.osDefault, 'oxd-server')
-                ])
+        self.oxtrustInstaller.renderTemplateInOut(
+            os.path.join(Config.install_dir, 'static/oxd/oxd-server.default'),
+            os.path.join(Config.install_dir, 'static/oxd/'),
+            os.path.join(Config.osDefault, 'oxd-server')
+            )
 
         self.log_file = os.path.join(self.log_dir, 'oxd-server.log')
         if not os.path.exists(self.log_file):

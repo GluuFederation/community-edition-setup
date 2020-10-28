@@ -221,7 +221,11 @@ class Config:
         self.redhat_services = ['httpd', 'rsyslog']
         self.debian_services = ['apache2', 'rsyslog']
 
-        self.defaultTrustStoreFN = os.path.join(self.jre_home, 'jre/lib/security/cacerts')
+        if base.snap:
+            self.defaultTrustStoreFN = os.path.join(self.certFolder, 'java-cacerts')
+        else:
+            self.defaultTrustStoreFN = os.path.join(self.jre_home, 'jre/lib/security/cacerts')
+
         self.defaultTrustStorePW = 'changeit'
 
 

@@ -63,7 +63,7 @@
 
     "ldifStore":"/var/gluu/identity/removed",
 
-    "caCertsLocation":"/usr/java/latest/jre/lib/security/cacerts",
+    "caCertsLocation":"%(defaultTrustStoreFN)s",
     "caCertsPassphrase":"",
 
     "certDir":"/etc/certs/",
