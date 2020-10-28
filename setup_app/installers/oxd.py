@@ -40,7 +40,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         if not os.path.exists(self.log_dir):
             self.run([paths.cmd_mkdir, self.log_dir])
 
-        self.oxtrustInstaller.renderTemplateInOut(
+        self.renderTemplateInOut(
             os.path.join(Config.install_dir, 'static/oxd/oxd-server.default'),
             os.path.join(Config.install_dir, 'static/oxd/'),
             os.path.join(Config.osDefault, 'oxd-server')
