@@ -53,8 +53,6 @@ for l in menifest.splitlines():
 
         gluu_version = '.'.join(gluu_version_list)
 
-gluu_version = '4.2.2'
-
 print("Current Gluu Version", gluu_version)
 
 
@@ -593,6 +591,16 @@ def installScim():
     if os.path.exists(os.path.join(setupObj.jetty_base, 'scim')):
         print("Scim Server is already installed on this system")
         return
+
+    scimUnitUrl = 'https://raw.githubusercontent.com/GluuFederation/community-edition-package/master/package/systemd/scim.service'
+    print("Downloading {}".format(os.path.basename(scimUnitUrl)))
+    setupObj.run(['wget', '-nv', scimUnitUrl, '-O', '/etc/systemd/system/scim.service'])
+
+    scimWarUrl = 'https://ox.gluu.org/maven/org/gluu/scim-server/{0}.Final/scim-server-{0}.Final.war'.format(gluu_version)
+
+    print("Downloading {}".format(os.path.basename(scimWarUrl)))
+    setupObj.run(['wget', '-nv', scimWarUrl, '-O', os.path.join(setupObj.distGluuFolder, 'scim.war')])
+
 
     setupObj.installScimServer = True
     setupObj.calculate_selected_aplications_memory()
