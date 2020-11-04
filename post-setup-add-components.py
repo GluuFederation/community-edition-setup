@@ -53,6 +53,8 @@ for l in menifest.splitlines():
 
         gluu_version = '.'.join(gluu_version_list)
 
+gluu_version = '4.2.1'
+
 print("Current Gluu Version", gluu_version)
 
 
