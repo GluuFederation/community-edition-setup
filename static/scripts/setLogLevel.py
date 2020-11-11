@@ -90,7 +90,7 @@ def main():
         del_pw = True
         fn_pw = ".pw"
         pw = getpass("Enter 'cn=directory manager' password: ")
-        write_file(pw, fn_pw)
+        writeFile(pw, fn_pw)
 
     configDN = "ou=%s,ou=configuration,o=gluu" % system
     base = "-b %s" % configDN
