@@ -3,20 +3,22 @@ objectClass: top
 objectClass: ldapSubentry
 objectClass: subschema
 cn: schema
-attributeTypes: ( 1.3.6.1.4.1.48710.1.3.1 NAME 'oxBiometricDevices'
-  DESC 'Stores the unique identifier (bcid) for a user on BioID's biometric service'
+attributeTypes: ( 1.3.6.1.4.1.48720.1.3.1 NAME 'oxBiometricDevices'
+  DESC 'Stores the unique identifier (bcid) for a user on BioIDs biometric service'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   X-ORIGIN 'Gluu created attribute' )
-attributeTypes: ( 1.3.6.1.4.1.48710.1.3.2 NAME 'oxDuoDevices'
-  DESC 'Stores the unique identifier for a user (userid) on DUO's 2fa service'
+attributeTypes: ( 1.3.6.1.4.1.48720.1.3.2 NAME 'oxDuoDevices'
+  DESC 'Stores the unique identifier for a user (userid) on DUOs 2fa service'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   X-ORIGIN 'Gluu created attribute' )
-objectClasses: ( 1.3.6.1.4.1.48710.1.4.1 NAME 'gluuCustomPerson'
+objectClasses: ( 1.3.6.1.4.1.48720.1.4.1 NAME 'gluuCustomPerson'
   SUP ( top )
   AUXILIARY
   MAY ( telephoneNumber $ mobile $ carLicense $ facsimileTelephoneNumber $ departmentNumber $ employeeType $ cn $ st $ manager $ street $ postOfficeBox $ employeeNumber $ preferredDeliveryMethod $ roomNumber $ secretary $ homePostalAddress $ l $ postalCode $ description $ title $ oxBiometricDevices $ oxDuoDevices )
   X-ORIGIN 'Gluu - Custom persom objectclass' )
+
+
