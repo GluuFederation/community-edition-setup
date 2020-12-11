@@ -74,6 +74,7 @@ class msg:
 
 
     ask_installHttpd = "Install Apache HTTPD Server"
+    ask_installOxTrust = "Install oxTrust Admin GUI"
     ask_installSaml = "Install Shibboleth SAML IDP"
     ask_installOxAuthRP  = "Install oxAuth RP"
     ask_installPassport  = "Install Passport"
@@ -110,8 +111,8 @@ class msg:
                    "Hostname: hostname of this server. Detected hostname will be provided.\n"
                    "Organization Name: ......")
 
-    installation_completed = "Gluu Server installation successful! Point your browser to https://{}"
-
+    installation_completed = "Gluu Server installation successful!"
+    installation_completed_oxtrsut =  "Point your browser to https://{}"
     installation_description_java = "Corretto is a build of the Open Java Development Kit (OpenJDK) with long-term support from Amazon. Corretto is certified using the Java Technical Compatibility Kit (TCK) to ensure it meets the Java SE standard."
     installation_description_opendj = "OpenDJ is an LDAPv3 compliant directory service, which has been developed for the Java platform, providing a high performance, highly available, and secure store for the identities managed by your organization."
     installation_description_oxauth = "oxAuth is an open source OpenID Connect Provider (OP) and UMA Authorization Server (AS). The project also includes OpenID Connect Client code which can be used by websites to validate tokens."

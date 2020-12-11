@@ -186,7 +186,7 @@ class MAIN(GluuSetupForm):
 
 class HostForm(GluuSetupForm):
 
-    myfields_ = ('ip', 'hostname', 'city', 'state', 'orgName', 'admin_email', 'countryCode', 'application_max_ram', 'oxtrust_admin_password')
+    myfields_ = ('ip', 'hostname', 'city', 'state', 'orgName', 'admin_email', 'countryCode', 'application_max_ram')
 
     def create(self):
 
@@ -201,8 +201,6 @@ class HostForm(GluuSetupForm):
 
         self.add(npyscreen.FixedText, value=make_title(msg.sys_info_label), rely=12, editable=False)
         self.application_max_ram = self.add(npyscreen.TitleText, name=msg.application_max_ram_label, begin_entry_at=25)
-        self.oxtrust_admin_password = self.add(npyscreen.TitleText, name=msg.oxtrust_admin_password_label, begin_entry_at=25)
-
 
     def nextButtonPressed(self):
 
@@ -224,10 +222,6 @@ class HostForm(GluuSetupForm):
 
         if len(self.countryCode.value) < 2:
             npyscreen.notify_confirm(msg.enter_valid_countryCode, title="Info")
-            return
-
-        if not self.parentApp.installObject.checkPassword(self.oxtrust_admin_password.value):
-            npyscreen.notify_confirm(msg.weak_password.format("oxTrust Admin"), title="Warning")
             return
 
         try:
@@ -263,7 +257,7 @@ class HostForm(GluuSetupForm):
 
 class ServicesForm(GluuSetupForm):
 
-    services = ('installHttpd', 'installSaml', 'installOxAuthRP', 
+    services = ('installHttpd', 'installOxTrust', 'installSaml', 'installOxAuthRP', 
                 'installPassport', 'installGluuRadius', 'installOxd', 
                 'installCasa', 'installScimServer', 'installFido2',
                 )
@@ -272,11 +266,13 @@ class ServicesForm(GluuSetupForm):
         for service in self.services:
             cb = self.add(npyscreen.Checkbox, scroll_exit=True, name = getattr(msg, 'ask_' + service))
             setattr(self, service, cb)
-
-        self.oxd_url = self.add(npyscreen.TitleText, name=msg.oxd_url_label, rely=12, begin_entry_at=17, hidden=True)
+        
+        self.oxtrust_admin_password = self.add(npyscreen.TitleText, name=msg.oxtrust_admin_password_label, rely=13, begin_entry_at=25)
+        self.oxd_url = self.add(npyscreen.TitleText, name=msg.oxd_url_label, rely=14, begin_entry_at=17, hidden=True)
 
         self.installCasa.value_changed_callback = self.casa_oxd_option_changed
         self.installOxd.value_changed_callback = self.casa_oxd_option_changed
+        self.installOxTrust.value_changed_callback = self.install_oxtrust_option_changed
 
     def do_beforeEditing(self):
         for service in self.services:
@@ -284,6 +280,9 @@ class ServicesForm(GluuSetupForm):
                 cb = getattr(self, service)
                 cb.value = True
                 cb.update()
+
+        if not self.parentApp.installObject.installOxTrust:
+            self.oxtrust_admin_password.hidden = True
 
     def nextButtonPressed(self):
 
@@ -300,6 +299,13 @@ class ServicesForm(GluuSetupForm):
             if cb_val and service in service_enable_dict:
                 for attribute in service_enable_dict[service]:
                     setattr(self.parentApp.installObject, attribute, 'true')
+
+        if self.installOxTrust.value:
+            if not self.parentApp.installObject.checkPassword(self.oxtrust_admin_password.value):
+                npyscreen.notify_confirm(msg.weak_password.format("oxTrust Admin"), title="Warning")
+                return
+
+            self.parentApp.installObject.oxtrust_admin_password = self.oxtrust_admin_password.value
 
         if self.installSaml:
             self.parentApp.installObject.shibboleth_version = 'v3'
@@ -369,6 +375,9 @@ class ServicesForm(GluuSetupForm):
 
         self.oxd_url.update()
 
+    def install_oxtrust_option_changed(self, widget):
+        self.oxtrust_admin_password.hidden = not widget.value
+        self.oxtrust_admin_password.update()
 
     def backButtonPressed(self):
         self.parentApp.switchForm('HostForm')
@@ -744,7 +753,12 @@ class InstallStepsForm(GluuSetupForm):
                 if self.parentApp.installObject.post_messages:
                     post_messages_text = '\n'.join(self.parentApp.installObject.post_messages)
                     npyscreen.notify_confirm(post_messages_text, title="Post Install Messages", wide=True)
-                npyscreen.notify_confirm(msg.installation_completed.format(self.parentApp.installObject.hostname), title="Completed")
+                completed_msg = msg.installation_completed
+                if self.parentApp.installObject.installOxTrust:
+                    completed_msg += ' ' + msg.installation_completed_oxtrsut.format(self.parentApp.installObject.hostname)
+                
+                npyscreen.notify_confirm(completed_msg, title="Completed")
+
                 self.parentApp.do_notify = False
                 self.parentApp.switchForm(None)
             elif data[0] == ERROR:
