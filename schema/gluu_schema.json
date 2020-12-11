@@ -2222,32 +2222,6 @@
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
             "x_origin": "Gluu created attribute"
         },
-		{
-	    "desc": "Stores the unique identifier (bcid) for a user on BioID's biometric service",
-
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "oxBiometricDevices"
-            ],
-            "multivalued": true,
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-		{
-	    "desc": "Stores the unique identifier for a user (userid) on DUO's 2fa service",
-
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "oxDuoDevices"
-            ],
-            "multivalued": true,
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
         {
             "desc": "URI for a graphic icon", 
             "equality": "caseIgnoreMatch", 
@@ -4752,9 +4726,7 @@
                 "oxCreationTimestamp", 
                 "oxExternalUid",
 		        "oxOTPCache",	
-				"oxBiometricDevices",
-				"oxDuoDevices",
-                "oxLastLogonTime", 
+				"oxLastLogonTime", 
                 "oxTrustActive", 
                 "oxTrustAddresses", 
                 "oxTrustEmail", 
