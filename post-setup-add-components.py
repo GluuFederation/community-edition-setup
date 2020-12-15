@@ -47,7 +47,7 @@ for l in menifest.splitlines():
 
     if ls[:n].strip() == 'Implementation-Version':
         oxVersion_current = ls[n+1:].strip()
-        gluu_version_list = oxVersion_current.split('.')
+        gluu_version_list = oxVersion_current.split('-')[0].split('.')
         if not gluu_version_list[-1].isdigit():
             gluu_version_list.pop(-1)
 
