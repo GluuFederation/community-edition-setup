@@ -56,6 +56,13 @@
     },
 
     {
+        "attribute": "jansId",
+        "type": "string",
+        "index": ["equality"],
+        "backend": ["userRoot"]
+    },
+
+    {
         "attribute": "oxAuthClientId",
         "type": "string",
         "index": ["equality"],
