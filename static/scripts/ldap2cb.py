@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import os
 import re
@@ -19,7 +19,7 @@ war_zip = zipfile.ZipFile('/opt/gluu/jetty/oxauth/webapps/oxauth.war', 'r')
 menifest = war_zip.read('META-INF/MANIFEST.MF')
 
 for l in menifest.splitlines():
-    ls = l.strip()
+    ls = l.decode().strip()
     n = ls.find(':')
 
     if ls[:n].strip() == 'Implementation-Version':
@@ -34,38 +34,28 @@ for l in menifest.splitlines():
 ces_version = '4.1.0' if gluu_version == '4.0' else gluu_version
 
 if not os.path.exists(setup_properties_fn):
-    print "Upgrade script needs {0}.\nCan't continue without {0}.\nPlease put {0} and\nre-run upgrade script. Exiting for now...".format(setup_properties_fn)
+    print("Upgrade script needs {0}.\nCan't continue without {0}.\nPlease put {0} and\nre-run upgrade script. Exiting for now...".format(setup_properties_fn))
     sys.exit()
-    
+
 
 if os.path.exists('/etc/yum.repos.d/'):
     package_type = 'rpm'
 elif os.path.exists('/etc/apt/sources.list'):
     package_type = 'deb'
-        
+
 
 missing_packages = []
 
 needs_restart = False
 dev_env = True if os.environ.get('update_dev') else False
 
-try:
-    import ldap
-except:
-    missing_packages.append('python-ldap')
-
-try:
-    import requests
-except:
-    missing_packages.append('python-requests')
-
 if missing_packages:
     needs_restart = True
     packages_str = ' '.join(missing_packages)
-    result = raw_input("Missing package(s): {0}. Install now? (Y|n): ".format(packages_str))
+    result = input("Missing package(s): {0}. Install now? (Y|n): ".format(packages_str))
     if result.strip() and result.strip().lower()[0] == 'n':
         sys.exit("Can't continue without installing these packages. Exiting ...")
-            
+
 
     if package_type == 'rpm':
         cmd = 'yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm'
@@ -77,7 +67,7 @@ if missing_packages:
         os.system('apt-get update')
         cmd = "apt-get install -y {0}".format(packages_str)
 
-    print "Installing package(s) with command: "+ cmd
+    print("Installing package(s) with command: "+ cmd)
     os.system(cmd)
 
 
@@ -96,7 +86,7 @@ def get_as_bool(val):
 
     if str(val).lower() in ('true', 'on', 'ok', 'yes'):
         return True
-        
+
     return False
 
 class LDAP2CB:
@@ -127,7 +117,7 @@ class LDAP2CB:
 
         file_list.sort(key=lambda fn_: [ c for c in re.split(r'(\d+)', fn_) ])
 
-        print "Using backed up file", file_list[0]
+        print("Using backed up file", file_list[0])
 
         return file_list[0]
 
@@ -139,23 +129,23 @@ class LDAP2CB:
                 setupObject.run(['mv', f, f+'.back_'+self.backup_time])
 
     def dump_current_db(self):
-        print "Dumping ldap to gluu.ldif"
-        
+        print("Dumping ldap to gluu.ldif")
+
         if os.path.exists(self.current_ldif_fn):
-            print "Previously dumped gluu.ldif file was found."
+            print("Previously dumped gluu.ldif file was found.")
             while True:
                 use_old = setupObject.getPrompt("Use previously dumped gluu.ldif [yes/no]")
                 if not use_old.lower() in ('yes', 'no'):
-                    print "Please type \033[1myes\033[0m or \033[1mno\033[0m"
+                    print("Please type \033[1myes\033[0m or \033[1mno\033[0m")
                 else:
                     break
             if get_as_bool(use_old):
                 return
             else:
                 self.backup_(self.current_ldif_fn)
-        
+
         setupObject.createLdapPw()
-        
+
         setupObject.run(' '.join([
                         '/opt/opendj/bin/ldapsearch',
                         '-X', '-Z', '-D',
@@ -182,7 +172,7 @@ class LDAP2CB:
 
     def fix_saml(self):
         prop_fn = os.path.join(setupObject.idp3Folder, 'conf', setupObject.idp3_configuration_ldap_properties)
-        print prop_fn
+        print(prop_fn)
         idp_ldap_prop = setupObject.readFile(prop_fn)
         idp_ldap_prop_l = idp_ldap_prop.splitlines()
 
@@ -193,26 +183,26 @@ class LDAP2CB:
 
         setupObject.writeFile(prop_fn, 
                         '\n'.join(idp_ldap_prop_l))
-                        
+
         setupObject.saml_couchbase_settings()
 
 
 
 if __name__ == '__main__':
 
-    from setup.pylib.ldif import LDIFParser, LDIFWriter, ParseLDIF
+    from setup.pylib.ldif3.ldif3 import LDIFParser, LDIFWriter
     from setup.pylib.cbm import CBM
     from setup.setup import *
-    from ldap.dn import explode_dn, str2dn, dn2str
-    from setup.pylib.Properties import Properties
+    from setup.pylib.jproperties import Properties
+    from setup.pylib.gluu_utils import attribDataTypes
 
     setup_porperties = Properties()
-    with open(setup_properties_fn) as f:
-        setup_porperties.load(f)
+    with open(setup_properties_fn, 'rb') as f:
+        setup_porperties.load(f, 'utf-8')
 
     migratorObj = LDAP2CB()
 
-    setup_install_dir = os.path.join(cur_dir,'setup')
+    setup_install_dir = cur_dir
     setupObject = Setup(setup_install_dir)
     setupObject.log = os.path.join(setup_install_dir, 'ldap2cb.log')
     setupObject.logError = os.path.join(setup_install_dir, 'ldap2cb_error.log')
@@ -254,19 +244,22 @@ if __name__ == '__main__':
     setupObject.remoteCouchbase=True
     setupObject.persistence_type='couchbase'
 
-    setupObject.renderTemplate(setupObject.data_source_properties)
+    print('setupObject.data_source_properties', setupObject.data_source_properties)
 
-    print "Stopping WrenDS"
+    setupObject.renderTemplate(os.path.join(setupObject.outputFolder, setupObject.data_source_properties))
+
+    print("Stopping WrenDS")
     setupObject.run_service_command('opendj', 'stop')
 
-    print "Disabling WrenDS"
+    print("Disabling WrenDS")
     setupObject.enable_service_at_start('opendj', action='disable')
 
     attribDataTypes.startup(setup_install_dir)
+    setupObject.cb_query_node = 0
     setupObject.prompt_remote_couchbase()
-    
+
     setupObject.mappingLocations = { group: 'couchbase' for group in setupObject.couchbaseBucketDict }
-    
+
     setupObject.cbm = CBM(
                         setupObject.couchbase_hostname.split(',')[0].strip(),
                         setupObject.couchebaseClusterAdmin, 
@@ -275,13 +268,13 @@ if __name__ == '__main__':
 
     setupObject.mappingLocations = { group: 'couchbase' for group in setupObject.couchbaseBucketDict }
 
-    print "Creating buckets and indexes"
+    print("Creating buckets and indexes")
     setupObject.create_couchbase_buckets()
-    
-    print "Importing ldif to Couchbase server"
+
+    print("Importing ldif to Couchbase server")
     setupObject.import_ldif_couchebase([ os.path.join(cur_dir, 'gluu.ldif') ])
-    
-    print "Exporting Couchbase SSL"
+
+    print("Exporting Couchbase SSL")
     setupObject.couchbaseSSL()
 
     setupObject.encode_passwords()
@@ -297,11 +290,11 @@ if __name__ == '__main__':
     if os.path.isdir(setupObject.idp3Folder):
         migratorObj.fix_saml()
 
-    print
+    print()
     if hasattr(setupObject, 'print_post_messages'):
         setupObject.print_post_messages()
 
     setupObject.backupFile(setupObject.ox_ldap_properties)
     setupObject.removeFile(setupObject.ox_ldap_properties)
 
-    print "Please logout from container and restart Gluu Server"
+    print("Please logout from container and restart Gluu Server")
