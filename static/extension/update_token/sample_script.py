@@ -28,7 +28,7 @@ class UpdateToken(UpdateTokenType):
     # Returns boolean, true - indicates that script applied changes
     # This method is called after adding headers and claims. Hence script can override them
     # Note :
-    # jsonWebResponse - is JwtHeader, you can use any method to manipulate JWT
+    # jsonWebResponse - is org.gluu.oxauth.model.token.JsonWebResponse, you can use any method to manipulate JWT
     # context is reference of org.gluu.oxauth.service.external.context.ExternalUpdateTokenContext (in https://github.com/GluuFederation/oxauth project, )
     def modifyIdToken(self, jsonWebResponse, context):
         print "Update token script. Modify idToken: %s" % jsonWebResponse
