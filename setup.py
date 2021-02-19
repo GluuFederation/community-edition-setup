@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+import warnings
+warnings.filterwarnings("ignore")
 
 import readline
 import os
