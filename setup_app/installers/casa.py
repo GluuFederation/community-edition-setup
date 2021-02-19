@@ -143,8 +143,10 @@ class CasaInstaller(JettyInstaller):
             oxd_cert_tmp_fn = '/tmp/{}.crt'.format(oxd_alias)
             self.writeFile(oxd_cert_tmp_fn, oxd_cert)
             
+            ca_cert_file = '/etc/certs/java-cacerts' if base.snap else '/opt/jre/jre/lib/security/cacerts'
+            
             self.run([Config.cmd_keytool, '-import', '-trustcacerts', '-keystore', 
-                            '/opt/jre/jre/lib/security/cacerts', '-storepass', 'changeit', 
+                            ca_cert_file, '-storepass', 'changeit', 
                             '-noprompt', '-alias', oxd_alias, '-file', oxd_cert_tmp_fn])
             
             os.remove(oxd_cert_tmp_fn)
