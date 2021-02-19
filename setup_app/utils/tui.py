@@ -265,8 +265,8 @@ class HostForm(GluuSetupForm):
 
 class ServicesForm(GluuSetupForm):
     services_before_this_form = []
-    if os.environ.get('gluu_services'):
-        services = os.environ['gluu_services'].split()
+    if os.environ.get('GLUU_SERVICES'):
+        services = os.environ['GLUU_SERVICES'].split()
     else:
         services = ('installHttpd', 'installSaml', 'installOxAuthRP', 
                 'installPassport', 'installGluuRadius', 'installOxd', 
@@ -624,8 +624,8 @@ class DisplaySummaryForm(GluuSetupForm):
 
     myfields_2 = [ "installOxAuth", "installOxTrust"]
     
-    if os.environ.get('gluu_services'):
-        myfields_2 += os.environ['gluu_services'].split()
+    if os.environ.get('GLUU_SERVICES'):
+        myfields_2 += os.environ['GLUU_SERVICES'].split()
     else:
         myfields_2 += ["installSaml", "installOxAuthRP",
                        "installPassport", "installGluuRadius", 
