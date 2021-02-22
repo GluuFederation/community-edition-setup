@@ -52,6 +52,7 @@
         "public",
         "pairwise"
     ],
+    "statWebServiceIntervalLimitInSeconds":60,
     "defaultSubjectType": "pairwise",
     "userInfoSigningAlgValuesSupported":[
         "HS256",
@@ -197,8 +198,6 @@
     "requireRequestUriRegistration":false,
     "allowPostLogoutRedirectWithoutValidation":false,
     "introspectionAccessTokenMustHaveUmaProtectionScope":false,
-    "requestUriHashVerificationEnabled": false,
-    "idTokenFilterClaimsBasedOnAccessToken": false,
     "opPolicyUri":"http://ox.gluu.org/doku.php?id=oxauth:policy",
     "opTosUri":"http://ox.gluu.org/doku.php?id=oxauth:tos",
     "authorizationCodeLifetime":60,
@@ -287,7 +286,7 @@
     "endSessionWithAccessToken":false,
     "clientWhiteList": ["*"],
     "clientBlackList": ["*.attacker.com/*"],
-    "legacyIdTokenClaims": false,
+    "legacyIdTokenClaims": %(oxauth_legacyIdTokenClaims)s,
     "customHeadersWithAuthorizationResponse": true,
     "frontChannelLogoutSessionSupported":true,
     "updateUserLastLogonTime": false,
@@ -318,7 +317,8 @@
         "customParam3"
     ],
     "legacyDynamicRegistrationScopeParam": false,
-    "openidScopeBackwardCompatibility": false,
+    "openidScopeBackwardCompatibility": %(oxauth_openidScopeBackwardCompatibility)s,
+    "useCacheForAllImplicitFlowObjects":false,
     "disableU2fEndpoint":false,
     "authenticationProtectionConfiguration": {
         "attemptExpiration": 15,
@@ -343,7 +343,6 @@
     "cibaGrantLifeExtraTimeSec": 180,
     "cibaMaxExpirationTimeAllowedSec": 1800,
     "backchannelLoginHintClaims": ["inum", "uid", "mail"],
-    "cibaEnabled": false,
     "cibaEndUserNotificationConfig": {
         "apiKey": "",
         "authDomain": "",
