@@ -4348,8 +4348,8 @@ class Setup(object):
             total_weigth += self.app_mem_weigths[app]['weigth']
 
         for app in installedComponents:        
-            app_max_heap_mem = round(self.app_mem_weigths[app]['weigth'] * application_max_ram /total_weigth)
-            self.templateRenderingDict['{}_max_mem'.format(app)] = app_max_heap_mem
+            app_max_mem = round(self.app_mem_weigths[app]['weigth'] * application_max_ram /total_weigth)
+            self.templateRenderingDict['{}_max_mem'.format(app)] = app_max_mem
             self.templateRenderingDict['{}_min_mem'.format(app)] = self.app_mem_weigths[app]['min']
 
         if self.wrends_install == LOCAL:
