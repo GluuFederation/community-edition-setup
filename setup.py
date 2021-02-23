@@ -301,46 +301,53 @@ class Setup(object):
         self.jetty_base = '%s/jetty' % self.gluuOptFolder
         self.jetty_user_home = '/home/jetty'
         self.jetty_user_home_lib = '%s/lib' % self.jetty_user_home
+        
+        self.system_ram = 750 #MB
+        self.app_mem_weigths = {
+                'opendj':    {'weigth' : 75, "min" : 128},
+                'oxauth':    {'weigth' : 50, "min" : 128},
+                'identity':  {'weigth' : 75, "min" : 128},
+                'idp':       {'weigth' : 20, "min" : 128},
+                'oxauth-rp': {'weigth' :  5, "min" : 128},
+                'passport':  {'weigth' : 10, "min" : 128},
+                'casa':      {'weigth' : 15, "min" : 128},
+                'fido2':     {'weigth' : 10, "min" : 128},
+                'scim':      {'weigth' : 10, "min" : 128},
+                'oxd':       {'weigth' : 10, "min" : 128},
+            }
+
         self.jetty_app_configuration = OrderedDict((
                 ('oxauth', {'name' : 'oxauth',
                             'jetty' : {'modules' : 'server,deploy,annotations,resources,http,http-forwarded,threadpool,console-capture,jsp,websocket'},
-                            'memory' : {'ratio' : 0.20, "jvm_heap_ration" : 0.7, "max_allowed_mb" : 2048, 'metaspace_mb': 128},
                             'installed' : False
                             }),
                 ('identity', {'name' : 'identity',
                               'jetty' : {'modules' : 'server,deploy,annotations,resources,http,http-forwarded,threadpool,console-capture,jsp,websocket'},
-                              'memory' : {'ratio' : 0.20, "jvm_heap_ration" : 0.7, "max_allowed_mb" : 2048, 'metaspace_mb': 128},
                               'installed' : False
                               }),
                 ('idp', {'name' : 'idp',
                          'jetty' : {'modules' : 'server,deploy,annotations,resources,http,http-forwarded,threadpool,console-capture,jsp'},
-                         'memory' : {'ratio' : 0.20, "jvm_heap_ration" : 0.7, "max_allowed_mb" : 2048, 'metaspace_mb': 128},
                          'installed' : False
                          }),
 
                 ('oxauth-rp', {'name' : 'oxauth-rp',
                                'jetty' : {'modules' : 'server,deploy,annotations,resources,http,http-forwarded,threadpool,console-capture,jsp,websocket'},
-                               'memory' : {'ratio' : 0.08, "jvm_heap_ration" : 0.85, "max_allowed_mb" : 384, 'metaspace_mb': 64},
                                'installed' : False
                                }),
                 ('passport', {'name' : 'passport',
                               'node' : {},
-                              'memory' : {'ratio' : 0.08, "max_allowed_mb" : 1024, 'metaspace_mb': 128},
                               'installed' : False
                                }),
                 ('casa', {'name': 'casa',
                          'jetty': {'modules': 'server,deploy,resources,http,http-forwarded,console-capture,jsp'},
-                         'memory': {'ratio': 0.08, "jvm_heap_ration": 0.7, "max_allowed_mb": 1024, 'metaspace_mb': 128},
                          'installed': False
                          }),
                 ('fido2', {'name' : 'fido2',
                             'jetty' : {'modules' : 'server,deploy,resources,http,http-forwarded,threadpool,console-capture,jsp'},
-                            'memory' : {'ratio' : 0.08, "jvm_heap_ration" : 0.7, "max_allowed_mb" : 512, 'metaspace_mb': 128},
                             'installed' : False
                             }),
                 ('scim', {'name': 'scim',
                          'jetty': {'modules': 'server,deploy,resources,http,http-forwarded,console-capture,jsp'},
-                         'memory': {'ratio': 0.08, "jvm_heap_ration": 0.7, "max_allowed_mb": 1024, 'metaspace_mb': 128},
                          'installed': False
                          }),
             ))
@@ -390,7 +397,7 @@ class Setup(object):
         self.admin_email = None
         self.encoded_ox_ldap_pw = None
         self.encoded_shib_jks_pw = None
-        self.application_max_ram = int(current_mem_size * .83 * 1000) # 83% of physical memory
+        self.application_max_ram = int(current_mem_size) * 1024 - self.system_ram #MB
         self.encode_salt = None
         self.admin_inum = None
 
@@ -3813,8 +3820,6 @@ class Setup(object):
         opendj_java_properties = self.readFile(opendj_java_properties_fn).splitlines()
         java_home_ln = 'default.java-home={}'.format(self.jre_home)
         java_home_ln_w = False
-        xms = os.environ['ce_wrends_xms'] if os.environ.get('ce_wrends_xms') else '1'
-        xmx = os.environ['ce_wrends_xmx'] if os.environ.get('ce_wrends_xmx') else '2'
 
         for i, l in enumerate(opendj_java_properties[:]):
             n = l.find('=')
@@ -3824,7 +3829,7 @@ class Setup(object):
                     opendj_java_properties[i] = java_home_ln
                     java_home_ln_w = True
                 if k == 'start-ds.java-args':
-                    opendj_java_properties[i] = 'start-ds.java-args=-server -Xms{}g -Xmx{}g -XX:+UseCompressedOops'.format(xms, xmx)
+                    opendj_java_properties[i] = 'start-ds.java-args=-server -Xms{}m -Xmx{}m -XX:+UseCompressedOops'.format(os.environ['ce_wrends_xms'], os.environ['ce_wrends_xmx'])
 
         if not java_home_ln_w:
             opendj_java_properties.append(java_home_ln)
@@ -4332,76 +4337,54 @@ class Setup(object):
             self.logIt(traceback.format_exc(), True)
 
 
-    def calculate_aplications_memory(self, application_max_ram, jetty_app_configuration, installedComponents):
-        self.logIt("Calculating memory setting for applications")
-        allowedApplicationsMemory = {}
-        application_max_ram = int(application_max_ram)
-        application_max_ram -= len(installedComponents) * 128
-        retVal = True
-        usedRatio = 0.001
-        for installedComponent in installedComponents:
-            usedRatio += installedComponent['memory']['ratio']
+    def calculate_aplications_memory(self, application_max_ram, installedComponents):
+        #self.logIt("Calculating memory setting for applications")
+        total_weigth = 0
 
-        ratioMultiplier = 1.0 + (1.0 - usedRatio)/usedRatio
+        if self.wrends_install == LOCAL:
+            total_weigth += self.app_mem_weigths['opendj']['weigth']
 
-        for installedComponent in installedComponents:
-            allowedRatio = installedComponent['memory']['ratio'] * ratioMultiplier
-            allowedMemory = int(round(allowedRatio * int(application_max_ram)))
+        for app in installedComponents:
+            total_weigth += self.app_mem_weigths[app]['weigth']
 
-            if allowedMemory > installedComponent['memory']['max_allowed_mb']:
-                allowedMemory = installedComponent['memory']['max_allowed_mb']
+        for app in installedComponents:        
+            app_max_heap_mem = round(self.app_mem_weigths[app]['weigth'] * application_max_ram /total_weigth)
+            self.templateRenderingDict['{}_max_mem'.format(app)] = app_max_heap_mem
+            self.templateRenderingDict['{}_min_mem'.format(app)] = self.app_mem_weigths[app]['min']
 
-            allowedApplicationsMemory[installedComponent['name']] = allowedMemory
+        if self.wrends_install == LOCAL:
+            opendj_mem = round(self.app_mem_weigths['opendj']['weigth'] * application_max_ram /total_weigth)
+            os.environ['ce_wrends_xms'] = str(self.app_mem_weigths['opendj']['min'])
+            os.environ['ce_wrends_xmx'] = str(opendj_mem)
 
-        # Iterate through all components into order to prepare all keys
-        for applicationName, applicationConfiguration in jetty_app_configuration.items():
-            if applicationName in allowedApplicationsMemory:
-                applicationMemory = allowedApplicationsMemory.get(applicationName)
-            else:
-                # We uses this dummy value to render template properly of not installed application
-                applicationMemory = 256
-
-            self.templateRenderingDict["%s_max_mem" % applicationName] = applicationMemory
-
-            if 'jvm_heap_ration' in applicationConfiguration['memory']:
-                jvmHeapRation = applicationConfiguration['memory']['jvm_heap_ration']
-
-                minHeapMem = 256
-                maxHeapMem = int(applicationMemory * jvmHeapRation)
-                if maxHeapMem < minHeapMem:
-                    minHeapMem = maxHeapMem
-
-                self.templateRenderingDict["%s_max_heap_mem" % applicationName] = maxHeapMem
-                self.templateRenderingDict["%s_min_heap_mem" % applicationName] = minHeapMem
-
-                if maxHeapMem < 256 and applicationName in allowedApplicationsMemory:    
-                    retVal = False
-
-        return retVal
+        return True
 
     def calculate_selected_aplications_memory(self):
         installedComponents = []
 
         # Jetty apps
         if self.installOxAuth:
-            installedComponents.append(self.jetty_app_configuration['oxauth'])
+            installedComponents.append('oxauth')
         if self.installOxTrust:
-            installedComponents.append(self.jetty_app_configuration['identity'])
+            installedComponents.append('identity')
         if self.installSaml:
-            installedComponents.append(self.jetty_app_configuration['idp'])
+            installedComponents.append('idp')
         if self.installOxAuthRP:
-            installedComponents.append(self.jetty_app_configuration['oxauth-rp'])
+            installedComponents.append('oxauth-rp')
         if self.installCasa:
-            installedComponents.append(self.jetty_app_configuration['casa'])
+            installedComponents.append('casa')
         if self.installScimServer:
-            installedComponents.append(self.jetty_app_configuration['scim'])
+            installedComponents.append('scim')
         if self.installFido2:
-            installedComponents.append(self.jetty_app_configuration['fido2'])
+            installedComponents.append('fido2')
+        if self.installOxd:
+            installedComponents.append('oxd')
+
         # Node apps
         if self.installPassport:
-            installedComponents.append(self.jetty_app_configuration['passport'])
+            installedComponents.append('passport')
         
-        return self.calculate_aplications_memory(self.application_max_ram, self.jetty_app_configuration, installedComponents)
+        return self.calculate_aplications_memory(self.application_max_ram, installedComponents)
 
     def merge_dicts(self, *dict_args):
         result = {}
@@ -5274,11 +5257,12 @@ class Setup(object):
             self.run([self.cmd_ln, service_file, '/etc/init.d/oxd-server'])
             self.run(['update-rc.d', 'oxd-server', 'defaults'])
 
-        self.run([
-                'cp', 
-                os.path.join(self.install_dir, 'static/oxd/oxd-server.default'), 
-                os.path.join(self.osDefault, 'oxd-server')
-                ])
+        oxd_default_tmp_fn = os.path.join(self.templateFolder, 'oxd/oxd-server.default')
+        oxd_default_tmp = self.readFile(oxd_default_tmp_fn)
+        oxd_default = self.fomatWithDict(oxd_default_tmp, self.merge_dicts(self.__dict__, self.templateRenderingDict))
+        oxd_default_fn = os.path.join(self.osDefault, 'oxd-server')
+        self.writeFile(oxd_default_fn, oxd_default)
+
         log_dir = '/var/log/oxd-server/'
         self.run(['mkdir', '-p', log_dir])
         log_file = os.path.join(log_dir, 'oxd-server.log')
