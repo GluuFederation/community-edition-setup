@@ -5700,7 +5700,7 @@ class Setup(object):
 file_max = int(open("/proc/sys/fs/file-max").read().strip())
 
 current_mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
-current_mem_size = round(current_mem_bytes / (1024.**3), 1) #in GB
+current_mem_size = round(current_mem_bytes / (1024.**3), 2) #in GB
 
 current_number_of_cpu = multiprocessing.cpu_count()
 
