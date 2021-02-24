@@ -397,7 +397,8 @@ class Setup(object):
         self.admin_email = None
         self.encoded_ox_ldap_pw = None
         self.encoded_shib_jks_pw = None
-        self.application_max_ram = int(current_mem_size) * 1024 - self.system_ram #MB
+        self.application_max_ram = round(current_mem_size * 1024) - self.system_ram #MB
+
         self.encode_salt = None
         self.admin_inum = None
 
@@ -1042,7 +1043,7 @@ class Setup(object):
             self.admin_inum = str(uuid.uuid4())
 
         if not self.application_max_ram:
-            self.application_max_ram = int(current_mem_size * .83 * 1000) # 83% of physical memory
+            self.application_max_ram = round(current_mem_size * 1024) - self.system_ram
 
         if (not self.couchbaseShibUserPassword) & self.reCreatePasswords:
             self.couchbaseShibUserPassword = self.getPW()
