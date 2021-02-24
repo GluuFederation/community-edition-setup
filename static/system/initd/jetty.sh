@@ -408,7 +408,7 @@ fi
 #####################################################
 if [ -z "$JETTY_START_TIMEOUT" ]
 then
-  JETTY_START_TIMEOUT=60
+  JETTY_START_TIMEOUT=120
 fi
 
 #####################################################
