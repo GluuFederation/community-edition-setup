@@ -304,7 +304,7 @@ class Setup(object):
         
         self.system_ram = 750 #MB
         self.app_mem_weigths = {
-                'opendj':    {'weigth' : 75, "min" : 128},
+                'opendj':    {'weigth' : 75, "min" : 256},
                 'oxauth':    {'weigth' : 50, "min" : 128},
                 'identity':  {'weigth' : 75, "min" : 128},
                 'idp':       {'weigth' : 20, "min" : 128},
