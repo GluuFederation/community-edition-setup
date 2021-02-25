@@ -302,12 +302,13 @@ class Setup(object):
         self.jetty_user_home = '/home/jetty'
         self.jetty_user_home_lib = '%s/lib' % self.jetty_user_home
         
-        self.system_ram = 750 #MB
+        self.system_ram = 500 #MB
+        self.opendj_ram = 1280 #MB
         self.app_mem_weigths = {
-                'opendj':    {'weigth' : 75, "min" : 256},
+                'opendj':    {'weigth' : 75, "min" : 512},
                 'oxauth':    {'weigth' : 50, "min" : 128},
                 'identity':  {'weigth' : 75, "min" : 128},
-                'idp':       {'weigth' : 20, "min" : 128},
+                'idp':       {'weigth' : 25, "min" : 128},
                 'oxauth-rp': {'weigth' :  5, "min" : 128},
                 'passport':  {'weigth' : 10, "min" : 128},
                 'casa':      {'weigth' : 15, "min" : 128},
@@ -4339,24 +4340,36 @@ class Setup(object):
 
 
     def calculate_aplications_memory(self, application_max_ram, installedComponents):
-        #self.logIt("Calculating memory setting for applications")
-        total_weigth = 0
+        self.logIt("Calculating memory setting for applications")
+        
+        def calulate_total_weigth(withopendj=True):
+            total_weigth = 0
 
+            if self.wrends_install == LOCAL and withopendj:
+                total_weigth += self.app_mem_weigths['opendj']['weigth']
+
+            for app in installedComponents:
+                total_weigth += self.app_mem_weigths[app]['weigth']
+
+            return total_weigth
+
+        total_weigth = calulate_total_weigth()
+        
         if self.wrends_install == LOCAL:
-            total_weigth += self.app_mem_weigths['opendj']['weigth']
+            opendj_max_ram = round(self.app_mem_weigths['opendj']['weigth'] * application_max_ram /total_weigth)
+            
+            if opendj_max_ram < self.opendj_ram:
+                total_weigth = calulate_total_weigth(withopendj=False)
+                opendj_max_ram = self.opendj_ram
+                application_max_ram -= self.opendj_ram
 
-        for app in installedComponents:
-            total_weigth += self.app_mem_weigths[app]['weigth']
+            os.environ['ce_wrends_xms'] = str(self.app_mem_weigths['opendj']['min'])
+            os.environ['ce_wrends_xmx'] = str(opendj_max_ram)
 
         for app in installedComponents:        
             app_max_mem = round(self.app_mem_weigths[app]['weigth'] * application_max_ram /total_weigth)
             self.templateRenderingDict['{}_max_mem'.format(app)] = app_max_mem
             self.templateRenderingDict['{}_min_mem'.format(app)] = self.app_mem_weigths[app]['min']
-
-        if self.wrends_install == LOCAL:
-            opendj_mem = round(self.app_mem_weigths['opendj']['weigth'] * application_max_ram /total_weigth)
-            os.environ['ce_wrends_xms'] = str(self.app_mem_weigths['opendj']['min'])
-            os.environ['ce_wrends_xmx'] = str(opendj_mem)
 
         return True
 
@@ -5221,6 +5234,19 @@ class Setup(object):
         sys.exit()
 
     def fix_systemd_script(self):
+
+        systemd_conf_fn = '/etc/systemd/system.conf'
+        systemd_conf = []
+
+        for l in open(systemd_conf_fn):
+            tl = l.strip('#')
+            if tl.startswith('DefaultTimeoutStartSec'):
+                systemd_conf.append('DefaultTimeoutStartSec=300s\n')
+            else:
+                systemd_conf.append(l)
+
+        self.writeFile(systemd_conf_fn, ''.join(systemd_conf))
+
         oxauth_systemd_script_fn = '/lib/systemd/system/oxauth.service'
         if os.path.exists(oxauth_systemd_script_fn):
             oxauth_systemd_script = open(oxauth_systemd_script_fn).read()
