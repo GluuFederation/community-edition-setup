@@ -302,8 +302,14 @@ class Setup(object):
         self.jetty_user_home = '/home/jetty'
         self.jetty_user_home_lib = '%s/lib' % self.jetty_user_home
         
-        self.system_ram = 500 #MB
-        self.opendj_ram = 1280 #MB
+        if current_mem_size < 4000:
+            self.system_ram =  500 #MB
+            self.opendj_ram = 1280 #MB
+        else current_mem_size < 6000:
+            self.system_ram =  750 #MB
+            self.opendj_ram = 1500 #MB
+
+
         self.app_mem_weigths = {
                 'opendj':    {'weigth' : 75, "min" : 512},
                 'oxauth':    {'weigth' : 50, "min" : 128},
@@ -4341,6 +4347,8 @@ class Setup(object):
 
     def calculate_aplications_memory(self, application_max_ram, installedComponents):
         self.logIt("Calculating memory setting for applications")
+        
+        
         
         def calulate_total_weigth(withopendj=True):
             total_weigth = 0
