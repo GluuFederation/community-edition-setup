@@ -305,7 +305,7 @@ class Setup(object):
         if current_mem_size < 4000:
             self.system_ram =  500 #MB
             self.opendj_ram = 1280 #MB
-        else current_mem_size < 6000:
+        else:
             self.system_ram =  750 #MB
             self.opendj_ram = 1500 #MB
 
