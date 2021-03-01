@@ -4347,9 +4347,9 @@ class Setup(object):
 
     def calculate_aplications_memory(self, application_max_ram, installedComponents):
         self.logIt("Calculating memory setting for applications")
-        
-        
-        
+
+        application_max_ram = float(application_max_ram)
+
         def calulate_total_weigth(withopendj=True):
             total_weigth = 0
 
