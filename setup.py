@@ -5241,8 +5241,8 @@ class Setup(object):
         print("Test data loaded. Exiting ...")
         sys.exit()
 
-    def fix_systemd_script(self):
 
+    def set_systemd_timeout(t=300):
         systemd_conf_fn = '/etc/systemd/system.conf'
         systemd_conf = []
 
@@ -5254,6 +5254,11 @@ class Setup(object):
                 systemd_conf.append(l)
 
         self.writeFile(systemd_conf_fn, ''.join(systemd_conf))
+
+
+    def fix_systemd_script(self):
+
+        self.set_systemd_timeout()
 
         oxauth_systemd_script_fn = '/lib/systemd/system/oxauth.service'
         if os.path.exists(oxauth_systemd_script_fn):
