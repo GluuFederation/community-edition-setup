@@ -5242,7 +5242,7 @@ class Setup(object):
         sys.exit()
 
 
-    def set_systemd_timeout(t=300):
+    def set_systemd_timeout(self, t=300):
         systemd_conf_fn = '/etc/systemd/system.conf'
         systemd_conf = []
 
