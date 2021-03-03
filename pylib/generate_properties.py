@@ -612,6 +612,10 @@ def generate_properties(as_dict=False):
     if os.path.exists('/opt/gluu/jetty/scim/start.ini'):
         setup_prop['installScimServer'] = True
 
+    if os.path.exists('/opt/gluu/fido2/scim/start.ini'):
+        setup_prop['installFido2'] = True
+
+
     return setup_prop
 
 if __name__ == '__main__':
