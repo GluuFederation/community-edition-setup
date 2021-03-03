@@ -612,8 +612,11 @@ def generate_properties(as_dict=False):
     if os.path.exists('/opt/gluu/jetty/scim/start.ini'):
         setup_prop['installScimServer'] = True
 
-    if os.path.exists('/opt/gluu/fido2/scim/start.ini'):
+    if os.path.exists('/opt/gluu/jetty/fido2/start.ini'):
         setup_prop['installFido2'] = True
+
+    if os.path.exists('/opt/oxd-server/conf/oxd-server.yml'):
+        setup_prop['installOxd'] = True
 
 
     return setup_prop
