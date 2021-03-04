@@ -467,6 +467,8 @@ def installOxd():
     
     print("Installing Oxd Server")
 
+    setupObj.installOxd = True
+    setupObj.calculate_selected_aplications_memory()
     oxd_url = 'https://ox.gluu.org/maven/org/gluu/oxd-server/{0}/oxd-server-{0}-distribution.zip'.format(oxVersion_current)
 
     print("Downloading {} and preparing package".format(os.path.basename(oxd_url)))
