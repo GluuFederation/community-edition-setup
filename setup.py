@@ -4350,6 +4350,12 @@ class Setup(object):
 
         application_max_ram = float(application_max_ram)
 
+        #prepare default mem needed for proper rendering
+        for app in self.app_mem_weigths:
+            self.templateRenderingDict['{}_max_mem'.format(app)] = self.app_mem_weigths[app]['min']
+            self.templateRenderingDict['{}_min_mem'.format(app)] = self.app_mem_weigths[app]['min']
+
+
         def calulate_total_weigth(withopendj=True):
             total_weigth = 0
 
