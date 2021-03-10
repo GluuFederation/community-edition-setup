@@ -25,6 +25,11 @@ try:
 except:
     missing_packages.append('python3-ldap3')
 
+try:
+    import six
+except:
+    missing_packages.append('python3-six')
+
 if not shutil.which('unzip'):
     missing_packages.append('unzip')
 
