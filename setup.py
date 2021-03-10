@@ -301,46 +301,60 @@ class Setup(object):
         self.jetty_base = '%s/jetty' % self.gluuOptFolder
         self.jetty_user_home = '/home/jetty'
         self.jetty_user_home_lib = '%s/lib' % self.jetty_user_home
+
+        if current_mem_size < 4000:
+            self.system_ram =  500 #MB
+            self.opendj_ram = 1280 #MB
+        else:
+            self.system_ram =  750 #MB
+            self.opendj_ram = 1500 #MB
+
+
+        self.app_mem_weigths = {
+                'opendj':    {'weigth' : 75, "min" : 512},
+                'oxauth':    {'weigth' : 50, "min" : 128},
+                'identity':  {'weigth' : 75, "min" : 128},
+                'idp':       {'weigth' : 25, "min" : 128},
+                'oxauth-rp': {'weigth' :  5, "min" : 128},
+                'passport':  {'weigth' : 10, "min" : 128},
+                'casa':      {'weigth' : 15, "min" : 128},
+                'fido2':     {'weigth' : 10, "min" : 128},
+                'scim':      {'weigth' : 10, "min" : 128},
+                'oxd':       {'weigth' : 10, "min" : 128},
+            }
+
         self.jetty_app_configuration = OrderedDict((
                 ('oxauth', {'name' : 'oxauth',
                             'jetty' : {'modules' : 'server,deploy,annotations,resources,http,http-forwarded,threadpool,console-capture,jsp,websocket'},
-                            'memory' : {'ratio' : 0.20, "jvm_heap_ration" : 0.7, "max_allowed_mb" : 2048, 'metaspace_mb': 128},
                             'installed' : False
                             }),
                 ('identity', {'name' : 'identity',
                               'jetty' : {'modules' : 'server,deploy,annotations,resources,http,http-forwarded,threadpool,console-capture,jsp,websocket'},
-                              'memory' : {'ratio' : 0.20, "jvm_heap_ration" : 0.7, "max_allowed_mb" : 2048, 'metaspace_mb': 128},
                               'installed' : False
                               }),
                 ('idp', {'name' : 'idp',
                          'jetty' : {'modules' : 'server,deploy,annotations,resources,http,http-forwarded,threadpool,console-capture,jsp'},
-                         'memory' : {'ratio' : 0.20, "jvm_heap_ration" : 0.7, "max_allowed_mb" : 2048, 'metaspace_mb': 128},
                          'installed' : False
                          }),
 
                 ('oxauth-rp', {'name' : 'oxauth-rp',
                                'jetty' : {'modules' : 'server,deploy,annotations,resources,http,http-forwarded,threadpool,console-capture,jsp,websocket'},
-                               'memory' : {'ratio' : 0.08, "jvm_heap_ration" : 0.85, "max_allowed_mb" : 384, 'metaspace_mb': 64},
                                'installed' : False
                                }),
                 ('passport', {'name' : 'passport',
                               'node' : {},
-                              'memory' : {'ratio' : 0.08, "max_allowed_mb" : 1024, 'metaspace_mb': 128},
                               'installed' : False
                                }),
                 ('casa', {'name': 'casa',
                          'jetty': {'modules': 'server,deploy,resources,http,http-forwarded,console-capture,jsp'},
-                         'memory': {'ratio': 0.08, "jvm_heap_ration": 0.7, "max_allowed_mb": 1024, 'metaspace_mb': 128},
                          'installed': False
                          }),
                 ('fido2', {'name' : 'fido2',
                             'jetty' : {'modules' : 'server,deploy,resources,http,http-forwarded,threadpool,console-capture,jsp'},
-                            'memory' : {'ratio' : 0.08, "jvm_heap_ration" : 0.7, "max_allowed_mb" : 512, 'metaspace_mb': 128},
                             'installed' : False
                             }),
                 ('scim', {'name': 'scim',
                          'jetty': {'modules': 'server,deploy,resources,http,http-forwarded,console-capture,jsp'},
-                         'memory': {'ratio': 0.08, "jvm_heap_ration": 0.7, "max_allowed_mb": 1024, 'metaspace_mb': 128},
                          'installed': False
                          }),
             ))
@@ -390,7 +404,7 @@ class Setup(object):
         self.admin_email = None
         self.encoded_ox_ldap_pw = None
         self.encoded_shib_jks_pw = None
-        self.application_max_ram = int(current_mem_size * .83 * 1000) # 83% of physical memory
+        self.application_max_ram = round(current_mem_size * 1024) - self.system_ram #MB
         self.encode_salt = None
         self.admin_inum = None
 
@@ -1035,7 +1049,7 @@ class Setup(object):
             self.admin_inum = str(uuid.uuid4())
 
         if not self.application_max_ram:
-            self.application_max_ram = int(current_mem_size * .83 * 1000) # 83% of physical memory
+            self.application_max_ram = round(current_mem_size * 1024) - self.system_ram
 
         if (not self.couchbaseShibUserPassword) & self.reCreatePasswords:
             self.couchbaseShibUserPassword = self.getPW()
@@ -1056,23 +1070,7 @@ class Setup(object):
 
     def enable_service_at_start(self, serviceName, startSequence=None, stopSequence=None, action='enable'):
         # Enable service autoload on Gluu-Server startup
-        if self.os_type in ['centos', 'fedora', 'red']:
-            if self.os_initdaemon == 'systemd':
-                self.run([self.systemctl, action, serviceName])
-            else:
-                self.run(["/sbin/chkconfig", serviceName, "on" if action=='enable' else 'off'])
-                
-        elif self.os_type+self.os_version in ('ubuntu20', 'ubuntu18','debian9','debian10'):
-            self.run([self.systemctl, action, serviceName])
-                
-        elif self.os_type in ['ubuntu', 'debian']:
-            cmd_list = ["/usr/sbin/update-rc.d", serviceName, 'defaults']
-            
-            if startSequence and stopSequence:
-                cmd_list.append(str(startSequence))
-                cmd_list.append(str(stopSequence))
-
-            self.run(cmd_list)
+        self.run([self.systemctl, action, serviceName])
 
 
     # = File system  =================================================================
@@ -3824,7 +3822,7 @@ class Setup(object):
                     opendj_java_properties[i] = java_home_ln
                     java_home_ln_w = True
                 if k == 'start-ds.java-args':
-                    opendj_java_properties[i] = 'start-ds.java-args=-server -Xms{}g -Xmx{}g -XX:+UseCompressedOops'.format(xms, xmx)
+                    opendj_java_properties[i] = 'start-ds.java-args=-server -Xms{}m -Xmx{}m -XX:+UseCompressedOops'.format(os.environ['ce_wrends_xms'], os.environ['ce_wrends_xmx'])
 
         if not java_home_ln_w:
             opendj_java_properties.append(java_home_ln)
@@ -4093,9 +4091,6 @@ class Setup(object):
                     )
             self.insertLinesInFile("/etc/init.d/opendj", 1, lsb_str)
 
-            if self.os_type in ['ubuntu', 'debian']:
-                self.run(["/usr/sbin/update-rc.d", "-f", "opendj", "remove"])
-
             self.fix_init_scripts('opendj', init_script_fn)
             self.enable_service_at_start('opendj')
 
@@ -4119,10 +4114,6 @@ class Setup(object):
         elif self.os_type in ['red']:
             for service in self.redhat_services:
                 self.run(["/sbin/chkconfig", service, "on"])
-        elif self.os_type in ['ubuntu', 'debian']:
-            for service in self.debian_services:
-                self.run(["/usr/sbin/update-rc.d", service, 'defaults'])
-                self.run(["/usr/sbin/update-rc.d", service, 'enable'])
 
     def detect_service_path(self):
         service_path = '/sbin/service'
@@ -4332,76 +4323,74 @@ class Setup(object):
             self.logIt(traceback.format_exc(), True)
 
 
-    def calculate_aplications_memory(self, application_max_ram, jetty_app_configuration, installedComponents):
+    def calculate_aplications_memory(self, application_max_ram, installedComponents):
         self.logIt("Calculating memory setting for applications")
-        allowedApplicationsMemory = {}
-        application_max_ram = int(application_max_ram)
-        application_max_ram -= len(installedComponents) * 128
-        retVal = True
-        usedRatio = 0.001
-        for installedComponent in installedComponents:
-            usedRatio += installedComponent['memory']['ratio']
 
-        ratioMultiplier = 1.0 + (1.0 - usedRatio)/usedRatio
+        application_max_ram = float(application_max_ram)
 
-        for installedComponent in installedComponents:
-            allowedRatio = installedComponent['memory']['ratio'] * ratioMultiplier
-            allowedMemory = int(round(allowedRatio * int(application_max_ram)))
+        #prepare default mem needed for proper rendering
+        for app in self.app_mem_weigths:
+            self.templateRenderingDict['{}_max_mem'.format(app)] = self.app_mem_weigths[app]['min']
+            self.templateRenderingDict['{}_min_mem'.format(app)] = self.app_mem_weigths[app]['min']
 
-            if allowedMemory > installedComponent['memory']['max_allowed_mb']:
-                allowedMemory = installedComponent['memory']['max_allowed_mb']
 
-            allowedApplicationsMemory[installedComponent['name']] = allowedMemory
+        def calulate_total_weigth(withopendj=True):
+            total_weigth = 0
 
-        # Iterate through all components into order to prepare all keys
-        for applicationName, applicationConfiguration in jetty_app_configuration.items():
-            if applicationName in allowedApplicationsMemory:
-                applicationMemory = allowedApplicationsMemory.get(applicationName)
-            else:
-                # We uses this dummy value to render template properly of not installed application
-                applicationMemory = 256
+            if self.wrends_install == LOCAL and withopendj:
+                total_weigth += self.app_mem_weigths['opendj']['weigth']
 
-            self.templateRenderingDict["%s_max_mem" % applicationName] = applicationMemory
+            for app in installedComponents:
+                total_weigth += self.app_mem_weigths[app]['weigth']
 
-            if 'jvm_heap_ration' in applicationConfiguration['memory']:
-                jvmHeapRation = applicationConfiguration['memory']['jvm_heap_ration']
+            return total_weigth
 
-                minHeapMem = 256
-                maxHeapMem = int(applicationMemory * jvmHeapRation)
-                if maxHeapMem < minHeapMem:
-                    minHeapMem = maxHeapMem
+        total_weigth = calulate_total_weigth()
+        
+        if self.wrends_install == LOCAL:
+            opendj_max_ram = round(self.app_mem_weigths['opendj']['weigth'] * application_max_ram /total_weigth)
+            
+            if opendj_max_ram < self.opendj_ram:
+                total_weigth = calulate_total_weigth(withopendj=False)
+                opendj_max_ram = self.opendj_ram
+                application_max_ram -= self.opendj_ram
 
-                self.templateRenderingDict["%s_max_heap_mem" % applicationName] = maxHeapMem
-                self.templateRenderingDict["%s_min_heap_mem" % applicationName] = minHeapMem
+            os.environ['ce_wrends_xms'] = str(self.app_mem_weigths['opendj']['min'])
+            os.environ['ce_wrends_xmx'] = str(opendj_max_ram)
 
-                if maxHeapMem < 256 and applicationName in allowedApplicationsMemory:    
-                    retVal = False
+        for app in installedComponents:        
+            app_max_mem = round(self.app_mem_weigths[app]['weigth'] * application_max_ram /total_weigth)
+            self.templateRenderingDict['{}_max_mem'.format(app)] = app_max_mem
+            self.templateRenderingDict['{}_min_mem'.format(app)] = self.app_mem_weigths[app]['min']
 
-        return retVal
+        return True
 
     def calculate_selected_aplications_memory(self):
         installedComponents = []
 
         # Jetty apps
         if self.installOxAuth:
-            installedComponents.append(self.jetty_app_configuration['oxauth'])
+            installedComponents.append('oxauth')
         if self.installOxTrust:
-            installedComponents.append(self.jetty_app_configuration['identity'])
+            installedComponents.append('identity')
         if self.installSaml:
-            installedComponents.append(self.jetty_app_configuration['idp'])
+            installedComponents.append('idp')
         if self.installOxAuthRP:
-            installedComponents.append(self.jetty_app_configuration['oxauth-rp'])
+            installedComponents.append('oxauth-rp')
         if self.installCasa:
-            installedComponents.append(self.jetty_app_configuration['casa'])
+            installedComponents.append('casa')
         if self.installScimServer:
-            installedComponents.append(self.jetty_app_configuration['scim'])
+            installedComponents.append('scim')
         if self.installFido2:
-            installedComponents.append(self.jetty_app_configuration['fido2'])
+            installedComponents.append('fido2')
+        if self.installOxd:
+            installedComponents.append('oxd')
+
         # Node apps
         if self.installPassport:
-            installedComponents.append(self.jetty_app_configuration['passport'])
-        
-        return self.calculate_aplications_memory(self.application_max_ram, self.jetty_app_configuration, installedComponents)
+            installedComponents.append('passport')
+
+        return self.calculate_aplications_memory(self.application_max_ram, installedComponents)
 
     def merge_dicts(self, *dict_args):
         result = {}
@@ -4542,14 +4531,6 @@ class Setup(object):
         installOutput = self.installPackage(packageName)
         self.post_messages.append(installOutput)
 
-        if self.os_type == 'ubuntu' and self.os_version == '16':
-            script_name = os.path.basename(self.couchbaseInitScript)
-            target_file = os.path.join('/etc/init.d', script_name)
-            self.copyFile(self.couchbaseInitScript, target_file)
-            self.run([self.cmd_chmod, '+x', target_file])
-            self.run(["/usr/sbin/update-rc.d", script_name, 'defaults'])
-            self.run(["/usr/sbin/update-rc.d", script_name, 'enable'])
-            self.run_service_command('couchbase-server', 'start')
 
     def couchebaseCreateCluster(self):
         
@@ -5236,7 +5217,25 @@ class Setup(object):
         print("Test data loaded. Exiting ...")
         sys.exit()
 
+
+    def set_systemd_timeout(self, t=300):
+        systemd_conf_fn = '/etc/systemd/system.conf'
+        systemd_conf = []
+
+        for l in open(systemd_conf_fn):
+            tl = l.strip('#')
+            if tl.startswith('DefaultTimeoutStartSec'):
+                systemd_conf.append('DefaultTimeoutStartSec=300s\n')
+            else:
+                systemd_conf.append(l)
+
+        self.writeFile(systemd_conf_fn, ''.join(systemd_conf))
+
+
     def fix_systemd_script(self):
+
+        self.set_systemd_timeout()
+
         oxauth_systemd_script_fn = '/lib/systemd/system/oxauth.service'
         if os.path.exists(oxauth_systemd_script_fn):
             oxauth_systemd_script = open(oxauth_systemd_script_fn).read()
@@ -5270,9 +5269,6 @@ class Setup(object):
         service_file = os.path.join(oxd_root, 'oxd-server.service')
         if os.path.exists(service_file):
             self.run(['cp', service_file, '/lib/systemd/system'])
-        else:
-            self.run([self.cmd_ln, service_file, '/etc/init.d/oxd-server'])
-            self.run(['update-rc.d', 'oxd-server', 'defaults'])
 
         self.run([
                 'cp', 
@@ -5552,12 +5548,9 @@ class Setup(object):
         
         self.copyFile(os.path.join(source_dir, 'etc/init.d/gluu-radius'), '/etc/init.d')
         self.run([self.cmd_chmod, '+x', '/etc/init.d/gluu-radius'])
-        
-        if self.os_type+self.os_version == 'ubuntu16':
-            self.run(['update-rc.d', 'gluu-radius', 'defaults'])
-        else:
-            self.copyFile(os.path.join(source_dir, 'systemd/gluu-radius.service'), '/etc/systemd/system')
-            self.run([self.systemctl, 'daemon-reload'])
+
+        self.copyFile(os.path.join(source_dir, 'systemd/gluu-radius.service'), '/etc/systemd/system')
+        self.run([self.systemctl, 'daemon-reload'])
         
         #create empty gluu-radius.private-key.pem
         gluu_radius_private_key_fn = os.path.join(self.certFolder, 'gluu-radius.private-key.pem')
@@ -5715,7 +5708,7 @@ class Setup(object):
 file_max = int(open("/proc/sys/fs/file-max").read().strip())
 
 current_mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
-current_mem_size = round(current_mem_bytes / (1024.**3), 1) #in GB
+current_mem_size = round(current_mem_bytes / (1024.**3), 2) #in GB
 
 current_number_of_cpu = multiprocessing.cpu_count()
 
