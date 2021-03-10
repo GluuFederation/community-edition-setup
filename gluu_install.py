@@ -8,8 +8,6 @@ import shutil
 import site
 import argparse
 
-
-
 from urllib.request import urlretrieve
 
 cur_dir = os.path.dirname(os.path.realpath(__file__))
@@ -18,6 +16,42 @@ app_dir = '/opt/dist/app'
 ces_dir = '/install/community-edition-setup'
 scripts_dir = '/opt/dist/scripts'
 certs_dir = '/etc/crts'
+
+
+missing_packages = []
+
+try:
+    import ldap3
+except:
+    missing_packages.append('python3-ldap3')
+
+if not shutil.which('unzip'):
+    missing_packages.append('unzip')
+
+if not shutil.which('tar'):
+    missing_packages.append('tar')
+
+rpm_clone = shutil.which('rpm')
+
+if missing_packages:
+    packages_str = ' '.join(missing_packages)
+    result = input("Missing package(s): {0}. Install now? (Y|n): ".format(packages_str))
+    if result.strip() and result.strip().lower()[0] == 'n':
+        sys.exit("Can't continue without installing these packages. Exiting ...")
+
+    if rpm_clone:
+        cmd = 'yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm'
+        os.system(cmd)
+        cmd = 'yum clean all'
+        os.system(cmd)
+        cmd = "yum install -y {0}".format(packages_str)
+    else:
+        os.system('apt-get update')
+        cmd = "apt-get install -y {0}".format(packages_str)
+
+    print ("Installing package(s) with command: "+ cmd)
+    os.system(cmd)
+
 
 if not os.path.exists(scripts_dir):
     os.makedirs(scripts_dir)
