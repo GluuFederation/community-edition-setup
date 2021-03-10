@@ -6080,6 +6080,7 @@ if __name__ == '__main__':
         msg.installation_step_number = 33
         
         msg.os_type = installObject.os_type
+        msg.oxVersion = installObject.oxVersion
         msg.os_version = installObject.os_version
         msg.os_initdaemon = installObject.os_initdaemon
         msg.apache_version = installObject.apache_version

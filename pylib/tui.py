@@ -31,6 +31,7 @@ REMOTE = '2'
 COMPLETED = -99
 ERROR = -101
 
+
 random_marketing_strings = [
     'Having trouble? Open a ticket: https://support.gluu.org',
     'Cluster your Gluu Server: https://gluu.org/docs/cm',
@@ -63,6 +64,7 @@ class GluuSetupApp(npyscreen.StandardApp):
     exit_reason = str()
     my_counter = 0
     do_notify = True
+    
 
     def onStart(self):
         self.addForm("MAIN", MAIN, name=msg.MAIN_label)
@@ -98,6 +100,8 @@ class GluuSetupForm(npyscreen.FormBaseNew):
                 self.button_back = self.add(npyscreen.ButtonPress, name="Back", when_pressed_function=self.backButtonPressed, rely=self.lines-5, relx=self.columns - 20)
 
         self.button_quit = self.add(npyscreen.ButtonPress, name="Quit", when_pressed_function=self.quitButtonPressed, rely=self.lines-5, relx=self.columns - 12)
+
+        self.add(npyscreen.FixedText, value='GLUU CE ' + msg.oxVersion, rely=self.lines-5, relx=2, editable=False, color='STANDOUT')
 
         if hasattr(self, 'do_beforeEditing'):
             self.do_beforeEditing()
