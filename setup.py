@@ -4411,8 +4411,6 @@ class Setup(object):
         # Node apps
         if self.installPassport:
             installedComponents.append('passport')
-        
-        return self.calculate_aplications_memory(self.application_max_ram, installedComponents)
 
     def merge_dicts(self, *dict_args):
         result = {}
