@@ -6048,7 +6048,7 @@ if __name__ == '__main__':
         msg = tui.msg
         msg.storages = list(installObject.couchbaseBucketDict.keys())
         msg.installation_step_number = 33
-        
+        msg.oxVersion = installObject.oxVersion
         msg.os_type = installObject.os_type
         msg.os_version = installObject.os_version
         msg.os_initdaemon = installObject.os_initdaemon
