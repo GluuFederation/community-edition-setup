@@ -14,6 +14,7 @@ import threading
 import math
 from queue import Queue
 from .messages import msg
+from pylib.printVersion import get_war_info
 
 # for putty connections we need the following env
 os.environ['NCURSES_NO_UTF8_ACS'] = "1" 
@@ -98,7 +99,7 @@ class GluuSetupForm(npyscreen.FormBaseNew):
                 self.button_back = self.add(npyscreen.ButtonPress, name="Back", when_pressed_function=self.backButtonPressed, rely=self.lines-5, relx=self.columns - 20)
 
         self.button_quit = self.add(npyscreen.ButtonPress, name="Quit", when_pressed_function=self.quitButtonPressed, rely=self.lines-5, relx=self.columns - 12)
-        self.add(npyscreen.FixedText, value='GLUU CE ' + msg.oxVersion, rely=self.lines-5, relx=2, editable=False, color='STANDOUT')
+        self.add(npyscreen.FixedText, value='CE {} {}'.format(msg.oxVersion, msg.oxauthBuildDate) , rely=self.lines-5, relx=2, editable=False, color='STANDOUT')
         if hasattr(self, 'do_beforeEditing'):
             self.do_beforeEditing()
 
@@ -131,9 +132,8 @@ class GluuSetupForm(npyscreen.FormBaseNew):
 class MAIN(GluuSetupForm):
 
     def create(self):
-
         desc_wrap = textwrap.wrap(msg.decription, self.columns - 6)
-
+        self.add_handlers({curses.KEY_F2: self.display_versions})
         self.description_label = self.add(npyscreen.MultiLineEdit, value='\n'.join(desc_wrap), max_height=6, rely=2, editable=False)
         self.description_label.autowrap = True
 
@@ -183,6 +183,19 @@ class MAIN(GluuSetupForm):
 
         self.button_next.rely =  self.lines-5
         self.button_next.relx = self.columns-20
+
+
+    def display_versions(self, code_of_key_pressed):
+
+        help_texts = []
+        
+        for war_file in ('oxauth.war', 'identity.war', 'idp.war', 'scim.war', 'fido2.war', 'casa.war'):
+            war_info = get_war_info(os.path.join(self.parentApp.installObject.distGluuFolder, war_file))
+            fn, fe = os.path.splitext(war_file)
+            s = '{}: {} {} {}'.format(fn.ljust(9), war_info['version'], war_info['buildDate'], war_info['build'])
+            help_texts.append(s)
+        help_text = 'versions'
+        npyscreen.notify_confirm('\n'.join(help_texts), title="Version Info", wide=True)
 
 class HostForm(GluuSetupForm):
 

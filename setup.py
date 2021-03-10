@@ -171,11 +171,10 @@ class Setup(object):
         self.distGluuFolder = '%s/gluu' % self.distFolder
         self.distTmpFolder = '%s/tmp' % self.distFolder
         
-        oxauth_info = get_war_info(os.path.join(self.distGluuFolder, 'oxauth.war'))
-
-        self.oxVersion = oxauth_info['version']
-        self.currentGluuVersion = re.search('([\d.]+)', oxauth_info['version']).group().strip('.')
-        self.githubBranchName = oxauth_info['branch']
+        self.oxauth_info = get_war_info(os.path.join(self.distGluuFolder, 'oxauth.war'))
+        self.oxVersion = self.oxauth_info['version']
+        self.currentGluuVersion = re.search('([\d.]+)', self.oxauth_info['version']).group().strip('.')
+        self.githubBranchName = self.oxauth_info['branch']
 
         # Used only if -w (get wars) options is given to setup.py
         self.oxauth_war = 'https://ox.gluu.org/maven/org/gluu/oxauth-server/%s/oxauth-server-%s.war' % (self.oxVersion, self.oxVersion)
@@ -6042,6 +6041,7 @@ if __name__ == '__main__':
         msg.storages = list(installObject.couchbaseBucketDict.keys())
         msg.installation_step_number = 33
         msg.oxVersion = installObject.oxVersion
+        msg.oxauthBuildDate = installObject.oxauth_info['buildDate'][4:].replace('UTC ', '')
         msg.os_type = installObject.os_type
         msg.os_version = installObject.os_version
         msg.os_initdaemon = installObject.os_initdaemon
