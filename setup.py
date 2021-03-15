@@ -4372,10 +4372,10 @@ class Setup(object):
         if self.wrends_install == LOCAL:
             opendj_max_ram = round(self.app_mem_weigths['opendj']['weigth'] * application_max_ram /total_weigth)
             
-            if opendj_max_ram < self.opendj_ram:
+            if opendj_max_ram < int(self.opendj_ram):
                 total_weigth = calulate_total_weigth(withopendj=False)
-                opendj_max_ram = self.opendj_ram
-                application_max_ram -= self.opendj_ram
+                opendj_max_ram = int(self.opendj_ram)
+                application_max_ram -= int(self.opendj_ram)
 
             os.environ['ce_wrends_xms'] = str(self.app_mem_weigths['opendj']['min'])
             os.environ['ce_wrends_xmx'] = str(opendj_max_ram)
