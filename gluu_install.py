@@ -33,16 +33,16 @@ argsp = parser.parse_args()
 jetty_home = '/opt/gluu/jetty'
 services = ['casa.service', 'identity.service', 'opendj.service', 'oxauth.service', 'passport.service', 'fido2.service', 'idp.service', 'oxauth-rp.service', 'oxd-server.service', 'scim.service']
 app_versions = {
-  "JETTY_VERSION": "9.4.31.v20200723", 
+    "JETTY_VERSION": "9.4.31.v20200723", 
     "AMAZON_CORRETTO_VERSION": "11.0.8.10.1", 
-      "OX_GITVERISON": "-SNAPSHOT", 
-      "NODE_VERSION": "v12.19.0",
-        "OX_VERSION": "4.3.0", 
-          "JYTHON_VERSION": "2.7.2",
-            "OPENDJ_VERSION": "4.0.0.gluu",
-              "SETUP_BRANCH": "",
-                "TWILIO_VERSION": "7.17.0",
-                  "JSMPP_VERSION": "2.3.7"
+    "OX_GITVERISON": ".Final", 
+    "NODE_VERSION": "v12.19.0",
+    "OX_VERSION": "4.2.3", 
+    "JYTHON_VERSION": "2.7.2",
+    "OPENDJ_VERSION": "4.0.0.gluu",
+    "SETUP_BRANCH": "",
+    "TWILIO_VERSION": "7.17.0",
+    "JSMPP_VERSION": "2.3.7"
     }
 
 def check_installation():
