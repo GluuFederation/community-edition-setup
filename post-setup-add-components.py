@@ -495,7 +495,7 @@ def installOxd():
     setupObj.oxd_package = os.path.join(setupObj.distGluuFolder, 'oxd-server.tgz')
     setupObj.install_oxd()
 
-    
+    setupObj.run(['chown', '-r', 'jetty:jetty', '/opt/oxd-server/'])
 
 def installCasa():
 
