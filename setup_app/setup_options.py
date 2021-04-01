@@ -3,6 +3,7 @@ import sys
 import argparse
 
 from setup_app.static import InstallTypes
+from setup_app.utils import base
 
 def get_setup_options():
 
@@ -58,7 +59,7 @@ def get_setup_options():
     parser.add_argument('-couchbase-bucket-prefix', help="Set prefix for couchbase buckets", default='gluu')
     parser.add_argument('--generate-oxd-certificate', help="Generate certificate for oxd based on hostname", action='store_true')
     parser.add_argument('--shell', help="Drop into interactive shell before starting installation", action='store_true')
-    
+
     argsp = parser.parse_args()
 
     setupOptions = {
@@ -95,8 +96,6 @@ def get_setup_options():
 
     if argsp.no_oxtrust:
         setupOptions['installOxTrust'] = False
-
-    setupOptions['installGluuRadius'] = argsp.install_gluu_radius
 
     if argsp.ip_address:
         setupOptions['ip'] = argsp.ip_address
@@ -143,10 +142,8 @@ def get_setup_options():
     if argsp.enable_scim_test_mode:
         setupOptions['scimTestMode'] = 'true'
 
-    setupOptions['installSaml'] = argsp.install_shib
+    
     setupOptions['downloadWars'] = argsp.w
-    setupOptions['installOxAuthRP'] = argsp.install_oxauth_rp
-    setupOptions['installPassport'] = argsp.install_passport
     setupOptions['loadTestData']  = argsp.t
     setupOptions['loadTestDataExit'] = argsp.x
     setupOptions['allowPreReleasedFeatures'] = argsp.allow_pre_released_features
@@ -156,6 +153,12 @@ def get_setup_options():
     setupOptions['installScimServer'] = argsp.install_scim
     setupOptions['installFido2'] = argsp.install_fido2
     setupOptions['couchbase_bucket_prefix'] = argsp.couchbase_bucket_prefix
+
+    if not base.snap:
+        setupOptions['installGluuRadius'] = argsp.install_gluu_radius
+        setupOptions['installSaml'] = argsp.install_shib
+        setupOptions['installOxAuthRP'] = argsp.install_oxauth_rp
+        setupOptions['installPassport'] = argsp.install_passport
 
     if argsp.remote_ldap:
         setupOptions['wrends_install'] = InstallTypes.REMOTE

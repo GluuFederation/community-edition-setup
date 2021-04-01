@@ -90,6 +90,9 @@ class GluuSetupForm(npyscreen.FormBaseNew):
 
         form_name = getClassName(self)
 
+        if base.snap:
+            msg.version_label = msg.version_label.replace('CE', 'CE (SNAP)')
+
         self.add(npyscreen.TitleFixedText, name=msg.version_label + ' ' + Config.oxVersion, rely=self.lines-5,  editable=False, labelColor='CONTROL')
         self.add(npyscreen.MultiLineEdit, value='=' * (self.columns - 4), max_height=1, rely=self.lines-4, editable=False)
 

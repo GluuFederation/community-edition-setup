@@ -231,13 +231,14 @@ class PropertiesUtils(SetupUtils):
                 print("Can't connect to remote LDAP Server with credentials found in setup.properties.")
                 sys.exit(1)
 
-        for si, se in ( 
-                        ('installPassport', 'gluuPassportEnabled'),
-                        ('gluuRadiusEnabled', 'gluuRadiusEnabled'),
-                        ('installSaml', 'gluuSamlEnabled'),
-                        ):
-            if Config.get(si):
-                setattr(Config, se, 'true')
+        if not base.snap:
+            for si, se in ( 
+                            ('installPassport', 'gluuPassportEnabled'),
+                            ('gluuRadiusEnabled', 'gluuRadiusEnabled'),
+                            ('installSaml', 'gluuSamlEnabled'),
+                            ):
+                if Config.get(si):
+                    setattr(Config, se, 'true')
 
         if not 'oxtrust_admin_password' in p:
             p['oxtrust_admin_password'] = p['ldapPass']
@@ -839,18 +840,21 @@ class PropertiesUtils(SetupUtils):
         self.promptForHTTPD()
         self.promptForScimServer()
         self.promptForFido2Server()
-        self.promptForShibIDP()
-        self.promptForOxAuthRP()
-        self.promptForPassport()
 
+        if not base.snap:
+            print("NO SNAP", base.snap)
+            self.promptForShibIDP()
+            self.promptForOxAuthRP()
+            self.promptForPassport()
 
         if os.path.exists(os.path.join(Config.distGluuFolder, 'casa.war')):
             self.promptForCasaInstallation()
 
         if (not Config.installOxd) and Config.oxd_package:
             self.promptForOxd()
-            
-        self.promptForGluuRadius()
+
+        if not base.snap:
+            self.promptForGluuRadius()
 
 
 propertiesUtils = PropertiesUtils()
