@@ -92,7 +92,7 @@ class msg:
 
     ask_cb_install = "Couchbase Installation"
     cb_install_options = ["Don't Install","Install Locally","Use Remote Couchbase"]
-    
+
     ask_use_gluu_storage_oxd = "oxd includes a built-in h2 database for persistence. Do you want to change it to the Authorization Server's persistence mechanism instead (recommended for high load only)?"
     ask_use_gluu_storage_oxd_title = "Use Authorization Server's persistence for oxd?"
     

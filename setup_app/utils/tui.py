@@ -52,6 +52,9 @@ def getClassName(c):
     except:
         return ''
 
+if base.snap:
+    msg.version_label = msg.version_label.replace('CE', 'CE (SNAP)')
+
 class GluuSetupApp(npyscreen.StandardApp):
     do_installation = None
     exit_reason = str()
@@ -89,9 +92,6 @@ class GluuSetupForm(npyscreen.FormBaseNew):
         self.marketing_label = self.add(npyscreen.MultiLineEdit, value='', max_height=1, rely=self.lines-3, editable=False)
 
         form_name = getClassName(self)
-
-        if base.snap:
-            msg.version_label = msg.version_label.replace('CE', 'CE (SNAP)')
 
         self.add(npyscreen.TitleFixedText, name=msg.version_label + ' ' + Config.oxVersion, rely=self.lines-5,  editable=False, labelColor='CONTROL')
         self.add(npyscreen.MultiLineEdit, value='=' * (self.columns - 4), max_height=1, rely=self.lines-4, editable=False)
@@ -420,6 +420,11 @@ class DBBackendForm(GluuSetupForm):
 
         self.add(npyscreen.FixedText, value=make_title(msg.ask_cb_install), rely=10, editable=False)
 
+        if base.snap:
+            for opt in msg.cb_install_options[:]:
+                if 'local' in opt.lower():
+                    msg.cb_install_options.remove(opt)
+
         self.ask_cb = self.add(npyscreen.SelectOne, max_height=3,
                 values = msg.cb_install_options, scroll_exit=True)
         self.ask_cb.value_changed_callback = self.cb_option_changed
@@ -507,6 +512,9 @@ class DBBackendForm(GluuSetupForm):
 
         Config.cb_install =  str(self.ask_cb.value[0]) if self.ask_cb.value[0] else 0
 
+        if base.snap and Config.cb_install == '1':
+            Config.cb_install = '2'
+
         if Config.cb_install == static.InstallTypes.LOCAL:
             Config.couchbase_hostname = 'localhost'
             Config.cb_password = self.cb_password.value
@@ -565,16 +573,19 @@ class DBBackendForm(GluuSetupForm):
 
     def cb_option_changed(self, widget):
         if self.ask_cb.value:
-            if not self.ask_cb.value[0]:
+            val = self.ask_cb.value[0]
+            if base.snap and val == 1:
+                val = 2
+            if not val:
                 self.cb_admin.hidden = True
                 self.cb_password.hidden = True
                 self.cb_hosts.hidden = True
-            elif str(self.ask_cb.value[0]) == static.InstallTypes.LOCAL:
+            elif str(val) == static.InstallTypes.LOCAL:
                 self.cb_admin.hidden = False
                 self.cb_hosts.hidden = False
                 self.cb_password.hidden = False
                 self.cb_hosts.hidden = True
-            elif str(self.ask_cb.value[0]) == static.InstallTypes.REMOTE:
+            elif str(val) == static.InstallTypes.REMOTE:
                 self.cb_admin.hidden = False
                 self.cb_password.hidden = False
                 self.cb_hosts.hidden = False
