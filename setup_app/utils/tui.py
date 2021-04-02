@@ -520,7 +520,7 @@ class DBBackendForm(GluuSetupForm):
                 return
 
         if Config.wrends_install == static.InstallTypes.LOCAL and not propertiesUtils.checkPassword(Config.ldapPass):
-            npyscreen.notify_confirm(msg.weak_password.format('WrenDS'), title="Warning")
+            npyscreen.notify_confirm(msg.weak_password.format('OpenDJ'), title="Warning")
             return
 
         if Config.cb_install == static.InstallTypes.LOCAL and not propertiesUtils.checkPassword(Config.cb_password):
@@ -682,9 +682,9 @@ class DisplaySummaryForm(GluuSetupForm):
                 if wn == 'backend_types':
                     bt_ = []
                     if Config.wrends_install == static.InstallTypes.LOCAL:
-                        bt_.append('wrends')
+                        bt_.append('OpenDJ')
                     elif Config.wrends_install == static.InstallTypes.REMOTE:
-                        bt_.append('wrends[R]')
+                        bt_.append('OpenDJ[R]')
 
                     if Config.cb_install == static.InstallTypes.LOCAL:
                         bt_.append('couchbase')
