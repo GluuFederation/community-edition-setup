@@ -97,12 +97,13 @@ class ProgressBar:
 
 setup_porperties = generate_properties(True)
 
+os.rename('/opt/dist/gluu/oxauth-client-jar-with-dependencies.jar', '/opt/dist/gluu/oxauth-client-jar-with-dependencies.jar.old')
 
 setup.__dict__['ruamel'] = ruamel
 setupObj = setup.Setup(ces_dir)
+setupObj.oxVersion = gluu_version +'.Final'
 setupObj.initialize()
 setupObj.pbar = ProgressBar()
-setupObj.oxVersion = gluu_version 
 
 setupObj.setup = setupObj
 
@@ -495,7 +496,7 @@ def installOxd():
     setupObj.oxd_package = os.path.join(setupObj.distGluuFolder, 'oxd-server.tgz')
     setupObj.install_oxd()
 
-    
+    setupObj.run(['chown', '-r', 'jetty:jetty', '/opt/oxd-server/'])
 
 def installCasa():
 

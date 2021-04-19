@@ -4380,7 +4380,7 @@ class Setup(object):
             os.environ['ce_wrends_xms'] = str(self.app_mem_weigths['opendj']['min'])
             os.environ['ce_wrends_xmx'] = str(opendj_max_ram)
 
-        for app in installedComponents:        
+        for app in installedComponents:
             app_max_mem = round(self.app_mem_weigths[app]['weigth'] * application_max_ram /total_weigth)
             self.templateRenderingDict['{}_max_mem'.format(app)] = app_max_mem
             self.templateRenderingDict['{}_min_mem'.format(app)] = self.app_mem_weigths[app]['min']
@@ -4411,6 +4411,8 @@ class Setup(object):
         # Node apps
         if self.installPassport:
             installedComponents.append('passport')
+
+        return self.calculate_aplications_memory(self.application_max_ram, installedComponents)
 
     def merge_dicts(self, *dict_args):
         result = {}
@@ -5489,7 +5491,7 @@ class Setup(object):
     def install_gluu_radius_base(self):
 
         if not self.gluu_radius_client_id:
-            self.gluu_radius_client_id = '1701.'  + str(uuid.uuid4())
+            self.gluu_radius_client_id = '1701.' + str(uuid.uuid4())
 
         source_dir = os.path.join(self.staticFolder, 'radius')
         conf_dir = os.path.join(self.gluuBaseFolder, 'conf/radius/')

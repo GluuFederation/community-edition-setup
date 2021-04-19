@@ -40,6 +40,8 @@ with open("/etc/os-release") as f:
 
 print("Detected OS", os_type, os_version)
 
+current_mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
+current_mem_size = round(current_mem_bytes / (1024.**3), 2) #in GB
 
 if os.path.exists('/etc/yum.repos.d/'):
     package_type = 'rpm'
@@ -561,28 +563,18 @@ def generate_properties(as_dict=False):
     if os.path.exists('/opt/gluu/node/passport/server'):
         setup_prop['installPassport'] = True
 
-    application_max_ram = 3072
+
+    if current_mem_size < 4000:
+        setup_prop['system_ram'] =  500 #MB
+        setup_prop['opendj_ram'] = 1280 #MB
+    else:
+        setup_prop['system_ram'] =  750 #MB
+        setup_prop['opendj_ram'] = 1500 #MB
+
+    application_max_ram = round(current_mem_size * 1024) - setup_prop['system_ram']
+    setup_prop['application_max_ram'] = application_max_ram
 
     default_dir = '/etc/default'
-    usedRatio = 0.001
-    oxauth_max_heap_mem = 0
-
-    for service in jetty_services:
-        service_default_fn = os.path.join(default_dir, service)
-        if os.path.exists(service_default_fn):
-            usedRatio += jetty_services[service][1]
-            if service == 'oxauth':
-                service_prop = read_properties_file(service_default_fn)
-                m = re.search('-Xmx(\d*)m', service_prop['JAVA_OPTIONS'])
-                oxauth_max_heap_mem = int(m.groups()[0])
-
-    if oxauth_max_heap_mem:
-        ratioMultiplier = 1.0 + (1.0 - usedRatio)/usedRatio
-        applicationMemory = oxauth_max_heap_mem / jetty_services['oxauth'][2]
-        allowedRatio = jetty_services['oxauth'][1] * ratioMultiplier
-        application_max_ram = int(round(applicationMemory / allowedRatio))
-
-    setup_prop['application_max_ram'] = application_max_ram
 
     if os.path.exists(os.path.join(default_dir, 'gluu-radius')):
         setup_prop['gluuRadiusEnabled'] = True
