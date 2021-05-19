@@ -11,7 +11,7 @@ OXD_PID_FILE=$OXD_RUN/oxd-server.pid
 OXD_STATE=/gluu/oxd-server/run/oxd-server.state
 OXD_INIT_LOG=$OXD_LOGS/oxd-server.log
 
-ALL_JARS=ls $LIB/* -t | sort -r | head -n 1
+ALL_JARS=`ls $LIB/* -t | sort -r | head -n 1`
 CLASSPATH="$ALL_JARS:$OXD_HOME/lib/oxd-server.jar org.gluu.oxd.server.OxdServerApplication"
 
 JAVA_OPTIONS="-server -Xms256m -Xmx512m -XX:MaxMetaspaceSize=256m -XX:+DisableExplicitGC -Djava.net.preferIPv4Stack=true -cp $CLASSPATH  server $OXD_CONF/oxd-server.yml"
