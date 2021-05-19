@@ -149,7 +149,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         oxd_tgz_fn = '/tmp/oxd-server.tgz' if base.snap else os.path.join(Config.distGluuFolder, 'oxd-server.tgz')
         tmp_dir = os.path.join('/tmp', os.urandom(5).hex())
         oxd_tmp_dir = os.path.join(tmp_dir, 'oxd-server')
-        
+
         self.run([paths.cmd_mkdir, '-p', oxd_tmp_dir])
         self.download_file(oxd_url, oxd_zip_fn)
         self.run([paths.cmd_unzip, '-qqo', oxd_zip_fn, '-d', oxd_tmp_dir])
