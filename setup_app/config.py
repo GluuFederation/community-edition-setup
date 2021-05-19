@@ -181,7 +181,7 @@ class Config:
         self.state = None
         self.admin_email = None
         self.encoded_ox_ldap_pw = None
-        self.application_max_ram = int(base.current_mem_size * .83 * 1000) # 83% of physical memory
+        self.application_max_ram = int(base.current_mem_size * .83 * 1024) # 83% of physical memory
         self.encode_salt = None
         self.admin_inum = None
 
@@ -295,6 +295,25 @@ class Config:
 
         self.install_time_ldap = None
 
+        if base.current_mem_size < 4.0:
+            self.system_ram =  500 #MB
+            self.opendj_ram = 1280 #MB
+        else:
+            self.system_ram =  750 #MB
+            self.opendj_ram = 1500 #MB
+
+        self.app_mem_weigths = {
+                'opendj':    {'weigth' : 75, "min" : 512},
+                'oxauth':    {'weigth' : 50, "min" : 128},
+                'identity':  {'weigth' : 75, "min" : 128},
+                'idp':       {'weigth' : 25, "min" : 128},
+                'oxauth-rp': {'weigth' :  5, "min" : 128},
+                'passport':  {'weigth' : 10, "min" : 128},
+                'casa':      {'weigth' : 15, "min" : 128},
+                'fido2':     {'weigth' : 10, "min" : 128},
+                'scim':      {'weigth' : 10, "min" : 128},
+                'oxd':       {'weigth' : 10, "min" : 128},
+            }
 
         self.couchbaseBucketDict = OrderedDict((
                         ('default', { 'ldif':[

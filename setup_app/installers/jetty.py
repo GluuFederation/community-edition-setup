@@ -5,7 +5,7 @@ import re
 
 from setup_app import paths
 from setup_app.utils import base
-from setup_app.static import AppType, InstallOption
+from setup_app.static import AppType, InstallOption, InstallTypes
 from setup_app.config import Config
 from setup_app.utils.setup_utils import SetupUtils
 from setup_app.installers.base import BaseInstaller
@@ -230,53 +230,47 @@ class JettyInstaller(BaseInstaller, SetupUtils):
 
         self.writeFile(service_fn, '\n'.join(start_ini_list))
 
-    def calculate_aplications_memory(self, application_max_ram, jetty_app_configuration, installedComponents):
+    def calculate_aplications_memory(self, application_max_ram, installedComponents):
         self.logIt("Calculating memory setting for applications")
-        allowedApplicationsMemory = {}
-        application_max_ram = int(application_max_ram)
-        application_max_ram -= len(installedComponents) * 128
 
-        retVal = True
-        usedRatio = 0.001
-        for installedComponent in installedComponents:
-            usedRatio += installedComponent['memory']['ratio']
+        application_max_ram = float(application_max_ram)
 
-        ratioMultiplier = 1.0 + (1.0 - usedRatio)/usedRatio
+        #prepare default mem needed for proper rendering
+        for app in Config.app_mem_weigths:
+            Config.templateRenderingDict['{}_max_mem'.format(app)] = Config.app_mem_weigths[app]['min']
+            Config.templateRenderingDict['{}_min_mem'.format(app)] = Config.app_mem_weigths[app]['min']
 
-        for installedComponent in installedComponents:
-            allowedRatio = installedComponent['memory']['ratio'] * ratioMultiplier
-            allowedMemory = int(round(allowedRatio * int(application_max_ram)))
 
-            if allowedMemory > installedComponent['memory']['max_allowed_mb']:
-                allowedMemory = installedComponent['memory']['max_allowed_mb']
+        def calulate_total_weigth(withopendj=True):
+            total_weigth = 0
 
-            allowedApplicationsMemory[installedComponent['name']] = allowedMemory
+            if Config.wrends_install == InstallTypes.LOCAL and withopendj:
+                total_weigth += Config.app_mem_weigths['opendj']['weigth']
 
-        # Iterate through all components into order to prepare all keys
-        for applicationName, applicationConfiguration in jetty_app_configuration.items():
-            if applicationName in allowedApplicationsMemory:
-                applicationMemory = allowedApplicationsMemory.get(applicationName)
-            else:
-                # We uses this dummy value to render template properly of not installed application
-                applicationMemory = 256
+            for app in installedComponents:
+                total_weigth += Config.app_mem_weigths[app]['weigth']
 
-            Config.templateRenderingDict["%s_max_mem" % applicationName] = applicationMemory
+            return total_weigth
 
-            if 'jvm_heap_ration' in applicationConfiguration['memory']:
-                jvmHeapRation = applicationConfiguration['memory']['jvm_heap_ration']
+        total_weigth = calulate_total_weigth()
+        
+        if Config.wrends_install == InstallTypes.LOCAL:
+            opendj_max_ram = round(Config.app_mem_weigths['opendj']['weigth'] * application_max_ram /total_weigth)
+            
+            if opendj_max_ram < Config.opendj_ram:
+                total_weigth = calulate_total_weigth(withopendj=False)
+                opendj_max_ram = Config.opendj_ram
+                application_max_ram -= Config.opendj_ram
 
-                minHeapMem = 256
-                maxHeapMem = int(applicationMemory * jvmHeapRation)
-                if maxHeapMem < minHeapMem:
-                    minHeapMem = maxHeapMem
+            os.environ['ce_wrends_xms'] = str(Config.app_mem_weigths['opendj']['min'])
+            os.environ['ce_wrends_xmx'] = str(opendj_max_ram)
 
-                Config.templateRenderingDict["%s_max_heap_mem" % applicationName] = maxHeapMem
-                Config.templateRenderingDict["%s_min_heap_mem" % applicationName] = minHeapMem
+        for app in installedComponents:
+            app_max_mem = round(Config.app_mem_weigths[app]['weigth'] * application_max_ram /total_weigth)
+            Config.templateRenderingDict['{}_max_mem'.format(app)] = app_max_mem
+            Config.templateRenderingDict['{}_min_mem'.format(app)] = Config.app_mem_weigths[app]['min']
 
-                if maxHeapMem < 256 and applicationName in allowedApplicationsMemory:    
-                    retVal = False
-
-        return retVal
+        return True
         
     def calculate_selected_aplications_memory(self):
         Config.pbar.progress("gluu", "Calculating application memory")
@@ -284,11 +278,25 @@ class JettyInstaller(BaseInstaller, SetupUtils):
         installedComponents = []
 
         # Jetty apps
-        for config_var, service in (
-                    ('installOxAuth', 'oxauth'), ('installOxTrust', 'identity'),
-                    ('installSaml', 'idp'), ('installOxAuthRP', 'oxauth-rp'),
-                    ('installCasa', 'casa'), ('installPassport', 'passport')):
-            if Config.get(config_var):
-                installedComponents.append(self.jetty_app_configuration[service])
+        if Config.installOxAuth:
+            installedComponents.append('oxauth')
+        if Config.installOxTrust:
+            installedComponents.append('identity')
+        if Config.installSaml:
+            installedComponents.append('idp')
+        if Config.installOxAuthRP:
+            installedComponents.append('oxauth-rp')
+        if Config.installCasa:
+            installedComponents.append('casa')
+        if Config.installScimServer:
+            installedComponents.append('scim')
+        if Config.installFido2:
+            installedComponents.append('fido2')
+        if Config.installOxd:
+            installedComponents.append('oxd')
 
-        return self.calculate_aplications_memory(Config.application_max_ram, self.jetty_app_configuration, installedComponents)
+        # Node apps
+        if Config.installPassport:
+            installedComponents.append('passport')
+
+        return self.calculate_aplications_memory(Config.application_max_ram, installedComponents)

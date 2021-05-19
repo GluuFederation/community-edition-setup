@@ -1,6 +1,8 @@
 {
     "scimTestMode": %(scimTestMode)s,
-    "scimUmaClientId":"%(scim_rs_client_id)s",
+    "ScimProperties": {
+        "maxCount": 200
+    },
     "scimUmaClientKeyId":"",
     "scimUmaResourceId":"%(scim_resource_oxid)s",
     "scimUmaScope":"https://%(hostname)s/oxauth/restv1/uma/scopes/scim_access",

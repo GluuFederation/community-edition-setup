@@ -1,9 +1,9 @@
 JAVA_HOME=%(jre_home)s
 JAVA=$JAVA_HOME/bin/java
-JAVA_OPTIONS="-server -Xss24m -Xms%(idp_min_heap_mem)sm -Xmx%(idp_max_heap_mem)sm -XX:MaxGCPauseMillis=400 -XX:+UseParallelGC -XX:+DisableExplicitGC -Dgluu.base=%(gluuBaseFolder)s -Dserver.base=%(jetty_base)s/idp -Dpython.home=%(jython_home)s  -Djavax.net.ssl.trustStore=%(defaultTrustStoreFN)s -Djavax.net.ssl.trustStorePassword=changeit"
+JAVA_OPTIONS="-server -Xss24m -Xms%(idp_min_mem)sm -Xmx%(idp_max_mem)sm -XX:MaxGCPauseMillis=400 -XX:+UseParallelGC -XX:+DisableExplicitGC -Dgluu.base=%(gluuBaseFolder)s -Dserver.base=%(jetty_base)s/idp -Dpython.home=%(jython_home)s"
 
 JETTY_HOME=%(jetty_home)s
 JETTY_BASE=%(jetty_base)s/idp
-JETTY_USER=%(jetty_user)s
+JETTY_USER=jetty
 JETTY_ARGS="jetty.http.host=localhost jetty.http.port=8086"
 TMPDIR=%(jetty_dist)s/temp
