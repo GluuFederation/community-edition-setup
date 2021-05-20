@@ -348,5 +348,8 @@ shutil.rmtree(tmp_dir)
 os.chmod('/install/community-edition-setup/setup.py', 33261)
 
 print("Launcing Gluu Setup")
-setup_cmd = 'python3 {}/setup.py{}'.format(ces_dir, ' -c' if cmdline else '')
+setup_cmd = 'python3 {}/setup.py'.format(ces_dir)
+if argsp.args:
+    setup_cmd += ' ' + argsp.args
+
 os.system(setup_cmd)
