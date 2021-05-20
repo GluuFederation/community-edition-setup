@@ -33,6 +33,9 @@ class OxauthInstaller(JettyInstaller):
         self.oxauth_openid_jwks_fn = os.path.join(self.output_folder, 'oxauth-keys.json')
         self.oxauth_openid_jks_fn = os.path.join(Config.certFolder, 'oxauth-keys.jks')
 
+        Config.oxauth_legacyIdTokenClaims = 'false'
+        Config.oxauth_openidScopeBackwardCompatibility = 'false'
+
 
     def install(self):
         self.logIt("Copying oxauth.war into jetty webapps folder...")

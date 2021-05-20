@@ -16,6 +16,9 @@ import code
 from queue import Queue
 
 os.environ['LC_ALL'] = 'C'
+from setup_app.utils.arg_parser import arg_parser
+
+argsp = arg_parser()
 
 #first import paths and make changes if necassary
 from setup_app import paths
@@ -27,6 +30,10 @@ from setup_app import static
 
 # second import module base, this makes some initial settings
 from setup_app.utils import base
+
+# we will access args via base module
+base.argsp = argsp
+
 
 from setup_app.messages import msg
 from setup_app.config import Config
@@ -74,11 +81,19 @@ Config.determine_version()
 SetupUtils.init()
 
 # get setup options from args
-argsp, setupOptions = get_setup_options()
+setupOptions = get_setup_options()
 
 terminal_size = shutil.get_terminal_size()
 tty_rows=terminal_size.lines 
 tty_columns = terminal_size.columns
+
+# check if we are running in terminal
+try:
+    os.get_terminal_size()
+except:
+    argsp.no_progress = True
+
+
 queue = Queue()
 GSA = None
 
