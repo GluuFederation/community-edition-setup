@@ -1,3 +1,4 @@
+import os
 
 from setup_app import paths
 from setup_app.config import Config
@@ -14,7 +15,7 @@ class PackageUtils(SetupUtils):
             query_command = 'dpkg-query -W -f=\'${{Status}}\' {} 2>/dev/null | grep -c "ok installed"'
             check_text = '0'
 
-        elif self.os_type in ('centos', 'red', 'fedora'):
+        elif base.clone_type in ('centos', 'red', 'fedora'):
             install_command = 'yum install -y {0}'
             update_command = 'yum install -y epel-release'
             query_command = 'rpm -q {0}'
@@ -31,7 +32,7 @@ class PackageUtils(SetupUtils):
 
         package_list = base.get_os_package_list()
 
-        os_type_version = self.os_type+' '+self.os_version
+        os_type_version = base.os_type + ' ' + base.os_version
 
         if base.argsp.local_rdbm == 'mysql':
             package_list[os_type_version]['mondatory'] += ' mysql-server'
@@ -85,7 +86,7 @@ class PackageUtils(SetupUtils):
                         sout, serr = self.run(update_command, shell=True, get_stderr=True)
                     self.run(install_command.format(packages), shell=True)
 
-        if self.os_type in ('ubuntu', 'debian'):
+        if base.clone_type == 'deb':
             self.run('a2enmod ssl headers proxy proxy_http proxy_ajp', shell=True)
             default_site = '/etc/apache2/sites-enabled/000-default.conf'
             if os.path.exists(default_site):
@@ -99,3 +100,5 @@ class PackageUtils(SetupUtils):
             output = self.run([paths.cmd_rpm, '--install', '--verbose', '--hash', packageName])
 
         return output
+
+packageUtils = PackageUtils()

@@ -16,8 +16,10 @@ import shutil
 import multiprocessing
 import ssl
 
+from pathlib import Path
 from collections import OrderedDict
 from urllib.request import urlretrieve
+from types import SimpleNamespace
 
 # disable ssl certificate check
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -29,8 +31,11 @@ from setup_app.pylib.jproperties import Properties
 
 # Note!!! This module should be imported after paths
 
-cur_dir = os.path.dirname(os.path.realpath(__file__))
-ces_dir = os.path.split(cur_dir)[0]
+cur_dir = Path(__file__).parent.as_posix()
+ces_dir = Path(__file__).parent.parent.as_posix()
+par_dir = Path(__file__).parent.parent.parent.as_posix()
+
+current_app = SimpleNamespace()
 
 snap = os.environ.get('SNAP','')
 snap_common = snap_common_dir = os.environ.get('SNAP_COMMON','')

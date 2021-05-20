@@ -86,8 +86,12 @@ class PropertiesUtils(SetupUtils):
         if Config.cb_install and not Config.get('cb_password'):
             Config.cb_password = Config.oxtrust_admin_password
 
-        if Config.cb_install and not Config.wrends_install:
-            Config.mappingLocations = { group: 'couchbase' for group in Config.couchbaseBucketDict }
+        if not Config.wrends_install:
+            if Config.cb_install:
+                Config.mappingLocations = { group: 'couchbase' for group in Config.couchbaseBucketDict }
+
+            if Config.rdbm_install:
+                Config.mappingLocations = { group: 'rdbm' for group in Config.couchbaseBucketDict }
 
         self.set_persistence_type()
 

@@ -34,6 +34,8 @@ from setup_app.utils import base
 # we will access args via base module
 base.argsp = argsp
 
+from setup_app.utils.package_utils import packageUtils
+packageUtils.check_and_install_packages()
 
 from setup_app.messages import msg
 from setup_app.config import Config
@@ -65,6 +67,7 @@ from setup_app.installers.saml import SamlInstaller
 from setup_app.installers.radius import RadiusInstaller
 from setup_app.installers.oxd import OxdInstaller
 from setup_app.installers.casa import CasaInstaller
+from setup_app.installers.rdbm import RDBMInstaller
 
 if base.snap:
     try:
@@ -121,22 +124,6 @@ for key in setupOptions:
 gluuInstaller = GluuInstaller()
 gluuInstaller.initialize()
 
-"""
-Config.hostname = 'snap.gluu.org'
-Config.ip = '174.138.37.150'
-Config.oxtrust_admin_password = 'Top!Secret-20'
-Config.orgName = 'MyGluu'
-Config.countryCode = 'GC'
-Config.city = 'GluuCity'
-Config.state = 'GluuState'
-Config.admin_email = 'admin@mygluu.org'
-Config.installPassport = False
-Config.installFido2 = False
-Config.installScimServer = False
-Config.installSaml = False
-Config.installOxd = False
-Config.installPassport = False
-"""
 
 if not GSA:
     print()
@@ -193,12 +180,16 @@ oxdInstaller = OxdInstaller()
 casaInstaller = CasaInstaller()
 passportInstaller = PassportInstaller()
 radiusInstaller = RadiusInstaller()
+rdbmInstaller = RDBMInstaller()
+
+
+rdbmInstaller.packageUtils = packageUtils
 
 if Config.installed_instance:
     for installer in (openDjInstaller, couchbaseInstaller, httpdinstaller, 
                         oxauthInstaller, passportInstaller, scimInstaller, 
                         fidoInstaller, samlInstaller, oxdInstaller, 
-                        casaInstaller, radiusInstaller):
+                        casaInstaller, radiusInstaller, rdbmInstaller):
 
         setattr(Config, installer.install_var, installer.installed())
 
@@ -298,6 +289,8 @@ def do_installation():
             if Config.cb_install:
                 couchbaseInstaller.start_installation()
 
+            if Config.rdbm_install:
+                rdbmInstaller.start_installation()
 
         if (Config.installed_instance and 'installHttpd' in Config.addPostSetupService) or (not Config.installed_instance and Config.installHttpd):
             httpdinstaller.configure()

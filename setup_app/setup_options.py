@@ -105,15 +105,55 @@ def get_setup_options():
 
     if base.argsp.remote_ldap:
         setupOptions['wrends_install'] = InstallTypes.REMOTE
+        setupOptions['listenAllInterfaces'] = True
 
-    if base.argsp.remote_couchbase:
-        setupOptions['cb_install'] = InstallTypes.REMOTE
+    if not (base.argsp.remote_couchbase or base.argsp.remote_rdbm or base.argsp.local_rdbm):
+        setupOptions['wrends_install'] = InstallTypes.LOCAL
+    else:
+        setupOptions['wrends_install'] = InstallTypes.NONE
+
+        if base.argsp.remote_couchbase:
+            setupOptions['cb_install'] = InstallTypes.REMOTE
+
+        if base.argsp.remote_rdbm:
+            setupOptions['rdbm_install'] = True
+            setupOptions['rdbm_install_type'] = InstallTypes.REMOTE
+            setupOptions['rdbm_type'] = base.argsp.remote_rdbm
+            if not base.argsp.remote_rdbm == 'spanner':
+                setupOptions['rdbm_host'] = base.argsp.rdbm_host
+
+        if base.argsp.local_rdbm:
+            setupOptions['rdbm_install'] = True
+            setupOptions['rdbm_install_type'] = InstallTypes.LOCAL
+            setupOptions['rdbm_type'] = base.argsp.local_rdbm
+            setupOptions['rdbm_host'] = 'localhost'
+
+        if base.argsp.rdbm_port:
+            setupOptions['rdbm_port'] = base.argsp.rdbm_port
+        else:
+            if setupOptions['rdbm_type'] == 'pgsql':
+                setupOptions['rdbm_port'] = 5432
+
+        if base.argsp.rdbm_db:
+            setupOptions['rdbm_db'] = base.argsp.rdbm_db
+        if base.argsp.rdbm_user:
+            setupOptions['rdbm_user'] = base.argsp.rdbm_user
+        if base.argsp.rdbm_password:
+            setupOptions['rdbm_password'] = base.argsp.rdbm_password
+
+        if base.argsp.spanner_project:
+            setupOptions['spanner_project'] = base.argsp.spanner_project
+        if base.argsp.spanner_instance:
+            setupOptions['spanner_instance'] = base.argsp.spanner_instance
+        if base.argsp.spanner_database:
+            setupOptions['spanner_database'] = base.argsp.spanner_database
+        if base.argsp.spanner_emulator_host:
+            setupOptions['spanner_emulator_host'] = base.argsp.spanner_emulator_host
+        if base.argsp.google_application_credentials:
+            setupOptions['google_application_credentials'] = base.argsp.google_application_credentials
 
     if base.argsp.no_data:
         setupOptions['loadData'] = False
-
-    if base.argsp.remote_ldap:
-        setupOptions['listenAllInterfaces'] = True
 
     if base.argsp.oxd_use_gluu_storage:
         setupOptions['oxd_use_gluu_storage'] = True
