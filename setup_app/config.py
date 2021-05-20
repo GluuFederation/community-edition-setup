@@ -129,6 +129,24 @@ class Config:
         #DB installation types
         self.wrends_install = InstallTypes.LOCAL
         self.cb_install = InstallTypes.NONE
+        self.rdbm_install = False
+
+        #rdbm
+        self.rdbm_install_type = InstallTypes.NONE
+        self.rdbm_type = 'mysql'
+        self.rdbm_host = 'localhost'
+        self.rdbm_port = 3306
+        self.rdbm_db = 'gluu'
+        self.rdbm_user = None
+        self.rdbm_password = None
+        self.static_rdbm_dir = os.path.join(self.install_dir, 'static/rdbm')
+
+        #spanner
+        self.spanner_project = 'gluu-project'
+        self.spanner_instance = 'gluu-instance'
+        self.spanner_database = 'gluudb' 
+        self.spanner_emulator_host = None
+        self.google_application_credentials = None
 
         # Gluu components installation status
         self.loadData = True
@@ -235,7 +253,9 @@ class Config:
         self.gluu_python_readme = os.path.join(self.gluuOptPythonFolder, 'libs/python.txt')
         self.ox_ldap_properties = os.path.join(self.configFolder, 'gluu-ldap.properties')
         self.gluuCouchebaseProperties = os.path.join(self.configFolder, 'gluu-couchbase.properties')
-        
+        self.gluuRDBMProperties = os.path.join(self.configFolder, 'gluu-sql.properties')
+        self.gluuSpannerProperties = os.path.join(self.configFolder, 'gluu-spanner.properties')
+
         self.ldif_base = os.path.join(self.outputFolder, 'base.ldif')
         self.ldif_attributes = os.path.join(self.outputFolder, 'attributes.ldif')
         self.ldif_scopes = os.path.join(self.outputFolder, 'scopes.ldif')
