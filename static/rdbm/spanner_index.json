@@ -1,5 +1,5 @@
 {
-  "jansPerson": {
+  "gluuPerson": {
     "fields": [
       "givenName",
       "sn"
@@ -7,67 +7,67 @@
     "custom": [
     ]
   },
-    "jansClnt": {
+    "oxAuthClient": {
     "fields": [],
     "custom": [
       "`del`, `exp`"
     ]
   },
-  "jansUmaPCT": {
+  "oxAuthUmaPCT": {
     "fields": [],
     "custom": [
       "`del`, `exp`"
     ]
   },
-  "jansScope": {
+  "oxAuthCustomScope": {
     "fields": [],
     "custom": [
       "`del`, `exp`"
     ]
   },
-  "jansU2fReq": {
+  "oxU2fRequest": {
     "fields": [],
     "custom": [
       "`del`, `exp`"
     ]
   },
-  "jansMetric": {
+  "oxMetric": {
     "fields": [],
     "custom": [
       "`del`, `exp`"
     ]
   },
-  "jansToken": {
+  "token": {
     "fields": [],
     "custom": [
       "`del`, `exp`"
     ]
   },
-  "jansDeviceRegistration": {
+  "oxDeviceRegistration": {
     "fields": [],
     "custom": [
       "`del`, `exp`"
     ]
   },
-  "jansCache": {
+  "cache": {
     "fields": [],
     "custom": [
       "`del`, `exp`"
     ]
   },
-  "jansSessId": {
+  "oxAuthSessionId": {
     "fields": [],
     "custom": [
       "`del`, `exp`"
     ]
   },
-  "jansUmaResource": {
+  "oxUmaResource": {
     "fields": [],
     "custom": [
       "`del`, `exp`"
     ]
   },
-  "jansClntAuthz": {
+  "oxClientAuthorization": {
     "fields": [],
     "custom": [
       "`del`, `exp`"

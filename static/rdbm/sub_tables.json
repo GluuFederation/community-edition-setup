@@ -2,7 +2,7 @@
   "pgsql": {},
   "mysql": {},
   "spanner": {
-    "jansPerson": [
+    "gluuPerson": [
       [
         "jansExtUid",
         "STRING(MAX)"

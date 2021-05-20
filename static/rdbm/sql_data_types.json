@@ -193,7 +193,7 @@
       "type": "STRING"
     }
   },
-  "jansCacheConf": {
+  "cacheConf": {
     "mysql": {
       "type": "TEXT"
     },
@@ -211,7 +211,7 @@
       "type": "STRING"
     }
   },
-  "jansClntSecret": {
+  "oxAuthClientSecret": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -353,7 +353,7 @@
       "type": "STRING"
     }
   },
-  "jansScopeTyp": {
+  "oxAuthCustomScopeTyp": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -468,7 +468,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansDeviceRegistrationConf": {
+  "oxDeviceRegistrationConf": {
     "mysql": {
       "type": "TEXT"
     },
@@ -563,7 +563,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansClntURI": {
+  "oxAuthClientURI": {
     "mysql": {
       "type": "TINYTEXT"
     },
@@ -646,7 +646,7 @@
       "type": "STRING"
     }
   },
-  "jansClntId": {
+  "oxAuthClientId": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -759,7 +759,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansScopeExpression": {
+  "oxAuthCustomScopeExpression": {
     "mysql": {
       "type": "TEXT"
     },
@@ -806,7 +806,7 @@
       "size": 64,
       "type": "VARCHAR",
       "tables": {
-        "jansClntAuthz": {
+        "oxClientAuthorization": {
           "size": 100,
           "type": "VARCHAR"
         }
@@ -816,7 +816,7 @@
       "size": 64,
       "type": "STRING",
       "tables": {
-        "jansClntAuthz": {
+        "oxClientAuthorization": {
           "size": 100,
           "type": "STRING"
         }
@@ -871,7 +871,7 @@
       "type": "ARRAY<STRING(MAX)>"
     }
   },
-  "jansClntIdIssuedAt": {
+  "oxAuthClientIdIssuedAt": {
     "mysql": {
       "type": "DATETIME(3)"
     },
