@@ -171,6 +171,7 @@ nodeInstaller = NodeInstaller()
 openDjInstaller = OpenDjInstaller()
 couchbaseInstaller = CouchbaseInstaller()
 httpdinstaller = HttpdInstaller()
+rdbmInstaller = RDBMInstaller()
 oxauthInstaller = OxauthInstaller()
 oxtrustInstaller = OxtrustInstaller()
 fidoInstaller = FidoInstaller()
@@ -180,8 +181,6 @@ oxdInstaller = OxdInstaller()
 casaInstaller = CasaInstaller()
 passportInstaller = PassportInstaller()
 radiusInstaller = RadiusInstaller()
-rdbmInstaller = RDBMInstaller()
-
 
 rdbmInstaller.packageUtils = packageUtils
 

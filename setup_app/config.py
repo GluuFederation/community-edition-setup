@@ -286,7 +286,6 @@ class Config:
                            self.ldif_configuration,
                            ]
 
-
         self.ce_templates = {
                              self.gluu_python_readme: True,
                              self.ox_ldap_properties: True,

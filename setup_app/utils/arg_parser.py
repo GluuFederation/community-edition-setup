@@ -58,7 +58,7 @@ def arg_parser():
     parser.add_argument('--install-casa', help="Install Casa", action='store_true')
     parser.add_argument('--install-oxd', help="Install Oxd Server", action='store_true')
     parser.add_argument('--install-scim', help="Install Scim Server", action='store_true')
-    parser.add_argument('--install-fido2', help="Install Fido2")
+    parser.add_argument('--install-fido2', help="Install Fido2", action='store_true')
     parser.add_argument('--oxd-use-gluu-storage', help="Use Gluu Storage for Oxd Server", action='store_true')
     parser.add_argument('-couchbase-bucket-prefix', help="Set prefix for couchbase buckets", default='gluu')
     parser.add_argument('--generate-oxd-certificate', help="Generate certificate for oxd based on hostname", action='store_true')

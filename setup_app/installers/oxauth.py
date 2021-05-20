@@ -51,7 +51,7 @@ class OxauthInstaller(JettyInstaller):
             Config.oxauth_openid_jks_pass = self.getPW()
 
         self.check_clients([('oxauth_client_id', '1001.')])
-        
+
         if not Config.get('oxauthClient_pw'):
             Config.oxauthClient_pw = self.getPW()
             Config.oxauthClient_encoded_pw = self.obscure(Config.oxauthClient_pw)

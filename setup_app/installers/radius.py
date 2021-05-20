@@ -79,11 +79,11 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
 
         result = self.dbUtils.search('ou=clients,o=gluu', '(inum=1701.*)')
 
-        if result:
-            Config.gluu_radius_client_id = result['inum']
-            Config.gluu_ro_encoded_pw = result['oxAuthClientSecret']
-        else:
-            self.logIt("Can't find gluu_radius_client_id in database", True, True)
+        self.check_clients([('gluu_radius_client_id', '1701.')])
+
+        if not Config.get('gluu_ro_encoded_pw'):
+            Config.gluu_ro_pw = self.getPW()
+            Config.gluu_ro_encoded_pw = self.obscure(Config.gluu_ro_pw)
 
         radius_libs = self.source_files[1][0]
         radius_jar = self.source_files[0][0]

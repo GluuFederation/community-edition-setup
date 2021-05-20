@@ -86,6 +86,7 @@ class DBUtils:
         self.set_cbm()
         self.default_bucket = Config.couchbase_bucket_prefix
 
+        logging.basicConfig(filename=os.path.join(Config.install_dir, 'logs', Config.rdbm_type + '.log'))
 
     def sqlconnection(self, log=True):
         base.logIt("Making {} Connection to {}:{}/{} with user {}".format(Config.rdbm_type.upper(), Config.rdbm_host, Config.rdbm_port, Config.rdbm_db, Config.rdbm_user))
@@ -106,7 +107,6 @@ class DBUtils:
 
         try:
             self.engine = sqlalchemy.create_engine(bind_uri)
-            logging.basicConfig(filename=os.path.join(Config.install_dir, 'logs/sqlalchemy.log'))
             logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
             Session = sqlalchemy.orm.sessionmaker(bind=self.engine)
             self.session = Session()
@@ -172,7 +172,7 @@ class DBUtils:
             self.ldap_conn.search(
                         search_base='ou=oxauth,ou=configuration,o=gluu',
                         search_scope=ldap3.BASE,
-                        search_filter='(objectClass=*)',
+                        search_filter='(objectClass=oxAuthConfiguration)',
                         attributes=["oxAuthConfDynamic"]
                         )
 
@@ -180,7 +180,7 @@ class DBUtils:
             oxAuthConfDynamic = json.loads(self.ldap_conn.response[0]['attributes']['oxAuthConfDynamic'][0])
 
         elif self.moddb in (BackendTypes.MYSQL, BackendTypes.PGSQL, BackendTypes.SPANNER):
-            result = self.search(search_base='ou=oxauth,ou=configuration,o=gluu', search_filter='(objectClass=oxAuthConfDynamic)', search_scope=ldap3.BASE)
+            result = self.search(search_base='ou=oxauth,ou=configuration,o=gluu', search_filter='(objectClass=oxAuthConfiguration)', search_scope=ldap3.BASE)
             dn = result['dn'] 
             oxAuthConfDynamic = json.loads(result['oxAuthConfDynamic'])
 
@@ -192,6 +192,31 @@ class DBUtils:
             oxAuthConfDynamic = js['results'][0][self.default_bucket]['oxAuthConfDynamic']
 
         return dn, oxAuthConfDynamic
+
+    def get_oxTrustConfApplication(self):
+        if self.moddb == BackendTypes.LDAP:
+            self.ldap_conn.search(
+                        search_base='o=gluu',
+                        search_scope=ldap3.SUBTREE,
+                        search_filter='(objectClass=oxTrustConfiguration)',
+                        attributes=['oxTrustConfApplication']
+                        )
+            dn = self.ldap_conn.response[0]['dn']
+            oxTrustConfApplication = json.loads(self.ldap_conn.response[0]['attributes']['oxTrustConfApplication'][0])
+        
+        elif self.moddb in (BackendTypes.MYSQL, BackendTypes.PGSQL, BackendTypes.SPANNER):
+            result = self.search(search_base='ou=oxtrust,ou=configuration,o=gluu', search_filter='(objectClass=oxTrustConfiguration)', search_scope=ldap3.BASE)
+            dn = result['dn'] 
+            oxTrustConfApplication = json.loads(result['oxTrustConfApplication'])
+
+        elif self.moddb == BackendTypes.COUCHBASE:
+            n1ql = 'SELECT * FROM `{}` USE KEYS "configuration_oxtrust"'.format(self.default_bucket)
+            result = self.cbm.exec_query(n1ql)
+            js = result.json()
+            dn = js['results'][0][self.default_bucket]['dn']
+            oxTrustConfApplication = json.loads(js['results'][0][self.default_bucket]['oxTrustConfApplication'])
+
+        return dn, oxTrustConfApplication
 
 
     def set_oxAuthConfDynamic(self, entries):
@@ -224,6 +249,34 @@ class DBUtils:
                 n1ql = 'UPDATE `{}` USE KEYS "configuration_oxauth" SET oxAuthConfDynamic.{}={}'.format(self.default_bucket, k, json.dumps(entries[k]))
                 self.cbm.exec_query(n1ql)
 
+    # TODO: modify this for sql and spanner
+    def set_oxTrustConfApplication(self, entries):
+        dn, oxTrustConfApplication = self.get_oxTrustConfApplication()
+        oxTrustConfApplication.update(entries)
+        oxTrustConfApplication_js = json.dumps(oxTrustConfApplication, indent=2)
+
+        if self.moddb == BackendTypes.LDAP:
+            self.ldap_conn.modify(
+                    dn,
+                    {"oxTrustConfApplication": [ldap3.MODIFY_REPLACE, oxTrustConfApplication_js]}
+                    )
+
+        elif self.moddb in (BackendTypes.MYSQL, BackendTypes.PGSQL):
+            dn, oxTrustConfApplication = self.get_oxTrustConfApplication()
+            oxTrustConfApplication.update(entries)
+            sqlalchemyObj = self.get_sqlalchObj_for_dn(dn)
+            sqlalchemyObj.oxTrustConfApplication = json.dumps(oxTrustConfApplication, indent=2)
+            self.session.commit()
+
+        elif self.moddb in (BackendTypes.SPANNER,):
+            dn, oxTrustConfApplication = self.get_oxTrustConfApplication()
+            oxTrustConfApplication.update(entries)
+            doc_id = self.get_doc_id_from_dn(dn)
+            self.spanner.update_data(table='oxTrustConfiguration', columns=['doc_id', 'oxTrustConfApplication'], values=[[doc_id, json.dumps(oxTrustConfApplication)]])
+
+        elif self.moddb == BackendTypes.COUCHBASE:
+            n1ql = 'UPDATE `{}` USE KEYS "configuration_oxtrust" SET `oxTrustConfApplication`={}'.format(self.default_bucket, json.dumps(oxTrustConfApplication_js))
+            self.cbm.exec_query(n1ql)
 
     def enable_script(self, inum):
         if self.moddb == BackendTypes.LDAP:
@@ -278,16 +331,18 @@ class DBUtils:
             self.log_ldap_result(ldap_operation_result)
 
         elif self.moddb in (BackendTypes.MYSQL, BackendTypes.PGSQL):
+            type_val = self.get_rdbm_val(component, [value])
             result = self.get_sqlalchObj_for_dn('ou=configuration,o=gluu')
             table_name = result.objectClass
             sqlalchemy_table = self.Base.classes[table_name]
             sqlalchemyObj = self.session.query(sqlalchemy_table).filter(sqlalchemy_table.dn =='ou=configuration,o=gluu').first()
             cur_val = getattr(sqlalchemyObj, component)
-            setattr(sqlalchemyObj, component, value)
+            setattr(sqlalchemyObj, component, type_val)
             self.session.commit()
 
         elif self.moddb == BackendTypes.SPANNER:
-            self.spanner.insert_data(table='gluuApplicationConfiguration', columns=["doc_id", component], values=[["oxauth", value]])
+            type_val = self.get_rdbm_val(component, [value])
+            self.spanner.insert_data(table='gluuApplicationConfiguration', columns=["doc_id", component], values=[["oxauth", type_val]])
 
 
         elif self.moddb == BackendTypes.COUCHBASE:
@@ -392,7 +447,7 @@ class DBUtils:
                 for col, val in search_list:
                     if val == '*':
                         continue
-                    
+
                     if col.lower() == 'objectclass':
                         s_table = val
                     else:
@@ -411,7 +466,7 @@ class DBUtils:
                 sql_cmd = 'SELECT * FROM {} WHERE ({}) {}'.format(s_table, dn_clause, where_clause)
 
                 data = self.spanner.exec_sql(sql_cmd)
-    
+
                 if not data.get('rows'):
                     return retVal
 
@@ -507,7 +562,7 @@ class DBUtils:
                 value2.append(v.strip())
         value2.append(client_id)
 
-        return  ','.join(value2)
+        return ','.join(value2)
 
     def add_client2script(self, script_inum, client_id):
         dn = 'inum={},ou=scripts,o=gluu'.format(script_inum)
@@ -544,9 +599,12 @@ class DBUtils:
                 else:
                     oxConfigurationProperty = {'v': []}
 
-                for oxconfigprop in oxConfigurationProperty['v']:
+                for i, oxconfigprop in enumerate(oxConfigurationProperty['v'][:]):
+                    if isinstance(oxconfigprop, str):
+                        oxconfigprop = json.loads(oxconfigprop)
                     if oxconfigprop.get('value1') == 'allowed_clients' and not client_id in oxconfigprop['value2']:
                         oxconfigprop['value2'] = self.add2strlist(client_id, oxconfigprop['value2'])
+                        oxConfigurationProperty['v'][i] = oxconfigprop
                         break
                 else:
                     oxConfigurationProperty['v'].append({'value1': 'allowed_clients', 'value2': client_id})
