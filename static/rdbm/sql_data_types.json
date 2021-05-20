@@ -125,7 +125,7 @@
       "type": "STRING"
     }
   },
-  "jansAccessTknSigAlg": {
+  "oxAccessTokenSigningAlg": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -135,7 +135,7 @@
       "type": "STRING"
     }
   },
-  "jansAppTyp": {
+  "oxApplicationType": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -145,7 +145,7 @@
       "type": "STRING"
     }
   },
-  "jansAttrName": {
+  "gluuAttributeName": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -155,7 +155,7 @@
       "type": "STRING"
     }
   },
-  "jansAttrOrigin": {
+  "gluuAttributeOrigin": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -165,7 +165,7 @@
       "type": "STRING"
     }
   },
-  "jansAttrTyp": {
+  "gluuAttributeType": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -175,7 +175,7 @@
       "type": "STRING"
     }
   },
-  "jansAttrs": {
+  "oxAttributes": {
     "mysql": {
       "type": "TEXT"
     },
@@ -183,7 +183,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansAuthMode": {
+  "oxAuthenticationMode": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -193,7 +193,7 @@
       "type": "STRING"
     }
   },
-  "cacheConf": {
+  "oxCacheConfiguration": {
     "mysql": {
       "type": "TEXT"
     },
@@ -201,7 +201,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansClaimName": {
+  "oxAuthClaimName": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -229,7 +229,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansConfDyn": {
+  "oxAuthConfDynamic": {
     "mysql": {
       "type": "TEXT"
     },
@@ -237,7 +237,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansConfErrors": {
+  "oxAuthConfErrors": {
     "mysql": {
       "type": "TEXT"
     },
@@ -245,7 +245,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansConfStatic": {
+  "oxAuthConfStatic": {
     "mysql": {
       "type": "TEXT"
     },
@@ -253,7 +253,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansConfWebKeys": {
+  "oxAuthConfWebKeys": {
     "mysql": {
       "type": "TEXT"
     },
@@ -261,7 +261,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansDbAuth": {
+  "oxIDPAuthentication jansDbAuth": {
     "mysql": {
       "type": "JSON"
     },
@@ -269,7 +269,7 @@
       "type": "ARRAY<STRING(MAX)>"
     }
   },
-  "jansDocStoreConf": {
+  "oxDocumentStoreConfiguration": {
     "mysql": {
       "type": "TEXT"
     },
@@ -277,7 +277,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansGrantTyp": {
+  "oxAuthGrantType": {
     "mysql": {
       "type": "JSON"
     },
@@ -285,7 +285,7 @@
       "type": "ARRAY<STRING(MAX)>"
     }
   },
-  "jansId": {
+  "oxId": {
     "mysql": {
       "size": 128,
       "type": "VARCHAR"
@@ -295,7 +295,7 @@
       "type": "STRING"
     }
   },
-  "jansIdTknSignedRespAlg": {
+  "oxAuthIdTokenSignedResponseAlg": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -305,7 +305,7 @@
       "type": "STRING"
     }
   },
-  "jansOrgShortName": {
+  "gluuOrgShortName": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -315,7 +315,7 @@
       "type": "STRING"
     }
   },
-  "jansProgLng": {
+  "programmingLanguage": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -325,7 +325,7 @@
       "type": "STRING"
     }
   },
-  "jansRespTyp": {
+  "oxAuthResponseType": {
     "mysql": {
       "type": "JSON"
     },
@@ -333,7 +333,7 @@
       "type": "ARRAY<STRING(MAX)>"
     }
   },
-  "jansSAML1URI": {
+  "gluuSAML1URI": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -343,7 +343,7 @@
       "type": "STRING"
     }
   },
-  "jansSAML2URI": {
+  "gluuSAML2URI": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -353,7 +353,7 @@
       "type": "STRING"
     }
   },
-  "oxAuthCustomScopeTyp": {
+  "oxScopeType": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -363,7 +363,7 @@
       "type": "STRING"
     }
   },
-  "jansScr": {
+  "oxScript": {
     "mysql": {
       "type": "TEXT"
     },
@@ -371,7 +371,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansScrTyp": {
+  "oxScriptType": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -381,7 +381,7 @@
       "type": "STRING"
     }
   },
-  "jansStatus": {
+  "gluuStatus": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -391,7 +391,7 @@
       "type": "STRING"
     }
   },
-  "jansSubjectTyp": {
+  "oxAuthSubjectType": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -401,7 +401,7 @@
       "type": "STRING"
     }
   },
-  "jansThemeColor": {
+  "gluuThemeColor": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -411,7 +411,7 @@
       "type": "STRING"
     }
   },
-  "jansTknEndpointAuthMethod": {
+  "oxAuthTokenEndpointAuthMethod": {
     "mysql": {
       "size": 64,
       "type": "VARCHAR"
@@ -421,7 +421,7 @@
       "type": "STRING"
     }
   },
-  "jansValidation": {
+  "oxValidation": {
     "mysql": {
       "type": "TINYTEXT"
     },
@@ -440,7 +440,7 @@
       "type": "ARRAY<STRING(MAX)>"
     }
   },
-  "jansDeviceKeyHandle": {
+  "oxDeviceKeyHandle": {
     "mysql": {
       "size": 96,
       "type": "VARCHAR"
@@ -450,7 +450,7 @@
       "type": "STRING"
     }
   },
-  "jansPublicKeyId": {
+  "oxPublicKeyId": {
     "mysql": {
       "size": 96,
       "type": "VARCHAR"
@@ -460,7 +460,7 @@
       "type": "STRING"
     }
   },
-  "jansRegistrationData": {
+  "oxRegistrationData": {
     "mysql": {
       "type": "TEXT"
     },
@@ -476,7 +476,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansDeviceData": {
+  "oxDeviceData": {
     "mysql": {
       "type": "TINYTEXT"
     },
@@ -497,7 +497,7 @@
       "type": "STRING"
     }
   },
-  "jansInitiateLoginURI": {
+  "oxAuthInitiateLoginURI": {
     "mysql": {
       "type": "TINYTEXT"
     },
@@ -508,7 +508,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansJwksURI": {
+  "oxAuthJwksURI": {
     "mysql": {
       "type": "TINYTEXT"
     },
@@ -519,7 +519,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansLogoURI": {
+  "oxAuthLogoURI": {
     "mysql": {
       "type": "TINYTEXT"
     },
@@ -530,7 +530,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansPolicyURI": {
+  "oxAuthPolicyURI": {
     "mysql": {
       "type": "TINYTEXT"
     },
@@ -541,7 +541,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansReqURI": {
+  "oxAuthRequestURI": {
     "mysql": {
       "type": "TINYTEXT"
     },
@@ -552,7 +552,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansSectorIdentifierURI": {
+  "oxAuthSectorIdentifierURI": {
     "mysql": {
       "type": "TINYTEXT"
     },
@@ -574,7 +574,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansTosURI": {
+  "oxAuthTosURI": {
     "mysql": {
       "type": "TINYTEXT"
     },
@@ -585,7 +585,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansClaimRedirectURI": {
+  "oxClaimRedirectURI": {
     "mysql": {
       "type": "TINYTEXT"
     },
@@ -596,7 +596,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansJwt": {
+  "oxJwt": {
     "mysql": {
       "type": "TEXT"
     },
@@ -604,7 +604,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansPermissionGrantedMap": {
+  "oxAuthPermissionGrantedMap": {
     "mysql": {
       "type": "TEXT"
     },
@@ -612,7 +612,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansInvolvedClnts": {
+  "oxInvolvedClients": {
     "mysql": {
       "type": "TEXT"
     },
@@ -620,7 +620,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansSessAttr": {
+  "oxAuthSessionAttribute": {
     "mysql": {
       "type": "TEXT"
     },
@@ -628,7 +628,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansSessState": {
+  "oxSessionState": {
     "mysql": {
       "type": "TEXT"
     },
@@ -722,7 +722,7 @@
       "type": "STRING"
     }
   },
-  "jansLogoutURI": {
+  "oxAuthLogoutURI": {
     "mysql": {
       "type": "TINYTEXT"
     },
@@ -733,7 +733,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansJwks": {
+  "oxAuthJwks": {
     "mysql": {
       "type": "TEXT"
     },
@@ -741,7 +741,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansUmaScope": {
+  "oxAuthUmaScope": {
     "mysql": {
       "size": 128,
       "type": "VARCHAR"
@@ -751,7 +751,7 @@
       "type": "STRING"
     }
   },
-  "jansSoftStatement": {
+  "oxSoftwareStatement": {
     "mysql": {
       "type": "TEXT"
     },
@@ -759,7 +759,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "oxAuthCustomScopeExpression": {
+  "oxScopeExpression": {
     "mysql": {
       "type": "TEXT"
     },
@@ -785,7 +785,7 @@
       "type": "STRING"
     }
   },
-  "jansUmaPermission": {
+  "oxUmaPermission": {
     "mysql": {
       "type": "JSON"
     },
@@ -793,7 +793,7 @@
       "type": "ARRAY<STRING(MAX)>"
     }
   },
-  "jansScrError": {
+  "oxScriptError": {
     "mysql": {
       "type": "TEXT"
     },
@@ -823,7 +823,7 @@
       }
     }
   },
-  "jansMetaLocation": {
+  "oxTrustMetaLocation": {
     "mysql": {
       "type": "TINYTEXT"
     },
@@ -834,7 +834,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "jansUsrDN": {
+  "oxAuthUserDN": {
     "mysql": {
       "size": 128,
       "type": "VARCHAR"
@@ -844,7 +844,7 @@
       "type": "STRING"
     }
   },
-  "jansSmtpConf": {
+  "oxSmtpConfiguration": {
     "mysql": {
       "type": "JSON"
     },
@@ -852,7 +852,7 @@
       "type": "ARRAY<STRING(MAX)>"
     }
   },
-  "jansResource": {
+  "oxResource": {
     "mysql": {
       "type": "TINYTEXT"
     },
@@ -882,7 +882,7 @@
       "type": "TIMESTAMP"
     }
   },
-  "jansData": {
+  "oxData": {
     "mysql": {
       "type": "TEXT"
     },
