@@ -4712,6 +4712,28 @@
             "substr": "caseIgnoreSubstringsMatch",
             "syntax": "1.3.6.1.4.1.1466.115.121.1.27",
             "x_origin": "Gluu created attribute"
+        },
+        {
+            "desc": "gluuConfigurationPollingInterval", 
+            "equality": "caseIgnoreMatch", 
+            "names": [
+                "gluuConfigurationPollingInterval"
+            ], 
+            "oid": "oxAttribute", 
+            "substr": "caseIgnoreSubstringsMatch", 
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
+            "x_origin": "Gluu created attribute"
+        },
+        {
+            "desc": "gluuConfigurationDnsServer",
+            "equality": "caseIgnoreMatch",
+            "names": [
+                "gluuConfigurationDnsServer"
+            ],
+            "oid": "oxAttribute",
+            "substr": "caseIgnoreSubstringsMatch",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+            "x_origin": "Gluu created attribute"
         }
     ], 
     "objectClasses": [
@@ -5015,7 +5037,9 @@
                 "gluuPassportEnabled", 
                 "gluuRadiusEnabled", 
                 "gluuSamlEnabled", 
-                "gluuSmtpServerTrust"
+                "gluuSmtpServerTrust",
+                "gluuConfigurationPollingInterval",
+                "gluuConfigurationDnsServer"
             ], 
             "must": [
                 "objectclass"

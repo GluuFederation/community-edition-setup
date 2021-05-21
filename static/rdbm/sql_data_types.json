@@ -221,7 +221,7 @@
       "type": "STRING"
     }
   },
-  "jansConfApp": {
+  "oxConfApplication": {
     "mysql": {
       "type": "TEXT"
     },
@@ -261,7 +261,7 @@
       "type": "STRING(MAX)"
     }
   },
-  "oxIDPAuthentication jansDbAuth": {
+  "oxIDPAuthentication": {
     "mysql": {
       "type": "JSON"
     },
@@ -890,14 +890,6 @@
       "type": "STRING(MAX)"
     }
   },
-  "oxIDPAuthentication": {
-    "mysql": {
-      "type": "TEXT"
-    },
-    "spanner": {
-      "type": "STRING(MAX)"
-    }
-  },
   "oxLogViewerConfig": {
     "mysql": {
       "type": "TEXT"
@@ -939,14 +931,6 @@
     }
   },
   "gluuConfStatic": {
-    "mysql": {
-      "type": "TEXT"
-    },
-    "spanner": {
-      "type": "STRING(MAX)"
-    }
-  },
-  "oxConfApplication": {
     "mysql": {
       "type": "TEXT"
     },
