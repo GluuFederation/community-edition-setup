@@ -604,10 +604,10 @@ class DBUtils:
                         oxconfigprop = json.loads(oxconfigprop)
                     if oxconfigprop.get('value1') == 'allowed_clients' and not client_id in oxconfigprop['value2']:
                         oxconfigprop['value2'] = self.add2strlist(client_id, oxconfigprop['value2'])
-                        oxConfigurationProperty['v'][i] = oxconfigprop
+                        oxConfigurationProperty['v'][i] = json.dumps(oxconfigprop)
                         break
                 else:
-                    oxConfigurationProperty['v'].append({'value1': 'allowed_clients', 'value2': client_id})
+                    oxConfigurationProperty['v'].append(json.dumps({'value1': 'allowed_clients', 'value2': client_id}))
 
                 sqlalchemyObj.oxConfigurationProperty = oxConfigurationProperty
                 self.session.commit()
