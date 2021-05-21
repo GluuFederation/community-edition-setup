@@ -61,7 +61,7 @@ class PackageUtils(SetupUtils):
             if install_list[install_type]:
                 packages = " ".join(install_list[install_type])
 
-                if not setupOptions['noPrompt']:
+                if not base.argsp.n:
                     if install_type == 'mondatory':
                         print("The following packages are required for Gluu Server")
                         print(packages)
@@ -82,7 +82,7 @@ class PackageUtils(SetupUtils):
                 if install[install_type]:
                     self.logIt("Installing packages " + packages)
                     print("Installing packages", packages)
-                    if not self.os_type == 'fedora':
+                    if not base.os_type == 'fedora':
                         sout, serr = self.run(update_command, shell=True, get_stderr=True)
                     self.run(install_command.format(packages), shell=True)
 
