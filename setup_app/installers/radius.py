@@ -4,11 +4,12 @@ import json
 import base64
 
 from setup_app import paths
-from setup_app.static import AppType, InstallOption
+from setup_app.static import AppType, InstallOption, BackendTypes
 from setup_app.utils import base
 from setup_app.config import Config
 from setup_app.utils.setup_utils import SetupUtils
 from setup_app.installers.base import BaseInstaller
+from setup_app.utils.ldif_utils import schema2json
 
 class RadiusInstaller(BaseInstaller, SetupUtils):
 
@@ -98,12 +99,20 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
 
         self.run(['unzip', '-n', '-q', radius_libs, '-d', self.radius_dir ])
         self.copyFile(radius_jar, self.radius_dir)
+        schema_ldif = os.path.join(self.source_dir, 'schema/98-radius.ldif')
 
-        if Config.mappingLocations['default'] == 'ldap':
-            schema_ldif = os.path.join(self.source_dir, 'schema/98-radius.ldif')
+        if self.dbUtils.moddb == BackendTypes.LDAP:
             self.dbUtils.import_schema(schema_ldif)
             self.dbUtils.ldap_conn.rebind()
-            
+
+        elif self.dbUtils.moddb in (BackendTypes.MYSQL, BackendTypes.PGSQL, BackendTypes.SPANNER):
+            schema_json_fn = schema2json(schema_ldif)
+            self.dbUtils.read_gluu_schema(others=[schema_json_fn])
+
+            base.current_app.RDBMInstaller.create_tables([schema_json_fn])
+            if Config.rdbm_type != 'spanner': 
+                self.dbUtils.rdm_automapper(force=True)
+
         self.dbUtils.import_ldif([ldif_file_server])
         
         self.copyFile(os.path.join(self.source_dir, 'etc/default/gluu-radius'), Config.osDefault)
