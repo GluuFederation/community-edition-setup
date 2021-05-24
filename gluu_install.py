@@ -57,6 +57,23 @@ try:
 except:
     missing_packages.append('python3-six')
 
+try:
+    import six
+except:
+    missing_packages.append('python3-ruamel.yaml')
+
+
+try:
+    from distutils import dist
+except:
+    missing_packages.append('python3-distutils')
+
+try:
+    import pymysql
+except:
+    missing_packages.append('python3-pymysql')
+
+
 if not shutil.which('unzip'):
     missing_packages.append('unzip')
 
