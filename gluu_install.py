@@ -58,7 +58,7 @@ except:
     missing_packages.append('python3-six')
 
 try:
-    import six
+    import ruamel.yaml
 except:
     missing_packages.append('python3-ruamel.yaml')
 
