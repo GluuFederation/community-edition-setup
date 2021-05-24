@@ -21,7 +21,7 @@ parser.add_argument('-uninstall', help="Uninstall Gluu server and removes all fi
 parser.add_argument('--args', help="Arguments to be passed to setup.py")
 parser.add_argument('--keep-downloads', help="Keep downloaded files", action='store_true')
 parser.add_argument('-n', help="No prompt", action='store_true')
-parser.add_argument('-no-setup', help="Do not launch setup", action='store_true')
+parser.add_argument('--no-setup', help="Do not launch setup", action='store_true')
 argsp = parser.parse_args()
 
 cur_dir = os.path.dirname(os.path.realpath(__file__))
