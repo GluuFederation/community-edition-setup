@@ -232,8 +232,8 @@ class PostSetup:
     install_type = static.InstallOption.MONDATORY
 
 gluuProgress.register(PostSetup)
-gluuProgress.queue = queue
-
+if not argsp.no_progress:
+    gluuProgress.queue = queue
 
 if argsp.shell:
     code.interact(local=locals())

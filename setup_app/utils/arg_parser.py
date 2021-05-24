@@ -53,7 +53,7 @@ def arg_parser():
     parser.add_argument('-country', help="Two letters country coude used for generating X.509 certificates")
     parser.add_argument('-oxtrust-admin-password', help="Used as the default admin user for oxTrust")
     parser.add_argument('-ldap-admin-password', help="Used as the LDAP directory manager password")
-    parser.add_argument('-application-max-ram', help="Used as the LDAP directory manager password")
+    parser.add_argument('-application-max-ram', help="Application max ram")
     parser.add_argument('-properties-password', help="Encoded setup.properties file password")
     parser.add_argument('--install-casa', help="Install Casa", action='store_true')
     parser.add_argument('--install-oxd', help="Install Oxd Server", action='store_true')
@@ -63,6 +63,7 @@ def arg_parser():
     parser.add_argument('-couchbase-bucket-prefix', help="Set prefix for couchbase buckets", default='gluu')
     parser.add_argument('--generate-oxd-certificate', help="Generate certificate for oxd based on hostname", action='store_true')
     parser.add_argument('--shell', help="Drop into interactive shell before starting installation", action='store_true')
+    parser.add_argument('--no-progress', help="Use simple progress", action='store_true')
 
     # spanner options
     parser.add_argument('-spanner-project', help="Spanner project name")
