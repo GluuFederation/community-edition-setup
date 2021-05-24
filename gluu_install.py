@@ -13,6 +13,16 @@ import locale
 from urllib import request
 from urllib.parse import urljoin
 
+
+parser = argparse.ArgumentParser(description="This script downloads Gluu Server components and fires setup")
+parser.add_argument('-u', help="Use downloaded components", action='store_true')
+#parser.add_argument('-upgrade', help="Upgrade Gluu war and jar files", action='store_true')
+parser.add_argument('-uninstall', help="Uninstall Gluu server and removes all files", action='store_true')
+parser.add_argument('--args', help="Arguments to be passed to setup.py")
+parser.add_argument('--keep-downloads', help="Keep downloaded files", action='store_true')
+parser.add_argument('-n', help="No prompt", action='store_true')
+argsp = parser.parse_args()
+
 cur_dir = os.path.dirname(os.path.realpath(__file__))
 gluu_app_dir = '/opt/dist/gluu'
 app_dir = '/opt/dist/app'
@@ -84,9 +94,10 @@ rpm_clone = shutil.which('rpm')
 
 if missing_packages:
     packages_str = ' '.join(missing_packages)
-    result = input("Missing package(s): {0}. Install now? (Y|n): ".format(packages_str))
-    if result.strip() and result.strip().lower()[0] == 'n':
-        sys.exit("Can't continue without installing these packages. Exiting ...")
+    if not argsp.n:
+        result = input("Missing package(s): {0}. Install now? (Y|n): ".format(packages_str))
+        if result.strip() and result.strip().lower()[0] == 'n':
+            sys.exit("Can't continue without installing these packages. Exiting ...")
 
     if rpm_clone:
         cmd = 'yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{}.noarch.rpm'.format(os_version)
@@ -108,14 +119,6 @@ if missing_packages:
 if not os.path.exists(scripts_dir):
     os.makedirs(scripts_dir)
 
-parser = argparse.ArgumentParser(description="This script downloads Gluu Server components and fires setup")
-parser.add_argument('-u', help="Use downloaded components", action='store_true')
-#parser.add_argument('-upgrade', help="Upgrade Gluu war and jar files", action='store_true')
-parser.add_argument('-uninstall', help="Uninstall Gluu server and removes all files", action='store_true')
-parser.add_argument('--args', help="Arguments to be passed to setup.py")
-parser.add_argument('--keep-downloads', help="Keep downloaded files", action='store_true')
-
-argsp = parser.parse_args()
 
 jetty_home = '/opt/gluu/jetty'
 services = ['casa.service', 'identity.service', 'opendj.service', 'oxauth.service', 'passport.service', 'fido2.service', 'idp.service', 'oxauth-rp.service', 'oxd-server.service', 'scim.service']
@@ -144,17 +147,18 @@ if argsp.uninstall:
     print("You will lose all data related to Gluu Server.")
     print('\033[0m')
     print()
-    while True:
-        print('\033[31m \033[1m')
-        response = input("Are you sure to uninstall Gluu Server? [yes/N] ")
-        print('\033[0m')
-        if response.lower() in ('yes', 'n', 'no'):
-            if not response.lower() == 'yes':
-                sys.exit()
+    if not argsp.n:
+        while True:
+            print('\033[31m \033[1m')
+            response = input("Are you sure to uninstall Gluu Server? [yes/N] ")
+            print('\033[0m')
+            if response.lower() in ('yes', 'n', 'no'):
+                if not response.lower() == 'yes':
+                    sys.exit()
+                else:
+                    break
             else:
-                break
-        else:
-            print("Please type \033[1m yes \033[0m to uninstall")
+                print("Please type \033[1m yes \033[0m to uninstall")
 
     print("Uninstalling Gluu Server...")
 
