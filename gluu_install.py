@@ -130,7 +130,7 @@ app_versions = {
     "OX_VERSION": "4.3.0", 
     "JYTHON_VERSION": "2.7.2",
     "OPENDJ_VERSION": "4.4.10",
-    "SETUP_BRANCH": "version_4.3.0_dev",
+    "SETUP_BRANCH": "version_4.3.0",
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7"
     }
