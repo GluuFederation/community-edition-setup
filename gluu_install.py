@@ -21,6 +21,7 @@ parser.add_argument('-uninstall', help="Uninstall Gluu server and removes all fi
 parser.add_argument('--args', help="Arguments to be passed to setup.py")
 parser.add_argument('--keep-downloads', help="Keep downloaded files", action='store_true')
 parser.add_argument('-n', help="No prompt", action='store_true')
+parser.add_argument('-no-setup', help="Do not launch setup", action='store_true')
 argsp = parser.parse_args()
 
 cur_dir = os.path.dirname(os.path.realpath(__file__))
@@ -373,9 +374,10 @@ shutil.rmtree(tmp_dir)
 
 os.chmod('/install/community-edition-setup/setup.py', 33261)
 
-print("Launcing Gluu Setup")
-setup_cmd = 'python3 {}/setup.py'.format(ces_dir)
-if argsp.args:
-    setup_cmd += ' ' + argsp.args
+if not argsp.no_setup:
+    print("Launching Gluu Setup")
+    setup_cmd = 'python3 {}/setup.py'.format(ces_dir)
+    if argsp.args:
+        setup_cmd += ' ' + argsp.args
 
-os.system(setup_cmd)
+    os.system(setup_cmd)
