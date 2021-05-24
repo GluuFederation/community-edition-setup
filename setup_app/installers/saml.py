@@ -120,11 +120,7 @@ class SamlInstaller(JettyInstaller):
                 '--storepass', Config.shibJksPass]
             
         self.run(' '.join(cmd), shell=True)
-
-        # chown -R jetty:jetty /opt/shibboleth-idp
-        # self.run([self.cmd_chown,'-R', 'jetty:jetty', self.idp3Folder], '/opt')
-        self.run([paths.cmd_chown, '-R', 'jetty:jetty', jettyServiceWebapps], '/opt')
-
+        self.run([paths.cmd_chown, '-R', 'jetty:jetty', self.idp3Folder])
         couchbase_mappings = self.getMappingType('couchbase')
         if 'user' in couchbase_mappings:
             self.saml_couchbase_settings()
@@ -232,7 +228,6 @@ class SamlInstaller(JettyInstaller):
             
             self.run([paths.cmd_mkdir, '-p', folder])
 
-        self.run([paths.cmd_chown, '-R', 'jetty:jetty', self.idp3Folder])
 
     def installed(self):
         return os.path.exists(os.path.join(Config.jetty_base, self.service_name, 'start.ini'))

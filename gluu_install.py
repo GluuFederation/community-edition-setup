@@ -42,7 +42,7 @@ with open(os_release_fn) as f:
         if row:
             if row[0] == 'ID':
                 os_type = row[1].lower()
-                if os_type in  ('rhel', 'redhat'):
+                if os_type in ('rhel', 'redhat'):
                     os_type = 'red'
                 elif 'ubuntu-core' in os_type:
                     os_type = 'ubuntu'
@@ -70,8 +70,10 @@ except:
 try:
     import ruamel.yaml
 except:
-    missing_packages.append('python3-ruamel.yaml')
-
+    if os_type == 'red':
+        missing_packages.append('python3-ruamel-yaml')
+    else:
+        missing_packages.append('python3-ruamel.yaml')
 
 try:
     from distutils import dist
@@ -81,7 +83,10 @@ except:
 try:
     import pymysql
 except:
-    missing_packages.append('python3-pymysql')
+    if os_type == 'red':
+        missing_packages.append('python3-PyMySQL')
+    else:
+        missing_packages.append('python3-pymysql')
 
 
 if not shutil.which('unzip'):

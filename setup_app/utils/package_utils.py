@@ -15,12 +15,12 @@ class PackageUtils(SetupUtils):
             query_command = 'dpkg-query -W -f=\'${{Status}}\' {} 2>/dev/null | grep -c "ok installed"'
             check_text = '0'
 
-        elif base.clone_type in ('centos', 'red', 'fedora'):
+        elif base.clone_type == 'rpm':
             install_command = 'yum install -y {0}'
             update_command = 'yum install -y epel-release'
             query_command = 'rpm -q {0}'
             check_text = 'is not installed'
-            
+
         return install_command, update_command, query_command, check_text
 
     def check_and_install_packages(self):
