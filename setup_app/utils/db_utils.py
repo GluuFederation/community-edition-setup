@@ -45,7 +45,11 @@ class DBUtils:
 
         base.logIt("Bind to database")
 
-        logging.basicConfig(filename=os.path.join(Config.install_dir, 'logs', Config.rdbm_type + '.log'))
+        logging.basicConfig(
+                filename=os.path.join(Config.install_dir, 'logs', Config.rdbm_type + '.log'),
+                level=logging.DEBUG,
+                format='%(asctime)s %(levelname)s - %(message)s'
+                )
 
         if Config.mappingLocations['default'] == 'ldap':
             self.moddb = BackendTypes.LDAP
