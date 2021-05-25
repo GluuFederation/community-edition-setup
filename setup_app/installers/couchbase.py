@@ -29,7 +29,7 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
         self.couchbaseIndexJson = os.path.join(Config.install_dir, 'static/couchbase/index.json')
         self.couchbaseInitScript = os.path.join(Config.install_dir, 'static/system/initd/couchbase-server')
         self.couchebaseCert = os.path.join(Config.certFolder, 'couchbase.pem')
-        
+
         self.couchbaseBuckets = []
 
 
@@ -92,17 +92,9 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
         installOutput = self.installPackage(packageName)
         Config.post_messages.append(installOutput)
 
-        if base.os_name == 'ubuntu16':
-            script_name = os.path.basename(self.couchbaseInitScript)
-            target_file = os.path.join('/etc/init.d', script_name)
-            self.copyFile(self.couchbaseInitScript, target_file)
-            self.run([paths.cmd_chmod, '+x', target_file])
-            self.reload_daemon()
-            self.enable()
-            self.start()
 
     def couchebaseCreateCluster(self):
-        
+
         self.logIt("Initializing Couchbase Node")
         result = self.dbUtils.cbm.initialize_node()
         if result.ok:

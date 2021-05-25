@@ -36,6 +36,13 @@ def get_setup_options():
     if base.argsp.install_local_wrends:
         setupOptions['wrends_install'] = InstallTypes.LOCAL
 
+    if base.argsp.local_couchbase:
+        setupOptions['cb_install'] = InstallTypes.LOCAL
+
+    setupOptions['couchbase_bucket_prefix'] = base.argsp.couchbase_bucket_prefix
+    setupOptions['cb_password'] = base.argsp.couchbase_admin_password
+    setupOptions['couchebaseClusterAdmin'] = base.argsp.couchbase_admin_user
+
     if base.argsp.no_oxauth:
         setupOptions['installOxAuth'] = False
 
@@ -101,7 +108,6 @@ def get_setup_options():
     setupOptions['installOxd'] = base.argsp.install_oxd
     setupOptions['installScimServer'] = base.argsp.install_scim
     setupOptions['installFido2'] = base.argsp.install_fido2
-    setupOptions['couchbase_bucket_prefix'] = base.argsp.couchbase_bucket_prefix
 
     if base.argsp.remote_ldap:
         setupOptions['wrends_install'] = InstallTypes.REMOTE
@@ -165,6 +171,9 @@ def get_setup_options():
         else:
             print("The custom LDIF import directory {} does not exist. Exiting...".format(base.argsp.import_ldif))
             sys.exit(2)
+
+    if base.argsp.disable_local_ldap:
+        setupOptions['wrends_install'] = InstallTypes.NONE
 
     setupOptions['properties_password'] = base.argsp.properties_password
 

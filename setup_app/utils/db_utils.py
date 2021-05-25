@@ -169,7 +169,7 @@ class DBUtils:
                 self.spanner.create_table(query)
 
     def set_cbm(self):
-        self.cbm = CBM(Config.get('cb_query_node'), Config.get('couchebaseClusterAdmin'), Config.get('cb_password'))
+        self.cbm = CBM(Config.get('cb_query_node', Config.couchbase_hostname), Config.get('couchebaseClusterAdmin'), Config.get('cb_password'))
 
     def get_oxAuthConfDynamic(self):
         if self.moddb == BackendTypes.LDAP:
