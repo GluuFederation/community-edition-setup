@@ -42,9 +42,16 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                     if Config.wrends_install == InstallTypes.REMOTE:
                         t_ += '[R]'
                     bc.append(t_)
+
                 if Config.cb_install:
                     t_ = 'couchbase'
                     if Config.cb_install == InstallTypes.REMOTE:
+                        t_ += '[R]'
+                    bc.append(t_)
+
+                if Config.rdbm_install:
+                    t_ = Config.rdbm_type
+                    if Config.rdbm_install_type == InstallTypes.REMOTE:
                         t_ += '[R]'
                     bc.append(t_)
 

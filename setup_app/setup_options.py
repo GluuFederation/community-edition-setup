@@ -93,7 +93,7 @@ def get_setup_options():
     setupOptions['downloadWars'] = base.argsp.w
     setupOptions['installOxAuthRP'] = base.argsp.install_oxauth_rp
     setupOptions['installPassport'] = base.argsp.install_passport
-    setupOptions['loadTestData']  = base.argsp.t
+    setupOptions['loadTestData'] = base.argsp.t
     setupOptions['loadTestDataExit'] = base.argsp.x
     setupOptions['allowPreReleasedFeatures'] = base.argsp.allow_pre_released_features
     setupOptions['listenAllInterfaces'] = base.argsp.listen_all_interfaces

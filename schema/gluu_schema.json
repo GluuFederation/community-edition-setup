@@ -4865,7 +4865,8 @@
             "sup": [
                 "top"
             ], 
-            "x_origin": "Gluu created objectclass"
+            "x_origin": "Gluu created objectclass",
+            "sql": {"include": ["telephoneNumber"], "includeObjectClass": ["gluuCustomPerson"]}
         }, 
         {
             "kind": "STRUCTURAL", 
@@ -5310,7 +5311,8 @@
             "sup": [
                 "top"
             ], 
-            "x_origin": "Gluu created objectclass"
+            "x_origin": "Gluu created objectclass",
+            "sql": {"ignore": true}
         }, 
         {
             "kind": "STRUCTURAL", 

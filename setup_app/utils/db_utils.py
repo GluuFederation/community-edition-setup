@@ -45,6 +45,8 @@ class DBUtils:
 
         base.logIt("Bind to database")
 
+        logging.basicConfig(filename=os.path.join(Config.install_dir, 'logs', Config.rdbm_type + '.log'))
+
         if Config.mappingLocations['default'] == 'ldap':
             self.moddb = BackendTypes.LDAP
         elif Config.mappingLocations['default'] == 'rdbm':
@@ -85,8 +87,6 @@ class DBUtils:
 
         self.set_cbm()
         self.default_bucket = Config.couchbase_bucket_prefix
-
-        logging.basicConfig(filename=os.path.join(Config.install_dir, 'logs', Config.rdbm_type + '.log'))
 
     def sqlconnection(self, log=True):
         base.logIt("Making {} Connection to {}:{}/{} with user {}".format(Config.rdbm_type.upper(), Config.rdbm_host, Config.rdbm_port, Config.rdbm_db, Config.rdbm_user))
@@ -316,7 +316,7 @@ class DBUtils:
             self.session.commit()
 
         elif self.moddb == BackendTypes.SPANNER:
-            self.spanner.update_data(table='gluuApplicationConfiguration', columns=['doc_id', service], values=[["configuration", True]])
+            self.spanner.update_data(table='gluuConfiguration', columns=['doc_id', service], values=[["configuration", True]])
 
         elif self.moddb == BackendTypes.COUCHBASE:
             n1ql = 'UPDATE `{}` USE KEYS "configuration" SET {}=true'.format(self.default_bucket, service)

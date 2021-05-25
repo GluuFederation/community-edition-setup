@@ -45,7 +45,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
 
 
     def render_import_templates(self):
-        
+
         scripts_dir = os.path.join(self.source_dir,'scripts')
         for scriptFile, scriptName in ( ('super_gluu_ro_session.py', 'super_gluu_ro_session_script'),
                             ('super_gluu_ro.py','super_gluu_ro_script'),
@@ -54,7 +54,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
             base64ScriptFile = self.generate_base64_file(scriptFilePath, 1)
             Config.templateRenderingDict[scriptName] = base64ScriptFile
 
-        
+
         for template in ('gluu_radius_base.ldif', 'gluu_radius_clients.ldif'):
             tmp_fn = os.path.join(self.source_dir, 'templates', template)
             self.renderTemplateInOut(tmp_fn, self.templates_folder, self.output_folder)
@@ -71,6 +71,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
 
     def update_backend(self):
         self.dbUtils.enable_service('gluuRadiusEnabled')
+
 
     def install_gluu_radius(self):
         self.check_for_download()

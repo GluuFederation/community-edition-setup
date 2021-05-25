@@ -10,10 +10,7 @@ from google.cloud import spanner
 from google.cloud.spanner_v1 import session
 from google.auth.credentials import AnonymousCredentials
 
-from setup_app import paths
 from setup_app.config import Config
-from setup_app.utils import base
-
 
 class Spanner:
 

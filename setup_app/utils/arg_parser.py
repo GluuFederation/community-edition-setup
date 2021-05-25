@@ -40,6 +40,11 @@ def arg_parser():
     parser.add_argument('-rdbm-host', help="RDBM host")
 
     parser.add_argument('--remote-couchbase', help="Enables using remote couchbase server", action='store_true')
+    parser.add_argument('--local-couchbase', help="Enables installing couchbase server", action='store_true')
+    parser.add_argument('-couchbase-admin-user', help="Couchbase admin user")
+    parser.add_argument('-couchbase-admin-password', help="Couchbase admin user password")
+    parser.add_argument('-couchbase-bucket-prefix', help="Set prefix for couchbase buckets", default='gluu')
+
     parser.add_argument('--no-data', help="Do not import any data to database backend, used for clustering", action='store_true')
     parser.add_argument('--no-oxauth', help="Do not install oxAuth OAuth2 Authorization Server", action='store_true')
     parser.add_argument('--no-oxtrust', help="Do not install oxTrust Admin UI", action='store_true')
@@ -60,7 +65,6 @@ def arg_parser():
     parser.add_argument('--install-scim', help="Install Scim Server", action='store_true')
     parser.add_argument('--install-fido2', help="Install Fido2", action='store_true')
     parser.add_argument('--oxd-use-gluu-storage', help="Use Gluu Storage for Oxd Server", action='store_true')
-    parser.add_argument('-couchbase-bucket-prefix', help="Set prefix for couchbase buckets", default='gluu')
     parser.add_argument('--generate-oxd-certificate', help="Generate certificate for oxd based on hostname", action='store_true')
     parser.add_argument('--shell', help="Drop into interactive shell before starting installation", action='store_true')
     parser.add_argument('--no-progress', help="Use simple progress", action='store_true')
