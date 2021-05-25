@@ -46,7 +46,7 @@ class DBUtils:
         base.logIt("Bind to database")
 
         logging.basicConfig(
-                filename=os.path.join(Config.install_dir, 'logs', Config.rdbm_type + '.log'),
+                filename=os.path.join(Config.install_dir, 'logs/db-backend.log'),
                 level=logging.DEBUG,
                 format='%(asctime)s %(levelname)s - %(message)s'
                 )

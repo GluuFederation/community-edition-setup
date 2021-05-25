@@ -1,6 +1,8 @@
 import os
 import requests
 import urllib3
+import logging
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from requests.auth import HTTPBasicAuth
 from setup_app.utils.base import logIt
@@ -33,7 +35,7 @@ class CBM:
 
     def _get(self, endpoint):
         api = os.path.join(self.api_root, endpoint)
-
+        logging.info('getting %s', endpoint)
         try:
             result = requests.get(api, auth=self.auth, verify=False)
         except Exception as e:
@@ -43,6 +45,7 @@ class CBM:
         return result
 
     def _delete(self, endpoint):
+        logging.info('deleting %s', endpoint)
         api = os.path.join(self.api_root, endpoint)
         result = requests.delete(api, auth=self.auth, verify=False)
         self.logIfError(result)
@@ -50,12 +53,14 @@ class CBM:
 
 
     def _post(self, endpoint, data):
+        logging.info('posting %s to %s', data, endpoint)
         url = os.path.join(self.api_root, endpoint)
         result = requests.post(url, data=data, auth=self.auth, verify=False)
         self.logIfError(result)
         return result
     
     def _put(self,  endpoint, data):
+        logging.info('putting %s to %s', data, endpoint)
         url = os.path.join(self.api_root, endpoint)
         result = requests.put(url, data=data, auth=self.auth, verify=False)
         self.logIfError(result)
@@ -97,7 +102,7 @@ class CBM:
 
 
     def exec_query(self, query):
-        logIt("Executing n1ql {}".format(query))
+        logging.info("Executing n1ql %s", query)
         data = {'statement': query}
         result = requests.post(self.n1ql_api, data=data, auth=self.auth, verify=False)
         self.logIfError(result)
