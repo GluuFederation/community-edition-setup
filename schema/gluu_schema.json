@@ -4734,6 +4734,17 @@
             "substr": "caseIgnoreSubstringsMatch",
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
             "x_origin": "Gluu created attribute"
+        },
+        {
+            "desc": "jans id",
+            "equality": "caseIgnoreMatch",
+            "names": [
+                "jansId"
+            ],
+            "oid": "oxAttribute",
+            "substr": "caseIgnoreSubstringsMatch",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+            "x_origin": "Gluu created attribute"
         }
     ], 
     "objectClasses": [
@@ -6255,7 +6266,26 @@
                 "top"
             ],
             "x_origin": "Gluu created objectclass"
-        }
+        },
+        {
+            "kind": "STRUCTURAL",
+            "may": [
+                "jansId",
+                "dat",
+                "attr"
+            ],
+            "must": [
+                "objectclass"
+            ],
+            "names": [
+                "jansStatEntry"
+            ],
+            "oid": "oxObjectClass",
+            "sup": [
+                "top"
+            ],
+            "x_origin": "Gluu created objectclass"
+      }
     ], 
     "oidMacros": {
         "oxAttribute": "oxPublished:3", 
