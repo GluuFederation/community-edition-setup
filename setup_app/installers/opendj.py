@@ -156,6 +156,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         except:
             self.logIt("Error deleting OpenDJ properties. Make sure %s/opendj-setup.properties is deleted" % Config.ldapBaseFolder)
 
+        self.enable()
 
     def create_backends(self):
         backends = [
