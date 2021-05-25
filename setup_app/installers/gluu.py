@@ -359,6 +359,8 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                     self.logIt("Error writing %s to %s" % (output_fn, dest_fn), True)
 
     def post_install_tasks(self):
+        # set systemd timeout
+        self.set_systemd_timeout()
 
         self.deleteLdapPw()
 

@@ -451,6 +451,20 @@ class SetupUtils(Crypto64):
         except:
             self.logIt("Error adding group", True)
 
+    def set_systemd_timeout(self, t=300):
+        systemd_conf_fn = '/etc/systemd/system.conf'
+        systemd_conf = []
+
+        for l in open(systemd_conf_fn):
+            tl = l.strip('#')
+            if tl.startswith('DefaultTimeoutStartSec'):
+                systemd_conf.append('DefaultTimeoutStartSec=300s\n')
+            else:
+                systemd_conf.append(l)
+
+        self.writeFile(systemd_conf_fn, ''.join(systemd_conf))
+
+
     def fix_init_scripts(self, serviceName, initscript_fn):
         if base.snap:
             return
