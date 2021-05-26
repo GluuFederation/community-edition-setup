@@ -344,6 +344,10 @@ def do_installation():
 
         gluuInstaller.post_install_tasks()
 
+        if argsp.t:
+            base.logIt("Loading test data")
+            testDataLoader.load_test_data()
+
         gluuProgress.progress(static.COMPLETED)
 
         if not GSA:

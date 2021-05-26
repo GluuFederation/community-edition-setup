@@ -218,7 +218,7 @@ class DBUtils:
             result = self.cbm.exec_query(n1ql)
             js = result.json()
             dn = js['results'][0][self.default_bucket]['dn']
-            oxTrustConfApplication = json.loads(js['results'][0][self.default_bucket]['oxTrustConfApplication'])
+            oxTrustConfApplication = js['results'][0][self.default_bucket]['oxTrustConfApplication']
 
         return dn, oxTrustConfApplication
 
@@ -279,7 +279,7 @@ class DBUtils:
             self.spanner.update_data(table='oxTrustConfiguration', columns=['doc_id', 'oxTrustConfApplication'], values=[[doc_id, json.dumps(oxTrustConfApplication)]])
 
         elif self.moddb == BackendTypes.COUCHBASE:
-            n1ql = 'UPDATE `{}` USE KEYS "configuration_oxtrust" SET `oxTrustConfApplication`={}'.format(self.default_bucket, json.dumps(oxTrustConfApplication_js))
+            n1ql = 'UPDATE `{}` USE KEYS "configuration_oxtrust" SET `oxTrustConfApplication`={}'.format(self.default_bucket, oxTrustConfApplication_js)
             self.cbm.exec_query(n1ql)
 
     def enable_script(self, inum):

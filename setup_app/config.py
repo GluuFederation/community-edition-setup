@@ -334,6 +334,7 @@ class Config:
                 'oxd':       {'weigth' : 10, "min" : 128},
             }
 
+        self.couchbaseBuckets = []
         self.couchbaseBucketDict = OrderedDict((
                         ('default', { 'ldif':[
                                             self.ldif_base, 

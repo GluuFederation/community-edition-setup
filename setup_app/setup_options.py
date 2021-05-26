@@ -137,7 +137,7 @@ def get_setup_options():
         if base.argsp.rdbm_port:
             setupOptions['rdbm_port'] = base.argsp.rdbm_port
         else:
-            if setupOptions['rdbm_type'] == 'pgsql':
+            if setupOptions.get('rdbm_type') == 'pgsql':
                 setupOptions['rdbm_port'] = 5432
 
         if base.argsp.rdbm_db:

@@ -60,7 +60,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
             Config.encoded_couchbaseTrustStorePass = gluu_cb_prop['ssl.trustStore.pin']
             Config.couchbaseTrustStorePass = self.unobscure(gluu_cb_prop['ssl.trustStore.pin'])
             Config.cb_query_node = Config.couchbase_hostname
-            Config.couchbase_buckets = [b.strip() for b in gluu_cb_prop['buckets'].split(',')]
+            Config.couchbaseBuckets = [b.strip() for b in gluu_cb_prop['buckets'].split(',')]
 
         if not Config.persistence_type in ('couchbase', 'sql') and os.path.exists(Config.ox_ldap_properties):
             gluu_ldap_prop = base.read_properties_file(Config.ox_ldap_properties)
@@ -149,7 +149,11 @@ class CollectProperties(SetupUtils, BaseInstaller):
         if 'gluuIpAddress' in oxConfiguration:
             Config.ip = oxConfiguration['gluuIpAddress']
 
-        oxCacheConfiguration = json.loads(oxConfiguration['oxCacheConfiguration'])
+        if isinstance(oxConfiguration['oxCacheConfiguration'], dict):
+            oxCacheConfiguration = oxConfiguration['oxCacheConfiguration']
+        else:
+            oxCacheConfiguration = json.loads(oxConfiguration['oxCacheConfiguration'])
+
         Config.cache_provider_type = str(oxCacheConfiguration['cacheProviderType'])
 
         result = dbUtils.search(oxidp_ConfigurationEntryDN, search_filter='(objectClass=oxApplicationConfiguration)', search_scope=ldap3.BASE)
@@ -197,8 +201,9 @@ class CollectProperties(SetupUtils, BaseInstaller):
         if 'scimUmaClientId' in oxTrustConfApplication:
             Config.scim_rs_client_id =  oxTrustConfApplication['scimUmaClientId']
 
-        if 'scimUmaClientId' in oxTrustConfApplication:
+        if 'scimUmaResourceId' in oxTrustConfApplication:
             Config.scim_resource_oxid =  oxTrustConfApplication['scimUmaResourceId']
+
         if 'scimTestMode' in oxTrustConfApplication:
             Config.scimTestMode =  oxTrustConfApplication['scimTestMode']
 

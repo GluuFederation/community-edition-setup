@@ -80,6 +80,8 @@ class TestDataLoader(BaseInstaller, SetupUtils):
             Config.templateRenderingDict['config_oxauth_test_ldap'] = rendered_text
 
         if self.getMappingType('couchbase'):
+            cb_propt_dict = base.current_app.CouchbaseInstaller.couchbaseDict()
+            Config.templateRenderingDict.update(cb_propt_dict)
             template_text = self.readFile(os.path.join(self.template_base, 'oxauth/server/config-oxauth-test-couchbase.properties.nrnd'))
             rendered_text = self.fomatWithDict(template_text, self.merge_dicts(Config.__dict__, Config.templateRenderingDict))
             Config.templateRenderingDict['config_oxauth_test_couchbase'] = rendered_text
@@ -201,11 +203,16 @@ class TestDataLoader(BaseInstaller, SetupUtils):
             self.dbUtils.cbm.exec_query('CREATE INDEX def_gluu_myCustomAttr2 ON `gluu`(myCustomAttr2) USING GSI WITH {"defer_build":true}')
             self.dbUtils.cbm.exec_query('BUILD INDEX ON `gluu` (def_gluu_myCustomAttr1, def_gluu_myCustomAttr2)')
 
-        self.dbUtils.ldap_conn.bind()
+        if Config.wrends_install:
+            self.dbUtils.ldap_conn.bind()
 
         result = self.dbUtils.search('ou=configuration,o=gluu', search_filter='(oxIDPAuthentication=*)', search_scope=ldap3.BASE)
 
-        oxIDPAuthentication = json.loads(result['oxIDPAuthentication'])
+        if isinstance(result['oxIDPAuthentication'], dict):
+            oxIDPAuthentication = result['oxIDPAuthentication']
+        else:
+            oxIDPAuthentication = json.loads(result['oxIDPAuthentication'])
+
         oxIDPAuthentication['config']['servers'] = ['{0}:{1}'.format(Config.hostname, Config.ldaps_port)]
         oxIDPAuthentication_js = json.dumps(oxIDPAuthentication, indent=2)
         self.dbUtils.set_configuration('oxIDPAuthentication', oxIDPAuthentication_js)

@@ -3,8 +3,9 @@
     "ScimProperties": {
         "maxCount": 200
     },
-    "scimUmaClientKeyId":"",
-    "scimUmaResourceId":"%(scim_resource_oxid)s",
+    "scimUmaClientKeyId": "",
+    "scimUmaResourceId": "%(scim_resource_oxid)s",
+    "scimUmaClientId": "%(scim_rs_client_id)s",
     "scimUmaScope":"https://%(hostname)s/oxauth/restv1/uma/scopes/scim_access",
     "scimUmaClientKeyStoreFile":"%(scim_rs_client_jks_fn)s",
     "scimUmaClientKeyStorePassword":"%(scim_rs_client_jks_pass_encoded)s"
