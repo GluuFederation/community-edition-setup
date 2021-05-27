@@ -63,6 +63,13 @@ class TestDataLoader(BaseInstaller, SetupUtils):
     def load_test_data(self):
 
         if not self.scimInstaller.installed():
+            if Config.wrends_install:
+                try:
+                    self.dbUtils.ldap_conn.unbind()
+                except:
+                    pass
+                self.dbUtils.ldap_conn.bind()
+
             self.logIt("Scim was not installed. Installing")
             Config.installScimServer = True
             self.scimInstaller.start_installation()
@@ -204,6 +211,11 @@ class TestDataLoader(BaseInstaller, SetupUtils):
             self.dbUtils.cbm.exec_query('BUILD INDEX ON `gluu` (def_gluu_myCustomAttr1, def_gluu_myCustomAttr2)')
 
         if Config.wrends_install:
+            try:
+                self.dbUtils.ldap_conn.unbind()
+            except:
+                pass
+
             self.dbUtils.ldap_conn.bind()
 
         result = self.dbUtils.search('ou=configuration,o=gluu', search_filter='(oxIDPAuthentication=*)', search_scope=ldap3.BASE)
