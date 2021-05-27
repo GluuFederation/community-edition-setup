@@ -4692,28 +4692,6 @@
             "x_origin": "Gluu created attribute"
         },
         {
-            "desc": "salt for gluu attrbiute",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "salt"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "lifetime for gluu attrbiute",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "lifetime"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.27",
-            "x_origin": "Gluu created attribute"
-        },
-        {
             "desc": "gluuConfigurationPollingInterval", 
             "equality": "caseIgnoreMatch", 
             "names": [
@@ -5092,9 +5070,7 @@
                 "urn", 
                 "gluuRegExp", 
                 "gluuTooltip", 
-                "oxValidation",
-                "salt",
-                "lifetime"
+                "oxValidation"
             ], 
             "must": [
                 "objectclass"

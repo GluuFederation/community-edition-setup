@@ -2482,31 +2482,19 @@ attributeTypes: ( 1.3.6.1.4.1.48710.1.3.429 NAME 'authReqId'
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   X-ORIGIN 'Gluu created attribute' )
-attributeTypes: ( 1.3.6.1.4.1.48710.1.3.430 NAME 'salt'
-  DESC 'salt for gluu attrbiute'
-  EQUALITY caseIgnoreMatch
-  SUBSTR caseIgnoreSubstringsMatch
-  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
-  X-ORIGIN 'Gluu created attribute' )
-attributeTypes: ( 1.3.6.1.4.1.48710.1.3.431 NAME 'lifetime'
-  DESC 'lifetime for gluu attrbiute'
-  EQUALITY caseIgnoreMatch
-  SUBSTR caseIgnoreSubstringsMatch
-  SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
-  X-ORIGIN 'Gluu created attribute' )
-attributeTypes: ( 1.3.6.1.4.1.48710.1.3.432 NAME 'gluuConfigurationPollingInterval'
+attributeTypes: ( 1.3.6.1.4.1.48710.1.3.430 NAME 'gluuConfigurationPollingInterval'
   DESC 'gluuConfigurationPollingInterval'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   X-ORIGIN 'Gluu created attribute' )
-attributeTypes: ( 1.3.6.1.4.1.48710.1.3.433 NAME 'gluuConfigurationDnsServer'
+attributeTypes: ( 1.3.6.1.4.1.48710.1.3.431 NAME 'gluuConfigurationDnsServer'
   DESC 'gluuConfigurationDnsServer'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   X-ORIGIN 'Gluu created attribute' )
-attributeTypes: ( 1.3.6.1.4.1.48710.1.3.434 NAME 'jansId'
+attributeTypes: ( 1.3.6.1.4.1.48710.1.3.432 NAME 'jansId'
   DESC 'jans id'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
@@ -2546,7 +2534,7 @@ objectClasses: ( 1.3.6.1.4.1.48710.1.4.6 NAME 'gluuAttribute'
   SUP ( top )
   STRUCTURAL
   MUST ( objectclass )
-  MAY ( description $ displayName $ gluuAttributeEditType $ gluuAttributeName $ gluuAttributeOrigin $ gluuAttributeSystemEditType $ gluuAttributeType $ oxAuthClaimName $ gluuAttributeUsageType $ gluuAttributeViewType $ gluuCategory $ gluuSAML1URI $ gluuSAML2URI $ gluuStatus $ iname $ inum $ oxMultivaluedAttribute $ oxNameIdType $ oxSCIMCustomAttribute $ oxSourceAttribute $ seeAlso $ urn $ gluuRegExp $ gluuTooltip $ oxValidation $ salt $ lifetime )
+  MAY ( description $ displayName $ gluuAttributeEditType $ gluuAttributeName $ gluuAttributeOrigin $ gluuAttributeSystemEditType $ gluuAttributeType $ oxAuthClaimName $ gluuAttributeUsageType $ gluuAttributeViewType $ gluuCategory $ gluuSAML1URI $ gluuSAML2URI $ gluuStatus $ iname $ inum $ oxMultivaluedAttribute $ oxNameIdType $ oxSCIMCustomAttribute $ oxSourceAttribute $ seeAlso $ urn $ gluuRegExp $ gluuTooltip $ oxValidation )
   X-ORIGIN 'Gluu created objectclass' )
 objectClasses: ( 1.3.6.1.4.1.48710.1.4.7 NAME 'gluuSAMLconfig'
   SUP ( top )
@@ -2804,7 +2792,7 @@ objectClasses: ( 1.3.6.1.4.1.48710.1.4.49 NAME 'gluuOxtrustStat'
   SUP ( top )
   STRUCTURAL
   MUST ( objectclass )
-  MAY ( gluuFreeDiskSpace $ gluuFreeMemory $ gluuFreeSwap $ gluuGroupCount $ gluuIpAddress $ gluuLoadAvg $ gluuPersonCount $ gluuSystemUptime $ uniqueIdentifier )
+  MAY ( inum $ gluuFreeDiskSpace $ gluuFreeMemory $ gluuFreeSwap $ gluuGroupCount $ gluuIpAddress $ gluuLoadAvg $ gluuPersonCount $ gluuSystemUptime $ uniqueIdentifier )
   X-ORIGIN 'Gluu created objectclass' )
 objectClasses: ( 1.3.6.1.4.1.48710.1.4.50 NAME 'gluuApplicationConfiguration'
   SUP ( top )
