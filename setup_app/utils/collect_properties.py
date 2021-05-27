@@ -135,7 +135,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
             if Config.persistence_type in ('sql', 'spanner'):
                 admin_dn = result['member']['v'][0]
             else:
-                admin_dn = resul['member'][1]
+                admin_dn = result['member'][0]
 
         if admin_dn:
             for rd in dnutils.parse_dn(admin_dn):
@@ -144,8 +144,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
                     break
 
 
-
-        oxConfiguration = dbUtils.search(gluu_ConfigurationDN, search_filter='(objectClass=gluuConfiguration)',  search_scope=ldap3.BASE)
+        oxConfiguration = dbUtils.search(gluu_ConfigurationDN, search_filter='(objectClass=gluuConfiguration)', search_scope=ldap3.BASE)
         if 'gluuIpAddress' in oxConfiguration:
             Config.ip = oxConfiguration['gluuIpAddress']
 

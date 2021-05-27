@@ -148,6 +148,9 @@ class Config:
         self.spanner_emulator_host = None
         self.google_application_credentials = None
 
+        #couchbase
+        self.couchbaseBuckets = []
+
         # Gluu components installation status
         self.loadData = True
         self.installGluu = True
@@ -334,7 +337,6 @@ class Config:
                 'oxd':       {'weigth' : 10, "min" : 128},
             }
 
-        self.couchbaseBuckets = []
         self.couchbaseBucketDict = OrderedDict((
                         ('default', { 'ldif':[
                                             self.ldif_base, 

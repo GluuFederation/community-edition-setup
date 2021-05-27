@@ -1,3 +1,4 @@
+# Couchbase
 config.couchbase.couchbase_servers=%(cb_query_node)s
 config.couchbase.couchbase_server_user=%(couchebaseClusterAdmin)s
 config.couchbase.encoded_couchbase_server_pw=%(encoded_cb_password)s
