@@ -3,8 +3,8 @@
 ######################################
 dn: inum=XXXX.AAAA-1111,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.AAAA-1111
 uid: aaaa1111
 givenName: Aaaa 1111
@@ -19,8 +19,8 @@ mail: aaaa1111@test.email
 
 dn: inum=XXXX.AAAA-2222,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.AAAA-2222
 uid: aaaa2222
 givenName: Aaaa 2222
@@ -36,8 +36,8 @@ oxTrustPhotos: {"value":"http://some.gif/AAAA-2222.gif","display":"AAAA-2222","t
 
 dn: inum=XXXX.AAAA-3333,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.AAAA-3333
 uid: aaaa3333
 givenName: Aaaa 3333
@@ -50,8 +50,8 @@ birthdate: 20140307000000Z
 
 dn: inum=XXXX.AAAA-4444,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.AAAA-4444
 uid: aaaa4444
 givenName: Aaaa 4444
@@ -64,8 +64,8 @@ birthdate: 20140425000000Z
 
 dn: inum=XXXX.AAAA-5555,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.AAAA-5555
 uid: aaaa5555
 givenName: Aaaa 5555
@@ -78,8 +78,8 @@ birthdate: 20140518000000Z
 
 dn: inum=XXXX.BBBB-1111,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.BBBB-1111
 uid: bbbb1111
 givenName: Bbbb 1111
@@ -94,8 +94,8 @@ mail: bbbb1111@test.email
 
 dn: inum=XXXX.BBBB-2222,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.BBBB-2222
 uid: bbbb2222
 givenName: Bbbb 2222
@@ -109,8 +109,8 @@ oxTrustAddresses: {"type":"home","streetAddress":"621 East 6th Street Suite 200"
 
 dn: inum=XXXX.BBBB-3333,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.BBBB-3333
 uid: bbbb3333
 givenName: Bbbb 3333
@@ -123,8 +123,8 @@ birthdate: 20150321000000Z
 
 dn: inum=XXXX.BBBB-4444,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.BBBB-4444
 uid: bbbb4444
 givenName: Bbbb 4444
@@ -137,8 +137,8 @@ birthdate: 20150420000000Z
 
 dn: inum=XXXX.BBBB-5555,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.BBBB-5555
 uid: bbbb5555
 givenName: Bbbb 5555
@@ -151,8 +151,8 @@ birthdate: 20150530000000Z
 
 dn: inum=XXXX.CCCC-1111,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.CCCC-1111
 uid: cccc1111
 givenName: Cccc 1111
@@ -167,8 +167,8 @@ mail: cccc1111@test.email
 
 dn: inum=XXXX.CCCC-2222,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.CCCC-2222
 uid: cccc2222
 givenName: Cccc 2222
@@ -182,8 +182,8 @@ oxTrustAddresses: {"type":"work","streetAddress":"621 East 6th Street Suite 200"
 
 dn: inum=XXXX.CCCC-3333,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.CCCC-3333
 uid: cccc3333
 givenName: Cccc 3333
@@ -196,8 +196,8 @@ birthdate: 20160229194603Z
 
 dn: inum=XXXX.CCCC-4444,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.CCCC-4444
 uid: cccc4444
 givenName: Cccc 4444
@@ -210,8 +210,8 @@ birthdate: 20160315000000Z
 
 dn: inum=XXXX.CCCC-5555,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.CCCC-5555
 uid: cccc5555
 givenName: Cccc 5555
@@ -226,8 +226,8 @@ birthdate: 20160413000000Z
 
 dn: inum=XXXX.DDDD-1111,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.DDDD-1111
 uid: dddd1111 *char
 givenName: Dddd 1111
@@ -237,8 +237,8 @@ displayName: Test Dddd 1111
 
 dn: inum=XXXX.DDDD-2222,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.DDDD-2222
 uid: dddd2222 * \ (char
 givenName: Dddd 2222
@@ -248,8 +248,8 @@ displayName: Test Dddd 2222
 
 dn: inum=XXXX.DDDD-3333,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.DDDD-3333
 uid: dddd3333 * \ (char) /
 givenName: Dddd 3333
@@ -259,8 +259,8 @@ displayName: Test Dddd 3333
 
 dn: inum=XXXX.DDDD-4444,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.DDDD-4444
 uid: dddd4444
 givenName: (special chars\)/*
@@ -270,8 +270,8 @@ displayName: Test Dddd 4444
 
 dn: inum=XXXX.EEEE-1111,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 inum: XXXX.EEEE-1111
 uid: eeee1111
 gluuStatus: active

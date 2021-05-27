@@ -80,6 +80,8 @@ class TestDataLoader(BaseInstaller, SetupUtils):
 
         Config.templateRenderingDict['config_oxauth_test_ldap'] = '# Not available'
         Config.templateRenderingDict['config_oxauth_test_couchbase'] = '# Not available'
+        Config.templateRenderingDict['config_oxauth_test_spanner'] = '# Not available'
+        Config.templateRenderingDict['config_oxauth_test_sql'] = '# Not available'
 
         if self.getMappingType('ldap'):
             template_text = self.readFile(os.path.join(self.template_base, 'oxauth/server/config-oxauth-test-ldap.properties.nrnd'))
@@ -92,6 +94,17 @@ class TestDataLoader(BaseInstaller, SetupUtils):
             template_text = self.readFile(os.path.join(self.template_base, 'oxauth/server/config-oxauth-test-couchbase.properties.nrnd'))
             rendered_text = self.fomatWithDict(template_text, self.merge_dicts(Config.__dict__, Config.templateRenderingDict))
             Config.templateRenderingDict['config_oxauth_test_couchbase'] = rendered_text
+
+        if self.getMappingType('rdbm'):
+            if Config.rdbm_type == 'spanner': 
+                template_text = self.readFile(os.path.join(self.template_base, 'oxauth/server/config-oxauth-test-spanner.properties.nrnd'))
+                rendered_text = self.fomatWithDict(template_text, self.merge_dicts(Config.__dict__, Config.templateRenderingDict))
+                Config.templateRenderingDict['config_oxauth_test_spanner'] = rendered_text
+            else:
+                base.current_app.RDBMInstaller.server_time_zone()
+                template_text = self.readFile(os.path.join(self.template_base, 'oxauth/server/config-oxauth-test-sql.properties.nrnd'))
+                rendered_text = self.fomatWithDict(template_text, self.merge_dicts(Config.__dict__, Config.templateRenderingDict))
+                Config.templateRenderingDict['config_oxauth_test_sql'] = rendered_text
 
         self.render_templates_folder(self.template_base)
 
@@ -119,7 +132,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
 
 
         oxAuthConfDynamic_changes = {
-                                    'dynamicRegistrationCustomObjectClass':  'oxAuthClientCustomAttributes',
+                                    'dynamicRegistrationCustomObjectClass': 'oxAuthClientCustomAttributes',
                                     'dynamicRegistrationCustomAttributes': [ "oxAuthTrustedClient", "myCustomAttr1", "myCustomAttr2", "oxIncludeClaimsInIdToken" ],
                                     'dynamicRegistrationExpirationTime': 86400,
                                     'dynamicGrantTypeDefault': [ "authorization_code", "implicit", "password", "client_credentials", "refresh_token", "urn:ietf:params:oauth:grant-type:uma-ticket" ],
@@ -228,6 +241,10 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                     self.logIt("Ldap modify operation failed {}".format(str(self.dbUtils.ldap_conn.result)))
                     self.logIt("Ldap modify operation failed {}".format(str(self.dbUtils.ldap_conn.result)), True)
 
+        elif self.dbUtils.moddb in (static.BackendTypes.SPANNER, static.BackendTypes.MYSQL, static.BackendTypes.PGSQL):
+            # TODO: create additional indexes for rdbm
+            pass
+
         else:
             self.dbUtils.cbm.exec_query('CREATE INDEX def_gluu_myCustomAttr1 ON `gluu`(myCustomAttr1) USING GSI WITH {"defer_build":true}')
             self.dbUtils.cbm.exec_query('CREATE INDEX def_gluu_myCustomAttr2 ON `gluu`(myCustomAttr2) USING GSI WITH {"defer_build":true}')
@@ -242,15 +259,15 @@ class TestDataLoader(BaseInstaller, SetupUtils):
             self.dbUtils.ldap_conn.bind()
 
         result = self.dbUtils.search('ou=configuration,o=gluu', search_filter='(oxIDPAuthentication=*)', search_scope=ldap3.BASE)
+        if result:
+            if isinstance(result['oxIDPAuthentication'], dict):
+                oxIDPAuthentication = result['oxIDPAuthentication']
+            else:
+                oxIDPAuthentication = json.loads(result['oxIDPAuthentication'])
 
-        if isinstance(result['oxIDPAuthentication'], dict):
-            oxIDPAuthentication = result['oxIDPAuthentication']
-        else:
-            oxIDPAuthentication = json.loads(result['oxIDPAuthentication'])
-
-        oxIDPAuthentication['config']['servers'] = ['{0}:{1}'.format(Config.hostname, Config.ldaps_port)]
-        oxIDPAuthentication_js = json.dumps(oxIDPAuthentication, indent=2)
-        self.dbUtils.set_configuration('oxIDPAuthentication', oxIDPAuthentication_js)
+            oxIDPAuthentication['config']['servers'] = ['{0}:{1}'.format(Config.hostname, Config.ldaps_port)]
+            oxIDPAuthentication_js = json.dumps(oxIDPAuthentication, indent=2)
+            self.dbUtils.set_configuration('oxIDPAuthentication', oxIDPAuthentication_js)
 
         self.create_test_client_keystore()
 

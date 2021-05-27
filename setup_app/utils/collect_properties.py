@@ -123,7 +123,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
     
             result = dbUtils.search('inum=5866-4202,ou=scripts,o=gluu', search_filter='(objectClass=oxCustomScript)', search_scope=ldap3.BASE)
             if result:
-                Config.enableRadiusScripts = result['oxEnabled']
+                Config.enableRadiusScripts = result.get('oxEnabled', False)
 
             result = dbUtils.search('ou=clients,o=gluu', search_filter='(&(inum=1402.*)(objectClass=oxAuthClient))', search_scope=ldap3.SUBTREE)
             if result:
@@ -132,7 +132,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
         admin_dn = None
         result = dbUtils.search('o=gluu', search_filter='(&(gluuGroupType=gluuManagerGroup)(objectClass=gluuGroup))', search_scope=ldap3.SUBTREE)
         if result:
-            if Config.persistence_type in ('sql', 'spanner'):
+            if Config.persistence_type in ('sql',):
                 admin_dn = result['member']['v'][0]
             else:
                 admin_dn = result['member'][0]
