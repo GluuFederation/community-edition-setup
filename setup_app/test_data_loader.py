@@ -183,27 +183,50 @@ class TestDataLoader(BaseInstaller, SetupUtils):
             
             self.run(['/bin/su', 'ldap', '-c', dsconfigCmd], cwd=cwd)
 
-            self.dbUtils.ldap_conn.unbind()
 
-            self.restart('opendj')
-            #wait 10 seconds to start opendj
-            time.sleep(10)
-
-            for atr in ('myCustomAttr1', 'myCustomAttr2'):
-                cmd = (
-                    'create-backend-index --backend-name userRoot --type generic '
-                    '--index-name {} --set index-type:equality --set index-entry-limit:4000 '
-                    '--hostName {} --port {} --bindDN "{}" -j /home/ldap/.pw '
-                    '--trustAll --noPropertiesFile --no-prompt'
-                    ).format(
-                        atr, 
-                        Config.ldap_hostname,
-                        Config.ldap_admin_port, 
-                        Config.ldap_binddn
+            self.logIt("Making opndj listen all interfaces")
+            ldap_operation_result = self.dbUtils.ldap_conn.modify(
+                    'cn=LDAPS Connection Handler,cn=Connection Handlers,cn=config', 
+                     {'ds-cfg-listen-address': [ldap3.MODIFY_REPLACE, '0.0.0.0']}
                     )
 
-                dsconfigCmd = '{1} {2}'.format(Config.ldapBaseFolder, os.path.join(cwd, 'dsconfig'), cmd)
-                self.run(['/bin/su', 'ldap', '-c', dsconfigCmd], cwd=cwd)
+            if not ldap_operation_result:
+                    self.logIt("Ldap modify operation failed {}".format(str(self.ldap_conn.result)))
+                    self.logIt("Ldap modify operation failed {}".format(str(self.ldap_conn.result)), True)
+
+            self.dbUtils.ldap_conn.unbind()
+
+            self.logIt("Re-starting opendj")
+            self.restart('opendj')
+
+            self.logIt("Re-binding opendj")
+            # try 5 times to re-bind opendj
+            for i in range(5):
+                time.sleep(5)
+                self.logIt("Try binding {} ...".format(i+1))
+                bind_result = self.dbUtils.ldap_conn.bind()
+                if bind_result:
+                    self.logIt("Binding to opendj was successful")
+                    break
+                self.logIt("Re-try in 5 seconds")
+            else:
+                self.logIt("Re-binding opendj FAILED")
+                sys.exit("Re-binding opendj FAILED")
+
+            for atr in ('myCustomAttr1', 'myCustomAttr2'):
+
+                dn = 'ds-cfg-attribute={},cn=Index,ds-cfg-backend-id={},cn=Backends,cn=config'.format(atr, 'userRoot')
+                entry = {
+                            'objectClass': ['top','ds-cfg-backend-index'],
+                            'ds-cfg-attribute': [atr],
+                            'ds-cfg-index-type': ['equality'],
+                            'ds-cfg-index-entry-limit': ['4000']
+                            }
+                self.logIt("Creating Index {}".format(dn))
+                ldap_operation_result = self.dbUtils.ldap_conn.add(dn, attributes=entry)
+                if not ldap_operation_result:
+                    self.logIt("Ldap modify operation failed {}".format(str(self.dbUtils.ldap_conn.result)))
+                    self.logIt("Ldap modify operation failed {}".format(str(self.dbUtils.ldap_conn.result)), True)
 
         else:
             self.dbUtils.cbm.exec_query('CREATE INDEX def_gluu_myCustomAttr1 ON `gluu`(myCustomAttr1) USING GSI WITH {"defer_build":true}')
