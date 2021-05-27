@@ -215,9 +215,8 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                      {attr: [change_type, val]}
                     )
         #Create uniqueness for attrbiutes
-        for attr in ('mail', 'uid'):
+        for cn, attr in (('Unique mail address', 'mail'), ('Unique uid entry', 'uid')):
             self.logIt("Creating OpenDJ uniqueness for {}".format(attr))
-            cn = 'Unique {} entry'.format(attr)
             self.dbUtils.ldap_conn.add(
                 'cn={},cn=Plugins,cn=config'.format(cn),
                 attributes={
