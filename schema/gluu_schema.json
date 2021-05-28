@@ -5181,7 +5181,9 @@
             "may": [
                 "creationDate", 
                 "oxGuid", 
-                "personInum"
+                "personInum",
+                "del",
+                "exp"
             ], 
             "must": [
                 "objectclass"
