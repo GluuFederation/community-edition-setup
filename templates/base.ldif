@@ -12,6 +12,11 @@ gluuOrgShortName: %(orgName)s
 description: Welcome to oxTrust!
 displayName: %(orgName)s
 
+dn: o=metric
+objectClass: top
+objectClass: organization
+o: metric
+
 ################################
 # statistics parent
 dn: ou=stat,o=gluu
@@ -200,15 +205,21 @@ objectClass: top
 objectClass: organizationalUnit
 ou: trustRelationships
 
+# Metric data - LEVEL 2
+dn: ou=statistic,o=metric
+objectClass: top
+objectClass: organizationalunit
+ou: statistic
+
 ######################################
 
 # Metric data - LEVEL 3
 dn: ou=oxauth,ou=statistic,o=metric
 objectClass: top
 objectClass: organizationalunit
-ou: metric
+ou: oxauth
 
 dn: ou=oxtrust,ou=statistic,o=metric
 objectClass: top
 objectClass: organizationalunit
-ou: metric
+ou: oxtrust
