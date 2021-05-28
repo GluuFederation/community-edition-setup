@@ -201,3 +201,14 @@ objectClass: organizationalUnit
 ou: trustRelationships
 
 ######################################
+
+# Metric data - LEVEL 3
+dn: ou=oxauth,ou=statistic,o=metric
+objectClass: top
+objectClass: organizationalunit
+ou: metric
+
+dn: ou=oxtrust,ou=statistic,o=metric
+objectClass: top
+objectClass: organizationalunit
+ou: metric
