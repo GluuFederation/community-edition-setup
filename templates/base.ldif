@@ -12,11 +12,6 @@ gluuOrgShortName: %(orgName)s
 description: Welcome to oxTrust!
 displayName: %(orgName)s
 
-dn: o=metric
-objectClass: top
-objectClass: organization
-o: metric
-
 ################################
 # statistics parent
 dn: ou=stat,o=gluu
