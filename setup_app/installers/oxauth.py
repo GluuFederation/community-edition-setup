@@ -62,7 +62,7 @@ class OxauthInstaller(JettyInstaller):
         jwks = self.gen_openid_jwks_jks_keys(self.oxauth_openid_jks_fn, Config.oxauth_openid_jks_pass, key_expiration=2, key_algs=sig_keys, enc_keys=enc_keys)
         self.write_openid_keys(self.oxauth_openid_jwks_fn, jwks)
 
-    def render_import_templates(self):        
+    def render_import_templates(self):
         self.renderTemplateInOut(self.oxauth_config_json, self.templates_folder, self.output_folder)
 
         Config.templateRenderingDict['oxauth_config_base64'] = self.generate_base64_ldap_file(self.oxauth_config_json)
