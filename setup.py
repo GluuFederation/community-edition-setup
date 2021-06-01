@@ -208,11 +208,25 @@ class Setup(object):
 
         self.sysemProfile = "/etc/profile"
 
-        # java commands
-        self.jre_home = '/opt/jre'
-        self.cmd_java = '%s/bin/java' % self.jre_home
-        self.cmd_keytool = '%s/bin/keytool' % self.jre_home
-        self.cmd_jar = '%s/bin/jar' % self.jre_home
+        self.use_existing_java = False
+        # determine if java is available on system
+        cmd_java = shutil.which('java')
+        if cmd_java:
+            java_version = os.popen('java -version 2>&1 | awk -F[\\\"\.] -v OFS=. \'NR==1{print $2,$3}\'').read().strip()
+            if java_version > '1.8':
+                self.use_existing_java = True
+                self.jre_home = os.popen('type -p {}|xargs readlink -f|xargs dirname|xargs dirname'.format(cmd_java)).read().strip()
+                self.cmd_java = cmd_java
+                self.cmd_keytool = shutil.which('keytool')
+                self.cmd_jar = shutil.which('jar')
+
+        if not self.use_existing_java:
+            # java commands
+            self.jre_home = '/opt/jre'
+            self.cmd_java = '%s/bin/java' % self.jre_home
+            self.cmd_keytool = '%s/bin/keytool' % self.jre_home
+            self.cmd_jar = '%s/bin/jar' % self.jre_home
+
         os.environ["OPENDJ_JAVA_HOME"] =  self.jre_home
 
         # Component ithversions
@@ -458,7 +472,7 @@ class Setup(object):
         self.ldapDsconfigCommand = "%s/bin/dsconfig" % self.ldapBaseFolder
         self.ldapDsCreateRcCommand = "%s/bin/create-rc-script" % self.ldapBaseFolder
         self.ldapDsJavaPropCommand = "%s/bin/dsjavaproperties" % self.ldapBaseFolder
-        
+
         self.ldap_user_home = '/home/ldap'
         self.ldapPassFn = '%s/.pw' % self.ldap_user_home
         self.ldap_backend_type = 'je'
@@ -482,7 +496,10 @@ class Setup(object):
 
         self.apache_start_script = '/etc/init.d/httpd'
 
-        self.defaultTrustStoreFN = '%s/jre/lib/security/cacerts' % self.jre_home
+        self.defaultTrustStoreFN = os.path.join(self.jre_home, 'lib/security/cacerts')
+        if not os.path.exists(self.defaultTrustStoreFN):
+            self.defaultTrustStoreFN = os.path.join(self.jre_home, 'jre/lib/security/cacerts')
+
         self.defaultTrustStorePW = 'changeit'
 
         self.passportSpKeyPass = None
@@ -1613,6 +1630,12 @@ class Setup(object):
     def fix_java_security(self):
         # https://github.com/OpenIdentityPlatform/OpenDJ/issues/78
         java_security_fn = os.path.join(self.jre_home, 'conf/security/java.security')
+        if not os.path.exists(java_security_fn):
+            java_security_fn = os.path.join(self.jre_home, 'lib/security/java.security')
+
+        if not os.path.exists(java_security_fn):
+            self.logIt("Java security file not found", errorLog=True)
+            return
 
         p = Properties()
         with open(java_security_fn, 'rb') as f:
@@ -1628,7 +1651,7 @@ class Setup(object):
                    java_security[i] = k + '=' + 'TLSv1.3, ' + v + '\n'
                    break
 
-        self.writeFile(java_security_fn, '\n'.join(java_security))
+            self.writeFile(java_security_fn, '\n'.join(java_security))
 
 
     def installJRE(self):
@@ -1678,9 +1701,7 @@ class Setup(object):
             for jsfn in Path('/opt/jre').rglob('java.security'):
                 self.run(['sed', '-i', '/^#crypto.policy=unlimited/s/^#//', jsfn._str])
 
-        self.fix_java_security()
-
-    def extractOpenDJ(self):        
+    def extractOpenDJ(self):
 
         openDJArchive = max(glob.glob(os.path.join(self.distFolder, 'app/opendj-server-*.zip')))
 
@@ -2020,7 +2041,7 @@ class Setup(object):
         public_certificate = '%s/%s.crt' % (self.certFolder, suffix)
         self.run([self.opensslCommand,
                   'genrsa',
-                  '-des3',
+                  '-aes256',
                   '-out',
                   key_with_password,
                   '-passout',
@@ -3793,17 +3814,15 @@ class Setup(object):
 
         try:
             ldapSetupCommand = '%s/setup' % self.ldapBaseFolder
-            setupCmd = " ".join([ldapSetupCommand,
+            setupCmd = [ldapSetupCommand,
                                 '--no-prompt',
                                 '--cli',
                                 '--propertiesFilePath',
                                 setupPropsFN,
-                                '--acceptLicense'])
-            self.run(['/bin/su',
-                      'ldap',
-                      '-c',
-                      setupCmd],
+                                '--acceptLicense']
+            self.run(setupCmd,
                       cwd='/opt/opendj',
+                      env={'OPENDJ_JAVA_HOME': self.jre_home}
                       )
         except:
             self.logIt("Error running LDAP setup script", True)
@@ -3814,7 +3833,7 @@ class Setup(object):
         try:
             self.logIt('Stopping opendj server')
             cmd = os.path.join(self.ldapBaseFolder, 'bin/stop-ds')
-            self.run(['/bin/su','ldap', '-c', cmd], cwd='/opt/opendj/bin')
+            self.run(cmd, cwd='/opt/opendj/bin', env={'OPENDJ_JAVA_HOME': self.jre_home})
         except:
             self.logIt("Error stopping opendj", True)
             self.logIt(traceback.format_exc(), True)
@@ -3884,22 +3903,19 @@ class Setup(object):
                           
         for changes in config_changes:
             cwd = os.path.join(self.ldapBaseFolder, 'bin')
-            dsconfigCmd = " ".join([
-                                    self.ldapDsconfigCommand,
-                                    '--trustAll',
-                                    '--no-prompt',
-                                    '--hostname',
-                                    self.ldap_hostname,
-                                    '--port',
-                                    self.ldap_admin_port,
-                                    '--bindDN',
-                                    '"%s"' % self.ldap_binddn,
-                                    '--bindPasswordFile',
-                                    self.ldapPassFn] + changes)
-            self.run(['/bin/su',
-                      'ldap',
-                      '-c',
-                      dsconfigCmd], cwd=cwd)
+            dsconfigCmd = [
+                            self.ldapDsconfigCommand,
+                            '--trustAll',
+                            '--no-prompt',
+                            '--hostname',
+                            self.ldap_hostname,
+                            '--port',
+                            self.ldap_admin_port,
+                            '--bindDN',
+                            '"%s"' % self.ldap_binddn,
+                            '--bindPasswordFile',
+                            self.ldapPassFn] + changes
+            self.run(dsconfigCmd, cwd=cwd, env={'OPENDJ_JAVA_HOME': self.jre_home})
 
     def export_opendj_public_cert(self):
         # Load password to acces OpenDJ truststore
@@ -4027,7 +4043,7 @@ class Setup(object):
                 for backend_name in backend_names:
                     if (backend_name == backend):
                         self.logIt("Creating %s index for attribute %s" % (', '.join(index_types), attr_name))
-                        indexCmd = " ".join([
+                        indexCmd = [
                                              self.ldapDsconfigCommand,
                                              index_command,
                                              '--backend-name',
@@ -4048,11 +4064,8 @@ class Setup(object):
                                              '-j', self.ldapPassFn,
                                              '--trustAll',
                                              '--noPropertiesFile',
-                                             '--no-prompt'])
-                        self.run(['/bin/su',
-                                  'ldap',
-                                  '-c',
-                                  indexCmd], cwd=cwd)
+                                             '--no-prompt']
+                        self.run(indexCmd, cwd=cwd, env={'OPENDJ_JAVA_HOME': self.jre_home})
 
         except:
             self.logIt("Error occured during backend " + backend + " LDAP indexing", True)
@@ -4246,7 +4259,7 @@ class Setup(object):
                 w.write(oxd_cert)
 
             self.run([self.cmd_keytool, '-import', '-trustcacerts', '-keystore', 
-                            '/opt/jre/jre/lib/security/cacerts', '-storepass', 'changeit', 
+                            self.defaultTrustStoreFN, '-storepass', 'changeit', 
                             '-noprompt', '-alias', oxd_alias, '-file', oxd_cert_tmp_fn])
 
         except:
@@ -5133,7 +5146,7 @@ class Setup(object):
             tmp_fn = '/tmp/77-customAttributes.ldif'
             with open(tmp_fn, 'wb') as w:
                 ldif_writer = LDIFWriter(w)
-                for dn, entry in obcl_parser.entries:                
+                for dn, entry in obcl_parser.entries:
                     ldif_writer.unparse(dn, entry)
 
             self.copyFile(tmp_fn, self.openDjSchemaFolder)
@@ -5149,7 +5162,7 @@ class Setup(object):
                         self.ldap_binddn
                     )
             
-            self.run(['/bin/su', 'ldap', '-c', dsconfigCmd], cwd=cwd)
+            self.run(dsconfigCmd, cwd=cwd, shell=True, env={'OPENDJ_JAVA_HOME': self.jre_home})
             
             ldap_conn.unbind()
             
@@ -5169,7 +5182,7 @@ class Setup(object):
                     )
                 
                 dsconfigCmd = '{1} {2}'.format(self.ldapBaseFolder, self.ldapDsconfigCommand, cmd)
-                self.run(['/bin/su', 'ldap', '-c', dsconfigCmd], cwd=cwd)
+                self.run(dsconfigCmd, cwd=cwd, env={'OPENDJ_JAVA_HOME': self.jre_home})
             
             
             ldap_conn = self.getLdapConnection()
@@ -5635,8 +5648,10 @@ class Setup(object):
             self.downloadWarFiles()
             self.pbar.progress("gluu", "Calculating application memory")
             self.calculate_selected_aplications_memory()
-            self.pbar.progress("java", "Installing JRE")
-            self.installJRE()
+            if not self.use_existing_java:
+                self.pbar.progress("java", "Installing JRE")
+                self.installJRE()
+            self.fix_java_security()
             self.pbar.progress("jetty", "Installing Jetty")
             self.installJetty()
             self.pbar.progress("jython", "Installing Jython")
