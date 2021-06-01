@@ -61,7 +61,7 @@ def zipper(final_attr):
             print(directory_name + ' logs are not available...')
 
     handle.writestr('version_info.txt', version)
-    print('\nZipper process has been finished.\nLogs are zipped in All_logs.zip')
+    print('\nZipper process has been finished.\nLogs are zipped successfully.')
     handle.close()
 
 
