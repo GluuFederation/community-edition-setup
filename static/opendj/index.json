@@ -56,6 +56,13 @@
     },
 
     {
+        "attribute": "jansId",
+        "type": "string",
+        "index": ["equality"],
+        "backend": ["userRoot"]
+    },
+
+    {
         "attribute": "oxAuthClientId",
         "type": "string",
         "index": ["equality"],
@@ -127,7 +134,7 @@
         "attribute": "exp",
         "type": "date",
         "index": ["ordering"],
-        "backend": ["userRoot"]
+        "backend": ["userRoot", "metric"]
     },
 
     {
@@ -209,6 +216,13 @@
 
     {
         "attribute": "ssnId",
+        "type": "string",
+        "index": ["equality"],
+        "backend": ["userRoot"]
+    },
+
+    {
+        "attribute": "sid",
         "type": "string",
         "index": ["equality"],
         "backend": ["userRoot"]
@@ -302,7 +316,7 @@
         "attribute": "del",
         "type": "boolean",
         "index": ["equality"],
-        "backend": ["userRoot"]
+        "backend": ["userRoot", "metric"]
     },
 
     {

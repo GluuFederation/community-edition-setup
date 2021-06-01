@@ -9,6 +9,7 @@
     "idpUrl":"https://%(hostname)s",
     "applicationUrl":"https://%(hostname)s",
 
+
     "personObjectClassTypes":[
         "gluuCustomPerson",
         "gluuPerson",
@@ -44,6 +45,7 @@
     "photoRepositoryCountLeveles":3,
     "photoRepositoryCountFoldersPerLevel":20,
 
+
     "spMetadataPath":"",
 
     "logoLocation":"/var/gluu/photos",
@@ -52,18 +54,12 @@
 
     ],
 
-    "configGeneration":false,
+    "configGeneration":%(oxTrustConfigGeneration)s,
     "ignoreValidation":false,
-
-    "idpBindDn":"cn=Directory Manager",
-    "idpBindPassword":"%(encoded_ox_ldap_pw)s",
-    "idpLdapProtocol":"ldaps",
-    "idpLdapServer":"%(ldap_hostname)s:%(ldaps_port)s",
-    "idpUserFields":"",
 
     "ldifStore":"/var/gluu/identity/removed",
 
-    "caCertsLocation":"%(defaultTrustStoreFN)s",
+    "caCertsLocation":"/usr/java/latest/jre/lib/security/cacerts",
     "caCertsPassphrase":"",
 
     "certDir":"/etc/certs/",
@@ -102,7 +98,6 @@
     "rptConnectionPoolDefaultMaxPerRoute":20,
     "rptConnectionPoolValidateAfterInactivity":10,
     "rptConnectionPoolCustomKeepAliveTimeout":5,
-
 
     "organizationName":"%(orgName)s",
 

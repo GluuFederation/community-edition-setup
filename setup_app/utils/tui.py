@@ -265,7 +265,10 @@ class HostForm(GluuSetupForm):
 
 class ServicesForm(GluuSetupForm):
     services_before_this_form = []
-    services = ('installHttpd', 'installSaml', 'installOxAuthRP', 
+    if os.environ.get('GLUU_SERVICES'):
+        services = os.environ['GLUU_SERVICES'].split()
+    else:
+        services = ('installHttpd', 'installSaml', 'installOxAuthRP', 
                 'installPassport', 'installGluuRadius', 'installOxd', 
                 'installCasa', 'installScimServer', 'installFido2',
                 )
@@ -324,7 +327,7 @@ class ServicesForm(GluuSetupForm):
                 else:
                     return
 
-        if self.installSaml:
+        if 'installSaml' in self.services and self.installSaml:
             Config.shibboleth_version = 'v3'
 
         if self.installOxd.value:
@@ -616,16 +619,20 @@ class StorageSelectionForm(GluuSetupForm):
 
 class DisplaySummaryForm(GluuSetupForm):
 
-    myfields_1 = ("hostname", "orgName", "os_type", "city", "state", "countryCode",
-                   "application_max_ram")
+    myfields_1 = ["hostname", "orgName", "os_type", "city", "state", "countryCode",
+                   "application_max_ram"]
 
-    myfields_2 = ( "installOxAuth", "installOxTrust", 
-                    "installHttpd", "installSaml", "installOxAuthRP",
-                    "installPassport", "installGluuRadius", 
-                    "installOxd", "installCasa",
-                    'installScimServer', 'installFido2',
-                    "java_type",
-                    "backend_types", 'wrends_storages')
+    myfields_2 = [ "installOxAuth", "installOxTrust"]
+    
+    if os.environ.get('GLUU_SERVICES'):
+        myfields_2 += os.environ['GLUU_SERVICES'].split()
+    else:
+        myfields_2 += ["installSaml", "installOxAuthRP",
+                       "installPassport", "installGluuRadius", 
+                       "installOxd", "installCasa",
+                       'installScimServer', 'installFido2']
+                    
+    myfields_2 += ["java_type","backend_types", 'wrends_storages']
 
     def create(self):
 

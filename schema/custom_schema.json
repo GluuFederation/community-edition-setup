@@ -1,5 +1,33 @@
 {
-    "attributeTypes": [],
+
+    "attributeTypes": [
+        {
+        "desc": "Stores the unique identifier (bcid) for a user on BioID`s biometric service",
+
+            "equality": "caseIgnoreMatch",
+            "names": [
+                "oxBiometricDevices"
+            ],
+            "multivalued": true,
+            "oid": "oxAttribute", 
+            "substr": "caseIgnoreSubstringsMatch",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+            "x_origin": "Gluu created attribute"
+        },
+        {
+        "desc": "Stores the unique identifier for a user (userid) on DUO`s 2fa service",
+
+            "equality": "caseIgnoreMatch",
+            "names": [
+                "oxDuoDevices"
+            ],
+            "multivalued": true,
+            "oid": "oxAttribute", 
+            "substr": "caseIgnoreSubstringsMatch",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+            "x_origin": "Gluu created attribute"
+        }
+    ],
     "objectClasses": [
         {
             "kind": "AUXILIARY", 
@@ -23,17 +51,27 @@
                 "l",
                 "postalCode",
                 "description",
-                "title"
+                "title",
+                "oxBiometricDevices",
+                "oxDuoDevices"
             ], 
             "names": [
                 "gluuCustomPerson"
             ], 
-            "oid": "1.3.6.1.4.1.48710.1.4.101", 
+            "oid": "oxObjectClass", 
             "sup": [
                 "top"
             ], 
             "x_origin": "Gluu - Custom persom objectclass"
         }
     ], 
-    "oidMacros": {}
+    "oidMacros": {
+        "oxAttribute": "oxPublished:3", 
+        "oxMatchRules": "oxPublished:2", 
+        "oxObjectClass": "oxPublished:4", 
+        "oxOrgOID": "1.3.6.1.4.1.48720", 
+        "oxPublished": "oxOrgOID:1", 
+        "oxReserved": "oxOrgOID:0", 
+        "oxSyntax": "oxPublished:1"
+    }
 }
