@@ -18,6 +18,7 @@ from urllib.parse import urljoin
 
 run_time = time.strftime("%Y-%m-%d_%H-%M-%S")
 ces_dir = '/install/community-edition-setup'
+app_dir = '/opt/dist/app'
 
 parser = argparse.ArgumentParser(description="This script extracts community-edition-setup package and runs setup.py without arguments")
 parser.add_argument('-o', help="download latest package from github and override current community-edition-setup", action='store_true')
@@ -123,3 +124,13 @@ if os.path.exists(npyscreen_package):
 
         shutil.rmtree(target_dir)
 
+sqlalchemy_zfn = os.path.join(app_dir, 'sqlalchemy.zip')
+sqlalchemy_zip = zipfile.ZipFile(sqlalchemy_zfn, "r")
+sqlalchemy_par_dir = sqlalchemy_zip.namelist()[0]
+tmp_dir = os.path.join('/tmp', os.urandom(2).hex())
+sqlalchemy_zip.extractall(tmp_dir)
+shutil.copytree(
+        os.path.join(tmp_dir, sqlalchemy_par_dir, 'lib/sqlalchemy'),
+        os.path.join(ces_dir, 'setup_app/pylib/sqlalchemy')
+        )
+shutil.rmtree(tmp_dir)
