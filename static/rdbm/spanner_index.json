@@ -1,0 +1,83 @@
+{
+  "gluuPerson": {
+    "fields": [
+      "givenName",
+      "sn"
+    ],
+    "custom": [
+    ]
+  },
+    "oxAuthClient": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxAuthUmaPCT": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxAuthCustomScope": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxU2fRequest": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxMetric": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "token": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxDeviceRegistration": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "cache": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxAuthSessionId": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxUmaResource": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxClientAuthorization": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "__common__": {
+    "JSON": [
+    ],
+    "fields": [
+      "inum"
+    ]
+  }
+}

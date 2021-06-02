@@ -45,4 +45,4 @@ class DynamicScope(DynamicScopeType):
         return 11
     
     def getSupportedClaims(self,arg):
-        return None   
+         return None

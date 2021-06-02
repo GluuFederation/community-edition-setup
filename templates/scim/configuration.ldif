@@ -1,0 +1,9 @@
+# SCIM Scope
+dn: inum=8CAD-B06D,ou=scopes,o=gluu
+objectClass: oxAuthCustomScope
+objectClass: top
+displayName: SCIM Access
+inum: 8CAD-B06D
+oxId: https://%(hostname)s/oxauth/restv1/uma/scopes/scim_access
+oxUmaPolicyScriptDn: inum=2DAF-F9A5,ou=scripts,o=gluu
+oxScopeType: uma

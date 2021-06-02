@@ -1,0 +1,15 @@
+# Couchbase
+config.couchbase.couchbase_servers=%(cb_query_node)s
+config.couchbase.couchbase_server_user=%(couchebaseClusterAdmin)s
+config.couchbase.encoded_couchbase_server_pw=%(encoded_cb_password)s
+config.couchbase.couchbase_buckets=%(couchbase_buckets)s
+config.couchbase.default_bucket=%(couchbase_bucket_prefix)s
+
+config.bucket.default: %(couchbase_bucket_prefix)s
+%(couchbase_test_mappings)s
+
+config.couchbase.encryption_method=%(encryption_method)s
+config.couchbase.ssl_enabled=%(ssl_enabled)s
+config.couchbase.couchbaseTrustStoreFn=%(couchbaseTrustStoreFn)s
+config.couchbase.encoded_couchbaseTrustStorePass=%(encoded_couchbaseTrustStorePass)s
+config.couchbase.certFolder=%(certFolder)s

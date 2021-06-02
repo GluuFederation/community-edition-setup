@@ -38,7 +38,7 @@ name_changer = ChangeGluuHostname(
     local = True,
     
     # Version of Gluu Server you're trying to modify. For example: 4.1.1 , nochroot-4.2.1
-    gluu_version='4.2.2',
+    gluu_version='4.2.1',
     
     )
 

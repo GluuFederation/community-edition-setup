@@ -1,0 +1,87 @@
+{
+  "gluuPerson": {
+    "fields": [],
+    "custom": [
+      "(CAST(address->'$.v' AS CHAR(48) ARRAY))",
+      "(lower(`uid`))",
+      "(lower(`mail`))"
+    ]
+  },
+  "oxAuthClient": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxAuthUmaPCT": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxAuthCustomScope": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxU2fRequest": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxMetric": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "token": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxDeviceRegistration": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "cache": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxAuthSessionId": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxUmaResource": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxClientAuthorization": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "__common__": {
+    "JSON": [
+      "CAST($field->'$.v' AS $data_type ARRAY)",
+      "CAST($field->'$.v[0]' AS $data_type)",
+      "CAST($field->'$.v[1]' AS $data_type)",
+      "CAST($field->'$.v[2]' AS $data_type)"
+    ],
+    "fields": [
+        "uid"
+    ]
+  }
+}

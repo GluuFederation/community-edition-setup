@@ -1,0 +1,949 @@
+{
+  "dat": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "description": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "displayName": {
+    "mysql": {
+      "size": 128,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 128,
+      "type": "STRING"
+    }
+  },
+  "givenName": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "inum": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "middleName": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "nickname": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "o": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "ou": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "sn": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "uid": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "urn": {
+    "mysql": {
+      "size": 128,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 128,
+      "type": "STRING"
+    }
+  },
+  "userPassword": {
+    "mysql": {
+      "size": 100,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 100,
+      "type": "STRING"
+    }
+  },
+  "oxAccessTokenSigningAlg": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "oxApplicationType": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "gluuAttributeName": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "gluuAttributeOrigin": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "gluuAttributeType": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "oxAttributes": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthenticationMode": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "oxCacheConfiguration": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthClaimName": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "oxAuthClientSecret": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "oxConfApplication": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthConfDynamic": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthConfErrors": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthConfStatic": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthConfWebKeys": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxIDPAuthentication": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
+  },
+  "oxDocumentStoreConfiguration": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthGrantType": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
+  },
+  "oxId": {
+    "mysql": {
+      "size": 128,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 128,
+      "type": "STRING"
+    }
+  },
+  "oxAuthIdTokenSignedResponseAlg": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "gluuOrgShortName": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "programmingLanguage": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "oxAuthResponseType": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
+  },
+  "gluuSAML1URI": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "gluuSAML2URI": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "oxScopeType": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "oxScript": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxScriptType": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "gluuStatus": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "oxAuthSubjectType": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "gluuThemeColor": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "oxAuthTokenEndpointAuthMethod": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "oxValidation": {
+    "mysql": {
+      "type": "TINYTEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "member": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
+  },
+  "oxDeviceKeyHandle": {
+    "mysql": {
+      "size": 96,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 96,
+      "type": "STRING"
+    }
+  },
+  "oxPublicKeyId": {
+    "mysql": {
+      "size": 96,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 96,
+      "type": "STRING"
+    }
+  },
+  "oxRegistrationData": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxDeviceRegistrationConf": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxDeviceData": {
+    "mysql": {
+      "type": "TINYTEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "picture": {
+    "mysql": {
+      "size": 96,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 96,
+      "type": "STRING"
+    }
+  },
+  "oxAuthInitiateLoginURI": {
+    "mysql": {
+      "type": "TINYTEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthJwksURI": {
+    "mysql": {
+      "type": "TINYTEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthLogoURI": {
+    "mysql": {
+      "type": "TINYTEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthPolicyURI": {
+    "mysql": {
+      "type": "TINYTEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthRequestURI": {
+    "mysql": {
+      "type": "TINYTEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthSectorIdentifierURI": {
+    "mysql": {
+      "type": "TINYTEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthClientURI": {
+    "mysql": {
+      "type": "TINYTEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthTosURI": {
+    "mysql": {
+      "type": "TINYTEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxClaimRedirectURI": {
+    "mysql": {
+      "type": "TINYTEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxJwt": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthPermissionGrantedMap": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxInvolvedClients": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthSessionAttribute": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxSessionState": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "clnId": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "oxAuthClientId": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING"
+    }
+  },
+  "jwtReq": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "attr": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "nnc": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "scp": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "tknBndCnf": {
+    "mysql": {
+      "type": "TINYTEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "tknTyp": {
+    "mysql": {
+      "size": 32,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 32,
+      "type": "STRING"
+    }
+  },
+  "acr": {
+    "mysql": {
+      "size": 48,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 48,
+      "type": "STRING"
+    }
+  },
+  "oxAuthLogoutURI": {
+    "mysql": {
+      "type": "TINYTEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthJwks": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthUmaScope": {
+    "mysql": {
+      "size": 128,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 128,
+      "type": "STRING"
+    }
+  },
+  "oxSoftwareStatement": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxScopeExpression": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "memberOf": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
+  },
+  "tknCde": {
+    "mysql": {
+      "size": 80,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 80,
+      "type": "STRING"
+    }
+  },
+  "oxUmaPermission": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
+  },
+  "oxScriptError": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "doc_id": {
+    "mysql": {
+      "size": 64,
+      "type": "VARCHAR",
+      "tables": {
+        "oxClientAuthorization": {
+          "size": 100,
+          "type": "VARCHAR"
+        }
+      }
+    },
+    "spanner": {
+      "size": 64,
+      "type": "STRING",
+      "tables": {
+        "oxClientAuthorization": {
+          "size": 100,
+          "type": "STRING"
+        }
+      }
+    }
+  },
+  "oxTrustMetaLocation": {
+    "mysql": {
+      "type": "TINYTEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxAuthUserDN": {
+    "mysql": {
+      "size": 128,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 128,
+      "type": "STRING"
+    }
+  },
+  "oxSmtpConfiguration": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
+  },
+  "oxResource": {
+    "mysql": {
+      "type": "TINYTEXT"
+    },
+  "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "scimCustomSecond": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
+  },
+  "oxAuthClientIdIssuedAt": {
+    "mysql": {
+      "type": "DATETIME(3)"
+    },
+    "pgsql": {
+      "type": "TIMESTAMP"
+    },
+    "spanner": {
+      "type": "TIMESTAMP"
+    }
+  },
+  "oxData": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxLogViewerConfig": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxTrustConfApplication": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxTrustConfCacheRefresh": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxTrustConfImportPerson": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "gluuConfDynamic": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "gluuConfStatic": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "classRef": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  }
+}
