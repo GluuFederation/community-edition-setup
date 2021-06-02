@@ -2660,7 +2660,7 @@ objectClasses: ( 1.3.6.1.4.1.48710.1.4.27 NAME 'oxAuthUmaRPT'
   SUP ( top )
   STRUCTURAL
   MUST ( objectclass )
-  MAY ( authnTime $ clnId $ iat $ exp $ del $ tknCde $ usrId $ oxUmaPermission $ uuid )
+  MAY ( authnTime $ clnId $ iat $ exp $ del $ tknCde $ usrId $ oxUmaPermission $ uuid $ ssnId )
   X-ORIGIN 'Gluu created objectclass' )
 objectClasses: ( 1.3.6.1.4.1.48710.1.4.28 NAME 'oxLiteralNode'
   SUP ( top )
@@ -2762,7 +2762,7 @@ objectClasses: ( 1.3.6.1.4.1.48710.1.4.44 NAME 'oxAuthUmaPCT'
   SUP ( top )
   STRUCTURAL
   MUST ( objectclass )
-  MAY ( clnId $ iat $ exp $ del $ tknCde $ oxClaimValues )
+  MAY ( clnId $ iat $ exp $ del $ tknCde $ oxClaimValues $ ssnId )
   X-ORIGIN 'Gluu created objectclass' )
 objectClasses: ( 1.3.6.1.4.1.48710.1.4.45 NAME 'cache'
   SUP ( top )

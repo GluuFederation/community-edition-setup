@@ -14,6 +14,7 @@ import threading
 import math
 from queue import Queue
 from .messages import msg
+from pylib.printVersion import get_war_info
 
 # for putty connections we need the following env
 os.environ['NCURSES_NO_UTF8_ACS'] = "1" 
@@ -35,14 +36,18 @@ random_marketing_strings = [
     'Having trouble? Open a ticket: https://support.gluu.org',
     'Cluster your Gluu Server: https://gluu.org/docs/cm',
     'oxd exposes simple, static APIs web application developers https://gluu.org/docs/oxd',
-    'Gluu Gateway https://gluu.org/docs/gg',
-    'Super Gluu (2FA) https://gluu.org/docs/supergluu',
-    'Gluu Casa (self-service web portal) https://gluu.org/docs/casa',
-    "Let's discuss your project https://www.gluu.org/booking",
-    'Gluu has both a social and a business mission.',
+    'Gluu Gateway helps you secure APIs with OAuth, OpenID and UMA. See https://gateway.gluu.org',
+    'Super Gluu is free mobile 2FA applications that uses push notifications and FIDO authentication https://super.gluu.org',
+    'Gluu Casa is a self-service web portal that enables end users to manage their 2FA credentials https://casa.gluu.org',
+    "Interested in VIP support? Schedule a Zoom meeting https://www.gluu.org/booking",
+    'Gluu only uses open source components to build the Gluu Server.',
     'Consider Gluu VIP Platform Subscription https://gluu.org/contact',
-    "Deploy Gluu using Kubernetes: https://gluu.org/docs/de",
-    'Evaluate our commercial offerings: https://gluu.org/pricing',
+    "Gluu Cloud Edition uses Kubernetes, Helm and other cloud native components to enable auto-scaling.",
+    'Interested in Open Source startups? Listen to Open Source Underdogs: https://opensourceunderdogs.com',
+    'Confused about OpenID? Read "Securing the Perimeter" by Gluu CEO Mike Schwartz: https://gluu.co/book',
+    'The Gluu Server is one of the most advanced OpenID Providers. Compare at https://openid.net/certification',
+    'Installing the Gluu Server is a SNAP. Search for Gluu on https://snapcraft.io',
+    'Search the Digital Ocean Marketplace for a quick way to install the Gluu Server: https://marketplace.digitalocean.com/'
     ]
 
 marketing_text_period = 20 
@@ -94,7 +99,7 @@ class GluuSetupForm(npyscreen.FormBaseNew):
                 self.button_back = self.add(npyscreen.ButtonPress, name="Back", when_pressed_function=self.backButtonPressed, rely=self.lines-5, relx=self.columns - 20)
 
         self.button_quit = self.add(npyscreen.ButtonPress, name="Quit", when_pressed_function=self.quitButtonPressed, rely=self.lines-5, relx=self.columns - 12)
-
+        self.add(npyscreen.FixedText, value='CE {} {}'.format(msg.oxVersion, msg.oxauthBuildDate) , rely=self.lines-5, relx=2, editable=False, color='STANDOUT')
         if hasattr(self, 'do_beforeEditing'):
             self.do_beforeEditing()
 
@@ -127,9 +132,8 @@ class GluuSetupForm(npyscreen.FormBaseNew):
 class MAIN(GluuSetupForm):
 
     def create(self):
-
         desc_wrap = textwrap.wrap(msg.decription, self.columns - 6)
-
+        self.add_handlers({curses.KEY_F2: self.display_versions})
         self.description_label = self.add(npyscreen.MultiLineEdit, value='\n'.join(desc_wrap), max_height=6, rely=2, editable=False)
         self.description_label.autowrap = True
 
@@ -180,9 +184,22 @@ class MAIN(GluuSetupForm):
         self.button_next.rely =  self.lines-5
         self.button_next.relx = self.columns-20
 
+
+    def display_versions(self, code_of_key_pressed):
+
+        help_texts = []
+        
+        for war_file in ('oxauth.war', 'identity.war', 'idp.war', 'scim.war', 'fido2.war', 'casa.war'):
+            war_info = get_war_info(os.path.join(self.parentApp.installObject.distGluuFolder, war_file))
+            fn, fe = os.path.splitext(war_file)
+            s = '{}: {} {} {}'.format(fn.ljust(9), war_info['version'], war_info['buildDate'], war_info['build'])
+            help_texts.append(s)
+        help_text = 'versions'
+        npyscreen.notify_confirm('\n'.join(help_texts), title="Version Info", wide=True)
+
 class HostForm(GluuSetupForm):
 
-    myfields_ = ('ip', 'hostname', 'city', 'state', 'orgName', 'admin_email', 'countryCode', 'application_max_ram', 'oxtrust_admin_password')
+    myfields_ = ('ip', 'hostname', 'city', 'state', 'orgName', 'admin_email', 'countryCode', 'application_max_ram')
 
     def create(self):
 
@@ -197,8 +214,6 @@ class HostForm(GluuSetupForm):
 
         self.add(npyscreen.FixedText, value=make_title(msg.sys_info_label), rely=12, editable=False)
         self.application_max_ram = self.add(npyscreen.TitleText, name=msg.application_max_ram_label, begin_entry_at=25)
-        self.oxtrust_admin_password = self.add(npyscreen.TitleText, name=msg.oxtrust_admin_password_label, begin_entry_at=25)
-
 
     def nextButtonPressed(self):
 
@@ -222,15 +237,12 @@ class HostForm(GluuSetupForm):
             npyscreen.notify_confirm(msg.enter_valid_countryCode, title="Info")
             return
 
-        if len(self.oxtrust_admin_password.value) < 6:
-            npyscreen.notify_confirm(msg.oxtrust_admin_password_warning, title="Info")
-            return
-
         try:
             int(self.application_max_ram.value)
         except:
             npyscreen.notify_confirm(msg.max_ram_int_warning, title="Info")
             return
+
 
         for k in self.myfields_:
             f = getattr(self, k)
@@ -242,6 +254,9 @@ class HostForm(GluuSetupForm):
     def do_beforeEditing(self):
         if not self.parentApp.installObject.hostname:
             self.parentApp.installObject.hostname = self.parentApp.installObject.detect_hostname()
+
+        if self.parentApp.installObject.hostname.lower() == 'localhost':
+            self.parentApp.installObject.hostname = ''
 
         for k in self.myfields_:
             f = getattr(self, k)
@@ -255,7 +270,7 @@ class HostForm(GluuSetupForm):
 
 class ServicesForm(GluuSetupForm):
 
-    services = ('installHttpd', 'installSaml', 'installOxAuthRP', 
+    services = ('installHttpd', 'installOxTrust', 'installSaml', 'installOxAuthRP', 
                 'installPassport', 'installGluuRadius', 'installOxd', 
                 'installCasa', 'installScimServer', 'installFido2',
                 )
@@ -264,11 +279,13 @@ class ServicesForm(GluuSetupForm):
         for service in self.services:
             cb = self.add(npyscreen.Checkbox, scroll_exit=True, name = getattr(msg, 'ask_' + service))
             setattr(self, service, cb)
-
-        self.oxd_url = self.add(npyscreen.TitleText, name=msg.oxd_url_label, rely=12, begin_entry_at=17, hidden=True)
+        
+        self.oxtrust_admin_password = self.add(npyscreen.TitleText, name=msg.oxtrust_admin_password_label, rely=13, begin_entry_at=25)
+        self.oxd_url = self.add(npyscreen.TitleText, name=msg.oxd_url_label, rely=14, begin_entry_at=17, hidden=True)
 
         self.installCasa.value_changed_callback = self.casa_oxd_option_changed
         self.installOxd.value_changed_callback = self.casa_oxd_option_changed
+        self.installOxTrust.value_changed_callback = self.install_oxtrust_option_changed
 
     def do_beforeEditing(self):
         for service in self.services:
@@ -276,6 +293,9 @@ class ServicesForm(GluuSetupForm):
                 cb = getattr(self, service)
                 cb.value = True
                 cb.update()
+
+        if not self.parentApp.installObject.installOxTrust:
+            self.oxtrust_admin_password.hidden = True
 
     def nextButtonPressed(self):
 
@@ -292,6 +312,13 @@ class ServicesForm(GluuSetupForm):
             if cb_val and service in service_enable_dict:
                 for attribute in service_enable_dict[service]:
                     setattr(self.parentApp.installObject, attribute, 'true')
+
+        if self.installOxTrust.value:
+            if not self.parentApp.installObject.checkPassword(self.oxtrust_admin_password.value):
+                npyscreen.notify_confirm(msg.weak_password.format("oxTrust Admin"), title="Warning")
+                return
+
+            self.parentApp.installObject.oxtrust_admin_password = self.oxtrust_admin_password.value
 
         if self.installSaml:
             self.parentApp.installObject.shibboleth_version = 'v3'
@@ -361,6 +388,9 @@ class ServicesForm(GluuSetupForm):
 
         self.oxd_url.update()
 
+    def install_oxtrust_option_changed(self, widget):
+        self.oxtrust_admin_password.hidden = not widget.value
+        self.oxtrust_admin_password.update()
 
     def backButtonPressed(self):
         self.parentApp.switchForm('HostForm')
@@ -393,6 +423,7 @@ class DBBackendForm(GluuSetupForm):
         self.cb_option_changed(self.ask_cb)
 
     def do_beforeEditing(self):
+
         self.ask_wrends.value = [int(self.parentApp.installObject.wrends_install)]
 
         if self.parentApp.installObject.wrends_install == REMOTE:
@@ -472,6 +503,9 @@ class DBBackendForm(GluuSetupForm):
         self.parentApp.installObject.cb_install =  str(self.ask_cb.value[0]) if self.ask_cb.value[0] else 0
 
         if self.parentApp.installObject.cb_install == LOCAL:
+            if not 'couchbase' in self.parentApp.installObject.getBackendTypes():
+                npyscreen.notify_confirm(msg.cb_not_available, title="Warning")
+                return 
             self.parentApp.installObject.couchbase_hostname = 'localhost'
             self.parentApp.installObject.cb_password = self.cb_password.value
         elif self.parentApp.installObject.cb_install == REMOTE:
@@ -488,7 +522,7 @@ class DBBackendForm(GluuSetupForm):
             self.parentApp.installObject.add_couchbase_post_messages()
 
         if self.parentApp.installObject.wrends_install  == LOCAL and not self.parentApp.installObject.checkPassword(self.parentApp.installObject.ldapPass):
-            npyscreen.notify_confirm(msg.weak_password.format('WrenDS'), title="Warning")
+            npyscreen.notify_confirm(msg.weak_password.format('OpenDJ'), title="Warning")
             return
 
         if self.parentApp.installObject.cb_install == LOCAL and not self.parentApp.installObject.checkPassword(self.parentApp.installObject.cb_password):
@@ -521,7 +555,7 @@ class DBBackendForm(GluuSetupForm):
             if not self.ask_wrends.value[0]:
                 self.wrends_password.hidden = True
                 self.wrends_hosts.hidden = True
-            elif str(self.ask_wrends.value[0]) == LOCAL:
+            elif str(self.ask_wrends.value[0]) == LOCAL:                    
                 self.wrends_password.hidden = False
                 self.wrends_hosts.hidden = True
             elif str(self.ask_wrends.value[0]) == REMOTE:
@@ -559,7 +593,7 @@ class StorageSelectionForm(GluuSetupForm):
     def create(self):
 
         self.wrends_storage = self.add(npyscreen.TitleMultiSelect, begin_entry_at=30, max_height=len(msg.storages), 
-            values=msg.storages, name=msg.DBBackendForm_label, scroll_exit=True)
+            values=msg.storages, name=msg.wrends_storage_selection_label, scroll_exit=True)
 
         self.add(npyscreen.FixedText, value=msg.unselected_storages, rely=len(msg.storages)+4, editable=False, color='STANDOUT')
 
@@ -578,6 +612,7 @@ class StorageSelectionForm(GluuSetupForm):
         self.wrends_storage.update()
 
     def nextButtonPressed(self):
+
         storage_list = list(self.parentApp.installObject.couchbaseBucketDict.keys())
 
         for i, s in enumerate(storage_list):
@@ -640,6 +675,7 @@ class DisplaySummaryForm(GluuSetupForm):
 
 
     def do_beforeEditing(self):
+
         wrends_storages_widget = getattr(self, 'wrends_storages')
 
         for wn in self.myfields_1+self.myfields_2:
@@ -648,9 +684,9 @@ class DisplaySummaryForm(GluuSetupForm):
                 if wn == 'backend_types':
                     bt_ = []
                     if self.parentApp.installObject.wrends_install == LOCAL:
-                        bt_.append('wrends')
+                        bt_.append('opendj')
                     elif self.parentApp.installObject.wrends_install == REMOTE:
-                        bt_.append('wrends[R]')
+                        bt_.append('opendj[R]')
 
                     if self.parentApp.installObject.cb_install == LOCAL:
                         bt_.append('couchbase')
@@ -681,6 +717,23 @@ class DisplaySummaryForm(GluuSetupForm):
 
 
     def nextButtonPressed(self):
+        if self.parentApp.installObject.cb_install == REMOTE:
+            couchbase_mappings_ = self.parentApp.installObject.getMappingType('couchbase')
+            buckets_ = [ 'gluu_{}'.format(b) for b in couchbase_mappings_ ]
+            buckets_.append('gluu')
+            isCBRoleOK = self.parentApp.installObject.checkCBRoles(buckets_)
+
+            if not isCBRoleOK[0]:
+                warn_text = msg.cb_bucket_rolese.format(
+                                self.parentApp.installObject.cbm.auth.username,
+                                ', '.join(self.parentApp.installObject.cb_bucket_roles),
+                                ', '.join(isCBRoleOK[1]),
+                                )
+
+                npyscreen.notify_confirm(warn_text, title="Warning")
+                self.parentApp.switchForm('DBBackendForm')
+                return
+
         # Validate Properties
         self.parentApp.installObject.check_properties()
 
@@ -711,8 +764,14 @@ class InstallStepsForm(GluuSetupForm):
             data = queue.get()
             if data[0] == COMPLETED:
                 if self.parentApp.installObject.post_messages:
-                    npyscreen.notify_confirm('\n'.join(self.parentApp.installObject.post_messages), title="Post Install Messages", wide=True)
-                npyscreen.notify_confirm(msg.installation_completed.format(self.parentApp.installObject.hostname), title="Completed")
+                    post_messages_text = '\n'.join(self.parentApp.installObject.post_messages)
+                    npyscreen.notify_confirm(post_messages_text, title="Post Install Messages", wide=True)
+                completed_msg = msg.installation_completed
+                if self.parentApp.installObject.installOxTrust:
+                    completed_msg += ' ' + msg.installation_completed_oxtrsut.format(self.parentApp.installObject.hostname)
+                
+                npyscreen.notify_confirm(completed_msg, title="Completed")
+
                 self.parentApp.do_notify = False
                 self.parentApp.switchForm(None)
             elif data[0] == ERROR:

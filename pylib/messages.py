@@ -3,11 +3,10 @@ class msg:
     MAIN_label = "System Information"
     HostForm_label = "Gathering Information"
     ServicesForm_label = "Select Services to Install"
-    DBBackendForm_label = "Choose to Store in WrenDS"
+    DBBackendForm_label = "Backend Install Options"
     StorageSelectionForm_label = "Hybrid Storage Selection"
     InstallStepsForm_label = "Installing Gluu Server"
     DisplaySummaryForm_label = "Gluu Server Installation Summary"
-
     decription = "Use setup.py to configure your Gluu Server and to add initial data required for oxAuth and oxTrust to start. If setup.properties is found in this folder, these properties will automatically be used instead of the interactive setup."
 
     os_type_label = "Detected OS"
@@ -34,7 +33,8 @@ class msg:
     installOxAuthRP_label = "Install OxAuthRP" 
     installPassport_label = "Install Passport" 
     installGluuRadius_label = "Install Radius"
-    wrends_storages_label = "Store on WrenDS"
+    wrends_storage_selection_label = "Choose to Store in OpenDJ"
+    wrends_storages_label = "Store in OpenDJ"
     installing_label = "Installing"
     installOxd_label = "Install Oxd"
     installCasa_label = "Install Casa"
@@ -58,7 +58,7 @@ class msg:
     oxtrust_admin_password_label = "oxTrust Admin Password"
     oxtrust_admin_password_warning = "oxTrust Admin Password should be at least six characters"
     max_ram_int_warning = "Please enter and integer value for Max ram"
-    memory_warning = "WARINIG: You don't have enough memory to run Gluu CE properly with selected applications."
+    memory_warning = "WARINIG: You don't have enough memory to run Gluu CE properly with selected applications. Continue anyway?"
 
     exit_from_app = "Setup is exiting. %(reason)s"
     not_to_continue = "Since you don't want to continue."
@@ -74,18 +74,19 @@ class msg:
 
 
     ask_installHttpd = "Install Apache HTTPD Server"
+    ask_installOxTrust = "Install oxTrust Admin GUI"
     ask_installSaml = "Install Shibboleth SAML IDP"
     ask_installOxAuthRP  = "Install oxAuth RP"
     ask_installPassport  = "Install Passport"
     ask_installGluuRadius = "Install Gluu Radius"
     ask_installCasa = "Install Casa"
     ask_installOxd = "Install Oxd"
-    ask_wrends_install = "Install WrenDS"
+    ask_wrends_install = "Install OpenDJ"
     ask_installScimServer = "Install Scim Server"
     ask_installFido2 = "Install Fido2"
 
 
-    wrends_install_options = ["Don't Install","Install Locally","Use Remote WrenDS"]
+    wrends_install_options = ["Don't Install","Install Locally","Use Remote OpenDJ"]
     oxd_url_label = "oxd Server URL"
     install_oxd_or_url_warning = "Please either enter oxd Server URL or check Install Oxd"
     oxd_connection_error = "Can't connect to oxd-server with url {}. Reason: {}"
@@ -93,9 +94,11 @@ class msg:
 
     ask_cb_install = "Couchbase Installation"
     cb_install_options = ["Don't Install","Install Locally","Use Remote Couchbase"]
+    cb_not_available = "Couchbase package is not found in /opt/dist/couchbase. Please put and retry."
+    cb_bucket_rolese = "Please check user {} has roles {} on bucket(s) {}"
     
-    ask_use_gluu_storage_oxd = "By default oxd uses its own db. Do you want to use Gluu Storage for Oxd?"
-    ask_use_gluu_storage_oxd_title = "Use Gluu Storage for Oxd?"
+    ask_use_gluu_storage_oxd = "oxd includes a built-in h2 database for persistence. Do you want to change it to the Authorization Server's persistence mechanism instead (recommended for high load only)?"
+    ask_use_gluu_storage_oxd_title = "Use Authorization Server's persistence for oxd?"
     
     notify_select_backend = "Please select one of the backends either local install or remote" 
     weak_password = "Password for {} must be at least 6 characters and include one uppercase letter, one lowercase letter, one digit, and one special character."
@@ -108,10 +111,10 @@ class msg:
                    "Hostname: hostname of this server. Detected hostname will be provided.\n"
                    "Organization Name: ......")
 
-    installation_completed = "Gluu Server installation successful! Point your browser to https://{}"
-
+    installation_completed = "Gluu Server installation successful!"
+    installation_completed_oxtrsut =  "Point your browser to https://{}"
     installation_description_java = "Corretto is a build of the Open Java Development Kit (OpenJDK) with long-term support from Amazon. Corretto is certified using the Java Technical Compatibility Kit (TCK) to ensure it meets the Java SE standard."
-    installation_description_opendj = "WrenDS is an LDAPv3 compliant directory service, which has been developed for the Java platform, providing a high performance, highly available, and secure store for the identities managed by your organization."
+    installation_description_opendj = "OpenDJ is an LDAPv3 compliant directory service, which has been developed for the Java platform, providing a high performance, highly available, and secure store for the identities managed by your organization."
     installation_description_oxauth = "oxAuth is an open source OpenID Connect Provider (OP) and UMA Authorization Server (AS). The project also includes OpenID Connect Client code which can be used by websites to validate tokens."
     installation_description_oxtrust = "oxTrust is a Weld based web application for Gluu Server administration."
     installation_description_saml = "The Gluu Server acts as a SAML identity provider (IDP) to support outbound SAML single sign-on (SSO)."

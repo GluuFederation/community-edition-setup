@@ -5646,7 +5646,8 @@
                 "exp", 
                 "del", 
                 "tknCde", 
-                "usrId", 
+                "usrId",
+                "ssnId",
                 "oxUmaPermission", 
                 "uuid"
             ], 
@@ -6035,7 +6036,8 @@
                 "iat", 
                 "exp", 
                 "del", 
-                "tknCde", 
+                "tknCde",
+                "ssnId",
                 "oxClaimValues"
             ], 
             "must": [

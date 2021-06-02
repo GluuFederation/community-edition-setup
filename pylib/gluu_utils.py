@@ -74,10 +74,11 @@ def get_os_type():
             if row:
                 if row[0] == 'ID':
                     os_type = row[1].lower()
-                    if os_type == 'rhel':
-                        os_type = 'redhat'
+                    if os_type in  ('rhel', 'redhat'):
+                        os_type = 'red'
                 elif row[0] == 'VERSION_ID':
                     os_version = row[1].split('.')[0]
+    print("Detected OS", os_type, os_version)
     return os_type, os_version
 
 def read_properties_file(fn):
