@@ -4464,7 +4464,7 @@ class Setup(object):
                 'centos 7': {'mandatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog bzip2', 'optional': ''},
                 'centos 8': {'mandatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog bzip2', 'optional': ''},
                 'red 7': {'mandatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog bzip2', 'optional': ''},
-                'red 8': {'mandatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog python3-ldap3 python3-requests python3-ruamel-yaml bzip2', 'optional': ''},
+                'red 8': {'mandatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog bzip2', 'optional': ''},
                 'fedora 22': {'mandatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog python3-ldap3 python3-requests python3-ruamel-yaml bzip2', 'optional': ''},
                 }
 
