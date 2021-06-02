@@ -5646,7 +5646,8 @@
                 "exp", 
                 "del", 
                 "tknCde", 
-                "usrId", 
+                "usrId",
+                "ssnId",
                 "oxUmaPermission", 
                 "uuid"
             ], 
