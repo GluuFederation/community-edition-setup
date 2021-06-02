@@ -474,7 +474,7 @@ class Setup(object):
         self.ldapDsJavaPropCommand = "%s/bin/dsjavaproperties" % self.ldapBaseFolder
 
         self.ldap_user_home = '/home/ldap'
-        self.ldapPassFn = '%s/.pw' % self.ldap_user_home
+        self.ldapPassFn = '/root/.pw'
         self.ldap_backend_type = 'je'
         self.importLdifCommand = '%s/bin/import-ldif' % self.ldapBaseFolder
         self.ldapModifyCommand = '%s/bin/ldapmodify' % self.ldapBaseFolder
@@ -3793,7 +3793,6 @@ class Setup(object):
             f = open(self.ldapPassFn, 'w')
             f.write(self.ldapPass)
             f.close()
-            self.run([self.cmd_chown, 'ldap:ldap', self.ldapPassFn])
         except:
             self.logIt("Error writing temporary LDAP password.")
             self.logIt(traceback.format_exc(), True)
@@ -3914,7 +3913,7 @@ class Setup(object):
                             '"%s"' % self.ldap_binddn,
                             '--bindPasswordFile',
                             self.ldapPassFn] + changes
-            self.run(dsconfigCmd, cwd=cwd, env={'OPENDJ_JAVA_HOME': self.jre_home})
+            self.run(' '.join(dsconfigCmd), shell=True, cwd=cwd, env={'OPENDJ_JAVA_HOME': self.jre_home})
 
     def export_opendj_public_cert(self):
         # Load password to acces OpenDJ truststore
@@ -4064,7 +4063,7 @@ class Setup(object):
                                              '--trustAll',
                                              '--noPropertiesFile',
                                              '--no-prompt']
-                        self.run(indexCmd, cwd=cwd, env={'OPENDJ_JAVA_HOME': self.jre_home})
+                        self.run(' '.join(indexCmd), shell=True, cwd=cwd, env={'OPENDJ_JAVA_HOME': self.jre_home})
 
         except:
             self.logIt("Error occured during backend " + backend + " LDAP indexing", True)
@@ -5181,7 +5180,7 @@ class Setup(object):
                     )
                 
                 dsconfigCmd = '{1} {2}'.format(self.ldapBaseFolder, self.ldapDsconfigCommand, cmd)
-                self.run(dsconfigCmd, cwd=cwd, env={'OPENDJ_JAVA_HOME': self.jre_home})
+                self.run(dsconfigCmd, shell=True, cwd=cwd, env={'OPENDJ_JAVA_HOME': self.jre_home})
             
             
             ldap_conn = self.getLdapConnection()
