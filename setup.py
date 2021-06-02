@@ -4454,18 +4454,18 @@ class Setup(object):
 
         install_command, update_command, query_command, check_text = self.get_install_commands()
 
-        install_list = {'mondatory': [], 'optional': []}
+        install_list = {'mandatory': [], 'optional': []}
 
         package_list = {
-                'debian 10': {'mondatory': 'apache2 curl wget tar xz-utils unzip rsyslog python3-ldap3 python3-requests python3-ruamel.yaml bzip2', 'optional': ''},
-                'debian 9': {'mondatory': 'apache2 curl wget tar xz-utils unzip rsyslog python3-ldap3 python3-requests python3-ruamel.yaml bzip2', 'optional': ''},
-                'ubuntu 18': {'mondatory': 'apache2 curl wget xz-utils unzip rsyslog python3-ldap3 net-tools python3-requests python3-ruamel.yaml bzip2', 'optional': ''},
-                'ubuntu 20': {'mondatory': 'apache2 curl wget xz-utils unzip rsyslog python3-ldap3 net-tools python3-requests python3-ruamel.yaml bzip2', 'optional': ''},
-                'centos 7': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog bzip2', 'optional': ''},
-                'centos 8': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog bzip2', 'optional': ''},
-                'red 7': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog bzip2', 'optional': ''},
-                'red 8': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog python3-ldap3 python3-requests python3-ruamel-yaml bzip2', 'optional': ''},
-                'fedora 22': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog python3-ldap3 python3-requests python3-ruamel-yaml bzip2', 'optional': ''},
+                'debian 10': {'mandatory': 'apache2 curl wget tar xz-utils unzip rsyslog python3-ldap3 python3-requests python3-ruamel.yaml bzip2', 'optional': ''},
+                'debian 9': {'mandatory': 'apache2 curl wget tar xz-utils unzip rsyslog python3-ldap3 python3-requests python3-ruamel.yaml bzip2', 'optional': ''},
+                'ubuntu 18': {'mandatory': 'apache2 curl wget xz-utils unzip rsyslog python3-ldap3 net-tools python3-requests python3-ruamel.yaml bzip2', 'optional': ''},
+                'ubuntu 20': {'mandatory': 'apache2 curl wget xz-utils unzip rsyslog python3-ldap3 net-tools python3-requests python3-ruamel.yaml bzip2', 'optional': ''},
+                'centos 7': {'mandatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog bzip2', 'optional': ''},
+                'centos 8': {'mandatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog bzip2', 'optional': ''},
+                'red 7': {'mandatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog bzip2', 'optional': ''},
+                'red 8': {'mandatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog python3-ldap3 python3-requests python3-ruamel-yaml bzip2', 'optional': ''},
+                'fedora 22': {'mandatory': 'httpd mod_ssl curl wget tar xz unzip rsyslog python3-ldap3 python3-requests python3-ruamel-yaml bzip2', 'optional': ''},
                 }
 
         os_type_version = self.os_type+' '+self.os_version
@@ -4473,17 +4473,17 @@ class Setup(object):
             try:
                 import ldap3
             except:
-                package_list[os_type_version]['mondatory'] += ' python3-ldap3'
+                package_list[os_type_version]['mandatory'] += ' python3-ldap3'
 
             try:
                 import ruamel.yaml
             except:
-                package_list[os_type_version]['mondatory'] += ' python3-ruamel-yaml'
+                package_list[os_type_version]['mandatory'] += ' python3-ruamel-yaml'
 
             try:
                 import requests
             except:
-                package_list[os_type_version]['mondatory'] += ' python3-requests'
+                package_list[os_type_version]['mandatory'] += ' python3-requests'
 
 
         for install_type in install_list:
@@ -4499,20 +4499,20 @@ class Setup(object):
                 else:
                     self.logIt('Package {0} was installed'.format(package_query))
 
-        install = {'mondatory': True, 'optional': False}
+        install = {'mandatory': True, 'optional': False}
 
         for install_type in install_list:
             if install_list[install_type]:
                 packages = " ".join(install_list[install_type])
 
                 if not setupOptions['noPrompt']:
-                    if install_type == 'mondatory':
+                    if install_type == 'mandatory':
                         print("The following packages are required for Gluu Server")
                         print(packages)
                         r = input("Do you want to install these now? [Y/n] ")
                         if r and r.lower()=='n':
                             install[install_type] = False
-                            if install_type == 'mondatory':
+                            if install_type == 'mandatory':
                                 print("Can not proceed without installing required packages. Exiting ...")
                                 sys.exit()
 
