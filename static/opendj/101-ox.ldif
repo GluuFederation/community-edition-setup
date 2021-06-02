@@ -2762,7 +2762,7 @@ objectClasses: ( 1.3.6.1.4.1.48710.1.4.44 NAME 'oxAuthUmaPCT'
   SUP ( top )
   STRUCTURAL
   MUST ( objectclass )
-  MAY ( clnId $ iat $ exp $ del $ tknCde $ oxClaimValues )
+  MAY ( clnId $ iat $ exp $ del $ tknCde $ oxClaimValues $ ssnId )
   X-ORIGIN 'Gluu created objectclass' )
 objectClasses: ( 1.3.6.1.4.1.48710.1.4.45 NAME 'cache'
   SUP ( top )

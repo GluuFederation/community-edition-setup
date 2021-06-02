@@ -6036,7 +6036,8 @@
                 "iat", 
                 "exp", 
                 "del", 
-                "tknCde", 
+                "tknCde",
+                "ssnId",
                 "oxClaimValues"
             ], 
             "must": [
