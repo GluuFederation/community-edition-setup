@@ -517,7 +517,7 @@ class DBBackendForm(GluuSetupForm):
                 return
 
         if Config.wrends_install == static.InstallTypes.LOCAL and not propertiesUtils.checkPassword(Config.ldapPass):
-            npyscreen.notify_confirm(msg.weak_password.format('WrenDS'), title="Warning")
+            npyscreen.notify_confirm(msg.weak_password.format('OpenDj'), title="Warning")
             return
 
         if Config.cb_install == static.InstallTypes.LOCAL and not propertiesUtils.checkPassword(Config.cb_password):
@@ -679,9 +679,9 @@ class DisplaySummaryForm(GluuSetupForm):
                 if wn == 'backend_types':
                     bt_ = []
                     if Config.wrends_install == static.InstallTypes.LOCAL:
-                        bt_.append('wrends')
+                        bt_.append('opendj')
                     elif Config.wrends_install == static.InstallTypes.REMOTE:
-                        bt_.append('wrends[R]')
+                        bt_.append('opendj[R]')
 
                     if Config.cb_install == static.InstallTypes.LOCAL:
                         bt_.append('couchbase')
@@ -757,6 +757,10 @@ class InstallStepsForm(GluuSetupForm):
             current = data.get('current')
             current_message = data.get('msg','')
             if  current == static.COMPLETED:
+
+                self.progress_percantage.value = self.progress_percantage.out_of
+                self.progress_percantage.update()
+
                 if Config.post_messages:
                     npyscreen.notify_confirm('\n'.join(Config.post_messages), title="Post Install Messages", wide=True)
 
@@ -765,6 +769,7 @@ class InstallStepsForm(GluuSetupForm):
 
                 self.parentApp.do_notify = False
                 self.parentApp.switchForm(None)
+
             elif current == static.ERROR:
                 npyscreen.notify_confirm(msg.installation_error +"\n"+current_message, title="ERROR")
                 self.parentApp.do_notify = False

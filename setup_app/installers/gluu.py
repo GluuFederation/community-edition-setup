@@ -38,7 +38,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
 
                 bc = []
                 if Config.wrends_install:
-                    t_ = 'wrends'
+                    t_ = 'opendj'
                     if Config.wrends_install == InstallTypes.REMOTE:
                         t_ += '[R]'
                     bc.append(t_)
