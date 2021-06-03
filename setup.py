@@ -1891,6 +1891,7 @@ class Setup(object):
 
         self.run([self.cmd_chmod, '+x', service_init_script_fn])
 
+
     def installJettyService(self, serviceConfiguration, supportCustomizations=False, supportOnlyPageCustomizations=False):
         serviceName = serviceConfiguration['name']
         self.logIt("Installing jetty service %s..." % serviceName)
@@ -1920,6 +1921,8 @@ class Setup(object):
         jettyEnv = os.environ.copy()
         jettyEnv['PATH'] = '%s/bin:' % self.jre_home + jettyEnv['PATH']
 
+        self.templateRenderingDict['thisServiceName'] = serviceName
+
         self.run([self.cmd_java, '-jar', '%s/start.jar' % self.jetty_home, 'jetty.home=%s' % self.jetty_home, 'jetty.base=%s' % jettyServiceBase, '--add-to-start=%s' % jettyModules], None, jettyEnv)
         self.run([self.cmd_chown, '-R', 'jetty:jetty', jettyServiceBase])
 
@@ -1933,7 +1936,7 @@ class Setup(object):
         self.copyFile(jettyServiceConfiguration, self.osDefault)
         self.run([self.cmd_chown, 'root:root', os.path.join(self.osDefault, serviceName)])
 
-        # Render web eources file
+        # Render web reources file
         try:
             web_resources = '%s_web_resources.xml' % serviceName
             if os.path.exists('%s/jetty/%s' % (self.templateFolder, web_resources)):
@@ -1974,6 +1977,8 @@ class Setup(object):
 
     def installNodeService(self, serviceName):
         self.logIt("Installing node service %s..." % serviceName)
+
+        self.templateRenderingDict['thisServiceName'] = serviceName
 
         nodeServiceConfiguration = '%s/node/%s' % (self.outputFolder, serviceName)
         self.copyFile(nodeServiceConfiguration, self.osDefault)

@@ -4,7 +4,7 @@ JAVA_OPTIONS="-server -Xms%(casa_min_mem)sm -Xmx%(casa_max_mem)sm -XX:+DisableEx
 
 JETTY_HOME=%(jetty_home)s
 JETTY_BASE=%(jetty_base)s/casa
-JETTY_USER=jetty
+JETTY_USER=%(thisServiceName)s
 JETTY_ARGS="jetty.http.host=localhost jetty.http.port=8099"
 TMPDIR=%(jetty_dist)s/temp
 
