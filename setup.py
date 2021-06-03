@@ -1303,6 +1303,50 @@ class Setup(object):
         except:
             self.logIt("Error loading file %s" % fileName)
 
+
+    def fapolicyd_access(self, uid):
+
+        fapolicyd_rules_fn = '/etc/fapolicyd/fapolicyd.rules'
+
+        fapolicyd_rules = []
+        fapolicyd_startn = 0
+
+        with open(fapolicyd_rules_fn) as f:
+            for i, l in enumerate(f):
+                ls = l.strip()
+                if ls.startswith('%languages'):
+                    fapolicyd_startn = i
+                fapolicyd_rules.append(ls)
+
+        self.jettyAbsoluteDir = max(glob.glob('/opt/jetty*'))
+        self.jythonAbsoluteDir = max(glob.glob('/opt/jython*'))
+        facl_tmp = [
+                'allow perm=any uid=%(uid)s : dir=%(jre_home)s',
+                'allow perm=any uid=%(uid)s : dir=%(gluuOptFolder)s',
+                'allow perm=any uid=%(uid)s : dir=%(distFolder)s',
+                'allow perm=any uid=%(uid)s : dir=%(jettyAbsoluteDir)s',
+                'allow perm=any uid=%(uid)s : dir=%(jythonAbsoluteDir)s',
+                'allow perm=any uid=%(uid)s : dir=%(jetty_user_home)s',
+                'allow perm=any uid=%(uid)s : dir=%(osDefault)s',
+                'allow perm=any uid=%(uid)s : dir=%(gluuBaseFolder)s',
+                '# give access to gluu service %(uid)s',
+                ]
+
+        tmp_render_dict = self.__dict__
+        tmp_render_dict.update({'uid': uid})
+
+        write_facl = False
+
+        for acl in facl_tmp:
+            facl = acl % tmp_render_dict
+            if not facl in fapolicyd_rules:
+                fapolicyd_rules.insert(fapolicyd_startn + 1, facl)
+                write_facl = True
+        if write_facl:
+            fapolicyd_rules.insert(fapolicyd_startn + 1, '\n')
+            self.writeFile(fapolicyd_rules_fn, '\n'.join(fapolicyd_rules))
+
+
     def set_ulimits(self):
         try:
             if self.os_type in ['centos', 'red', 'fedora']:
