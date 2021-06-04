@@ -1,0 +1,14 @@
+[Unit]
+Description=fido2 service
+After=opendj.service
+
+[Service]
+Type=forking
+ExecStart=/opt/dist/scripts/fido2 start
+ExecStop=/opt/dist/scripts/fido2 stop
+User=%(thisServiceName)s
+Group=gluu
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target

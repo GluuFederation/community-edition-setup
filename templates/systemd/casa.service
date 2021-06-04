@@ -1,0 +1,14 @@
+[Unit]
+Description=Casa service
+After=oxauth.service
+
+[Service]
+Type=forking
+ExecStart=/opt/dist/scripts/casa start
+ExecStop=/opt/dist/scripts/casa stop
+User=%(thisServiceName)s
+Group=gluu
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target

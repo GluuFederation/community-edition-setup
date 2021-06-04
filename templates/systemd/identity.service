@@ -1,0 +1,14 @@
+[Unit]
+Description=Identity service
+After=oxauth.service
+
+[Service]
+Type=forking
+ExecStart=/opt/dist/scripts/identity start
+ExecStop=/opt/dist/scripts/identity stop
+User=%(thisServiceName)s
+Group=gluu
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target

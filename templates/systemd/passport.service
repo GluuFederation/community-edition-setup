@@ -1,0 +1,15 @@
+[Unit]
+Description=Passport service
+After=identity.service
+
+[Service]
+Type=forking
+EnvironmentFile=/etc/default/passport
+ExecStart=/opt/dist/scripts/passport start
+ExecStop=/opt/dist/scripts/passport stop
+User=%(thisServiceName)s
+Group=gluu
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,73 @@
+#!/bin/bash
+
+ready() {
+    	PORTS=`ss -tunpl | awk '{ print $5 }' |grep -Eohw ':(80|443|8080|8081|8082|8083|8084|8085|8086|8090|1389|1689|11211)$'`
+    	STAT=(`df -aP |grep \/opt\/gluu-server\/ | awk '{ print $6 }' | grep -Eohw 'proc|lo|pts|modules|dev'`)
+    	if [ -f $PIDFILE ] && [ ${#STAT[@]} = "6" ]; then
+            PID=`cat $PIDFILE`
+            return 1
+        elif [ -f $PIDFILE ] || [ "$STAT" != "" ]; then
+            return 1
+        elif [ "$PORTS" != "" ]; then
+            return 1
+	fi 
+        return 0
+}
+ 
+wait_stop() {
+    end=$((SECONDS+30))
+ 
+    while [ $SECONDS -lt $end ]; do
+        ready
+        STAT=$?
+        if [ $STAT = 0 ]; then
+            return 0;
+        fi
+        sleep 10
+    done
+ 
+    return 1
+}
+
+case "$1" in
+        start)
+            systemctl start systemd-nspawn@gluu_server.service
+            ;;
+         
+        stop)
+            systemctl stop systemd-nspawn@gluu_server.service
+            ;;
+         
+        status)
+            systemctl status systemd-nspawn@gluu_server.service
+            ;;
+        restart)
+            systemctl stop systemd-nspawn@gluu_server.service
+	    wait_stop
+            systemctl start systemd-nspawn@gluu_server.service
+            ;;
+	ready)
+	    ready
+	    ;;
+        login)
+            PID=$(machinectl status gluu_server 2>/dev/null | grep Leader | awk -F ' ' '{ print $2 };' )
+	    if [[ ${PID} =~ ^-?[0-9]+$ ]] ; then
+                ssh  -o IdentityFile=/etc/gluu/keys/gluu-console -o Port=60022 -o LogLevel=QUIET \
+                -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+                -o PubkeyAuthentication=yes root@localhost
+            else
+                echo "Gluu server is not started."
+            fi
+	    ;;
+        enable)
+	    systemctl enable machines.target
+	    systemctl enable systemd-nspawn@gluu_server.service
+	    ;;
+	disable) 
+	    systemctl disable systemd-nspawn@gluu_server.service
+            systemctl disable machines.target
+            ;; 
+	*)
+            echo $"Usage: $0 {enable|start|restart|ready|login|stop|disable|status}"
+            exit 1
+esac

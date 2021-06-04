@@ -170,7 +170,8 @@ class Setup(object):
         self.distAppFolder = '%s/app' % self.distFolder
         self.distGluuFolder = '%s/gluu' % self.distFolder
         self.distTmpFolder = '%s/tmp' % self.distFolder
-        
+        self.systemdDir = '/etc/systemd/system'
+
         oxauth_info = get_war_info(os.path.join(self.distGluuFolder, 'oxauth.war'))
 
         self.oxVersion = oxauth_info['version']
@@ -946,15 +947,15 @@ class Setup(object):
         self.logIt("Changing permissions")
 
         ### Below commands help us to set permissions readable if umask is set as 077
-        self.run(['find', "/opt", '-user', 'root', '-perm', '700', '-exec', 'chmod', "755", '{}',  ';'])
-        self.run(['find', "/opt", '-user', 'root', '-perm', '600', '-exec', 'chmod', "644", '{}',  ';'])
-        self.run(['find', "/opt", '-user', 'root', '-perm', '400', '-exec', 'chmod', "444", '{}',  ';'])
+        #self.run(['find', "/opt", '-user', 'root', '-perm', '700', '-exec', 'chmod', "755", '{}',  ';'])
+        #self.run(['find', "/opt", '-user', 'root', '-perm', '600', '-exec', 'chmod', "644", '{}',  ';'])
+        #self.run(['find', "/opt", '-user', 'root', '-perm', '400', '-exec', 'chmod', "444", '{}',  ';'])
 
-        self.run(['find', "%s" % self.gluuBaseFolder, '-perm', '700', '-exec', self.cmd_chmod, "755", '{}', ';'])
-        self.run(['find', "%s" % self.gluuBaseFolder, '-perm', '600', '-exec', self.cmd_chmod, "644", '{}', ';'])
+        #self.run(['find', "%s" % self.gluuBaseFolder, '-perm', '700', '-exec', self.cmd_chmod, "755", '{}', ';'])
+        #self.run(['find', "%s" % self.gluuBaseFolder, '-perm', '600', '-exec', self.cmd_chmod, "644", '{}', ';'])
 
-        self.run(['find', "%s" % self.osDefault, '-perm', '700', '-exec', self.cmd_chmod, "755", '{}', ';'])
-        self.run(['find', "%s" % self.osDefault, '-perm', '600', '-exec', self.cmd_chmod, "644", '{}', ';'])
+        #self.run(['find', "%s" % self.osDefault, '-perm', '700', '-exec', self.cmd_chmod, "755", '{}', ';'])
+        #self.run(['find', "%s" % self.osDefault, '-perm', '600', '-exec', self.cmd_chmod, "644", '{}', ';'])
 
         self.run(['/bin/chmod', '-R', '644', self.etc_hosts])
 
@@ -1782,7 +1783,8 @@ class Setup(object):
         self.templateRenderingDict['jetty_dist'] = jetty_dist
         jettyTemp = os.path.join(jetty_dist, 'temp')
         self.run([self.cmd_mkdir, '-p', jettyTemp])
-        self.run([self.cmd_chown, '-R', 'jetty:jetty', jettyTemp])
+        self.run([self.cmd_chown, '-R', 'jetty:gluu', jettyTemp])
+        self.run([self.cmd_chmod, '775', jettyTemp])
 
         try:
             self.logIt("Extracting %s into /opt/jetty" % jettyArchive)
@@ -1799,16 +1801,16 @@ class Setup(object):
 
         self.applyChangesInFiles(self.app_custom_changes['jetty'])
 
-        self.run([self.cmd_chown, '-R', 'jetty:jetty', jettyDestinationPath])
-        self.run([self.cmd_chown, '-h', 'jetty:jetty', self.jetty_home])
+        self.run([self.cmd_chown, '-R', 'jetty:gluu', jettyDestinationPath])
+        self.run([self.cmd_chown, '-h', 'jetty:gluu', self.jetty_home])
 
         self.run([self.cmd_mkdir, '-p', self.jetty_base])
-        self.run([self.cmd_chown, '-R', 'jetty:jetty', self.jetty_base])
+        self.run([self.cmd_chown, '-R', 'jetty:gluu', self.jetty_base])
 
         jettyRunFolder = '/var/run/jetty'
         self.run([self.cmd_mkdir, '-p', jettyRunFolder])
         self.run([self.cmd_chmod, '-R', '775', jettyRunFolder])
-        self.run([self.cmd_chgrp, '-R', 'jetty', jettyRunFolder])
+        self.run([self.cmd_chgrp, '-R', 'jetty:gluu', jettyRunFolder])
 
         self.run(['rm', '-rf', '/opt/jetty/bin/jetty.sh'])
         self.copyFile("%s/system/initd/jetty.sh" % self.staticFolder, "%s/bin/jetty.sh" % self.jetty_home)
@@ -1846,11 +1848,11 @@ class Setup(object):
         self.run([self.cmd_chmod, '-R', "755", "%s/node" % self.gluuOptSystemFolder])
         self.run([self.cmd_chmod, '-R', "755", "%s/passport" % self.gluuOptSystemFolder])
 
-        self.run([self.cmd_chown, '-R', 'node:node', nodeDestinationPath])
-        self.run([self.cmd_chown, '-h', 'node:node', self.node_home])
+        self.run([self.cmd_chown, '-R', 'node:gluu', nodeDestinationPath])
+        self.run([self.cmd_chown, '-h', 'node:gluu', self.node_home])
 
         self.run([self.cmd_mkdir, '-p', self.node_base])
-        self.run([self.cmd_chown, '-R', 'node:node', self.node_base])
+        self.run([self.cmd_chown, '-R', 'node:gluu', self.node_base])
 
     def fix_init_scripts(self, serviceName, initscript_fn):
 
@@ -1891,6 +1893,10 @@ class Setup(object):
 
         self.run([self.cmd_chmod, '+x', service_init_script_fn])
 
+    def renderUnitFile(self, serviceName):
+        self.templateRenderingDict['thisServiceName'] = serviceName
+        self.renderTemplateInOut(serviceName+'.service', os.path.join(self.templateFolder, 'systemd'), self.systemdDir)
+
 
     def installJettyService(self, serviceConfiguration, supportCustomizations=False, supportOnlyPageCustomizations=False):
         serviceName = serviceConfiguration['name']
@@ -1917,6 +1923,14 @@ class Setup(object):
                 self.run([self.cmd_mkdir, '-p', "%s/custom/static" % jettyServiceBase])
                 self.run([self.cmd_mkdir, '-p', "%s/custom/libs" % jettyServiceBase])
 
+        # create user for this service if not exists
+        service_home_dir = os.path.join(self.jetty_base, serviceName)
+        try:
+            pwd.getpwnam(serviceName)
+        except:
+            self.createUser(serviceName, service_home_dir)
+            self.addUserToGroup('gluu', serviceName)
+
         self.logIt("Preparing %s service base configuration" % serviceName)
         jettyEnv = os.environ.copy()
         jettyEnv['PATH'] = '%s/bin:' % self.jre_home + jettyEnv['PATH']
@@ -1924,7 +1938,6 @@ class Setup(object):
         self.templateRenderingDict['thisServiceName'] = serviceName
 
         self.run([self.cmd_java, '-jar', '%s/start.jar' % self.jetty_home, 'jetty.home=%s' % self.jetty_home, 'jetty.base=%s' % jettyServiceBase, '--add-to-start=%s' % jettyModules], None, jettyEnv)
-        self.run([self.cmd_chown, '-R', 'jetty:jetty', jettyServiceBase])
 
         try:
             self.renderTemplateInOut(serviceName, '%s/jetty' % self.templateFolder, '%s/jetty' % self.outputFolder)
@@ -1934,7 +1947,7 @@ class Setup(object):
 
         jettyServiceConfiguration = '%s/jetty/%s' % (self.outputFolder, serviceName)
         self.copyFile(jettyServiceConfiguration, self.osDefault)
-        self.run([self.cmd_chown, 'root:root', os.path.join(self.osDefault, serviceName)])
+        self.run([self.cmd_chown, '{}:gluu'.format(serviceName), os.path.join(self.osDefault, serviceName)])
 
         # Render web reources file
         try:
@@ -1970,25 +1983,47 @@ class Setup(object):
             self.run([self.cmd_chown, 'root:root', jetty_tmpfiles_dst])
             self.run([self.cmd_chmod, '644', jetty_tmpfiles_dst])
 
-        serviceConfiguration['installed'] = True
+        self.renderUnitFile(serviceName)
+        self.run([self.cmd_chown, '-R', '{}:gluu'.format(serviceName), service_home_dir])
+        self.fapolicyd_access(serviceName)
 
+        serviceConfiguration['installed'] = True
         # don't send header to server
         self.set_jetty_param(serviceName, 'jetty.httpConfig.sendServerVersion', 'false')
+
 
     def installNodeService(self, serviceName):
         self.logIt("Installing node service %s..." % serviceName)
 
+        # create user for this service if not exists
+        service_home_dir = os.path.join(self.node_base, serviceName)
+        try:
+            pwd.getpwnam(serviceName)
+        except:
+            self.createUser(serviceName, service_home_dir)
+            self.addUserToGroup('gluu', serviceName)
+
         self.templateRenderingDict['thisServiceName'] = serviceName
 
-        nodeServiceConfiguration = '%s/node/%s' % (self.outputFolder, serviceName)
-        self.copyFile(nodeServiceConfiguration, self.osDefault)
-        self.run([self.cmd_chown, 'root:root', os.path.join(self.osDefault, serviceName)])
+        try:
+            self.renderTemplateInOut(serviceName, '%s/node' % self.templateFolder, '%s/node' % self.outputFolder)
+        except:
+            self.logIt("Error rendering service '%s' defaults" % serviceName, True)
+            self.logIt(traceback.format_exc(), True)
+
+        jettyServiceConfiguration = '%s/node/%s' % (self.outputFolder, serviceName)
+        self.copyFile(jettyServiceConfiguration, self.osDefault)
+        self.run([self.cmd_chown, '{}:gluu'.format(serviceName), os.path.join(self.osDefault, serviceName)])
 
         if serviceName == 'passport':
             initscript_fn = os.path.join(self.gluuOptSystemFolder, serviceName)
             self.fix_init_scripts(serviceName, initscript_fn)
         else:
             self.run([self.cmd_ln, '-sf', '%s/node' % self.gluuOptSystemFolder, '/etc/init.d/%s' % serviceName])
+
+        self.renderUnitFile(serviceName)
+        self.fapolicyd_access(serviceName)
+        self.run([self.cmd_chown, '-R', '{}:gluu'.format(serviceName), service_home_dir])
 
     def installJython(self):
         self.logIt("Installing Jython")
@@ -2806,8 +2841,8 @@ class Setup(object):
         encrypted_password = '{{SSHA}}{0}'.format(b64encoded)
         return encrypted_password
 
-    def createUser(self, userName, homeDir, shell='/bin/bash'):
-        
+    def createUser(self, userName, homeDir=None, shell='/bin/bash'):
+
         try:
             useradd = '/usr/sbin/useradd'
             cmd = [useradd, '--system', '--user-group', '--shell', shell, userName]
@@ -4174,7 +4209,10 @@ class Setup(object):
 
             self.run([service_path, 'opendj', 'stop'])
             self.run([service_path, 'opendj', 'start'])
-        time.sleep(10)
+
+        # wait a couple of seconds for opendj start properly
+        time.sleep(5)
+
     def setup_init_scripts(self):
         if self.os_initdaemon == 'initd':
             for init_file in self.init_files:
@@ -4228,6 +4266,11 @@ class Setup(object):
         return 'apache2'
 
     def start_services(self):
+
+        # fapolicyd
+        self.pbar.progress("gluu", "Restarting fapolicyd")
+        self.run_service_command('fapolicyd', 'stop')
+        self.run_service_command('fapolicyd', 'start')
 
         # Apache HTTPD
         if self.installHttpd:
@@ -4380,7 +4423,9 @@ class Setup(object):
                 self.pbar.progress("opendj", "OpenDJ:  exporting certificate", False)
                 self.export_opendj_public_cert()
                 self.pbar.progress("opendj", "OpenDJ: creating indexes", False)
-                self.index_opendj()
+
+                ######## DISABLED FOR TESTING ############
+                #self.index_opendj()
                 self.pbar.progress("opendj", "OpenDJ: importing Ldif files", False)
                 
                 ldif_files = []
