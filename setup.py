@@ -5712,6 +5712,13 @@ class Setup(object):
         self.enable_service_at_start('gluu-radius')
 
     def post_install_tasks(self):
+
+        # selinux proxypass
+        setsebool_cmd = shtuil.wihich('setsebool')
+        self.run([setsebool_cmd, 'httpd_can_network_connect', '1'])
+        # make it permanent
+        self.run([setsebool_cmd, 'httpd_can_network_connect', '1', '-P'])
+
         super_gluu_lisence_renewer_fn = os.path.join(self.staticFolder, 'scripts', 'super_gluu_license_renewer.py')
         target_fn = '/etc/cron.daily/super_gluu_lisence_renewer'
         self.run(['cp', '-f', super_gluu_lisence_renewer_fn, target_fn])
