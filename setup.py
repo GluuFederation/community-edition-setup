@@ -913,13 +913,18 @@ class Setup(object):
 
         self.run([self.cmd_chown, '-R', 'root:gluu', realCertFolder])
         self.run([self.cmd_chown, '-R', 'root:gluu', realConfigFolder])
-        self.run([self.cmd_chown, '-R', 'root:gluu', realOptPythonFolderFolder])
-        self.run([self.cmd_chown, '-R', 'root:gluu', self.oxBaseDataFolder])
+        #self.run([self.cmd_chown, '-R', 'root:gluu', realOptPythonFolderFolder])
+        #self.run([self.cmd_chown, '-R', 'root:gluu', self.oxBaseDataFolder])
 
         # Set right permissions
         self.run([self.cmd_chmod, '-R', '440', realCertFolder])
         self.run([self.cmd_chmod, 'a+X', realCertFolder])
 
+        self.run([self.cmd_chown, 'jetty:gluu', '/opt/gluu/'])
+        self.run([self.cmd_chown, 'root:gluu', '/etc/gluu/'])
+
+        # TODO: check later
+        """
         if self.installOxAuth:
             self.run([self.cmd_chown, '-R', 'jetty:jetty', self.oxauth_openid_jks_fn])
             self.run([self.cmd_chmod, '660', self.oxauth_openid_jks_fn])
@@ -935,6 +940,7 @@ class Setup(object):
             if os.path.exists(fn):
                 cmd = [self.cmd_chown, 'jetty:jetty', fn]
                 self.run(cmd)
+        """
 
         gluu_radius_jks_fn = os.path.join(self.certFolder, 'gluu-radius.jks')
         gluu_radius_pem_fn = os.path.join(self.certFolder, 'gluu-radius.private-key.pem')
@@ -956,6 +962,8 @@ class Setup(object):
 
         #self.run(['find', "%s" % self.osDefault, '-perm', '700', '-exec', self.cmd_chmod, "755", '{}', ';'])
         #self.run(['find', "%s" % self.osDefault, '-perm', '600', '-exec', self.cmd_chmod, "644", '{}', ';'])
+
+
 
         self.run(['/bin/chmod', '-R', '644', self.etc_hosts])
 
@@ -1304,9 +1312,7 @@ class Setup(object):
         except:
             self.logIt("Error loading file %s" % fileName)
 
-
-    def fapolicyd_access(self, uid):
-
+    def apply_fapolicyd_rules(self, rules):
         fapolicyd_rules_fn = '/etc/fapolicyd/fapolicyd.rules'
 
         fapolicyd_rules = []
@@ -1319,34 +1325,42 @@ class Setup(object):
                     fapolicyd_startn = i
                 fapolicyd_rules.append(ls)
 
+        write_facl = False
+        for rule in rules:
+            if not rule in fapolicyd_rules:
+                fapolicyd_rules.insert(fapolicyd_startn + 1, rule)
+                write_facl = True
+
+        if write_facl:
+            fapolicyd_rules.insert(fapolicyd_startn + 1, '\n')
+            self.writeFile(fapolicyd_rules_fn, '\n'.join(fapolicyd_rules))
+            self.run_service_command('fapolicyd', 'restart')
+
+    def fapolicyd_access(self, uid):
+
         self.jettyAbsoluteDir = max(glob.glob('/opt/jetty*'))
         self.jythonAbsoluteDir = max(glob.glob('/opt/jython*'))
         facl_tmp = [
-                'allow perm=any uid=%(uid)s : dir=%(jre_home)s',
-                'allow perm=any uid=%(uid)s : dir=%(gluuOptFolder)s',
-                'allow perm=any uid=%(uid)s : dir=%(distFolder)s',
-                'allow perm=any uid=%(uid)s : dir=%(jettyAbsoluteDir)s',
-                'allow perm=any uid=%(uid)s : dir=%(jythonAbsoluteDir)s',
-                'allow perm=any uid=%(uid)s : dir=%(jetty_user_home)s',
-                'allow perm=any uid=%(uid)s : dir=%(osDefault)s',
-                'allow perm=any uid=%(uid)s : dir=%(gluuBaseFolder)s',
+                'allow perm=any uid=%(uid)s : dir=%(jre_home)s/',
+                'allow perm=any uid=%(uid)s : dir=%(gluuOptFolder)s/',
+                'allow perm=any uid=%(uid)s : dir=%(distFolder)s/',
+                'allow perm=any uid=%(uid)s : dir=%(jettyAbsoluteDir)s/',
+                'allow perm=any uid=%(uid)s : dir=%(jythonAbsoluteDir)s/',
+                'allow perm=any uid=%(uid)s : dir=%(jetty_user_home)s/',
+                'allow perm=any uid=%(uid)s : dir=%(osDefault)s/',
+                'allow perm=any uid=%(uid)s : dir=%(gluuBaseFolder)s/',
                 '# give access to gluu service %(uid)s',
                 ]
 
         tmp_render_dict = self.__dict__
         tmp_render_dict.update({'uid': uid})
 
-        write_facl = False
-
+        rules = []
         for acl in facl_tmp:
             facl = acl % tmp_render_dict
-            if not facl in fapolicyd_rules:
-                fapolicyd_rules.insert(fapolicyd_startn + 1, facl)
-                write_facl = True
-        if write_facl:
-            fapolicyd_rules.insert(fapolicyd_startn + 1, '\n')
-            self.writeFile(fapolicyd_rules_fn, '\n'.join(fapolicyd_rules))
+            rules.append(facl)
 
+        self.apply_fapolicyd_rules(rules)
 
     def set_ulimits(self):
         try:
@@ -1783,6 +1797,7 @@ class Setup(object):
         self.templateRenderingDict['jetty_dist'] = jetty_dist
         jettyTemp = os.path.join(jetty_dist, 'temp')
         self.run([self.cmd_mkdir, '-p', jettyTemp])
+        self.run([self.cmd_chown, '-R', 'jetty:gluu', jetty_dist])
         self.run([self.cmd_chown, '-R', 'jetty:gluu', jettyTemp])
         self.run([self.cmd_chmod, '775', jettyTemp])
 
@@ -3912,6 +3927,13 @@ class Setup(object):
 
         self.fix_opendj_java_properties()
 
+        opendj_fapolicyd_rules = [
+                'allow perm=any uid=ldap : dir=/usr/lib/jvm/java-11-openjdk-11.0.11.0.9-2.el8_4.x86_64/',
+                'allow perm=any uid=ldap : dir=/opt/opendj/'
+                ]
+
+        self.apply_fapolicyd_rules(opendj_fapolicyd_rules)
+
         try:
             self.logIt('Stopping opendj server')
             cmd = os.path.join(self.ldapBaseFolder, 'bin/stop-ds')
@@ -5253,11 +5275,11 @@ class Setup(object):
                         self.ldap_admin_port,
                         self.ldap_binddn
                     )
-            
+
             self.run(dsconfigCmd, cwd=cwd, shell=True, env={'OPENDJ_JAVA_HOME': self.jre_home})
-            
+
             ldap_conn.unbind()
-            
+
             self.run_service_command('opendj', 'restart')
 
             for atr in ('myCustomAttr1', 'myCustomAttr2'):
@@ -5714,7 +5736,7 @@ class Setup(object):
     def post_install_tasks(self):
 
         # selinux proxypass
-        setsebool_cmd = shtuil.wihich('setsebool')
+        setsebool_cmd = shutil.which('setsebool')
         self.run([setsebool_cmd, 'httpd_can_network_connect', '1'])
         # make it permanent
         self.run([setsebool_cmd, 'httpd_can_network_connect', '1', '-P'])
