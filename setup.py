@@ -1907,6 +1907,7 @@ class Setup(object):
             W.write(''.join(initscript))
 
         self.run([self.cmd_chmod, '+x', service_init_script_fn])
+        self.run([self.cmd_chown, '{}:{}'.format(serviceName, serviceName), service_init_script_fn])
 
     def renderUnitFile(self, serviceName):
         self.templateRenderingDict['thisServiceName'] = serviceName
