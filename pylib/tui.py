@@ -261,10 +261,8 @@ class HostForm(GluuSetupForm):
 
 class ServicesForm(GluuSetupForm):
 
-    services = ('installHttpd', 'installOxTrust', 'installSaml', 'installOxAuthRP', 
-                'installPassport', 'installGluuRadius', 'installOxd', 
-                'installCasa', 'installScimServer', 'installFido2',
-                )
+    services = ('installHttpd', 'installOxTrust', 'installSaml', 
+                'installOxd', 'installCasa')
 
     def create(self):
         for service in self.services:
@@ -621,11 +619,8 @@ class DisplaySummaryForm(GluuSetupForm):
                    "application_max_ram")
 
     myfields_2 = ( "installOxAuth", "installOxTrust", 
-                    "installHttpd", "installSaml", "installOxAuthRP",
-                    "installPassport", "installGluuRadius", 
-                    "installOxd", "installCasa",
-                    'installScimServer', 'installFido2',
-                    "java_type",
+                    "installHttpd", "installSaml",
+                    "installOxd", "installCasa", "java_type",
                     "backend_types", 'wrends_storages')
 
     def create(self):

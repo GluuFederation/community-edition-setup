@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+# DEPENDENCIES: java-11-openjdk-headless java-11-openjdk-devel
+
 # The MIT License (MIT)
 #
 # Copyright (c) 2014 Gluu
@@ -58,6 +60,7 @@ import zipfile
 import datetime
 import urllib.request, urllib.error, urllib.parse
 import locale
+import pwd
 
 from collections import OrderedDict
 from xml.etree import ElementTree
@@ -5420,16 +5423,19 @@ class Setup(object):
         self.logIt("Installing oxd server...")
         oxd_root = '/opt/oxd-server/'
         oxd_server_yml_fn = os.path.join(oxd_root, 'conf/oxd-server.yml')
+        oxd_user = 'oxd-server'
+        self.templateRenderingDict['thisServiceName'] = 'oxd-server'
+        self.renderUnitFile('oxd-server')
         
+        # create user for oxd service if not exists
+        try:
+            pwd.getpwnam(oxd_user)
+        except:
+            self.createUser(oxd_user, oxd_root)
+            self.addUserToGroup('gluu', serviceName)
+
         self.run(['tar', '-zxf', self.oxd_package, '-C', '/opt'])
-        self.run(['chown', '-R', 'jetty:jetty', oxd_root])
-        
-        service_file = os.path.join(oxd_root, 'oxd-server.service')
-        if os.path.exists(service_file):
-            self.run(['cp', service_file, '/lib/systemd/system'])
-        else:
-            self.run([self.cmd_ln, service_file, '/etc/init.d/oxd-server'])
-            self.run(['update-rc.d', 'oxd-server', 'defaults'])
+        self.run(['chown', '-R', '{}:gluu'.format(oxd_user), oxd_root])
 
         oxd_default_tmp_fn = os.path.join(self.templateFolder, 'oxd/oxd-server.default')
         oxd_default_tmp = self.readFile(oxd_default_tmp_fn)
@@ -5437,13 +5443,15 @@ class Setup(object):
         oxd_default_fn = os.path.join(self.osDefault, 'oxd-server')
         self.writeFile(oxd_default_fn, oxd_default)
 
+        self.run(['chown', '{0}:{0}'.format(oxd_user), oxd_default_fn])
+
         log_dir = '/var/log/oxd-server/'
         self.run(['mkdir', '-p', log_dir])
         log_file = os.path.join(log_dir, 'oxd-server.log')
         if not os.path.exists(log_file):
             open(log_file, 'w').close()
 
-        self.run(['chown', '-R', 'jetty:jetty', log_dir])
+        self.run(['chown', '-R', '{0}:{0}'.format(oxd_user), log_dir])
         
         for fn in glob.glob(os.path.join(oxd_root,'bin/*')):
             self.run(['chmod', '+x', fn])
@@ -5526,6 +5534,14 @@ class Setup(object):
             for f in ('/tmp/oxd.crt', '/tmp/oxd.key', '/tmp/oxd.p12', '/tmp/oxd.keystore'):
                 self.run(['rm', '-f', f])
 
+        oxd_fapolicyd_rules = [
+                'allow perm=any uid={} : dir=/usr/lib/jvm/java-11-openjdk-11.0.11.0.9-2.el8_4.x86_64/'.format(oxd_user),
+                'allow perm=any uid={} : dir={}'.format(oxd_user, log_dir),
+                'allow perm=any uid={} : dir={}'.format(oxd_user, oxd_root),
+                # give access to oxd-server
+                ]
+
+        self.apply_fapolicyd_rules(oxd_fapolicyd_rules)
 
         self.enable_service_at_start('oxd-server')
 
@@ -5562,7 +5578,7 @@ class Setup(object):
                 jettyServiceOxAuthCustomLibsPath
                 )
         
-        self.run([self.cmd_chown, '-R', 'jetty:jetty', jettyServiceOxAuthCustomLibsPath])
+        self.run([self.cmd_chown, '-R', 'oxauth:gluu', jettyServiceOxAuthCustomLibsPath])
 
         # Make necessary Directories for Casa
         for path in ('/opt/gluu/jetty/casa/static/', '/opt/gluu/jetty/casa/plugins'):
@@ -5778,8 +5794,8 @@ class Setup(object):
             self.installJetty()
             self.pbar.progress("jython", "Installing Jython")
             self.installJython()
-            self.pbar.progress("node", "Installing Node")
-            self.installNode()
+            #self.pbar.progress("node", "Installing Node")
+            #self.installNode()
             self.pbar.progress("gluu", "Making salt")
             self.make_salt()
             self.pbar.progress("gluu", "Making oxauth salt")
