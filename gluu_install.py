@@ -83,7 +83,9 @@ if argsp.uninstall:
             print("Stopping", service)
             os.system('systemctl stop ' + service)
 
-    remove_list = ['/etc/certs', '/etc/gluu', '/opt/gluu', '/opt/amazon-corretto*', '/opt/jre', '/opt/jetty*', '/opt/jython*', '/opt/opendj']
+    os.system('systemctl stop oxd')
+
+    remove_list = ['/etc/certs', '/etc/gluu', '/opt/gluu', '/opt/amazon-corretto*', '/opt/jre', '/opt/jetty*', '/opt/jython*', '/opt/opendj', '/opt/oxd-server', '/opt/shibboleth-idp']
     if not argsp.keep_downloads:
         remove_list.append('/opt/dist')
 
