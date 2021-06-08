@@ -42,6 +42,8 @@ def arg_parser():
 
     parser.add_argument('--remote-couchbase', help="Enables using remote couchbase server", action='store_true')
     parser.add_argument('--local-couchbase', help="Enables installing couchbase server", action='store_true')
+    parser.add_argument('-couchbase-hostname', help="Remote couchbase server hostname")
+
     parser.add_argument('-couchbase-admin-user', help="Couchbase admin user")
     parser.add_argument('-couchbase-admin-password', help="Couchbase admin user password")
     parser.add_argument('-couchbase-bucket-prefix', help="Set prefix for couchbase buckets", default='gluu')
