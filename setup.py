@@ -2138,6 +2138,7 @@ class Setup(object):
 
     def gen_cert(self, suffix, password, user='root', cn=None):
         self.logIt('Generating Certificate for %s' % suffix)
+        key_without_password = '%s/%s.key.noenc' % (self.certFolder, suffix)
         key_with_password = '%s/%s.key.orig' % (self.certFolder, suffix)
         key = '%s/%s.key' % (self.certFolder, suffix)
         csr = '%s/%s.csr' % (self.certFolder, suffix)
@@ -2145,11 +2146,23 @@ class Setup(object):
         self.run([self.opensslCommand,
                   'genrsa',
                   '-out',
+                  key_without_password,
+                  ])
+
+        self.run([self.opensslCommand,
+                  'pkey',
+                  '-in',
+                  key_without_password,
+                  '-out',
                   key_with_password,
+                  '-des3',
                   '-passout',
                   'pass:%s' % password,
-                  '2048'
                   ])
+
+        # remove unencrypted key
+        os.remove(key_without_password)
+
         self.run([self.opensslCommand,
                   'rsa',
                   '-in',
