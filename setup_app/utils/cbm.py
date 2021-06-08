@@ -160,7 +160,7 @@ class CBM:
         data = {
                     'password': self.auth.password,
                     'username': self.auth.username,
-                     'port': 'SAME',
+                    'port': self.port,
                  }
 
         result = self._post('settings/web', data)

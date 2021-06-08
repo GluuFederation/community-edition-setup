@@ -49,6 +49,8 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
         if not Config.get('couchbase_bucket_prefix'):
             Config.couchbase_bucket_prefix = 'gluu'
 
+        self.dbUtils.set_cbm()
+
         if Config.cb_install == InstallTypes.LOCAL:
             self.add_couchbase_post_messages()
             self.couchbaseInstall()
