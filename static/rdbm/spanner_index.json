@@ -12,6 +12,13 @@
     "custom": [
     ]
   },
+  "gluuPerson_oxExternalUid": {
+    "fields": [
+      "oxExternalUid"
+    ],
+    "custom": [
+    ]
+  },
   "gluuGroup": {
     "fields": [
       "inum",
