@@ -5435,7 +5435,7 @@ class Setup(object):
             self.addUserToGroup('gluu', serviceName)
 
         self.run(['tar', '-zxf', self.oxd_package, '-C', '/opt'])
-        self.run(['chown', '-R', '{}:gluu'.format(oxd_user), oxd_root])
+        self.run(['chown', '-R', '{0}:{0}'.format(oxd_user), oxd_root])
 
         oxd_default_tmp_fn = os.path.join(self.templateFolder, 'oxd/oxd-server.default')
         oxd_default_tmp = self.readFile(oxd_default_tmp_fn)
