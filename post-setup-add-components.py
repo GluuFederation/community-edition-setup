@@ -246,7 +246,8 @@ def installSaml():
     setupObj.run(['/usr/bin/wget', setupObj.idp3_dist_jar, '--no-verbose', '-c', '--retry-connrefused', '--tries=10', '-O', setupObj.distGluuFolder + '/shibboleth-idp.jar'])
     setupObj.installSaml = True
     setupObj.install_saml()
-    
+
+    setupObj.renderTemplateInOut('idp', os.path.join(setupObj.templateFolder, 'jetty'), setupObj.osDefault)
     setupObj.run([setupObj.cmd_chown, '-h', 'root:gluu', '/etc/certs/idp-signing.crt'])
     setupObj.run([setupObj.cmd_chown, '-h', 'root:gluu', '/etc/certs/idp-signing.key'])
 
