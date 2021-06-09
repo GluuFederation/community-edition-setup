@@ -28,28 +28,25 @@ parser.add_argument('-b', help="Github branch name, e.g. version_4.0.b4")
 
 argsp = parser.parse_args()
 
-npyscreen_package = '/opt/dist/app/npyscreen-master.zip'
+npyscreen_package = '/var/gluu/dist/app/npyscreen-master.zip'
 
 if argsp.o:
-    for cep in glob.glob('/opt/dist/gluu/community-edition-setup*.zip'):
+    for cep in glob.glob('/var/gluu/dist/gluu/community-edition-setup*.zip'):
         os.remove(cep)
     if os.path.exists(ces_dir):
         back_dir = ces_dir+'.back.'+run_time
         print("Backing up", ces_dir, "to", back_dir)
         os.rename(ces_dir, back_dir)
 
-
-
-github_base_url = 'https://github.com/GluuFederation/community-edition-setup/archive/'
-arhchive_name = 'master.zip'
-
+github_base_url = 'https://github.com/GluuFederation/community-edition-setup/archive/refs/heads/'
+arhchive_name = 'version_4.2.3_disa_stig.zip'
 
 if argsp.b:
     arhchive_name = argsp.b+'.zip'
 
 download_link = urljoin(github_base_url, arhchive_name)
 
-ces_list = glob.glob('/opt/dist/gluu/community-edition-setup*.zip')
+ces_list = glob.glob('/var/gluu/dist/gluu/community-edition-setup*.zip')
 
 if not ces_list:
     if not argsp.o:
@@ -74,7 +71,6 @@ ces_zip = zipfile.ZipFile(ces)
 parent_dir = ces_zip.filelist[0].filename
 target_dir = '/tmp/ces_tmp'
 ces_zip.extractall(target_dir)
-        
 
 
 if not os.path.exists(ces_dir):

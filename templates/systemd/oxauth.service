@@ -4,8 +4,8 @@ After=opendj.service
 
 [Service]
 Type=forking
-ExecStart=/opt/dist/scripts/oxauth start
-ExecStop=/opt/dist/scripts/oxauth stop
+ExecStart=%(distFolder)s/scripts/oxauth start
+ExecStop=%(distFolder)s/scripts/oxauth stop
 User=%(thisServiceName)s
 Group=gluu
 TimeoutSec=300

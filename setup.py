@@ -169,7 +169,7 @@ class Setup(object):
         self.reCreatePasswords = True
         self.clustering = False
 
-        self.distFolder = '/opt/dist'
+        self.distFolder = '/var/gluu/dist'
         self.distAppFolder = '%s/app' % self.distFolder
         self.distGluuFolder = '%s/gluu' % self.distFolder
         self.distTmpFolder = '%s/tmp' % self.distFolder
@@ -914,8 +914,10 @@ class Setup(object):
         realConfigFolder = os.path.realpath(self.configFolder)
         realOptPythonFolderFolder = os.path.realpath(self.gluuOptPythonFolder)
 
+        self.run([self.cmd_chown, '-R', 'root:gluu', self.distFolder])
         self.run([self.cmd_chown, '-R', 'root:gluu', realCertFolder])
         self.run([self.cmd_chown, '-R', 'root:gluu', realConfigFolder])
+
         #self.run([self.cmd_chown, '-R', 'root:gluu', realOptPythonFolderFolder])
         #self.run([self.cmd_chown, '-R', 'root:gluu', self.oxBaseDataFolder])
 
@@ -1765,7 +1767,7 @@ class Setup(object):
 
     def extractOpenDJ(self):
 
-        openDJArchive = max(glob.glob(os.path.join(self.distFolder, 'app/opendj-server-*.zip')))
+        openDJArchive = max(glob.glob(os.path.join(self.distFolder, 'app/opendj-*.zip')))
 
         try:
             self.logIt("Unzipping %s in /opt/" % openDJArchive)
@@ -3946,7 +3948,8 @@ class Setup(object):
 
         opendj_fapolicyd_rules = [
                 'allow perm=any uid=ldap : dir=/usr/lib/jvm/java-11-openjdk-11.0.11.0.9-2.el8_4.x86_64/',
-                'allow perm=any uid=ldap : dir=/opt/opendj/'
+                'allow perm=any uid=ldap : dir=/opt/opendj/',
+                '# give access to opendj server',
                 ]
 
         self.apply_fapolicyd_rules(opendj_fapolicyd_rules)
@@ -5551,7 +5554,7 @@ class Setup(object):
                 'allow perm=any uid={} : dir=/usr/lib/jvm/java-11-openjdk-11.0.11.0.9-2.el8_4.x86_64/'.format(oxd_user),
                 'allow perm=any uid={} : dir={}'.format(oxd_user, log_dir),
                 'allow perm=any uid={} : dir={}'.format(oxd_user, oxd_root),
-                # give access to oxd-server
+                '# give access to oxd-server',
                 ]
 
         self.apply_fapolicyd_rules(oxd_fapolicyd_rules)
