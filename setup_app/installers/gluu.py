@@ -136,6 +136,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
 
         if not base.snap:
             self.run([paths.cmd_chown, '-R', 'root:gluu', Config.certFolder])
+            self.run([paths.cmd_chown, '-R', 'root:gluu', Config.gluuOptPythonFolder])
             self.run([paths.cmd_chmod, '551', Config.certFolder])
             self.run([paths.cmd_chmod, 'ga+w', "/tmp"]) # Allow write to /tmp
 
