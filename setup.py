@@ -1914,6 +1914,10 @@ class Setup(object):
         self.run([self.cmd_chmod, '+x', service_init_script_fn])
         self.run([self.cmd_chown, '{}:{}'.format(serviceName, serviceName), service_init_script_fn])
 
+        self.run(['semanage', 'fcontext', '-a', '-t', 'usr_t', service_init_script_fn])
+        self.run(['restorecon', '-v', service_init_script_fn])
+
+
     def renderUnitFile(self, serviceName):
         self.templateRenderingDict['thisServiceName'] = serviceName
         self.renderTemplateInOut(serviceName+'.service', os.path.join(self.templateFolder, 'systemd'), self.systemdDir)
