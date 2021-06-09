@@ -346,8 +346,7 @@ class DBUtils:
 
         elif self.moddb == BackendTypes.SPANNER:
             type_val = self.get_rdbm_val(component, [value])
-            self.spanner.insert_data(table='gluuApplicationConfiguration', columns=["doc_id", component], values=[["oxauth", type_val]])
-
+            self.spanner.update_data(table='gluuConfiguration', columns=["doc_id", component], values=[["configuration", type_val]])
 
         elif self.moddb == BackendTypes.COUCHBASE:
             n1ql = 'UPDATE `{}` USE KEYS "configuration" SET {}={}'.format(self.default_bucket, component, value)

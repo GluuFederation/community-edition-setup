@@ -47,7 +47,6 @@ class PassportInstaller(NodeInstaller):
 
 
     def install(self):
-        self.logIt("Installing passport", pbar=self.service_name)
         self.logIt("Preparing passport service base folders")
         self.run([paths.cmd_mkdir, '-p', self.gluu_passport_base])
 
