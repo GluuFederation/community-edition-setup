@@ -57,6 +57,7 @@ class Spanner:
                     data['fields'].append({'name': f.name, 'type': f.type_.code.name})
             except Exception as e:
                 logging.error(e)
+
         logging.debug("Data received: %s", data)
         return data
 

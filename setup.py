@@ -332,6 +332,10 @@ def do_installation():
         propertiesUtils.save_properties()
         time.sleep(2)
 
+        if argsp.t:
+            base.logIt("Loading test data")
+            testDataLoader.load_test_data()
+
         for service in gluuProgress.services:
             if service['app_type'] == static.AppType.SERVICE:
                 gluuProgress.progress(PostSetup.service_name, "Starting {}".format(service['name'].title()))
@@ -343,10 +347,6 @@ def do_installation():
                     service['object'].start('oxauth-rp')
 
         gluuInstaller.post_install_tasks()
-
-        if argsp.t:
-            base.logIt("Loading test data")
-            testDataLoader.load_test_data()
 
         gluuProgress.progress(static.COMPLETED)
 

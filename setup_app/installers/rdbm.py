@@ -323,7 +323,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         if Config.ldif_site in ldif_files:
             ldif_files.remove(Config.ldif_site)
 
-        Config.pbar.progress(self.service_name, "Importing ldif files to {}".format(Config.rdbm_type), False)
+        Config.pbar.progress(self.service_name, "Importing base ldif files to {}".format(Config.rdbm_type), False)
         if not Config.ldif_base in ldif_files:
             if Config.rdbm_type == 'mysql':
                 force = BackendTypes.MYSQL

@@ -24,7 +24,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         self.service_name = 'test-data'
         self.pbar_text = "Loading" 
         self.needdb = True
-        self.app_type = static.AppType.SERVICE
+        self.app_type = static.AppType.APPLICATION
         self.install_type = static.InstallOption.OPTONAL
         self.install_var = 'loadTestData'
         self.register_progess()
@@ -61,7 +61,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         self.copyFile(keys_json_fn, os.path.join(Config.outputFolder, 'test/oxauth/server'))
 
     def load_test_data(self):
-
+        Config.pbar.progress(self.service_name, "Loading Test Data", False)
         # we need ldap rebind
         if Config.wrends_install:
             try:
@@ -78,8 +78,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
 
         self.encode_test_passwords()
 
-        self.logIt("Rendering test templates")
-
+        Config.pbar.progress(self.service_name, "Rendering test templates", False)
         Config.templateRenderingDict['config_oxauth_test_ldap'] = '# Not available'
         Config.templateRenderingDict['config_oxauth_test_couchbase'] = '# Not available'
         Config.templateRenderingDict['config_oxauth_test_spanner'] = '# Not available'
@@ -110,8 +109,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
 
         self.render_templates_folder(self.template_base)
 
-        self.logIt("Loading test ldif files")
-
+        Config.pbar.progress(self.service_name, "Loading test ldif files", False)
         if not self.passportInstaller.installed():
             self.passportInstaller.generate_configuration()
 

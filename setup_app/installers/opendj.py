@@ -73,7 +73,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
             for group in ldap_mappings:
                 ldif_files +=  Config.couchbaseBucketDict[group]['ldif']
 
-            Config.pbar.progress(self.service_name, "Importing ldif files to OpenDJ", False)
+            Config.pbar.progress(self.service_name, "Importing base ldif files to OpenDJ", False)
             if not Config.ldif_base in ldif_files:
                 self.dbUtils.import_ldif([Config.ldif_base], force=BackendTypes.LDAP)
 
