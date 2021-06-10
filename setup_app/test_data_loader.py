@@ -62,14 +62,16 @@ class TestDataLoader(BaseInstaller, SetupUtils):
 
     def load_test_data(self):
 
+        # we need ldap rebind
+        if Config.wrends_install:
+            try:
+                self.dbUtils.ldap_conn.unbind()
+            except:
+                pass
+            self.dbUtils.ldap_conn.bind()
+        
         if not self.scimInstaller.installed():
-            if Config.wrends_install:
-                try:
-                    self.dbUtils.ldap_conn.unbind()
-                except:
-                    pass
-                self.dbUtils.ldap_conn.bind()
-
+    
             self.logIt("Scim was not installed. Installing")
             Config.installScimServer = True
             self.scimInstaller.start_installation()
