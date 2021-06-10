@@ -46,7 +46,6 @@ class FidoInstaller(JettyInstaller):
         Config.templateRenderingDict['fido2_dynamic_conf_base64'] = self.generate_base64_file(self.fido2_dynamic_conf_json, 1)
         Config.templateRenderingDict['fido2_static_conf_base64'] = self.generate_base64_file(self.fido2_static_conf_json, 1)
 
-        
         self.renderTemplateInOut(self.ldif_fido2, self.template_folder, self.output_folder)
 
         ldif_files = [self.ldif_fido2]
@@ -70,6 +69,13 @@ class FidoInstaller(JettyInstaller):
             os.path.join(Config.install_dir, 'static/auth/fido2/mds_toc_cert/metadata-root-ca.cer'),
             os.path.join(self.fido2ConfigFolder, 'mds/cert')
             )
+
+        # copy Apple_WebAuthn_Root_CA
+        apple_webauthn = os.path.join(Config.distAppFolder, 'Apple_WebAuthn_Root_CA.pem')
+        if os.path.exists(apple_webauthn):
+            target_dir = os.path.join(self.fido2ConfigFolder, 'apple')
+            self.run([paths.cmd_mkdir, '-p', target_dir])
+            self.copyFile(apple_webauthn, target_dir)
 
     def installed(self):
         return os.path.exists(os.path.join(Config.jetty_base, self.service_name, 'start.ini'))
