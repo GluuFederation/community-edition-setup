@@ -134,12 +134,6 @@ class PassportInstaller(NodeInstaller):
         # create certificates
         self.gen_cert('passport-sp', Config.passportSpKeyPass, 'ldap', Config.ldap_hostname)
 
-        # set owner and mode of certificate files
-        cert_files = glob.glob(os.path.join(Config.certFolder, 'passport*'))
-        for fn in cert_files:
-            self.run([paths.cmd_chmod, '500', fn])
-            self.run([paths.cmd_chown, 'root:gluu', fn])
-
         Config.passport_rs_client_jwks = self.gen_openid_jwks_jks_keys(self.passport_rs_client_jks_fn, Config.passport_rs_client_jks_pass)
         Config.templateRenderingDict['passport_rs_client_base64_jwks'] = self.generate_base64_string(Config.passport_rs_client_jwks, 1)
 
@@ -157,6 +151,11 @@ class PassportInstaller(NodeInstaller):
 
         self.export_openid_key(self.passport_rp_client_jks_fn, Config.passport_rp_client_jks_pass, Config.passport_rp_client_cert_alias, self.passport_rp_client_cert_fn)
 
+        # set owner and mode of certificate files
+        cert_files = glob.glob(os.path.join(Config.certFolder, 'passport*'))
+        for fn in cert_files:
+            self.run([paths.cmd_chmod, '440', fn])
+            self.run([paths.cmd_chown, 'root:gluu', fn])
 
     def render_import_templates(self):
 
