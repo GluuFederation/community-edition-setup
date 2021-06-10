@@ -188,6 +188,9 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                       '-c',
                       dsconfigCmd], cwd=cwd)
 
+        # rebind after creating backends
+        self.dbUtils.ldap_conn.unbind()
+        self.dbUtils.ldap_conn.bind()
 
     def configure_opendj(self):
         self.logIt("Configuring OpenDJ")
@@ -229,8 +232,6 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                         'ds-cfg-base-dn': ['o=gluu']
                         }
                 )
-
-
 
 
     def export_opendj_public_cert(self):

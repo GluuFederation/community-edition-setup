@@ -13,13 +13,6 @@ description: Welcome to oxTrust!
 displayName: %(orgName)s
 
 ################################
-# statistics parent
-dn: ou=stat,o=gluu
-objectClass: top
-objectClass: organizationalunit
-ou: stat
-
-################################
 
 # People data - LEVEL 2
 dn: ou=people,o=gluu
@@ -208,21 +201,3 @@ objectClass: top
 objectClass: organizationalUnit
 ou: trustRelationships
 
-# Metric data - LEVEL 2
-dn: ou=statistic,o=metric
-objectClass: top
-objectClass: organizationalunit
-ou: statistic
-
-######################################
-
-# Metric data - LEVEL 3
-dn: ou=oxauth,ou=statistic,o=metric
-objectClass: top
-objectClass: organizationalunit
-ou: oxauth
-
-dn: ou=oxtrust,ou=statistic,o=metric
-objectClass: top
-objectClass: organizationalunit
-ou: oxtrust
