@@ -70,6 +70,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             txt += 'Install Casa '.ljust(30) + repr(Config.installCasa).rjust(35) + (' *' if 'installCasa' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Oxd '.ljust(30) + repr(Config.installOxd).rjust(35) + (' *' if 'installOxd' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Gluu Radius '.ljust(30) + repr(Config.installGluuRadius).rjust(35) + (' *' if 'installGluuRadius' in Config.addPostSetupService else '') + "\n"
+            txt += 'Load Test Data '.ljust(30) + repr( base.argsp.t).rjust(35) + "\n"
             return txt
 
         except:
