@@ -222,14 +222,12 @@ class Setup(object):
                 self.jre_home = os.popen('type -p {}|xargs readlink -f|xargs dirname|xargs dirname'.format(cmd_java)).read().strip()
                 self.cmd_java = cmd_java
                 self.cmd_keytool = shutil.which('keytool')
-                self.cmd_jar = shutil.which('jar')
 
         if not self.use_existing_java:
             # java commands
             self.jre_home = '/opt/jre'
             self.cmd_java = '%s/bin/java' % self.jre_home
             self.cmd_keytool = '%s/bin/keytool' % self.jre_home
-            self.cmd_jar = '%s/bin/jar' % self.jre_home
 
         os.environ["OPENDJ_JAVA_HOME"] =  self.jre_home
 
@@ -2585,7 +2583,10 @@ class Setup(object):
             self.createDirs('%s/identity/conf/shibboleth3/sp' % self.jetty_base)
 
             # unpack IDP3 JAR with static configs
-            self.run([self.cmd_jar, 'xf', self.distGluuFolder + '/shibboleth-idp.jar'], '/opt')
+            dist_shib_fn = os.path.join(self.distGluuFolder, 'shibboleth-idp.jar')
+            shib_zipfile = zipfile.ZipFile(dist_shib_fn)
+            shib_zipfile.extractall('/opt')
+
             self.removeDirs('/opt/META-INF')
 
             if self.mappingLocations['user'] == 'couchbase':
@@ -2644,15 +2645,13 @@ class Setup(object):
         idpWar = 'idp.war'
         distIdpPath = '%s/idp.war' % self.distGluuFolder
 
-        tmpIdpDir = '%s/tmp/tmp_idp' % self.distFolder
+        tmpIdpDir = '%s/tmp/idp_tmp' % self.distFolder
 
         self.logIt("Unpacking %s..." % idpWar)
         self.removeDirs(tmpIdpDir)
         self.createDirs(tmpIdpDir)
-
-        self.run([self.cmd_jar,
-                  'xf',
-                  distIdpPath], tmpIdpDir)
+        idp_zipfile = zipfile.ZipFile(distIdpPath)
+        idp_zipfile.extractall(tmpIdpDir)
 
         # Copy libraries into webapp
         idp3WebappLibFolder = "%s/WEB-INF/lib" % self.idp3WebappFolder
