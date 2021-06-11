@@ -4469,8 +4469,7 @@ class Setup(object):
                 self.export_opendj_public_cert()
                 self.pbar.progress("opendj", "OpenDJ: creating indexes", False)
 
-                ######## DISABLED FOR TESTING ############
-                #self.index_opendj()
+                self.index_opendj()
                 self.pbar.progress("opendj", "OpenDJ: importing Ldif files", False)
                 
                 ldif_files = []
