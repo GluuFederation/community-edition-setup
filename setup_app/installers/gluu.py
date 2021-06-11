@@ -275,7 +275,6 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         encode_script = self.readFile(os.path.join(Config.templateFolder, 'encode.py'))
         encode_script = encode_script % self.merge_dicts(Config.__dict__, Config.templateRenderingDict)
         self.writeFile(os.path.join(Config.gluuOptBinFolder, 'encode.py'), encode_script)
-        self.logIt("Error rendering encode script", True)
 
         super_gluu_lisence_renewer_fn = os.path.join(Config.staticFolder, 'scripts', 'super_gluu_license_renewer.py')
 
