@@ -187,7 +187,7 @@ class SamlInstaller(JettyInstaller):
             self.logIt("Creating couchbase readonly user for shib")
             self.dbUtils.cbm.create_user(shib_user, Config.couchbaseShibUserPassword, 'Shibboleth IDP', shib_user_roles)
         else:
-            Config.post_messages.append('{}Please create a user on Couchbase Server with the following credidentals and roles{}'.format(gluu_utils.colors.WARNING, gluu_utils.colors.ENDC))
+            Config.post_messages.append('Please create a user on Couchbase Server with the following credidentals and roles')
             Config.post_messages.append('Username: {}'.format(shib_user))
             Config.post_messages.append('Password: {}'.format(Config.couchbaseShibUserPassword))
             Config.post_messages.append('Roles: {}'.format(shib_user_roles))
