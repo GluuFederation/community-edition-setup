@@ -10,6 +10,8 @@ import base64
 import json
 import string
 import random
+import pwd
+import grp
 import hashlib
 import ruamel.yaml
 
@@ -419,31 +421,47 @@ class SetupUtils(Crypto64):
     def createUser(self, userName, homeDir, shell='/bin/bash'):
 
         try:
-            useradd = '/usr/sbin/useradd'
-            cmd = [useradd, '--system', '--user-group', '--shell', shell, userName]
-            if homeDir:
-                cmd.insert(-1, '--create-home')
-                cmd.insert(-1, '--home-dir')
-                cmd.insert(-1, homeDir)
-            else:
-                cmd.insert(-1, '--no-create-home')
-            self.run(cmd)
-            if homeDir:
-                self.logOSChanges("User %s with homedir %s was created" % (userName, homeDir))
-            else:
-                self.logOSChanges("User %s without homedir was created" % (userName))
-        except:
-            self.logIt("Error adding user", True)
+            pwd.getpwnam(userName)
+            self.logIt("User {} exists".format(userName))
+        except KeyError:
+            try:
+                useradd = '/usr/sbin/useradd'
+                cmd = [useradd, '--system', '--user-group', '--shell', shell, userName]
+                if homeDir:
+                    cmd.insert(-1, '--create-home')
+                    cmd.insert(-1, '--home-dir')
+                    cmd.insert(-1, homeDir)
+                else:
+                    cmd.insert(-1, '--no-create-home')
+                self.run(cmd)
+                if homeDir:
+                    self.logOSChanges("User %s with homedir %s was created" % (userName, homeDir))
+                else:
+                    self.logOSChanges("User %s without homedir was created" % (userName))
+            except:
+                self.logIt("Error adding user", True)
 
     def createGroup(self, groupName):
         try:
-            groupadd = '/usr/sbin/groupadd'
-            self.run([groupadd, groupName])
-            self.logOSChanges("Group %s was created" % (groupName))
-        except:
-            self.logIt("Error adding group", True)
+            grp.getgrnam(groupName)
+            self.logIt("Group {} exists".format(groupName))
+        except KeyError:
+            try:
+                groupadd = '/usr/sbin/groupadd'
+                self.run([groupadd, groupName])
+                self.logOSChanges("Group %s was created" % (groupName))
+            except:
+                self.logIt("Error adding group", True)
 
     def addUserToGroup(self, groupName, userName):
+        try:
+            grpdb = grp.getgrnam(groupName)
+        except KeyError:
+            createGroup(groupName)
+            grpdb = grp.getgrnam(groupName)
+        if userName in grpdb.gr_mem:
+            self.logIt("User {} is already member of {}".format(userName, groupName))
+            return
         try:
             usermod = '/usr/sbin/usermod'
             self.run([usermod, '-a', '-G', groupName, userName])
