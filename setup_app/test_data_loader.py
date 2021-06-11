@@ -132,18 +132,45 @@ class TestDataLoader(BaseInstaller, SetupUtils):
 
 
         oxAuthConfDynamic_changes = {
-                                    'dynamicRegistrationCustomObjectClass': 'oxAuthClientCustomAttributes',
-                                    'dynamicRegistrationCustomAttributes': [ "oxAuthTrustedClient", "myCustomAttr1", "myCustomAttr2", "oxIncludeClaimsInIdToken" ],
+                                    'dynamicRegistrationCustomObjectClass':  'jansClntCustomAttributes',
+                                    'dynamicRegistrationCustomAttributes': [ "jansTrustedClnt", "myCustomAttr1", "myCustomAttr2", "jansInclClaimsInIdTkn" ],
                                     'dynamicRegistrationExpirationTime': 86400,
-                                    'dynamicGrantTypeDefault': [ "authorization_code", "implicit", "password", "client_credentials", "refresh_token", "urn:ietf:params:oauth:grant-type:uma-ticket" ],
+                                    'dynamicGrantTypeDefault': [ "authorization_code", "implicit", "password", "client_credentials", "refresh_token", "urn:ietf:params:oauth:grant-type:uma-ticket", "urn:openid:params:grant-type:ciba", "urn:ietf:params:oauth:grant-type:device_code" ],
                                     'legacyIdTokenClaims': True,
                                     'authenticationFiltersEnabled': True,
                                     'clientAuthenticationFiltersEnabled': True,
                                     'keyRegenerationEnabled': True,
                                     'openidScopeBackwardCompatibility': False,
+                                    'forceOfflineAccessScopeToEnableRefreshToken' : False,
+                                    'dynamicRegistrationPasswordGrantTypeEnabled' : True,
+                                    'cibaEnabled': True,
+                                    'backchannelAuthenticationRequestSigningAlgValuesSupported': [ "RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512" ],
+                                    'backchannelClientId': '123-123-123',
+                                    'backchannelUserCodeParameterSupported': True,
+                                    'tokenEndpointAuthSigningAlgValuesSupported': [ 'HS256', 'HS384', 'HS512', 'RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512', 'PS256', 'PS384', 'PS512' ],
+                                    'userInfoSigningAlgValuesSupported': [ 'none', 'HS256', 'HS384', 'HS512', 'RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512', 'PS256', 'PS384', 'PS512' ],
+                                    'consentGatheringScriptBackwardCompatibility': False,
+                                    'claimsParameterSupported': True,
+                                    'grantTypesSupported': [ 'urn:openid:params:grant-type:ciba', 'authorization_code', 'urn:ietf:params:oauth:grant-type:uma-ticket', 'urn:ietf:params:oauth:grant-type:device_code', 'client_credentials', 'implicit', 'refresh_token', 'password' ],
+                                    'idTokenSigningAlgValuesSupported': [ 'none', 'HS256', 'HS384', 'HS512', 'RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512', 'PS256', 'PS384', 'PS512' ],
+                                    'requestObjectSigningAlgValuesSupported': [ 'none', 'HS256', 'HS384', 'HS512', 'RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512', 'PS256', 'PS384', 'PS512' ],
+                                    'softwareStatementValidationClaimName': 'jwks_uri',
+                                    'softwareStatementValidationType': 'jwks_uri',
+                                    'umaGrantAccessIfNoPolicies': True,
+                                    'rejectJwtWithNoneAlg': False,
+                                    'removeRefreshTokensForClientOnLogout': True,
+                                    'fapiCompatibility': False,
+                                    'forceIdTokenHintPrecense': False,
+                                    'introspectionScriptBackwardCompatibility': False,
+                                    'spontaneousScopeLifetime': 0,
+                                    'tokenEndpointAuthMethodsSupported': [ 'client_secret_basic', 'client_secret_post', 'client_secret_jwt', 'private_key_jwt', 'tls_client_auth', 'self_signed_tls_client_auth', 'none' ],
+                                    'sessionIdRequestParameterEnabled': True,
+                                    'skipRefreshTokenDuringRefreshing': False,
+                                    'enabledComponents': ['unknown', 'health_check', 'userinfo', 'clientinfo', 'id_generation', 'registration', 'introspection', 'revoke_token', 'revoke_session', 'end_session', 'status_session', 'jans_configuration', 'ciba', 'uma', 'u2f', 'device_authz', 'stat'],
+                                    'cleanServiceInterval':3600
                                     }
 
-        custom_scripts = ('2DAF-F995', '2DAF-F996', '4BBE-C6A8')
+        custom_scripts = ('2DAF-F995', '2DAF-F996', '4BBE-C6A8', 'A51E-76DA')
 
         self.dbUtils.set_oxAuthConfDynamic(oxAuthConfDynamic_changes)
         
