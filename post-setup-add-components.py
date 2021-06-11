@@ -97,7 +97,9 @@ class ProgressBar:
 
 setup_porperties = generate_properties(True)
 
-os.rename('/opt/dist/gluu/oxauth-client-jar-with-dependencies.jar', '/opt/dist/gluu/oxauth-client-jar-with-dependencies.jar.old')
+oxauth_client_fn = '/opt/dist/gluu/oxauth-client-jar-with-dependencies.jar'
+if os.path.exists(oxauth_client_fn):
+    os.rename(oxauth_client_fn, oxauth_client_fn + '.old')
 
 setup.__dict__['ruamel'] = ruamel
 setupObj = setup.Setup(ces_dir)
