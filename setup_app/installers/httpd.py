@@ -123,7 +123,8 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
                     self.run([cmd_a2dismod, mod_load_fn])
 
             for amod in mods_enabled:
-                self.run([cmd_a2enmod, amod])
+                if os.path.exists('/etc/apache2/mods-available/{}.load'.format(amod)):
+                    self.run([cmd_a2enmod, amod])
 
         if not Config.get('httpdKeyPass'):
             Config.httpdKeyPass = self.getPW()
