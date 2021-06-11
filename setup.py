@@ -5451,7 +5451,7 @@ class Setup(object):
             pwd.getpwnam(oxd_user)
         except:
             self.createUser(oxd_user, oxd_root)
-            self.addUserToGroup('gluu', serviceName)
+            self.addUserToGroup('gluu', oxd_user)
 
         self.run(['tar', '-zxf', self.oxd_package, '-C', '/opt'])
         self.run(['chown', '-R', '{0}:{0}'.format(oxd_user), oxd_root])
