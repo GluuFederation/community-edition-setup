@@ -417,6 +417,11 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             self.writeFile(os.path.join(base.snap_common, 'etc/hosts.gluu'), Config.ip + '\t' + Config.hostname)
 
         else:
+            self.run([paths.cmd_chown, '-R', 'jetty:root', Config.certFolder])
+            self.run([paths.cmd_chmod, '-R', '660', Config.certFolder])
+            self.run([paths.cmd_chmod, 'u+X', Config.certFolder])
+
             if not Config.installed_instance:
-                cron_service = 'crond' if base.os_type in ['centos', 'red', 'fedora'] else 'cron'
+                cron_service = 'crond' if base.clone_type == 'rpm' else 'cron'
                 self.restart(cron_service)
+
