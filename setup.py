@@ -156,7 +156,6 @@ if os.path.exists(Config.gluu_properties_fn):
         collectProperties.save()
         sys.exit()
 
-
 if not Config.noPrompt and not GSA and not Config.installed_instance and not setup_loaded:
     propertiesUtils.promptForProperties()
 
@@ -215,6 +214,17 @@ if argsp.x:
 
 
 if not GSA:
+
+    if Config.wrends_install == static.InstallTypes.LOCAL:
+        # check if opendj ports are available
+        used_ports = base.check_port_available((1389, 4444, 1636))
+        s, aux = ('', 'is') if len(used_ports) == 1 else ('s', 'are')
+        if used_ports:
+            print()
+            print("{}Setup needs port{} {} {} free. Exiting ...{}".format(static.colors.DANGER, s, ','.join(used_ports), aux, static.colors.ENDC))
+            print()
+            sys.exit()
+
     print()
     print(gluuInstaller)
 

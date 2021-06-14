@@ -13,6 +13,7 @@ import subprocess
 import traceback
 import re
 import shutil
+import socket
 import multiprocessing
 import ssl
 
@@ -296,3 +297,14 @@ def download(url, dst):
     result = urlretrieve(url, dst)
     f_size = result[1].get('Content-Length','0')
     logIt("Download size: {} bytes".format(f_size))
+
+def check_port_available(port_list, host='localhost'):
+    open_ports = []
+    for port in port_list:
+        socket_object = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        check_port = socket_object.connect_ex((host, port))
+        if check_port == 0:
+            open_ports.append(str(port))
+        socket_object.close()
+
+    return open_ports

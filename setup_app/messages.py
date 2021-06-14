@@ -85,6 +85,7 @@ class msg:
 
 
     wrends_install_options = ["Don't Install","Install Locally","Use Remote OpenDJ"]
+    opendj_port_availibility = "Setup needs port{0} {1} {2} free. Please stop services listening {3} port{0}."
     oxd_url_label = "oxd Server URL"
     install_oxd_or_url_warning = "Please either enter oxd Server URL or check Install Oxd"
     oxd_connection_error = "Can't connect to oxd-server with url {}. Reason: {}"

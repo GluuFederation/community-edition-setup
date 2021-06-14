@@ -488,6 +488,15 @@ class DBBackendForm(GluuSetupForm):
         if Config.wrends_install == static.InstallTypes.LOCAL:
             Config.ldap_hostname = 'localhost'
             Config.ldapPass = self.wrends_password.value
+
+            # check if opendj ports are available
+            used_ports = base.check_port_available((1389, 4444, 1636))
+            s, aux, w = ('', 'is', 'this') if len(used_ports) == 1 else ('s', 'are', 'these')
+            if used_ports:
+                port_msg = msg.opendj_port_availibility.format(s, ','.join(used_ports), aux, w)
+                npyscreen.notify_confirm(port_msg, title="Warning")
+                return
+
         elif Config.wrends_install == static.InstallTypes.REMOTE:
             Config.ldap_hostname = self.wrends_hosts.value
             Config.ldapPass = self.wrends_password.value
