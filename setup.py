@@ -848,14 +848,9 @@ class Setup(object):
 
             txt += 'Java Type'.ljust(30) + self.java_type.rjust(35) + "\n"
             txt += 'Install Apache 2 web server'.ljust(30) + repr(self.installHttpd).rjust(35) + "\n"
-            txt += 'Install Fido2 Server'.ljust(30) + repr(self.installFido2).rjust(35) + "\n"
-            txt += 'Install Scim Server'.ljust(30) + repr(self.installScimServer).rjust(35) + "\n"
             txt += 'Install Shibboleth SAML IDP'.ljust(30) + repr(self.installSaml).rjust(35) + "\n"
-            txt += 'Install oxAuth RP'.ljust(30) + repr(self.installOxAuthRP).rjust(35) + "\n"
-            txt += 'Install Passport '.ljust(30) + repr(self.installPassport).rjust(35) + "\n"
             txt += 'Install Casa '.ljust(30) + repr(self.installCasa).rjust(35) + "\n"
             txt += 'Install Oxd '.ljust(30) + repr(self.installOxd).rjust(35) + "\n"
-            txt += 'Install Gluu Radius '.ljust(30) + repr(self.installGluuRadius).rjust(35) + "\n"
 
             return txt
         except:
@@ -3518,7 +3513,6 @@ class Setup(object):
                 sys.exit(False)
 
 
-
         promptForHTTPD = self.getPrompt("Install Apache HTTPD Server", 
                                         self.getDefaultOption(self.installHTTPD)
                                         )[0].lower()
@@ -3526,21 +3520,6 @@ class Setup(object):
             self.installHttpd = True
         else:
             self.installHttpd = False
-
-        promptForScimServer = self.getPrompt("Install Scim Server?",
-                                            self.getDefaultOption(self.installScimServer)
-                                            )[0].lower()
-        if promptForScimServer == 'y':
-            self.installScimServer = True
-            self.gluuScimEnabled = 'true'
-            self.enable_scim_access_policy = 'true'
-
-        promptForFido2Server = self.getPrompt("Install Fido2 Server?",
-                                            self.getDefaultOption(self.installFido2)
-                                            )[0].lower()
-        if promptForFido2Server == 'y':
-            self.installFido2 = True
-
 
         promptForShibIDP = self.getPrompt("Install Shibboleth SAML IDP?",
                                             self.getDefaultOption(self.installSaml)
@@ -3553,24 +3532,6 @@ class Setup(object):
                 self.couchbaseShibUserPassword = self.getPW()
         else:
             self.installSaml = False
-
-        promptForOxAuthRP = self.getPrompt("Install oxAuth RP?",
-                                            self.getDefaultOption(self.installOxAuthRP)
-                                            )[0].lower()
-        if promptForOxAuthRP == 'y':
-            self.installOxAuthRP = True
-        else:
-            self.installOxAuthRP = False
-
-        promptForPassport = self.getPrompt("Install Passport?", 
-                                            self.getDefaultOption(self.installPassport)
-                                            )[0].lower()
-        if promptForPassport == 'y':
-            self.installPassport = True
-            self.gluuPassportEnabled = 'true'
-            self.enable_scim_access_policy = 'true'
-        else:
-            self.installPassport = False
 
         if os.path.exists(os.path.join(self.distGluuFolder, 'casa.war')):
             self.promptForCasaInstallation()
@@ -3592,19 +3553,6 @@ class Setup(object):
                                                 )[0].lower()
             if promptForOxdGluuStorage == 'y':
                 self.oxd_use_gluu_storage = True
-
-
-        promptForGluuRadius = self.getPrompt("Install Gluu Radius?", 
-                                            self.getDefaultOption(self.installGluuRadius)
-                                            )[0].lower()
-        if promptForGluuRadius == 'y':
-            self.installGluuRadius = True
-            self.oxauth_legacyIdTokenClaims = 'true'
-            self.oxauth_openidScopeBackwardCompatibility =  'true'
-            self.enableRadiusScripts = 'true'
-            self.gluuRadiusEnabled = 'true'
-        else:
-            self.installGluuRadius = False
 
 
     def get_filepaths(self, directory):
