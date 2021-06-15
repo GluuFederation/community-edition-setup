@@ -10,7 +10,7 @@ from setup_app.utils import base
 from setup_app.config import Config
 from setup_app.utils.setup_utils import SetupUtils
 from setup_app.installers.base import BaseInstaller
-from setup_app.utils.ldif_utils import myLdifParser
+from setup_app.utils.ldif_utils import myLdifParser, schema2json
 from setup_app.pylib.schema import ObjectClass
 from setup_app.pylib.ldif4.ldif import LDIFWriter
 
@@ -106,6 +106,55 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                 template_text = self.readFile(os.path.join(self.template_base, 'oxauth/server/config-oxauth-test-sql.properties.nrnd'))
                 rendered_text = self.fomatWithDict(template_text, self.merge_dicts(Config.__dict__, Config.templateRenderingDict))
                 Config.templateRenderingDict['config_oxauth_test_sql'] = rendered_text
+
+
+            self.logIt("Adding custom attributs and indexes")
+
+            schema2json(
+                    os.path.join(Config.templateFolder, 'test/oxauth/schema/102-oxauth_test.ldif'),
+                    os.path.join(Config.outputFolder, 'test/oxauth/schema/')
+                    )
+            schema2json(
+                    os.path.join(Config.templateFolder, 'test/scim-client/schema/103-scim_test.ldif'),
+                    os.path.join(Config.outputFolder, 'test/scim-client/schema/'),
+                    )
+
+            oxauth_json_schema_fn =os.path.join(Config.outputFolder, 'test/oxauth/schema/102-oxauth_test.json')
+            
+            oxauth_schema = base.readJsonFile(oxauth_json_schema_fn)
+            oxauth_schema['objectClasses'][0]['names'] = ['oxAuthClient']
+
+            with open(oxauth_json_schema_fn, 'w') as w:
+                json.dump(oxauth_schema, w, indent=2)
+
+            scim_json_schema_fn = os.path.join(Config.outputFolder, 'test/scim-client/schema/103-scim_test.json')
+            gluu_schema_json_files = [ oxauth_json_schema_fn, scim_json_schema_fn ]
+
+            scim_schema = base.readJsonFile(scim_json_schema_fn)
+            may_list = []
+
+            for attribute in scim_schema['attributeTypes']:
+                may_list += attribute['names']
+
+            gluuPerson = {
+                        'kind': 'STRUCTURAL',
+                        'may': may_list,
+                        'must': ['objectclass'],
+                        'names': ['gluuPerson'],
+                        'oid': 'gluuObjClass',
+                        'sup': ['top'],
+                        'x_origin': 'Gluu created objectclass'
+                        }
+            scim_schema['objectClasses'].append(gluuPerson)
+
+            with open(scim_json_schema_fn, 'w') as w:
+                json.dump(scim_schema, w, indent=2)
+
+            self.dbUtils.read_gluu_schema(others=gluu_schema_json_files)
+
+            base.current_app.RDBMInstaller.create_tables(gluu_schema_json_files)
+            if Config.rdbm_type != 'spanner': 
+                self.dbUtils.rdm_automapper(force=True)
 
         self.render_templates_folder(self.template_base)
 
