@@ -148,6 +148,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                                     'backchannelAuthenticationRequestSigningAlgValuesSupported': [ "RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512" ],
                                     'backchannelClientId': '123-123-123',
                                     'backchannelUserCodeParameterSupported': True,
+                                    'backchannelRequestsProcessorJobIntervalSec': 5,
                                     'tokenEndpointAuthSigningAlgValuesSupported': [ 'HS256', 'HS384', 'HS512', 'RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512', 'PS256', 'PS384', 'PS512' ],
                                     'userInfoSigningAlgValuesSupported': [ 'none', 'HS256', 'HS384', 'HS512', 'RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512', 'PS256', 'PS384', 'PS512' ],
                                     'consentGatheringScriptBackwardCompatibility': False,
