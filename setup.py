@@ -920,6 +920,8 @@ class Setup(object):
 
         self.run([self.cmd_chown, 'jetty:gluu', '/opt/gluu/'])
         self.run([self.cmd_chown, 'root:gluu', '/etc/gluu/'])
+        self.run([self.cmd_chown, 'root:gluu', '/var/gluu'])
+        self.run([self.cmd_chmod, '770', '/var/gluu'])
 
         # TODO: check later
         """
@@ -1912,7 +1914,7 @@ class Setup(object):
 
 
     def renderUnitFile(self, serviceName):
-        self.templateRenderingDict['thisServiceName'] = serviceName
+        self.templateRenderingDict['thisServiceName'] = 'identity' if serviceName == 'idp' else serviceName
         self.renderTemplateInOut(serviceName+'.service', os.path.join(self.templateFolder, 'systemd'), self.systemdDir)
 
 
@@ -1941,19 +1943,20 @@ class Setup(object):
                 self.run([self.cmd_mkdir, '-p', "%s/custom/static" % jettyServiceBase])
                 self.run([self.cmd_mkdir, '-p', "%s/custom/libs" % jettyServiceBase])
 
+
+        self.templateRenderingDict['thisServiceName'] = 'identity' if serviceName == 'idp' else serviceName
+
         # create user for this service if not exists
         service_home_dir = os.path.join(self.jetty_base, serviceName)
         try:
-            pwd.getpwnam(serviceName)
+            pwd.getpwnam(self.templateRenderingDict['thisServiceName'])
         except:
             self.createUser(serviceName, service_home_dir)
-            self.addUserToGroup('gluu', serviceName)
+            self.addUserToGroup('gluu', self.templateRenderingDict['thisServiceName'])
 
         self.logIt("Preparing %s service base configuration" % serviceName)
         jettyEnv = os.environ.copy()
         jettyEnv['PATH'] = '%s/bin:' % self.jre_home + jettyEnv['PATH']
-
-        self.templateRenderingDict['thisServiceName'] = serviceName
 
         self.run([self.cmd_java, '-jar', '%s/start.jar' % self.jetty_home, 'jetty.home=%s' % self.jetty_home, 'jetty.base=%s' % jettyServiceBase, '--add-to-start=%s' % jettyModules], None, jettyEnv)
 
@@ -1965,7 +1968,7 @@ class Setup(object):
 
         jettyServiceConfiguration = '%s/jetty/%s' % (self.outputFolder, serviceName)
         self.copyFile(jettyServiceConfiguration, self.osDefault)
-        self.run([self.cmd_chown, '{}:gluu'.format(serviceName), os.path.join(self.osDefault, serviceName)])
+        self.run([self.cmd_chown, '{}:gluu'.format(self.templateRenderingDict['thisServiceName']), os.path.join(self.osDefault, serviceName)])
 
         # Render web reources file
         try:
@@ -2002,7 +2005,7 @@ class Setup(object):
             self.run([self.cmd_chmod, '644', jetty_tmpfiles_dst])
 
         self.renderUnitFile(serviceName)
-        self.run([self.cmd_chown, '-R', '{}:gluu'.format(serviceName), service_home_dir])
+        self.run([self.cmd_chown, '-R', '{}:gluu'.format(self.templateRenderingDict['thisServiceName']), service_home_dir])
         self.fapolicyd_access(serviceName)
 
         serviceConfiguration['installed'] = True
@@ -2622,10 +2625,7 @@ class Setup(object):
                 
             self.run(' '.join(cmd), shell=True)
 
-            # chown -R jetty:jetty /opt/shibboleth-idp
-            # self.run([self.cmd_chown,'-R', 'jetty:jetty', self.idp3Folder], '/opt')
-            self.run([self.cmd_chown, '-R', 'jetty:jetty', jettyIdpServiceWebapps], '/opt')
-
+            self.run([self.cmd_chown, '-R', 'identity:gluu', '/opt/shibboleth-idp/'])
 
             if self.persistence_type == 'couchbase':
                 self.saml_couchbase_settings()
@@ -5798,8 +5798,8 @@ class Setup(object):
             self.copy_output()
             self.pbar.progress("gluu", "Setting up init scripts")
             self.setup_init_scripts()
-            self.pbar.progress("node", "Rendering node templates")
-            self.render_node_templates()
+            #self.pbar.progress("node", "Rendering node templates")
+            #self.render_node_templates()
             self.pbar.progress("gluu", "Installing Gluu components")
             self.install_gluu_components()
             self.pbar.progress("gluu", "Rendering test templates")
