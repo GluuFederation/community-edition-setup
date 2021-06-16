@@ -9,7 +9,7 @@
   },
   "description": {
     "mysql": {
-      "size": 1024,
+      "size": 768,
       "type": "VARCHAR"
     },
     "spanner": {
