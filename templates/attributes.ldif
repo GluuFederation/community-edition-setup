@@ -1135,9 +1135,7 @@ description: Specifies the person's affiliation within a particular security
  alName since both identify a security domain. Multiple "@" signsare not rec
  ommended, but in any case, the first occurrence of the "@" sign starting fr
  om theleft is to be taken as the delimiter between components. Thus, user i
- dentifier is to the left,security domain to the right of the first "@". Thi
- s parsing rule conforms to the POSIX "greedy"disambiguation method in regul
- ar expression processing.
+ dentifier is to the left,security domain to the right of the first "@".
 displayName: eduPersonScopedAffiliation
 gluuAttributeEditType: admin
 gluuAttributeName: eduPersonScopedAffiliation
