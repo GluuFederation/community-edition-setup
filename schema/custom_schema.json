@@ -62,7 +62,7 @@
             "sup": [
                 "top"
             ], 
-            "x_origin": "Gluu - Custom persom objectclass",
+            "x_origin": "Gluu - Custom person objectclass",
             "sql": {"ignore": true}
         }
     ], 
