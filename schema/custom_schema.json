@@ -62,7 +62,8 @@
             "sup": [
                 "top"
             ], 
-            "x_origin": "Gluu - Custom persom objectclass"
+            "x_origin": "Gluu - Custom persom objectclass",
+            "sql": {"ignore": true}
         }
     ], 
     "oidMacros": {
