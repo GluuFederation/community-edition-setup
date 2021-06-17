@@ -942,12 +942,19 @@ class Setup(object):
                 self.run(cmd)
         """
 
+        for oxdir in (self.oxPhotosFolder, self.oxTrustRemovedFolder, self.oxTrustCacheRefreshFolder):
+            if os.path.exists(oxdir):
+                self.run([self.cmd_chown, '-R', 'identity:gluu', oxdir])
+
+        self.run([self.cmd_chown, '-R', 'identity:gluu', '/var/gluu/identity'])
+
         gluu_radius_jks_fn = os.path.join(self.certFolder, 'gluu-radius.jks')
         gluu_radius_pem_fn = os.path.join(self.certFolder, 'gluu-radius.private-key.pem')
         for fn in (gluu_radius_jks_fn, gluu_radius_pem_fn):
             if os.path.exists(fn):
                 self.run([self.cmd_chown, 'radius:gluu', fn])
                 self.run([self.cmd_chmod, '660', fn])
+
 
     def set_permissions(self):
         self.logIt("Changing permissions")
@@ -964,7 +971,6 @@ class Setup(object):
         #self.run(['find', "%s" % self.osDefault, '-perm', '600', '-exec', self.cmd_chmod, "644", '{}', ';'])
 
 
-
         self.run(['/bin/chmod', '-R', '644', self.etc_hosts])
 
         if self.os_type in ['debian', 'ubuntu']:
@@ -975,6 +981,7 @@ class Setup(object):
             realIdp3BinFolder = "%s/bin" % realIdp3Folder;
             if os.path.exists(realIdp3BinFolder):
                 self.run(['find', realIdp3BinFolder, '-name', '*.sh', '-exec', 'chmod', "755", '{}',  ';'])
+
 
     def detect_ip(self):
         detectedIP = None
@@ -2956,10 +2963,6 @@ class Setup(object):
                 self.run([self.cmd_mkdir, '-m', '775', '-p', self.oxTrustRemovedFolder])
                 self.run([self.cmd_mkdir, '-m', '775', '-p', self.oxTrustCacheRefreshFolder])
 
-                self.run([self.cmd_chown, '-R', 'root:gluu', self.oxPhotosFolder])
-                self.run([self.cmd_chown, '-R', 'root:gluu', self.oxTrustRemovedFolder])
-                self.run([self.cmd_chown, '-R', 'root:gluu', self.oxTrustCacheRefreshFolder])
-
             if self.installSaml:
                 self.run([self.cmd_mkdir, '-p', self.idp3Folder])
                 self.run([self.cmd_mkdir, '-p', self.idp3MetadataFolder])
@@ -4147,6 +4150,8 @@ class Setup(object):
             self.logIt(traceback.format_exc(), True)
 
     def index_opendj(self):
+        if os.environ.get('noldapindex'):
+            return
         self.index_opendj_backend('userRoot')
         if self.mappingLocations['site'] == 'ldap':
             self.index_opendj_backend('site')
@@ -4416,10 +4421,9 @@ class Setup(object):
                 self.pbar.progress("opendj", "OpenDJ:  exporting certificate", False)
                 self.export_opendj_public_cert()
                 self.pbar.progress("opendj", "OpenDJ: creating indexes", False)
-
                 self.index_opendj()
                 self.pbar.progress("opendj", "OpenDJ: importing Ldif files", False)
-                
+
                 ldif_files = []
 
                 if self.mappingLocations['default'] == 'ldap':
