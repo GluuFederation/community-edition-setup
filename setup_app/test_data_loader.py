@@ -79,10 +79,10 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         self.encode_test_passwords()
 
         Config.pbar.progress(self.service_name, "Rendering test templates", False)
-        Config.templateRenderingDict['config_oxauth_test_ldap'] = '# Not available'
-        Config.templateRenderingDict['config_oxauth_test_couchbase'] = '# Not available'
-        Config.templateRenderingDict['config_oxauth_test_spanner'] = '# Not available'
-        Config.templateRenderingDict['config_oxauth_test_sql'] = '# Not available'
+        Config.templateRenderingDict['config_oxauth_test_ldap'] = '# ldap backend is not available'
+        Config.templateRenderingDict['config_oxauth_test_couchbase'] = '# couchbase backend is not available'
+        Config.templateRenderingDict['config_oxauth_test_spanner'] = '# spanner backend is not available'
+        Config.templateRenderingDict['config_oxauth_test_sql'] = '# rdbm backend is not available'
 
         if self.getMappingType('ldap'):
             template_text = self.readFile(os.path.join(self.template_base, 'oxauth/server/config-oxauth-test-ldap.properties.nrnd'))

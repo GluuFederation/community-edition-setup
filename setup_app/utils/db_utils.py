@@ -165,8 +165,10 @@ class DBUtils:
                 elif getresult:
                     return qresult.fetchall()
         elif Config.rdbm_type == 'spanner':
-            if query.startswith('CREATE TABLE'):
-                self.spanner.create_table(query)
+            if query.startswith('CREATE TABLE') or query.startswith('ALTER TABLE'):
+                self.spanner.create_table(query.strip(';'))
+            else:
+                return self.spanner.exec_sql(query.strip(';'))
 
     def set_cbm(self):
         self.cbm = CBM(Config.get('cb_query_node', Config.couchbase_hostname), Config.get('couchebaseClusterAdmin'), Config.get('cb_password'))
@@ -944,7 +946,7 @@ class DBUtils:
 
                                     if 'rows' in data and data['rows'] and data['rows'][0] and data['rows'][0][0]:
                                         cur_data = data['rows'][0][0]
-                                    
+
                                     for cur_val in entry[change_attr]:
                                         typed_val = self.get_rdbm_val(change_attr, cur_val, rdbm_type='spanner')
                                         cur_data.append(typed_val)
