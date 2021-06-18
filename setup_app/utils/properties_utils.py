@@ -792,7 +792,7 @@ class PropertiesUtils(SetupUtils):
 
             emulator = self.getPrompt("Is it emulator?", "N|y")[0].lower()
             if emulator == 'y':
-                Config.spanner_emulator_host = self.getPrompt("Emulator host", Config.get('spanner_emulator_host'))
+                Config.spanner_emulator_host = self.getPrompt("  Emulator host", Config.get('spanner_emulator_host'))
 
             Config.spanner_project = self.getPrompt("  Spanner project", Config.get('spanner_project'))
             Config.spanner_instance = self.getPrompt("  Spanner instance", Config.get('spanner_instance'))
