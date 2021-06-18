@@ -91,6 +91,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
 
         if self.getMappingType('couchbase'):
             cb_propt_dict = base.current_app.CouchbaseInstaller.couchbaseDict()
+            cb_propt_dict['ssl_enabled'] = 'false'
             Config.templateRenderingDict.update(cb_propt_dict)
             template_text = self.readFile(os.path.join(self.template_base, 'oxauth/server/config-oxauth-test-couchbase.properties.nrnd'))
             rendered_text = self.fomatWithDict(template_text, self.merge_dicts(Config.__dict__, Config.templateRenderingDict))
