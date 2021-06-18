@@ -43,14 +43,14 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
             Config.couchbaseTrustStorePass = 'secret'
             Config.encoded_couchbaseTrustStorePass = self.obscure(Config.couchbaseTrustStorePass)
 
-        if not Config.get('cb_query_node'):
-            Config.cb_query_node = Config.couchbase_hostname
-
         if not Config.get('couchbase_bucket_prefix'):
             Config.couchbase_bucket_prefix = 'gluu'
 
         if Config.cb_install == InstallTypes.LOCAL:
             Config.couchbase_hostname = Config.hostname
+
+        if not Config.get('cb_query_node'):
+            Config.cb_query_node = Config.couchbase_hostname
 
         self.dbUtils.set_cbm()
 
@@ -249,7 +249,7 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
 
     def couchbaseSSL(self):
         self.logIt("Exporting Couchbase SSL certificate to " + self.couchebaseCert)
-        
+
         for cb_host in base.re_split_host.findall(Config.couchbase_hostname):
 
             cbm_ = CBM(cb_host.strip(), Config.couchebaseClusterAdmin, Config.cb_password)

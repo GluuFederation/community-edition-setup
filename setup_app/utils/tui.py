@@ -514,7 +514,7 @@ class DBBackendForm(GluuSetupForm):
         Config.cb_install =  str(self.ask_cb.value[0]) if self.ask_cb.value[0] else 0
 
         if Config.cb_install == static.InstallTypes.LOCAL:
-            Config.couchbase_hostname = 'localhost'
+            Config.couchbase_hostname = Config.hostname
             Config.cb_password = self.cb_password.value
         elif Config.cb_install == static.InstallTypes.REMOTE:
             Config.couchbase_hostname =  self.cb_hosts.value
