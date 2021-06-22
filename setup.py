@@ -864,6 +864,11 @@ class Setup(object):
         return getattr(self, attr) if hasattr(self, attr) else default
 
     def initialize(self):
+        # create initial users
+        self.createUser('gluu', '/opt/gluu')
+        self.createUser('identity', os.path.join(self.jetty_base, 'identity'))
+        self.addUserToGroup('gluu', 'identity')
+
         self.install_time_ldap = time.strftime('%Y%m%d%H%M%SZ', time.gmtime(time.time()))
         if not os.path.exists(self.distFolder):
             print("Please ensure that you are running this script inside Gluu container.")
@@ -891,7 +896,7 @@ class Setup(object):
 
     def get_ssl_subject(self, ssl_fn):
         retDict = {}
-        cmd = 'openssl x509  -noout -subject -nameopt RFC2253 -in {}'.format(ssl_fn)
+        cmd = 'openssl x509 -noout -subject -nameopt RFC2253 -in {}'.format(ssl_fn)
         s = self.run(cmd, shell=True)
         s = s.strip() + ','
 
@@ -910,6 +915,7 @@ class Setup(object):
         self.run([self.cmd_chown, '-R', 'root:gluu', self.distFolder])
         self.run([self.cmd_chown, '-R', 'root:gluu', realCertFolder])
         self.run([self.cmd_chown, '-R', 'root:gluu', realConfigFolder])
+        self.run([self.cmd_chown, 'gluu:gluu', self.jetty_base])
 
         #self.run([self.cmd_chown, '-R', 'root:gluu', realOptPythonFolderFolder])
         #self.run([self.cmd_chown, '-R', 'root:gluu', self.oxBaseDataFolder])
@@ -918,7 +924,7 @@ class Setup(object):
         self.run([self.cmd_chmod, '-R', '440', realCertFolder])
         self.run([self.cmd_chmod, 'a+X', realCertFolder])
 
-        self.run([self.cmd_chown, 'jetty:gluu', '/opt/gluu/'])
+        self.run([self.cmd_chown, 'gluu:gluu', '/opt/gluu/'])
         self.run([self.cmd_chown, 'root:gluu', '/etc/gluu/'])
         self.run([self.cmd_chown, 'root:gluu', '/var/gluu'])
         self.run([self.cmd_chmod, '770', '/var/gluu'])
@@ -970,11 +976,12 @@ class Setup(object):
         #self.run(['find', "%s" % self.osDefault, '-perm', '700', '-exec', self.cmd_chmod, "755", '{}', ';'])
         #self.run(['find', "%s" % self.osDefault, '-perm', '600', '-exec', self.cmd_chmod, "644", '{}', ';'])
 
-
-        self.run(['/bin/chmod', '-R', '644', self.etc_hosts])
+        self.run([self.cmd_chmod, '750', '/opt/gluu'])
+        
+        self.run([self.cmd_chmod, '-R', '644', self.etc_hosts])
 
         if self.os_type in ['debian', 'ubuntu']:
-            self.run(['/bin/chmod', '-f', '644', self.etc_hostname])
+            self.run([self.cmd_chmod, '-f', '644', self.etc_hostname])
 
         if self.installSaml:
             realIdp3Folder = os.path.realpath(self.idp3Folder)
@@ -1153,26 +1160,26 @@ class Setup(object):
 
         return inFilePathText
 
-    def insertLinesInFile(self, inFilePath, index, text):        
-            inFilePathLines = None                    
-            try:            
-                f = open(inFilePath, "r")            
-                inFilePathLines = f.readlines()            
+    def insertLinesInFile(self, inFilePath, index, text):
+            inFilePathLines = None
+            try:
+                f = open(inFilePath, "r")
+                inFilePathLines = f.readlines()
                 f.close()
                 try:
                     self.backupFile(inFilePath)
-                    inFilePathLines.insert(index, text)            
-                    f = open(inFilePath, "w")            
-                    inFilePathLines = "".join(inFilePathLines)            
-                    f.write(inFilePathLines)            
-                    f.close()        
-                except:            
-                    self.logIt("Error writing %s" % inFilePathLines, True)            
+                    inFilePathLines.insert(index, text)
+                    f = open(inFilePath, "w")
+                    inFilePathLines = "".join(inFilePathLines)
+                    f.write(inFilePathLines)
+                    f.close()
+                except:
+                    self.logIt("Error writing %s" % inFilePathLines, True)
                     self.logIt(traceback.format_exc(), True)
-            except:            
+            except:
                 self.logIt("Error reading %s" % inFilePathLines, True)
-                self.logIt(traceback.format_exc(), True)        
-                    
+                self.logIt(traceback.format_exc(), True)
+
     def commentOutText(self, text):
         textLines = text.splitlines()
 
@@ -1804,8 +1811,8 @@ class Setup(object):
         self.templateRenderingDict['jetty_dist'] = jetty_dist
         jettyTemp = os.path.join(jetty_dist, 'temp')
         self.run([self.cmd_mkdir, '-p', jettyTemp])
-        self.run([self.cmd_chown, '-R', 'jetty:gluu', jetty_dist])
-        self.run([self.cmd_chown, '-R', 'jetty:gluu', jettyTemp])
+        self.run([self.cmd_chown, '-R', 'gluu:gluu', jetty_dist])
+        self.run([self.cmd_chown, '-R', 'gluu:gluu', jettyTemp])
         self.run([self.cmd_chmod, '775', jettyTemp])
 
         try:
@@ -1823,20 +1830,20 @@ class Setup(object):
 
         self.applyChangesInFiles(self.app_custom_changes['jetty'])
 
-        self.run([self.cmd_chown, '-R', 'jetty:gluu', jettyDestinationPath])
-        self.run([self.cmd_chown, '-h', 'jetty:gluu', self.jetty_home])
+        self.run([self.cmd_chown, '-R', 'gluu:gluu', jettyDestinationPath])
+        self.run([self.cmd_chown, '-h', 'gluu:gluu', self.jetty_home])
 
         self.run([self.cmd_mkdir, '-p', self.jetty_base])
-        self.run([self.cmd_chown, '-R', 'jetty:gluu', self.jetty_base])
+        self.run([self.cmd_chown, '-R', 'gluu:gluu', self.jetty_base])
 
         jettyRunFolder = '/var/run/jetty'
         self.run([self.cmd_mkdir, '-p', jettyRunFolder])
         self.run([self.cmd_chmod, '-R', '775', jettyRunFolder])
-        self.run([self.cmd_chgrp, '-R', 'jetty:gluu', jettyRunFolder])
+        self.run([self.cmd_chgrp, '-R', 'gluu', jettyRunFolder])
 
         self.run(['rm', '-rf', '/opt/jetty/bin/jetty.sh'])
         self.copyFile("%s/system/initd/jetty.sh" % self.staticFolder, "%s/bin/jetty.sh" % self.jetty_home)
-        self.run([self.cmd_chown, '-R', 'jetty:jetty', "%s/bin/jetty.sh" % self.jetty_home])
+        self.run([self.cmd_chown, '-R', 'gluu:gluu', "%s/bin/jetty.sh" % self.jetty_home])
         self.run([self.cmd_chmod, '-R', '755', "%s/bin/jetty.sh" % self.jetty_home])
 
     def installNode(self):
@@ -2235,7 +2242,7 @@ class Setup(object):
                               'jetty')
 
             # permissions
-            self.run([self.cmd_chown, '-R', 'jetty:jetty', self.certFolder])
+            self.run([self.cmd_chown, '-R', 'gluu:gluu', self.certFolder])
             self.run([self.cmd_chmod, '-R', '500', self.certFolder])
 
         except:
@@ -2388,7 +2395,7 @@ class Setup(object):
             f = open(fn, 'w')
             f.write(jwks_text)
             f.close()
-            self.run([self.cmd_chown, 'jetty:jetty', fn])
+            self.run([self.cmd_chown, 'gluu:gluu', fn])
             self.run([self.cmd_chmod, '600', fn])
             self.logIt("Wrote oxAuth OpenID Connect key to %s" % fn)
         except:
@@ -2974,7 +2981,7 @@ class Setup(object):
                 self.run([self.cmd_mkdir, '-p', self.idp3CredentialsFolder])
                 self.run([self.cmd_mkdir, '-p', self.idp3WebappFolder])
                 # self.run([self.cmd_mkdir, '-p', self.idp3WarFolder])
-                self.run([self.cmd_chown, '-R', 'jetty:jetty', self.idp3Folder])
+                self.run([self.cmd_chown, '-R', 'gluu:gluu', self.idp3Folder])
 
         except:
             self.logIt("Error making folders", True)
@@ -5499,7 +5506,7 @@ class Setup(object):
 
             oxd_keystore_fn = os.path.join(oxd_root, 'conf/oxd-server.keystore')
             self.run(['cp', '-f', '/tmp/oxd.keystore', oxd_keystore_fn])
-            self.run(['chown', 'jetty:jetty', oxd_keystore_fn])
+            self.run(['chown', 'gluu:gluu', oxd_keystore_fn])
             
             for f in ('/tmp/oxd.crt', '/tmp/oxd.key', '/tmp/oxd.p12', '/tmp/oxd.keystore'):
                 self.run(['rm', '-f', f])
@@ -5554,7 +5561,7 @@ class Setup(object):
         for path in ('/opt/gluu/jetty/casa/static/', '/opt/gluu/jetty/casa/plugins'):
             if not os.path.exists(path):
                 self.run(['mkdir', '-p', path])
-                self.run(['chown', '-R', 'jetty:jetty', path])
+                self.run(['chown', '-R', 'gluu:gluu', path])
         
         #Adding twilio jar path to oxauth.xml
         oxauth_xml_fn = '/opt/gluu/jetty/oxauth/webapps/oxauth.xml'
