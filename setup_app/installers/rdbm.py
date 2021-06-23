@@ -17,8 +17,6 @@ from setup_app.utils.setup_utils import SetupUtils
 
 class RDBMInstaller(BaseInstaller, SetupUtils):
 
-    packageUtils = None
-
     def __init__(self):
         setattr(base.current_app, self.__class__.__name__, self)
         self.needdb = False # we will connect later
@@ -51,7 +49,6 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
             Config.rdbm_user = 'gluu'
 
         if Config.rdbm_install_type == InstallTypes.LOCAL:
-
             if Config.rdbm_type == 'mysql':
                 result, conn = self.dbUtils.mysqlconnection(log=False)
                 if not result:

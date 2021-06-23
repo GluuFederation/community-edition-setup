@@ -234,6 +234,9 @@ if not GSA:
         if proceed_prompt and proceed_prompt[0] !='y':
             proceed = False
 
+    if Config.rdbm_install_type == static.InstallTypes.LOCAL:
+        packageUtils.check_and_install_packages()
+
 #register post setup progress
 class PostSetup:
     service_name = 'post-setup'
