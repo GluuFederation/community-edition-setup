@@ -2007,7 +2007,7 @@ class Setup(object):
         initscript_fn = os.path.join(self.jetty_home, 'bin/jetty.sh')
         self.fix_init_scripts(serviceName, initscript_fn)
         
-        self.enable_service_at_start(self.templateRenderingDict['thisServiceName'])
+        self.enable_service_at_start(serviceName)
         
         tmpfiles_base = '/usr/lib/tmpfiles.d'
         if self.os_initdaemon == 'systemd' and os.path.exists(tmpfiles_base):
