@@ -2020,7 +2020,7 @@ class Setup(object):
 
         self.renderUnitFile(serviceName)
         self.run([self.cmd_chown, '-R', '{}:gluu'.format(self.templateRenderingDict['thisServiceName']), service_home_dir])
-        self.fapolicyd_access(serviceName)
+        self.fapolicyd_access(self.templateRenderingDict['thisServiceName'])
 
         serviceConfiguration['installed'] = True
         # don't send header to server
