@@ -13,6 +13,7 @@ from setup_app.utils import base
 from setup_app.static import InstallTypes
 from setup_app.installers.base import BaseInstaller
 from setup_app.utils.setup_utils import SetupUtils
+from setup_app.utils.package_utils import packageUtils
 
 
 class RDBMInstaller(BaseInstaller, SetupUtils):
@@ -49,6 +50,8 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
             Config.rdbm_user = 'gluu'
 
         if Config.rdbm_install_type == InstallTypes.LOCAL:
+            base.argsp.n = True
+            packageUtils.check_and_install_packages()
             if Config.rdbm_type == 'mysql':
                 result, conn = self.dbUtils.mysqlconnection(log=False)
                 if not result:

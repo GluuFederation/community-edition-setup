@@ -9,6 +9,7 @@ import ssl
 import re
 import inspect
 import pymysql
+import ldap3
 
 from setup_app import paths
 from setup_app.utils import base
@@ -388,8 +389,8 @@ class PropertiesUtils(SetupUtils):
         
         result = {'result': True, 'reason': ''}
         
-        ldap_server = Server(ldap_host, port=int(Config.ldaps_port), use_ssl=True)
-        conn = Connection(
+        ldap_server = ldap3.Server(ldap_host, port=int(Config.ldaps_port), use_ssl=True)
+        conn = ldap3.Connection(
             ldap_server,
             user=ldap_binddn,
             password=ldap_password,
@@ -677,7 +678,7 @@ class PropertiesUtils(SetupUtils):
         for i, btype in enumerate(backend_types):
             nn = i+1
             print(" ", nn, btype)
-            nlist.append(str(nn))    
+            nlist.append(str(nn))
 
         while True:
             n = input('Selection [1]: ')
