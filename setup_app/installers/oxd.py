@@ -84,7 +84,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             oxd_yaml['storage'] = 'gluu_server_configuration'
             oxd_yaml['storage_configuration']['baseDn'] = 'o=gluu'
             oxd_yaml['storage_configuration']['type'] = Config.gluu_properties_fn
-            if Config.mappingLocations['default'] == 'ldap'
+            if Config.mappingLocations['default'] == 'ldap':
                 oxd_yaml['storage_configuration']['connection'] = Config.ox_ldap_properties
             elif Config.mappingLocations['default'] == 'rdbm':
                 if Config.rdbm_type in ('mysql', 'pgsql'):
