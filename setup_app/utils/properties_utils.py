@@ -742,7 +742,7 @@ class PropertiesUtils(SetupUtils):
 
         elif backend_type_str == 'Remote Couchbase':
             Config.wrends_install = InstallTypes.NONE
-            Config.cb_install = InstallTypes.LOCAL
+            Config.cb_install = InstallTypes.REMOTE
 
             while True:
                 Config.couchbase_hostname = self.getPrompt("  Couchbase hosts", Config.get('couchbase_hostname'))
