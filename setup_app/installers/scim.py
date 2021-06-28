@@ -34,6 +34,7 @@ class ScimInstaller(JettyInstaller):
 
         self.oxtrust_config_fn = os.path.join(self.output_folder, 'oxtrust_config.json')
         self.ldif_config = os.path.join(self.output_folder, 'configuration.ldif')
+        self.scim_ldif = os.path.join(self.output_folder, 'scim.ldif')
         self.ldif_clients = os.path.join(self.output_folder, 'clients.ldif')
 
         self.scim_rs_client_jks_fn = os.path.join(Config.certFolder, 'scim-rs.jks')
@@ -77,10 +78,11 @@ class ScimInstaller(JettyInstaller):
 
     def render_import_templates(self):
         self.renderTemplateInOut(self.ldif_config, self.templates_folder, self.output_folder)
+        self.renderTemplateInOut(self.scim_ldif, self.templates_folder, self.output_folder)
         self.renderTemplateInOut(self.ldif_clients, self.templates_folder, self.output_folder)
         self.renderTemplateInOut(self.oxtrust_config_fn, self.templates_folder, self.output_folder)
 
-        self.dbUtils.import_ldif([self.ldif_config, self.ldif_clients])
+        self.dbUtils.import_ldif([self.scim_ldif, self.ldif_config, self.ldif_clients])
 
     def update_backend(self):
         oxtrust_config = base.readJsonFile(self.oxtrust_config_fn)
@@ -88,4 +90,5 @@ class ScimInstaller(JettyInstaller):
 
         self.dbUtils.add_client2script('2DAF-F9A5', Config.scim_rp_client_id)
         self.dbUtils.add_client2script('2DAF-F995', Config.scim_rp_client_id)
+        self.dbUtils.enable_script('2DAF-F9A5')
         self.dbUtils.enable_service('gluuScimEnabled')
