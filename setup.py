@@ -1146,10 +1146,12 @@ class Setup(object):
 
         return inFilePathText
 
-    def writeFile(self, outFilePath, text):
+    def writeFile(self, outFilePath, text, backup=True):
         self.logIt("Writing file %s" % outFilePath)
         inFilePathText = None
-        self.backupFile(outFilePath)
+        if backup:
+            self.backupFile(outFilePath, cur_content=text)
+
         try:
             f = open(outFilePath, 'w')
             f.write(text)
@@ -1169,10 +1171,7 @@ class Setup(object):
                 try:
                     self.backupFile(inFilePath)
                     inFilePathLines.insert(index, text)
-                    f = open(inFilePath, "w")
-                    inFilePathLines = "".join(inFilePathLines)
-                    f.write(inFilePathLines)
-                    f.close()
+                    self.writeFile(inFilePath, "".join(inFilePathLines))
                 except:
                     self.logIt("Error writing %s" % inFilePathLines, True)
                     self.logIt(traceback.format_exc(), True)
@@ -1215,7 +1214,7 @@ class Setup(object):
             W.write(text+"\n")
 
 
-    def backupFile(self, inFile, destFolder=None):
+    def backupFile(self, inFile, destFolder=None, move=False, cur_content=''):
 
         if destFolder:
             if os.path.isfile(destFolder):
@@ -1226,21 +1225,37 @@ class Setup(object):
         else:
             destFile = inFile
 
+        # check if file is the same
+        if os.path.isfile(destFile):
+            with open(destFile, 'rb') as f:
+                old_content = f.read()
+            if isinstance(cur_content, str):
+                cur_content = cur_content.encode()
+            if cur_content == old_content:
+                return
+
         bc = 1
         while True:
-            backupFile = destFile+'.gluu-{0}-{1}~'.format(self.currentGluuVersion, bc)
-            if not os.path.exists(backupFile):
+            backupFile_fn = destFile+'.gluu-{0}-{1}~'.format(Config.currentGluuVersion, bc)
+            if not os.path.exists(backupFile_fn):
                 break
             bc += 1
 
         if os.path.exists(destFile):
-            self.run(['cp', '-f', destFile, backupFile])
+            self.run(['mv' if move else 'cp', '-f', destFile, backupFile_fn])
 
         if not destFile.startswith('/opt'):
-            self.logOSChanges("File %s was backed up as %s" % (destFile, backupFile))
+            self.logOSChanges("File %s was backed up as %s" % (destFile, backupFile_fn))
 
     def copyFile(self, inFile, destFolder):
-        self.backupFile(inFile, destFolder)
+        if os.path.isfile(inFile):
+            with open(inFile, 'rb') as f:
+                cur_content = f.read()
+        else:
+            cur_content = ''
+
+        self.backupFile(inFile, destFolder, cur_content=cur_content)
+
         self.logIt("Copying file {} to {}".format(inFile, destFolder))
         try:
             shutil.copy(inFile, destFolder)
@@ -1264,8 +1279,10 @@ class Setup(object):
                         self.removeFile(d)
 
                     if not os.path.exists(d) or os.stat(s).st_mtime - os.stat(d).st_mtime > 1:
+                        with open(s, 'rb') as fi:
+                            cur_content = fi.read()
+                        self.backupFile(s, d, cur_content=cur_content)
                         shutil.copy2(s, d)
-                        self.backupFile(s, d)
 
             self.logIt("Copied tree %s to %s" % (src, dst))
         except:
