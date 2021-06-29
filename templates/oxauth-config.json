@@ -55,43 +55,24 @@
     "statWebServiceIntervalLimitInSeconds":60,
     "defaultSubjectType": "pairwise",
     "userInfoSigningAlgValuesSupported":[
-        "HS256",
-        "HS384",
-        "HS512",
-        "RS256",
-        "RS384",
-        "RS512",
         "ES256",
         "ES384",
         "ES512"
     ],
     "userInfoEncryptionAlgValuesSupported":[
-        "RSA1_5",
-        "RSA-OAEP",
         "A128KW",
         "A256KW"
     ],
     "userInfoEncryptionEncValuesSupported":[
-        "A128CBC+HS256",
-        "A256CBC+HS512",
-        "A128GCM",
-        "A256GCM"
+        "A128KW",
+        "A256KW"
     ],
     "idTokenSigningAlgValuesSupported":[
-        "none",
-        "HS256",
-        "HS384",
-        "HS512",
-        "RS256",
-        "RS384",
-        "RS512",
         "ES256",
         "ES384",
         "ES512"
     ],
     "idTokenEncryptionAlgValuesSupported":[
-        "RSA1_5",
-        "RSA-OAEP",
         "A128KW",
         "A256KW"
     ],
@@ -102,13 +83,6 @@
         "A256GCM"
     ],
     "requestObjectSigningAlgValuesSupported":[
-        "none",
-        "HS256",
-        "HS384",
-        "HS512",
-        "RS256",
-        "RS384",
-        "RS512",
         "ES256",
         "ES384",
         "ES512"
@@ -127,8 +101,6 @@
         "RSA-OAEP"
     ],
     "requestObjectEncryptionAlgValuesSupported":[
-        "RSA1_5",
-        "RSA-OAEP",
         "A128KW",
         "A256KW"
     ],
@@ -147,12 +119,6 @@
         "self_signed_tls_client_auth"
     ],
     "tokenEndpointAuthSigningAlgValuesSupported":[
-        "HS256",
-        "HS384",
-        "HS512",
-        "RS256",
-        "RS384",
-        "RS512",
         "ES256",
         "ES384",
         "ES512"
