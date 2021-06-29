@@ -3909,6 +3909,14 @@ class Setup(object):
         self.run(['chown', 'ldap:ldap', setupPropsFN])
         self.writeFile(self.opendj_pck11_keyfn, 'changeit')
 
+        # create PKCS11 server cert
+        self.run([self.cmd_keytool, '-genkey', '-alias', 'admin-cert', '-keyalg', 'rsa', '-dname', 'CN={},O=Administration Connector RSA Self-Signed Certificate'.format(self.hostname), '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
+        self.run([self.cmd_keytool, '-genkey', '-alias', 'server-cert', '-keyalg', 'rsa', '-dname', 'CN={},O=OpenDJ RSA Self-Signed Certificate'.format(self.hostname), '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
+
+        self.run([self.cmd_keytool, '-selfcert', '-alias', 'admin-cert', '-validity', '3650', '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
+        self.run([self.cmd_keytool, '-selfcert', '-alias', 'server-cert', '-validity', '3650', '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
+
+
         try:
             ldapSetupCommand = '%s/setup' % self.ldapBaseFolder
             setupCmd = [ldapSetupCommand,
