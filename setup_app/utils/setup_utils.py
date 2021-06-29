@@ -192,7 +192,6 @@ class SetupUtils(Crypto64):
 
                 inFilePathLines.insert(index, text)
                 inFileText = ''.join(inFilePathLines)
-                self.backupFile(inFilePath, cur_content=inFileText)
                 self.writeFile(inFilePath, inFileText)
             except:
                 self.logIt("Error writing %s" % inFilePathLines, True)
