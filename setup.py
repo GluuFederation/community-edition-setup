@@ -229,7 +229,7 @@ class Setup(object):
             self.cmd_java = '%s/bin/java' % self.jre_home
             self.cmd_keytool = '%s/bin/keytool' % self.jre_home
 
-        os.environ["OPENDJ_JAVA_HOME"] =  self.jre_home
+        os.environ["OPENDJ_JAVA_HOME"] = self.jre_home
 
         # Component ithversions
         self.apache_version = None
@@ -458,9 +458,11 @@ class Setup(object):
         self.ldapTrustStoreFn = None
         self.encoded_ldapTrustStorePass = None
 
+        self.ldapBaseFolder = '/opt/opendj'
         self.opendj_cert_fn = '%s/opendj.crt' % self.certFolder
         self.opendj_p12_fn = '%s/opendj.pkcs12' % self.certFolder
         self.opendj_p12_pass = None
+        self.opendj_pck11_keyfn = os.path.join(self.ldapBaseFolder, 'pck11keystore.pin')
 
         self.ldap_binddn = 'cn=directory manager'
         self.ldap_hostname = "localhost"
@@ -468,7 +470,7 @@ class Setup(object):
         self.ldap_port = '1389'
         self.ldaps_port = '1636'
         self.ldap_admin_port = '4444'
-        self.ldapBaseFolder = '/opt/opendj'
+
 
         self.ldapSetupCommand = '%s/setup' % self.ldapBaseFolder
         self.ldapDsconfigCommand = "%s/bin/dsconfig" % self.ldapBaseFolder
@@ -1236,7 +1238,7 @@ class Setup(object):
 
         bc = 1
         while True:
-            backupFile_fn = destFile+'.gluu-{0}-{1}~'.format(Config.currentGluuVersion, bc)
+            backupFile_fn = destFile+'.gluu-{0}-{1}~'.format(self.oxVersion, bc)
             if not os.path.exists(backupFile_fn):
                 break
             bc += 1
@@ -3905,6 +3907,7 @@ class Setup(object):
         shutil.copy("%s/opendj-setup.properties" % self.outputFolder, setupPropsFN)
         self.set_ownership()
         self.run(['chown', 'ldap:ldap', setupPropsFN])
+        self.writeFile(self.opendj_pck11_keyfn, 'changeit')
 
         try:
             ldapSetupCommand = '%s/setup' % self.ldapBaseFolder
@@ -3925,8 +3928,8 @@ class Setup(object):
         self.fix_opendj_java_properties()
 
         opendj_fapolicyd_rules = [
-                'allow perm=any uid=ldap : dir=/usr/lib/jvm/java-11-openjdk-11.0.11.0.9-2.el8_4.x86_64/',
-                'allow perm=any uid=ldap : dir=/opt/opendj/',
+                'allow perm=any uid=ldap : dir={}'.format(self.jre_home),
+                'allow perm=any uid=ldap : dir={}'.format(self.ldapBaseFolder),
                 '# give access to opendj server',
                 ]
 
@@ -3940,9 +3943,11 @@ class Setup(object):
             self.logIt("Error stopping opendj", True)
             self.logIt(traceback.format_exc(), True)
 
+        self.fix_opendj_config_stig()
+
     def fix_opendj_java_properties(self):
 
-        #Set memory and default.java-home in java.properties   
+        #Set memory and default.java-home in java.properties
         opendj_java_properties_fn = os.path.join(self.ldapBaseFolder, 'config/java.properties')
 
         self.logIt("Setting memory and default.java-home in %s" % opendj_java_properties_fn)
@@ -3964,6 +3969,27 @@ class Setup(object):
             opendj_java_properties.append(java_home_ln)
 
         self.writeFile(opendj_java_properties_fn, '\n'.join(opendj_java_properties))
+
+    def fix_opendj_config_stig(self):
+        config_fn = os.path.join(self.ldapBaseFolder, 'config/config.ldif')
+        self.logIt("Fixing {} for stig".format(config_fn))
+        parser = gluu_utils.myLdifParser(config_fn)
+
+        parser.parse()
+        for dn, entry in parser.entries:
+            if dn == 'cn=Administration,cn=Key Manager Providers,cn=config':
+                entry['ds-cfg-java-class'] = ['org.opends.server.extensions.PKCS11KeyManagerProvider']
+                entry['ds-cfg-key-store-pin-file'] = ['config/keystore.pin']
+                entry['objectClass'].remove('ds-cfg-file-based-key-manager-provider')
+                entry['objectClass'].insert(0, 'ds-cfg-pkcs11-key-manager-provider')
+                entry.pop('ds-cfg-key-store-file')
+                break
+
+        with open(config_fn, 'wb') as w:
+            ldif_writer = LDIFWriter(w, cols=9999)
+            for dn, entry in parser.entries:
+                ldif_writer.unparse(dn, entry)
+
 
     def post_install_opendj(self):
         try:
@@ -5232,7 +5258,6 @@ class Setup(object):
             for inum in custom_scripts:
                 dn = 'inum={0},ou=scripts,o=gluu'.format(inum)
                 ldap_conn.modify(dn, {'oxEnabled': [MODIFY_REPLACE, 'true']})
-
 
 
             # Update LDAP schema
