@@ -38,7 +38,7 @@ class ScimInstaller(JettyInstaller):
         self.ldif_clients = os.path.join(self.output_folder, 'clients.ldif')
 
         self.scim_rs_client_jks_fn = os.path.join(Config.certFolder, 'scim-rs.jks')
-        self.scim_rp_client_jks_fn = os.path.join(Config.certFolder, 'scim-rp.jks')
+        self.scim_rp_client_jks_fn = os.path.join(Config.outputFolder, 'scim-rp.jks')
 
         self.enable()
 
@@ -75,6 +75,9 @@ class ScimInstaller(JettyInstaller):
 
         Config.scim_rp_client_jwks = self.gen_openid_jwks_jks_keys(self.scim_rp_client_jks_fn, Config.scim_rp_client_jks_pass)
         Config.templateRenderingDict['scim_rp_client_base64_jwks'] = self.generate_base64_string(Config.scim_rp_client_jwks, 1)
+
+        self.copyFile(self.scim_rp_client_jks_fn, Config.certFolder)
+
 
     def render_import_templates(self):
         self.renderTemplateInOut(self.ldif_config, self.templates_folder, self.output_folder)
