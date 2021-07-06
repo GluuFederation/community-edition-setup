@@ -462,7 +462,10 @@ class Setup(object):
         self.opendj_cert_fn = '%s/opendj.crt' % self.certFolder
         self.opendj_p12_fn = '%s/opendj.pkcs12' % self.certFolder
         self.opendj_p12_pass = None
-        self.opendj_pck11_keyfn = os.path.join(self.ldapBaseFolder, 'pck11keystore.pin')
+        self.opendj_pck11_setup_key_fn = os.path.join('/root/.keystore.pin')
+        self.opendj_admin_keystore_pin_fn = os.path.join(self.ldapBaseFolder, 'config', 'admin-keystore.pin')
+        self.opendj_admin_truststore_fn = os.path.join(self.ldapBaseFolder, 'config', 'admin-truststore')
+        self.opendj_key_store_password_fn = os.path.join(self.ldapBaseFolder, 'config', 'keystore.pin')
 
         self.ldap_binddn = 'cn=directory manager'
         self.ldap_hostname = "localhost"
@@ -3907,7 +3910,7 @@ class Setup(object):
         shutil.copy("%s/opendj-setup.properties" % self.outputFolder, setupPropsFN)
         self.set_ownership()
         self.run(['chown', 'ldap:ldap', setupPropsFN])
-        self.writeFile(self.opendj_pck11_keyfn, 'changeit')
+        self.writeFile(self.opendj_pck11_setup_key_fn, 'changeit')
 
         # create PKCS11 server cert
         self.run([self.cmd_keytool, '-genkey', '-alias', 'admin-cert', '-keyalg', 'rsa', '-dname', 'CN={},O=Administration Connector RSA Self-Signed Certificate'.format(self.hostname), '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
@@ -3981,6 +3984,8 @@ class Setup(object):
     def fix_opendj_config_stig(self):
         config_fn = os.path.join(self.ldapBaseFolder, 'config/config.ldif')
         self.logIt("Fixing {} for stig".format(config_fn))
+        
+
         parser = gluu_utils.myLdifParser(config_fn)
 
         parser.parse()
@@ -3998,6 +4003,45 @@ class Setup(object):
             for dn, entry in parser.entries:
                 ldif_writer.unparse(dn, entry)
 
+        #self.run(['patch', config_fn, '/root/config.patch'])
+
+        # Update admin-cert in /opt/opendj/config/admin-truststore
+
+        self.run([self.cmd_keytool,
+                '-delete',
+                '-alias', 'admin-cert',
+                '-storetype','jks',
+                '-keystore', self.opendj_admin_truststore_fn,
+                '-v',
+                '-storepass:file', self.opendj_admin_keystore_pin_fn
+                ])
+
+        admin_cert_fn = os.path.join(self.ldapBaseFolder, 'config', 'admin-cert.pem')
+
+        self.run([self.cmd_keytool,
+                '-export',
+                '-rfc',
+                '-keystore', 'NONE',
+                '-storepass:file', self.opendj_admin_keystore_pin_fn,
+                '-storetype', 'PKCS11',
+                '-alias', 'admin-cert',
+                '-file', admin_cert_fn
+                ])
+
+
+        self.run([self.cmd_keytool,
+                '-import',
+                '-noprompt',
+                '-alias', 'admin-cert',
+                '-storetype', 'jks',
+                '-keystore',  self.opendj_admin_truststore_fn,
+                '-v',
+                '-storepass:file', self.opendj_admin_keystore_pin_fn,
+                '-file', admin_cert_fn
+                ])
+
+        self.run([self.cmd_keytool, '-delete', '-alias', 'dummy', '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
+        
 
     def post_install_opendj(self):
         try:
@@ -4041,7 +4085,6 @@ class Setup(object):
             cwd = os.path.join(self.ldapBaseFolder, 'bin')
             dsconfigCmd = [
                             self.ldapDsconfigCommand,
-                            '--trustAll',
                             '--no-prompt',
                             '--hostname',
                             self.ldap_hostname,
@@ -4049,8 +4092,11 @@ class Setup(object):
                             self.ldap_admin_port,
                             '--bindDN',
                             '"%s"' % self.ldap_binddn,
-                            '--bindPasswordFile',
-                            self.ldapPassFn] + changes
+                            '--bindPasswordFile', self.ldapPassFn,
+                            '--trustStorePath', self.opendj_admin_truststore_fn,
+                            '--trustStorePasswordFile', self.opendj_admin_keystore_pin_fn,
+                            '--keyStorePassword', self.opendj_key_store_password_fn,
+                            ] + changes
             self.run(' '.join(dsconfigCmd), shell=True, cwd=cwd, env={'OPENDJ_JAVA_HOME': self.jre_home})
 
     def export_opendj_public_cert(self):
@@ -4101,11 +4147,13 @@ class Setup(object):
                           '"%s"' % self.ldap_binddn,
                           '-j',
                           self.ldapPassFn,
-                          '--trustAll',
                           '--useSSL',
                           '--continueOnError',
                           '--filename',
                           ldif_file_fullpath,
+                        '--trustStorePath', self.opendj_admin_truststore_fn,
+                        '--trustStorePasswordFile', self.opendj_admin_keystore_pin_fn,
+                        '--keyStorePassword', self.opendj_key_store_password_fn,
                         ]
 
         importCmd = " ".join(importParams)
@@ -4138,20 +4186,22 @@ class Setup(object):
             ldif_file_fullpath = os.path.realpath(ldif_file_fn)
             cwd = os.path.join(self.ldapBaseFolder, 'bin')
             importParams = [
-                              self.loadLdifCommand,
-                              '--hostname',
-                              self.ldap_hostname,
-                              '--port',
-                              self.ldap_admin_port,
-                              '--bindDN',
-                              '"%s"' % self.ldap_binddn,
-                              '-j',
-                              self.ldapPassFn,
-                              '--trustAll',
-                              '--useSSL',
-                              '--continueOnError',
-                              '--filename',
-                              ldif_file_fullpath,
+                            self.loadLdifCommand,
+                            '--hostname',
+                            self.ldap_hostname,
+                            '--port',
+                            self.ldap_admin_port,
+                            '--bindDN',
+                            '"%s"' % self.ldap_binddn,
+                            '-j',
+                            self.ldapPassFn,
+                            '--useSSL',
+                            '--continueOnError',
+                            '--filename',
+                            ldif_file_fullpath,
+                            '--trustStorePath', self.opendj_admin_truststore_fn,
+                            '--trustStorePasswordFile', self.opendj_admin_keystore_pin_fn,
+                            '--keyStorePassword', self.opendj_key_store_password_fn,
                             ]
 
             importCmd = " ".join(importParams)
@@ -4198,9 +4248,12 @@ class Setup(object):
                                              '--bindDN',
                                              '"%s"' % self.ldap_binddn,
                                              '-j', self.ldapPassFn,
-                                             '--trustAll',
                                              '--noPropertiesFile',
-                                             '--no-prompt']
+                                             '--no-prompt',
+                                            '--trustStorePath', self.opendj_admin_truststore_fn,
+                                            '--trustStorePasswordFile', self.opendj_admin_keystore_pin_fn,
+                                            '--keyStorePassword', self.opendj_key_store_password_fn,
+                                             ]
                         self.run(' '.join(indexCmd), shell=True, cwd=cwd, env={'OPENDJ_JAVA_HOME': self.jre_home})
 
         except:
@@ -5297,14 +5350,22 @@ class Setup(object):
             self.copyFile(tmp_fn, self.openDjSchemaFolder)
             cwd = os.path.join(self.ldapBaseFolder, 'bin')
             dsconfigCmd = (
-                '{} --trustAll --no-prompt --hostname {} --port {} '
-                '--bindDN "{}" --bindPasswordFile /home/ldap/.pw set-connection-handler-prop '
-                '--handler-name "LDAPS Connection Handler" --set listen-address:0.0.0.0'
+                '{} --no-prompt --hostname {} --port {} '
+                '--bindDN "{}" set-connection-handler-prop '
+                '--handler-name "LDAPS Connection Handler" --set listen-address:0.0.0.0 '
+                '--bindPasswordFile {} '
+                '--trustStorePath {} '
+                '--trustStorePasswordFile {} '
+                '--keyStorePassword {}'
                     ).format(
                         self.ldapDsconfigCommand, 
                         self.ldap_hostname, 
                         self.ldap_admin_port,
-                        self.ldap_binddn
+                        self.ldap_binddn,
+                        self.ldapPassFn,
+                        self.opendj_admin_truststore_fn,
+                        self.opendj_admin_keystore_pin_fn,
+                        self.opendj_key_store_password_fn
                     )
 
             self.run(dsconfigCmd, cwd=cwd, shell=True, env={'OPENDJ_JAVA_HOME': self.jre_home})
@@ -5318,14 +5379,21 @@ class Setup(object):
                     'create-backend-index --backend-name userRoot --type generic '
                     '--index-name {} --set index-type:equality --set index-entry-limit:4000 '
                     '--hostName {} --port {} --bindDN "{}" -j /home/ldap/.pw '
-                    '--trustAll --noPropertiesFile --no-prompt'
+                    '--noPropertiesFile --no-prompt '
+                    '--bindPasswordFile {} '
+                    '--trustStorePath {} '
+                    '--trustStorePasswordFile {} '
+                    '--keyStorePassword {}'
                     ).format(
                         atr, 
                         self.ldap_hostname,
                         self.ldap_admin_port, 
-                        self.ldap_binddn
+                        self.ldap_binddn,
+                        self.opendj_admin_truststore_fn,
+                        self.opendj_admin_keystore_pin_fn,
+                        self.opendj_key_store_password_fn
                     )
-                
+
                 dsconfigCmd = '{1} {2}'.format(self.ldapBaseFolder, self.ldapDsconfigCommand, cmd)
                 self.run(dsconfigCmd, shell=True, cwd=cwd, env={'OPENDJ_JAVA_HOME': self.jre_home})
             
