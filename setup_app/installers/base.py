@@ -77,6 +77,9 @@ class BaseInstaller:
         if base.snap:
             service = os.environ['SNAP_NAME'] + '.' + service
 
+        else:
+            self.set_systemd_ulimits(service)
+
         try:
             if base.snap:
                 cmd_list = [base.snapctl, operation, service]
@@ -89,6 +92,14 @@ class BaseInstaller:
                 self.run([base.service_path, service, operation], None, None, True)
         except:
             self.logIt("Error running operation {} for service {}".format(operation, service), True)
+
+
+    def set_systemd_ulimits(self, service):
+        umilit_file = '/etc/systemd/system/{}.service.d/override.conf'.format(service)
+        if not os.path.exists(umilit_file):
+            os.makedirs(os.path.dirname(umilit_file))
+            self.writeFile(umilit_file, '[Service]\nLimitNOFILE=262144\n')
+
 
     def enable(self, service=None):
         if not base.snap:
