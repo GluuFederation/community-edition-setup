@@ -137,7 +137,6 @@ class GluuInstaller(BaseInstaller, SetupUtils):
 
         if not base.snap:
             self.run([paths.cmd_chown, '-R', 'root:gluu', Config.certFolder])
-            self.run([paths.cmd_chown, '-R', 'root:gluu', Config.gluuOptPythonFolder])
             self.run([paths.cmd_chmod, '551', Config.certFolder])
             self.run([paths.cmd_chmod, 'ga+w', "/tmp"]) # Allow write to /tmp
 
@@ -420,6 +419,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             self.run([paths.cmd_chown, '-R', 'jetty:root', Config.certFolder])
             self.run([paths.cmd_chmod, '-R', '660', Config.certFolder])
             self.run([paths.cmd_chmod, 'u+X', Config.certFolder])
+            self.run([paths.cmd_chown, '-R', 'root:gluu', Config.gluuOptPythonFolder])
 
             if not Config.installed_instance:
                 cron_service = 'crond' if base.clone_type == 'rpm' else 'cron'
