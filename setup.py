@@ -67,7 +67,7 @@ from setup_app.installers.saml import SamlInstaller
 from setup_app.installers.radius import RadiusInstaller
 from setup_app.installers.oxd import OxdInstaller
 from setup_app.installers.casa import CasaInstaller
-from setup_app.installers.rdbm import RDBMInstaller
+#from setup_app.installers.rdbm import RDBMInstaller
 
 if base.snap:
     try:
@@ -169,7 +169,7 @@ jythonInstaller = JythonInstaller()
 nodeInstaller = NodeInstaller()
 openDjInstaller = OpenDjInstaller()
 couchbaseInstaller = CouchbaseInstaller()
-rdbmInstaller = RDBMInstaller()
+#rdbmInstaller = RDBMInstaller()
 httpdinstaller = HttpdInstaller()
 oxauthInstaller = OxauthInstaller()
 oxtrustInstaller = OxtrustInstaller()
@@ -181,13 +181,15 @@ casaInstaller = CasaInstaller()
 passportInstaller = PassportInstaller()
 radiusInstaller = RadiusInstaller()
 
-rdbmInstaller.packageUtils = packageUtils
+#rdbmInstaller.packageUtils = packageUtils
 
 if Config.installed_instance:
     for installer in (openDjInstaller, couchbaseInstaller, httpdinstaller, 
                         oxauthInstaller, passportInstaller, scimInstaller, 
                         fidoInstaller, samlInstaller, oxdInstaller, 
-                        casaInstaller, radiusInstaller, rdbmInstaller):
+                        casaInstaller, radiusInstaller, 
+                        #rdbmInstaller
+                        ):
 
         setattr(Config, installer.install_var, installer.installed())
 
@@ -301,8 +303,8 @@ def do_installation():
             if Config.cb_install:
                 couchbaseInstaller.start_installation()
 
-            if Config.rdbm_install:
-                rdbmInstaller.start_installation()
+            #if Config.rdbm_install:
+            #    rdbmInstaller.start_installation()
 
         if (Config.installed_instance and 'installHttpd' in Config.addPostSetupService) or (not Config.installed_instance and Config.installHttpd):
             httpdinstaller.configure()

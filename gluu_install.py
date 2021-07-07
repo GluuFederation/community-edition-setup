@@ -293,7 +293,7 @@ if not argsp.u:
     download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'super-gluu-radius-server.jar'))
     download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'gluu-radius-libs.zip'))
     download(maven_base + '/org/gluu/oxShibbolethKeyGenerator/{0}{1}/oxShibbolethKeyGenerator-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'idp3_cml_keygenerator.jar'))
-    download('https://github.com/sqlalchemy/sqlalchemy/archive/rel_1_3_23.zip', os.path.join(app_dir, 'sqlalchemy.zip'))
+    #download('https://github.com/sqlalchemy/sqlalchemy/archive/rel_1_3_23.zip', os.path.join(app_dir, 'sqlalchemy.zip'))
     download('https://www.apple.com/certificateauthority/Apple_WebAuthn_Root_CA.pem', os.path.join(app_dir, 'Apple_WebAuthn_Root_CA.pem'))
 
     for uf in services:
@@ -364,19 +364,19 @@ os.system(cmd)
 
 shutil.rmtree(target_dir)
 
-download_gcs()
+#download_gcs()
 
 
-sqlalchemy_zfn = os.path.join(app_dir, 'sqlalchemy.zip')
-sqlalchemy_zip = zipfile.ZipFile(sqlalchemy_zfn, "r")
-sqlalchemy_par_dir = sqlalchemy_zip.namelist()[0]
-tmp_dir = os.path.join('/tmp', os.urandom(2).hex())
-sqlalchemy_zip.extractall(tmp_dir)
-shutil.copytree(
-        os.path.join(tmp_dir, sqlalchemy_par_dir, 'lib/sqlalchemy'), 
-        os.path.join(ces_dir, 'setup_app/pylib/sqlalchemy')
-        )
-shutil.rmtree(tmp_dir)
+#sqlalchemy_zfn = os.path.join(app_dir, 'sqlalchemy.zip')
+#sqlalchemy_zip = zipfile.ZipFile(sqlalchemy_zfn, "r")
+#sqlalchemy_par_dir = sqlalchemy_zip.namelist()[0]
+#tmp_dir = os.path.join('/tmp', os.urandom(2).hex())
+#sqlalchemy_zip.extractall(tmp_dir)
+#shutil.copytree(
+#        os.path.join(tmp_dir, sqlalchemy_par_dir, 'lib/sqlalchemy'), 
+#        os.path.join(ces_dir, 'setup_app/pylib/sqlalchemy')
+#        )
+#shutil.rmtree(tmp_dir)
 
 os.chmod('/install/community-edition-setup/setup.py', 33261)
 
