@@ -959,13 +959,14 @@ class Setup(object):
 
         self.run([self.cmd_chown, '-R', 'identity:gluu', '/var/gluu/identity'])
 
+        """
         gluu_radius_jks_fn = os.path.join(self.certFolder, 'gluu-radius.jks')
         gluu_radius_pem_fn = os.path.join(self.certFolder, 'gluu-radius.private-key.pem')
         for fn in (gluu_radius_jks_fn, gluu_radius_pem_fn):
             if os.path.exists(fn):
                 self.run([self.cmd_chown, 'radius:gluu', fn])
                 self.run([self.cmd_chmod, '660', fn])
-
+        """
 
     def set_permissions(self):
         self.logIt("Changing permissions")
@@ -2884,7 +2885,7 @@ class Setup(object):
             self.pbar.progress("casa", "Installing Gluu components: Casa", False)
             self.install_casa()
 
-        self.install_gluu_radius_base()
+        #self.install_gluu_radius_base()
 
 
     def isIP(self, address):
@@ -2951,14 +2952,14 @@ class Setup(object):
         self.createUser('ldap', self.ldap_user_home)
         self.createUser('jetty', self.jetty_user_home)
         self.createUser('node', self.node_user_home)
-        self.createUser('radius', homeDir=self.radius_dir, shell='/bin/false')
+        #self.createUser('radius', homeDir=self.radius_dir, shell='/bin/false')
 
         self.createGroup('gluu')
 
         self.addUserToGroup('gluu', 'ldap')
         self.addUserToGroup('gluu', 'jetty')
         self.addUserToGroup('gluu', 'node')
-        self.addUserToGroup('gluu', 'radius')
+        #self.addUserToGroup('gluu', 'radius')
         self.addUserToGroup('adm', 'ldap')
 
     def makeFolders(self):
