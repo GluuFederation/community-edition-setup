@@ -899,6 +899,8 @@ class Setup(object):
         if (not 'key_gen_path' in self.non_setup_properties) or (not 'key_export_path' in self.non_setup_properties):
             self.logIt("Can't determine key generator and/or key exporter path form {}".format(self.non_setup_properties['oxauth_client_jar_fn']), True, True)
 
+        self.remove_pcks11_keys()
+
     def get_ssl_subject(self, ssl_fn):
         retDict = {}
         cmd = 'openssl x509 -noout -subject -nameopt RFC2253 -in {}'.format(ssl_fn)
@@ -4041,8 +4043,15 @@ class Setup(object):
                 '-file', admin_cert_fn
                 ])
 
-        self.run([self.cmd_keytool, '-delete', '-alias', 'dummy', '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
-        
+        self.remove_pcks11_keys(keys=['dummy'])
+
+    def remove_pcks11_keys(self, keys=['server-cert', 'admin-cert', 'dummy']):
+        output = self.run(['keytool', '-list', '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
+        for l in output.splitlines():
+            if 'PrivateKeyEntry' in l:
+                alias = l.split(',')[0]
+                if alias in keys:
+                    self.run([self.cmd_keytool, '-delete', '-alias', alias, '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
 
     def post_install_opendj(self):
         try:
@@ -4062,7 +4071,7 @@ class Setup(object):
                           ['set-log-publisher-prop', '--publisher-name', '"File-Based Audit Logger"', '--set', 'enabled:true'],
                           ['create-backend', '--backend-name', 'metric', '--set', 'base-dn:o=metric', '--type %s' % self.ldap_backend_type, '--set', 'enabled:true', '--set', 'db-cache-percent:20'],
                           ]
-                          
+
         if self.mappingLocations['site'] == 'ldap':
             config_changes.append(['create-backend', '--backend-name', 'site', '--set', 'base-dn:o=site', '--type %s' % self.ldap_backend_type, '--set', 'enabled:true', '--set', 'db-cache-percent:20'])
 
@@ -4210,6 +4219,10 @@ class Setup(object):
             self.run(importCmd, shell=True, cwd=cwd)
 
     def index_opendj_backend(self, backend):
+        if 'noindex' in os.environ:
+            self.logIt('ldap indexing passed ...')
+            return
+
         index_command = 'create-backend-index'
         cwd = os.path.join(self.ldapBaseFolder, 'bin')
         try:
