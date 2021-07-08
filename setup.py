@@ -1735,21 +1735,49 @@ class Setup(object):
             self.logIt("Java security file not found", errorLog=True)
             return
 
-        p = Properties()
-        with open(java_security_fn, 'rb') as f:
-            p.load(f, 'utf-8')
+        with open(java_security_fn) as f:
+            java_security = f.readlines()
 
-        if not 'TLSv1.3' in p['jdk.tls.disabledAlgorithms'].data:
-            java_security = self.readFile(java_security_fn).splitlines()
-            for i, l in enumerate(java_security[:]):
-                if l.strip().startswith('jdk.tls.disabledAlgorithms'):
+        # remove current fips providers
+        provider_n = None
+        for i, l in enumerate(java_security[:]):
+            ls = l.strip()
+            if ls:
+                if ls.startswith('fips.provider.1'):
+                    provider_n = i
+                if ls.startswith('fips.provider.'):
+                    java_security.remove(l)
+
+        providers = [
+            'fips.provider.1=org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider\n',
+            'fips.provider.2=org.bouncycastle.jsse.provider.BouncyCastleJsseProvider fips:BCFIPS\n',
+            'fips.provider.3=SunPKCS11 ${java.home}/conf/security/nss.fips.cfg\n',
+            'fips.provider.4=SUN\n'
+            'fips.provider.5=SunEC\n'
+            'fips.provider.6=com.sun.net.ssl.internal.ssl.Provider SunPKCS11-NSS-FIPS\n'
+            ]
+
+        providers.reverse()
+
+        # add fips providers
+        for p in providers:
+            java_security.insert(provider_n, p)
+
+        # fix securerandom.strongAlgorithms and jdk.tls.disabledAlgorithms
+        for i, l in enumerate(java_security[:]):
+            ls = l.strip()
+            if ls:
+                if ls.split('=')[0].strip() == 'securerandom.strongAlgorithms':
+                    java_security[i] = 'securerandom.strongAlgorithms=NativePRNGBlocking:SUN,DRBG:SUN:BCFIPS\n'
+
+                if ls.split('=')[0].strip() =='jdk.tls.disabledAlgorithms':
                    n = l.find('=')
                    k = l[:n].strip()
                    v = l[n+1:].strip()
                    java_security[i] = k + '=' + 'TLSv1.3, ' + v + '\n'
-                   break
 
-            self.writeFile(java_security_fn, '\n'.join(java_security))
+        with open(java_security_fn, 'w') as w:
+            w.write(''.join(java_security))
 
 
     def installJRE(self):
