@@ -2331,6 +2331,7 @@ class Setup(object):
         if not enc_keys:
             enc_keys = key_algs
 
+        """
         # We can remove this once KeyGenerator will do the same
         if jks_create == True:
             self.logIt("Creating empty JKS keystore")
@@ -2363,6 +2364,7 @@ class Setup(object):
                             '-dname',
                             '"%s"' % dn_name])
             self.run(['/bin/sh', '-c', cmd])
+        """
 
         cmd = " ".join([self.cmd_java,
                         "-Dlog4j.defaultInitOverride=true",
