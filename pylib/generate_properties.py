@@ -326,7 +326,7 @@ def generate_properties(as_dict=False):
         setup_prop['ldap_binddn'] = gluu_ldap_prop['bindDN']
         setup_prop['ldapPass'] = unobscure(gluu_ldap_prop['bindPassword'])
         try:
-            setup_prop['opendj_p12_pass'] = unobscure(gluu_ldap_prop['ssl.trustStorePin'])
+            setup_prop['opendj_truststore_pass'] = unobscure(gluu_ldap_prop['ssl.trustStorePin'])
         except:
             pass
         setup_prop['ldap_hostname'], setup_prop['ldaps_port']  = gluu_ldap_prop['servers'].split(',')[0].split(':')

@@ -460,8 +460,9 @@ class Setup(object):
 
         self.ldapBaseFolder = '/opt/opendj'
         self.opendj_cert_fn = '%s/opendj.crt' % self.certFolder
-        self.opendj_p12_fn = '%s/opendj.pkcs12' % self.certFolder
-        self.opendj_p12_pass = None
+        self.opendj_truststore_fn = '%s/opendj.jks' % self.certFolder
+        self.opendj_truststore_pass = None
+        self.opendj_truststore_format = 'jks'
         self.opendj_pck11_setup_key_fn = os.path.join('/root/.keystore.pin')
         self.opendj_admin_keystore_pin_fn = os.path.join(self.ldapBaseFolder, 'config', 'admin-keystore.pin')
         self.opendj_admin_truststore_fn = os.path.join(self.ldapBaseFolder, 'config', 'admin-truststore')
@@ -1071,8 +1072,8 @@ class Setup(object):
             self.shibJksPass = self.getPW()
         if (not self.oxauth_openid_jks_pass) & self.reCreatePasswords:
             self.oxauth_openid_jks_pass = self.getPW()
-        if (not self.opendj_p12_pass) & self.reCreatePasswords:
-            self.opendj_p12_pass = self.getPW()
+        if (not self.opendj_truststore_pass) & self.reCreatePasswords:
+            self.opendj_truststore_pass = self.getPW()
         if (not self.passportSpKeyPass) & self.reCreatePasswords:
             self.passportSpKeyPass = self.getPW()
             self.passportSpJksPass = self.getPW()
@@ -2174,7 +2175,7 @@ class Setup(object):
                 self.encoded_ox_ldap_pw = self.obscure(self.ldapPass)
             if self.cb_password:
                 self.encoded_cb_password = self.obscure(self.cb_password)
-            self.encoded_opendj_p12_pass = self.obscure(self.opendj_p12_pass)
+            self.opendj_truststore_pass_enc = self.obscure(self.opendj_truststore_pass)
 
             if (not self.get('oxauthClient_pw')) & self.reCreatePasswords:
                 self.oxauthClient_pw = self.getPW()
@@ -2556,8 +2557,8 @@ class Setup(object):
         self.generate_scim_configuration()
 
         self.ldapCertFn = self.opendj_cert_fn
-        self.ldapTrustStoreFn = self.opendj_p12_fn
-        self.encoded_ldapTrustStorePass = self.encoded_opendj_p12_pass
+        self.ldapTrustStoreFn = self.opendj_truststore_fn
+        self.encoded_ldapTrustStorePass = self.opendj_truststore_pass_enc
 
         if self.installSaml:
             self.oxTrustConfigGeneration = "true"
@@ -2602,8 +2603,9 @@ class Setup(object):
         jettyServiceName = 'oxauth'
         self.installJettyService(self.jetty_app_configuration[jettyServiceName], True)
 
-        jettyServiceWebapps = '%s/%s/webapps' % (self.jetty_base, jettyServiceName)
-        self.copyFile('%s/oxauth.war' % self.distGluuFolder, jettyServiceWebapps)
+        jettyServiceWebapps = os.path.join(self.jetty_base, jettyServiceName, 'webapps')
+        self.copyFile(os.path.join(self.distGluuFolder, 'oxauth.war'), jettyServiceWebapps)
+        self.run([self.cmd_chown, '-R', 'oxauth:gluu', jettyServiceWebapps])
 
     def install_oxtrust(self):
         self.logIt("Copying identity.war into jetty webapps folder...")
@@ -2611,8 +2613,9 @@ class Setup(object):
         jettyServiceName = 'identity'
         self.installJettyService(self.jetty_app_configuration[jettyServiceName], True)
 
-        jettyServiceWebapps = '%s/%s/webapps' % (self.jetty_base, jettyServiceName)
-        self.copyFile('%s/identity.war' % self.distGluuFolder, jettyServiceWebapps)
+        jettyServiceWebapps = os.path.join(self.jetty_base, jettyServiceName, 'webapps')
+        self.copyFile(os.path.join(self.distGluuFolder,'identity.war'), jettyServiceWebapps)
+        self.run([self.cmd_chown, '-R', 'identity:gluu', jettyServiceWebapps])
 
         # don't send header to server
         self.set_jetty_param(jettyServiceName, 'jetty.httpConfig.sendServerVersion', 'false')
@@ -2623,8 +2626,9 @@ class Setup(object):
         jettyServiceName = 'scim'
         self.installJettyService(self.jetty_app_configuration[jettyServiceName], True)
 
-        jettyServiceWebapps = '%s/%s/webapps' % (self.jetty_base, jettyServiceName)
-        self.copyFile('%s/scim.war' % self.distGluuFolder, jettyServiceWebapps)
+        jettyServiceWebapps = os.path.join(self.jetty_base, jettyServiceName, 'webapps')
+        self.copyFile(os.path.join(self.distGluuFolder,'scim.war'), jettyServiceWebapps)
+        self.run([self.cmd_chown, '-R', 'identity:gluu', jettyServiceWebapps])
 
         # don't send header to server
         self.set_jetty_param(jettyServiceName, 'jetty.httpConfig.sendServerVersion', 'false')
@@ -2635,8 +2639,9 @@ class Setup(object):
         jettyServiceName = 'fido2'
         self.installJettyService(self.jetty_app_configuration[jettyServiceName], True)
 
-        jettyServiceWebapps = '%s/%s/webapps' % (self.jetty_base, jettyServiceName)
-        self.copyFile('%s/fido2.war' % self.distGluuFolder, jettyServiceWebapps)
+        jettyServiceWebapps = os.path.join(self.jetty_base, jettyServiceName, 'webapps')
+        self.copyFile(os.path.join(self.distGluuFolder,'fido2.war'), jettyServiceWebapps)
+        self.run([self.cmd_chown, '-R', 'fido2:gluu', jettyServiceWebapps])
 
     def install_saml(self):
         if self.installSaml:
@@ -4157,11 +4162,11 @@ class Setup(object):
                   '-file',
                   self.opendj_cert_fn,
                   '-keystore',
-                  self.opendj_p12_fn,
+                  self.opendj_truststore_fn,
                   '-storetype',
-                  'PKCS12',
+                  self.opendj_truststore_format,
                   '-storepass',
-                  self.opendj_p12_pass
+                  self.opendj_truststore_pass
                   ])
 
         # Import OpenDJ certificate into java truststore
