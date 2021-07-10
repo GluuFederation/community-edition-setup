@@ -1739,6 +1739,7 @@ class Setup(object):
         with open(java_security_fn) as f:
             java_security = f.readlines()
 
+        """
         # remove current fips providers
         provider_n = None
         for i, l in enumerate(java_security[:]):
@@ -1763,6 +1764,7 @@ class Setup(object):
         # add fips providers
         for p in providers:
             java_security.insert(provider_n, p)
+        """
 
         # fix securerandom.strongAlgorithms and jdk.tls.disabledAlgorithms
         for i, l in enumerate(java_security[:]):
