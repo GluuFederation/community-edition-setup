@@ -3943,7 +3943,7 @@ class Setup(object):
             os.remove(self.ldapPassFn)
 
     def install_opendj(self):
-        self.logIt("Running Opem Setup")
+        self.logIt("Running OpenDJ Setup")
 
         # Copy opendj-setup.properties so user ldap can find it in /opt/opendj
         setupPropsFN = os.path.join(self.ldapBaseFolder, 'opendj-setup.properties')
@@ -3993,6 +3993,9 @@ class Setup(object):
         except:
             self.logIt("Error stopping opendj", True)
             self.logIt(traceback.format_exc(), True)
+
+        # Restore SELinux Context
+        self.run(['restorecon', '-rv', os.path.join(self.ldapBaseFolder, 'bin')])
 
         self.fix_opendj_config_stig()
 
