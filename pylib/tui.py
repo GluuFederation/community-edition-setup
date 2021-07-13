@@ -362,8 +362,8 @@ class ServicesForm(GluuSetupForm):
             if not result:
                 return
 
-        self.parentApp.switchForm('DBBackendForm')
-
+        #self.parentApp.switchForm('DBBackendForm')
+        self.parentApp.switchForm('DisplaySummaryForm')
 
     def casa_oxd_option_changed(self, widget):
 
@@ -698,11 +698,12 @@ class DisplaySummaryForm(GluuSetupForm):
             w.update()
 
     def backButtonPressed(self):
-        if self.parentApp.installObject.wrends_install and self.parentApp.installObject.cb_install:
-            self.parentApp.switchForm('StorageSelectionForm')
-        else:
-            self.parentApp.switchForm('DBBackendForm')
+        #if self.parentApp.installObject.wrends_install and self.parentApp.installObject.cb_install:
+        #    self.parentApp.switchForm('StorageSelectionForm')
+        #else:
+        #    self.parentApp.switchForm('DBBackendForm')
 
+        self.parentApp.switchForm('ServicesForm')
 
     def nextButtonPressed(self):
         if self.parentApp.installObject.cb_install == REMOTE:
