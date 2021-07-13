@@ -261,7 +261,8 @@ class HostForm(GluuSetupForm):
 
 class ServicesForm(GluuSetupForm):
 
-    services = ('installHttpd', 'installOxTrust', 'installSaml', 
+    services = ('installHttpd', 'installOxTrust', 
+                #'installSaml', 
                 'installOxd', 'installCasa')
 
     def create(self):
@@ -309,8 +310,8 @@ class ServicesForm(GluuSetupForm):
 
             self.parentApp.installObject.oxtrust_admin_password = self.oxtrust_admin_password.value
 
-        if self.installSaml:
-            self.parentApp.installObject.shibboleth_version = 'v3'
+        #if self.installSaml:
+        #    self.parentApp.installObject.shibboleth_version = 'v3'
 
         if self.installOxd.value:
             self.parentApp.installObject.oxd_server_https = 'https://{}:8443'.format(self.parentApp.installObject.hostname)
@@ -619,7 +620,8 @@ class DisplaySummaryForm(GluuSetupForm):
                    "application_max_ram")
 
     myfields_2 = ( "installOxAuth", "installOxTrust", 
-                    "installHttpd", "installSaml",
+                    "installHttpd", 
+                    #"installSaml",
                     "installOxd", "installCasa", "java_type",
                     "backend_types", 'wrends_storages')
 

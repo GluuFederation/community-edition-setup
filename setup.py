@@ -2284,18 +2284,18 @@ class Setup(object):
         try:
             self.logIt('Generating certificates and keystores')
             self.gen_cert('httpd', self.httpdKeyPass, 'jetty')
-            self.gen_cert('shibIDP', self.shibJksPass, 'jetty')
-            self.gen_cert('idp-encryption', self.shibJksPass, 'jetty')
-            self.gen_cert('idp-signing', self.shibJksPass, 'jetty')
+            #self.gen_cert('shibIDP', self.shibJksPass, 'jetty')
+            #self.gen_cert('idp-encryption', self.shibJksPass, 'jetty')
+            #self.gen_cert('idp-signing', self.shibJksPass, 'jetty')
 
-            self.gen_cert('passport-sp', self.passportSpKeyPass, 'ldap', self.ldap_hostname)
+            #self.gen_cert('passport-sp', self.passportSpKeyPass, 'ldap', self.ldap_hostname)
 
-            self.gen_keystore('shibIDP',
-                              self.shibJksFn,
-                              self.shibJksPass,
-                              '%s/shibIDP.key' % self.certFolder,
-                              '%s/shibIDP.crt' % self.certFolder,
-                              'jetty')
+            #self.gen_keystore('shibIDP',
+            #                  self.shibJksFn,
+            #                  self.shibJksPass,
+            #                  '%s/shibIDP.key' % self.certFolder,
+            #                  '%s/shibIDP.crt' % self.certFolder,
+            #                  'jetty')
 
             # permissions
             self.run([self.cmd_chown, '-R', 'gluu:gluu', self.certFolder])
