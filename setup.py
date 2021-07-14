@@ -1376,7 +1376,7 @@ class Setup(object):
             self.writeFile(fapolicyd_rules_fn, '\n'.join(fapolicyd_rules))
             self.run_service_command('fapolicyd', 'restart')
 
-    def fapolicyd_access(self, uid):
+    def fapolicyd_access(self, uid, service_dir):
 
         self.jettyAbsoluteDir = max(glob.glob('/opt/jetty*'))
         self.jythonAbsoluteDir = max(glob.glob('/opt/jython*'))
@@ -1386,14 +1386,14 @@ class Setup(object):
                 'allow perm=any uid=%(uid)s : dir=%(distFolder)s/',
                 'allow perm=any uid=%(uid)s : dir=%(jettyAbsoluteDir)s/',
                 'allow perm=any uid=%(uid)s : dir=%(jythonAbsoluteDir)s/',
-                'allow perm=any uid=%(uid)s : dir=%(jetty_user_home)s/',
+                'allow perm=any uid=%(uid)s : dir=%(service_dir)s/',
                 'allow perm=any uid=%(uid)s : dir=%(osDefault)s/',
                 'allow perm=any uid=%(uid)s : dir=%(gluuBaseFolder)s/',
                 '# give access to gluu service %(uid)s',
                 ]
 
         tmp_render_dict = self.__dict__
-        tmp_render_dict.update({'uid': uid})
+        tmp_render_dict.update({'uid': uid, 'service_dir': service_dir})
 
         rules = []
         for acl in facl_tmp:
@@ -2075,8 +2075,8 @@ class Setup(object):
             self.run([self.cmd_chmod, '644', jetty_tmpfiles_dst])
 
         self.renderUnitFile(serviceName)
-        self.run([self.cmd_chown, '-R', '{}:gluu'.format(self.templateRenderingDict['thisServiceName']), service_home_dir])
-        self.fapolicyd_access(self.templateRenderingDict['thisServiceName'])
+        self.run([self.cmd_chown, '-R', '{}:gluu'.format(self.templateRenderingDict['thisServiceName']), jettyServiceBase])
+        self.fapolicyd_access(self.templateRenderingDict['thisServiceName'], jettyServiceBase)
 
         serviceConfiguration['installed'] = True
         # don't send header to server
@@ -2113,8 +2113,8 @@ class Setup(object):
             self.run([self.cmd_ln, '-sf', '%s/node' % self.gluuOptSystemFolder, '/etc/init.d/%s' % serviceName])
 
         self.renderUnitFile(serviceName)
-        self.fapolicyd_access(serviceName)
-        self.run([self.cmd_chown, '-R', '{}:gluu'.format(serviceName), service_home_dir])
+        self.fapolicyd_access(serviceName, jettyServiceConfiguration)
+        self.run([self.cmd_chown, '-R', '{}:gluu'.format(serviceName), jettyServiceConfiguration])
 
     def installJython(self):
         self.logIt("Installing Jython")
