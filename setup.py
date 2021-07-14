@@ -871,8 +871,8 @@ class Setup(object):
 
     def initialize(self):
         # create initial users
-        self.createUser('gluu', '/opt/gluu')
-        self.createUser('identity', os.path.join(self.jetty_base, 'identity'))
+        self.createUser('gluu', '/home/gluu')
+        self.createUser('identity', '/home/identity'))
         self.addUserToGroup('gluu', 'identity')
 
         self.install_time_ldap = time.strftime('%Y%m%d%H%M%SZ', time.gmtime(time.time()))
@@ -2017,7 +2017,7 @@ class Setup(object):
         self.templateRenderingDict['thisServiceName'] = 'identity' if serviceName == 'idp' else serviceName
 
         # create user for this service if not exists
-        service_home_dir = os.path.join(self.jetty_base, serviceName)
+        service_home_dir = os.path.join('/home', serviceName)
         try:
             pwd.getpwnam(self.templateRenderingDict['thisServiceName'])
         except:
@@ -2087,7 +2087,7 @@ class Setup(object):
         self.logIt("Installing node service %s..." % serviceName)
 
         # create user for this service if not exists
-        service_home_dir = os.path.join(self.node_base, serviceName)
+        service_home_dir = os.path.join('/home', serviceName)
         try:
             pwd.getpwnam(serviceName)
         except:
@@ -5580,7 +5580,7 @@ class Setup(object):
         try:
             pwd.getpwnam(oxd_user)
         except:
-            self.createUser(oxd_user, oxd_root)
+            self.createUser(oxd_user, '/home/oxd-server')
             self.addUserToGroup('gluu', oxd_user)
 
         self.run(['tar', '-zxf', self.oxd_package, '-C', '/opt'])
@@ -5923,6 +5923,8 @@ class Setup(object):
         show_version_fn = os.path.join(self.gluuOptBinFolder, 'show_version.py')
         self.run(['cp', '-f', print_version_fn, show_version_fn])
         self.run(['chmod', '+x', show_version_fn])
+        self.run([self.cmd_chmod, 'g+rwX', '-R', self.jetty_base])
+        self.run([self.cmd_chmod, 'g+rwX', '-R', self.jettyAbsoluteDir])
 
 
     def do_installation(self, queue=None):
