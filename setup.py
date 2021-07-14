@@ -872,7 +872,7 @@ class Setup(object):
     def initialize(self):
         # create initial users
         self.createUser('gluu', '/home/gluu')
-        self.createUser('identity', '/home/identity'))
+        self.createUser('identity', '/home/identity')
         self.addUserToGroup('gluu', 'identity')
 
         self.install_time_ldap = time.strftime('%Y%m%d%H%M%SZ', time.gmtime(time.time()))
