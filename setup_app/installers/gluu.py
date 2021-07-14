@@ -138,6 +138,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         if not base.snap:
             self.run([paths.cmd_chown, '-R', 'root:gluu', Config.certFolder])
             self.run([paths.cmd_chmod, '551', Config.certFolder])
+            
             self.run([paths.cmd_chmod, 'ga+w', "/tmp"]) # Allow write to /tmp
 
     def customiseSystem(self):
@@ -416,9 +417,12 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             self.writeFile(os.path.join(base.snap_common, 'etc/hosts.gluu'), Config.ip + '\t' + Config.hostname)
 
         else:
-            self.run([paths.cmd_chown, '-R', 'jetty:root', Config.certFolder])
-            self.run([paths.cmd_chmod, '-R', '660', Config.certFolder])
-            self.run([paths.cmd_chmod, 'u+X', Config.certFolder])
+            for f in os.listdir(Config.certFolder):
+                if not f.startswith('passport-'):
+                    fpath = os.path.join(Config.certFolder, f)
+                    self.run([paths.cmd_chown, 'jetty:root', fpath])
+                    self.run([paths.cmd_chmod, '660', fpath])
+                    self.run([paths.cmd_chmod, 'u+X', fpath])
             self.run([paths.cmd_chown, '-R', 'root:gluu', Config.gluuOptPythonFolder])
 
             if not Config.installed_instance:
