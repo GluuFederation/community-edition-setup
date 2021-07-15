@@ -126,13 +126,3 @@ if os.path.exists(npyscreen_package):
 
         shutil.rmtree(target_dir)
 
-sqlalchemy_zfn = os.path.join(app_dir, 'sqlalchemy.zip')
-sqlalchemy_zip = zipfile.ZipFile(sqlalchemy_zfn, "r")
-sqlalchemy_par_dir = sqlalchemy_zip.namelist()[0]
-tmp_dir = os.path.join('/tmp', os.urandom(2).hex())
-sqlalchemy_zip.extractall(tmp_dir)
-shutil.copytree(
-        os.path.join(tmp_dir, sqlalchemy_par_dir, 'lib/sqlalchemy'),
-        os.path.join(ces_dir, 'setup_app/pylib/sqlalchemy')
-        )
-shutil.rmtree(tmp_dir)
