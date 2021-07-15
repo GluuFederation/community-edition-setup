@@ -101,6 +101,10 @@ post_setup = '/install/community-edition-setup/post-setup-add-components.py'
 if os.path.exists(post_setup):
     os.chmod(post_setup, 33261)
 
+gluu_install = '/install/community-edition-setup/gluu_install.py'
+if os.path.exists(gluu_install):
+    os.remove(gluu_install)
+
 if argsp.o:
     npy_download_link = 'https://github.com/npcole/npyscreen/archive/master.zip'
     result = requests.get(npy_download_link, allow_redirects=True)
