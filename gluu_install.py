@@ -34,7 +34,7 @@ gluu_app_dir = '/opt/dist/gluu'
 app_dir = '/opt/dist/app'
 ces_dir = '/install/community-edition-setup'
 scripts_dir = '/opt/dist/scripts'
-certs_dir = '/etc/crts'
+certs_dir = '/etc/certs'
 
 os_type, os_version = '', ''
 
