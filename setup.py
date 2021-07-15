@@ -5926,6 +5926,9 @@ class Setup(object):
         self.run([self.cmd_chmod, 'g+rwX', '-R', self.jetty_base])
         self.run([self.cmd_chmod, 'g+rwX', '-R', self.jettyAbsoluteDir])
 
+        self.run([self.cmd_chmod, 'g+rwX', '-R', self.gluuBaseFolder])
+        self.run([self.cmd_chmod, 'g+rwX', '-R', os.path.join(self.distFolder,'scripts')])
+
 
     def do_installation(self, queue=None):
         try:
