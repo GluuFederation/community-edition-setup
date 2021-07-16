@@ -925,7 +925,7 @@ class Setup(object):
         self.run([self.cmd_chown, '-R', 'root:gluu', realConfigFolder])
         self.run([self.cmd_chown, 'gluu:gluu', self.jetty_base])
 
-        #self.run([self.cmd_chown, '-R', 'root:gluu', realOptPythonFolderFolder])
+        self.run([self.cmd_chown, 'root:gluu', realOptPythonFolderFolder])
         #self.run([self.cmd_chown, '-R', 'root:gluu', self.oxBaseDataFolder])
 
         # Set right permissions
@@ -4472,8 +4472,8 @@ class Setup(object):
         # casa service
         if self.installCasa:
             # import_oxd_certificate2javatruststore:
-            self.logIt("Importing oxd certificate")
-            self.import_oxd_certificate()
+            #self.logIt("Importing oxd certificate")
+            #self.import_oxd_certificate()
 
             self.pbar.progress("gluu", "Starting Casa Service")
             self.run_service_command('casa', 'start')
@@ -5605,11 +5605,10 @@ class Setup(object):
         for fn in glob.glob(os.path.join(oxd_root,'bin/*')):
             self.run(['chmod', '+x', fn])
 
-
         yml_str = self.readFile(oxd_server_yml_fn)
         oxd_yaml = ruamel.yaml.load(yml_str, ruamel.yaml.RoundTripLoader)
 
-        bind_ip_addresses = '127.0.0.1' if self.clustering else self.ip
+        bind_ip_addresses = '127.0.0.1'
 
         if 'bind_ip_addresses' in oxd_yaml:
             oxd_yaml['bind_ip_addresses'].append(bind_ip_addresses)
@@ -5620,6 +5619,15 @@ class Setup(object):
             else:
                 i = 1
             oxd_yaml.insert(i, 'bind_ip_addresses',  [bind_ip_addresses])
+
+
+        oxd_yaml['server']['applicationConnectors'][0].pop('keyStorePath')
+        oxd_yaml['server']['applicationConnectors'][0].pop('keyStorePassword')
+        oxd_yaml['server']['applicationConnectors'][0].pop('validateCerts')
+        oxd_yaml['server']['adminConnectors'][0]['type']='http'
+        oxd_yaml['server']['adminConnectors'][0].pop('keyStorePath')
+        oxd_yaml['server']['adminConnectors'][0].pop('keyStorePassword')
+        oxd_yaml['server']['adminConnectors'][0].pop('validateCerts')
 
 
         if self.oxd_use_gluu_storage:
@@ -5642,47 +5650,6 @@ class Setup(object):
         yml_str = ruamel.yaml.dump(oxd_yaml, Dumper=ruamel.yaml.RoundTripDumper)
         self.writeFile(oxd_server_yml_fn, yml_str)
 
-        if not self.clustering:
-
-            # generate oxd-server.keystore for the hostname
-            self.run([
-                self.opensslCommand,
-                'req', '-x509', '-newkey', 'rsa:4096', '-nodes',
-                '-out', '/tmp/oxd.crt',
-                '-keyout', '/tmp/oxd.key',
-                '-days', '3650',
-                '-subj', '/C={}/ST={}/L={}/O={}/CN={}/emailAddress={}'.format(self.countryCode, self.state, self.city, self.orgName, self.hostname, self.admin_email),
-                ])
-
-            self.run([
-                self.opensslCommand,
-                'pkcs12', '-export',
-                '-in', '/tmp/oxd.crt',
-                '-inkey', '/tmp/oxd.key',
-                '-out', '/tmp/oxd.p12',
-                '-name', self.hostname,
-                '-passout', 'pass:example'
-                ])
-
-            self.run([
-                self.cmd_keytool,
-                '-importkeystore',
-                '-deststorepass', 'example',
-                '-destkeypass', 'example',
-                '-destkeystore', '/tmp/oxd.keystore',
-                '-srckeystore', '/tmp/oxd.p12',
-                '-srcstoretype', 'PKCS12',
-                '-srcstorepass', 'example',
-                '-alias', self.hostname,
-                ])
-
-            oxd_keystore_fn = os.path.join(oxd_root, 'conf/oxd-server.keystore')
-            self.run(['cp', '-f', '/tmp/oxd.keystore', oxd_keystore_fn])
-            self.run(['chown', 'gluu:gluu', oxd_keystore_fn])
-            
-            for f in ('/tmp/oxd.crt', '/tmp/oxd.key', '/tmp/oxd.p12', '/tmp/oxd.keystore'):
-                self.run(['rm', '-f', f])
-
         oxd_fapolicyd_rules = [
                 'allow perm=any uid={} : dir=/usr/lib/jvm/java-11-openjdk-11.0.11.0.9-2.el8_4.x86_64/'.format(oxd_user),
                 'allow perm=any uid={} : dir={}'.format(oxd_user, log_dir),
@@ -5691,6 +5658,8 @@ class Setup(object):
                 ]
 
         self.apply_fapolicyd_rules(oxd_fapolicyd_rules)
+        # Restore SELinux Context
+        self.run(['restorecon', '-rv', os.path.join(oxd_root, 'bin')])
 
         self.enable_service_at_start('oxd-server')
 
@@ -5733,7 +5702,7 @@ class Setup(object):
         for path in ('/opt/gluu/jetty/casa/static/', '/opt/gluu/jetty/casa/plugins'):
             if not os.path.exists(path):
                 self.run(['mkdir', '-p', path])
-                self.run(['chown', '-R', 'gluu:gluu', path])
+                self.run(['chown', '-R', 'casa:gluu', path])
         
         #Adding twilio jar path to oxauth.xml
         oxauth_xml_fn = '/opt/gluu/jetty/oxauth/webapps/oxauth.xml'
@@ -5771,9 +5740,14 @@ class Setup(object):
             self.writeFile(oxauth_xml_fn, xml_headers+ElementTree.tostring(root).decode('utf-8'))
 
         pylib_folder = os.path.join(self.gluuOptPythonFolder, 'libs')
+        self.run([self.cmd_chown, '-R', 'root:gluu', self.gluuOptPythonFolder])
+
         for script_fn in glob.glob(os.path.join(self.staticFolder, 'casa/scripts/*.*')):
             self.run(['cp', script_fn, pylib_folder])
+            scr_name = os.path.basename(script_fn)
+            self.run([self.cmd_chown, 'casa:gluu', os.path.join(pylib_folder, scr_name)])
 
+        self.run([self.cmd_chown, '-R', 'casa:gluu', jettyServiceWebapps])
         self.enable_service_at_start('casa')
 
     def parse_url(self, url):
@@ -5914,6 +5888,12 @@ class Setup(object):
         self.run(['chmod', '+x', target_fn])
         cron_service = 'cron'
 
+        self.run([self.cmd_chmod, 'g+rwX', '-R', self.jetty_base])
+        self.run([self.cmd_chmod, 'g+rwX', '-R', self.jettyAbsoluteDir])
+
+        self.run([self.cmd_chmod, 'g+rwX', '-R', self.gluuBaseFolder])
+        self.run([self.cmd_chmod, 'g+rwX', '-R', os.path.join(self.distFolder,'scripts')])
+
         if self.os_type in ['centos', 'red', 'fedora']:
             cron_service = 'crond'
 
@@ -5923,11 +5903,6 @@ class Setup(object):
         show_version_fn = os.path.join(self.gluuOptBinFolder, 'show_version.py')
         self.run(['cp', '-f', print_version_fn, show_version_fn])
         self.run(['chmod', '+x', show_version_fn])
-        self.run([self.cmd_chmod, 'g+rwX', '-R', self.jetty_base])
-        self.run([self.cmd_chmod, 'g+rwX', '-R', self.jettyAbsoluteDir])
-
-        self.run([self.cmd_chmod, 'g+rwX', '-R', self.gluuBaseFolder])
-        self.run([self.cmd_chmod, 'g+rwX', '-R', os.path.join(self.distFolder,'scripts')])
 
 
     def do_installation(self, queue=None):
