@@ -5621,6 +5621,7 @@ class Setup(object):
             oxd_yaml.insert(i, 'bind_ip_addresses',  [bind_ip_addresses])
 
 
+        oxd_yaml['server']['applicationConnectors'][0]['type']='http'
         oxd_yaml['server']['applicationConnectors'][0].pop('keyStorePath')
         oxd_yaml['server']['applicationConnectors'][0].pop('keyStorePassword')
         oxd_yaml['server']['applicationConnectors'][0].pop('validateCerts')
