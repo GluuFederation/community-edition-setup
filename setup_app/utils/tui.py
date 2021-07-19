@@ -30,23 +30,31 @@ import npyscreen
 
 random_marketing_strings = [
     'Having trouble? Open a ticket: https://support.gluu.org',
-    'Cluster your Gluu Server: https://gluu.org/docs/cm',
-    'oxd exposes simple, static APIs web application developers https://gluu.org/docs/oxd',
-    'Gluu Gateway helps you secure APIs with OAuth, OpenID and UMA. See https://gateway.gluu.org',
+    'Need to cluster? Consider moving to Kubernetes with Gluu Cloud Native Edition.',
+    "What is oxd? It's an API that developers use to obtain OAuth tokens or to use OpenID Connect authentication.",
     'Super Gluu is free mobile 2FA applications that uses push notifications and FIDO authentication https://super.gluu.org',
-    'Gluu Casa is a self-service web portal that enables end users to manage their 2FA credentials https://casa.gluu.org',
+    'Gluu Casa enables end users to manage their 2FA credentials https://casa.gluu.org',
     "Interested in VIP support? Schedule a Zoom meeting https://www.gluu.org/booking",
-    'Gluu only uses open source components to build the Gluu Server.',
-    'Consider Gluu VIP Platform Subscription https://gluu.org/contact',
-    "Gluu Cloud Edition uses Kubernetes, Helm and other cloud native components to enable auto-scaling.",
-    'Interested in Open Source startups? Listen to Open Source Underdogs: https://opensourceunderdogs.com',
-    'Confused about OpenID? Read "Securing the Perimeter" by Gluu CEO Mike Schwartz: https://gluu.co/book',
+    "Gluu Cloud Native Edition (CN) uses Kubernetes, Helm and other tools to enable efficient ways to scale.",
+    'Interested in Open Source software business models? Listen to Open Source Underdogs: https://opensourceunderdogs.com',
+    'Need to learn more about OpenID and SAML? Read "Securing the Perimeter" by Gluu CEO Mike Schwartz: https://gluu.co/book',
     'The Gluu Server is one of the most advanced OpenID Providers. Compare at https://openid.net/certification',
     'Installing the Gluu Server is a SNAP. Search for Gluu on https://snapcraft.io',
-    'Search the Digital Ocean Marketplace for a quick way to install the Gluu Server: https://marketplace.digitalocean.com/'
+    'Gluu Solo is coming soon. This is a hosted CE offering with 99.95% availability.',
+    'Need FIPS 140-2? Consider the new Gluu Server RHEL 8.4 FIPS distribution that leverages central crypto policies',
+    'Open Banking security is available with our new Gluu Server profile. See https://gluu.org/openbanking/',
+    "Gluu's core software now lives at the Linux Foundation Janssen Project. See https://github.com/JanssenProject",
+    'FIDO 2 is now a standalone service in the Gluu Server.  The latest MacBook and iPhone devices support FIDO 2',
+    'One Time Password (OTP) is available out-of-the-box with the Gluu Server and Casa',
+    "Passwordless authentication flows enable you to improve your organization's security posture",
+    'Gluu supports many databases: LDAP, Couchbase, RDBMS and Google Spanner',
+    'OpenID is more modern and more secure then SAML; deprecate older protocols like CAS or WS-Fed',
+    'SCIM enables you to add, edit, delete and search users via a JSON/REST API',
+    'Social Login is supported with passport-js. There are hundreds of strategies available',
+    'Inbound SAML enables you to act as an SAML SP if your partners or customers have their own SAML IDP'
     ]
 
-marketing_text_period = 20 
+marketing_text_period = 15 
 
 
 def getClassName(c):
