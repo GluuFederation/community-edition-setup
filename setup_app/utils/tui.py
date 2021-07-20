@@ -423,10 +423,10 @@ class DBBackendForm(GluuSetupForm):
         self.backend_types = ['Local OpenDj',
                          'Remote OpenDj',
                          'Remote Couchbase',
-                         'Local MySQL',
-                         'Remote MySQL',
-                         'Cloud Spanner',
-                         'Spanner Emulator',
+                         #'Local MySQL',
+                         #'Remote MySQL',
+                         #'Cloud Spanner',
+                         #'Spanner Emulator',
                          ]
 
         if 'couchbase' in propertiesUtils.getBackendTypes():

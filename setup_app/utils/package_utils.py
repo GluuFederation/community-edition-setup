@@ -36,13 +36,12 @@ class PackageUtils(SetupUtils):
 
         os_type_version = base.os_type + ' ' + base.os_version
 
-        if base.argsp.local_rdbm == 'mysql' or (Config.get('rdbm_install_type') == InstallTypes.LOCAL and Config.rdbm_type == 'mysql'):
+        if hasattr(base.argsp,'local_rdbm') and (base.argsp.local_rdbm == 'mysql' or (Config.get('rdbm_install_type') == InstallTypes.LOCAL and Config.rdbm_type == 'mysql')):
             package_list[os_type_version]['mondatory'] += ' mysql-server'
-        if base.argsp.local_rdbm == 'pgsql' or (Config.get('rdbm_install_type') == InstallTypes.LOCAL and Config.rdbm_type == 'pgsql'):
+        if hasattr(base.argsp,'local_rdbm') and (base.argsp.local_rdbm == 'pgsql' or (Config.get('rdbm_install_type') == InstallTypes.LOCAL and Config.rdbm_type == 'pgsql')):
             package_list[os_type_version]['mondatory'] += ' postgresql python3-psycopg2'
             if base.clone_type == 'deb':
                 package_list[os_type_version]['mondatory'] += ' postgresql-contrib'
-
 
         for install_type in install_list:
             for package in package_list[os_type_version][install_type].split():

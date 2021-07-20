@@ -113,7 +113,7 @@ def get_setup_options():
         setupOptions['wrends_install'] = InstallTypes.REMOTE
         setupOptions['listenAllInterfaces'] = True
 
-    if not (base.argsp.remote_couchbase or base.argsp.remote_rdbm or base.argsp.local_rdbm):
+    if not (base.argsp.remote_couchbase or getattr(base.argsp, 'remote_rdbm', None) or getattr(base.argsp, 'local_rdbm', None)):
         setupOptions['wrends_install'] = InstallTypes.LOCAL
     else:
         setupOptions['wrends_install'] = InstallTypes.NONE
@@ -122,42 +122,42 @@ def get_setup_options():
             setupOptions['cb_install'] = InstallTypes.REMOTE
             setupOptions['couchbase_hostname'] = base.argsp.couchbase_hostname
             
-            
-        if base.argsp.remote_rdbm:
+
+        if getattr(base.argsp, 'remote_rdbm', None):
             setupOptions['rdbm_install'] = True
             setupOptions['rdbm_install_type'] = InstallTypes.REMOTE
             setupOptions['rdbm_type'] = base.argsp.remote_rdbm
             if not base.argsp.remote_rdbm == 'spanner':
                 setupOptions['rdbm_host'] = base.argsp.rdbm_host
 
-        if base.argsp.local_rdbm:
+        if getattr(base.argsp, 'local_rdbm', None):
             setupOptions['rdbm_install'] = True
             setupOptions['rdbm_install_type'] = InstallTypes.LOCAL
             setupOptions['rdbm_type'] = base.argsp.local_rdbm
             setupOptions['rdbm_host'] = 'localhost'
 
-        if base.argsp.rdbm_port:
+        if getattr(base.argsp, 'rdbm_port', None):
             setupOptions['rdbm_port'] = base.argsp.rdbm_port
         else:
             if setupOptions.get('rdbm_type') == 'pgsql':
                 setupOptions['rdbm_port'] = 5432
 
-        if base.argsp.rdbm_db:
+        if getattr(base.argsp, 'rdbm_db', None):
             setupOptions['rdbm_db'] = base.argsp.rdbm_db
-        if base.argsp.rdbm_user:
+        if getattr(base.argsp, 'rdbm_user', None):
             setupOptions['rdbm_user'] = base.argsp.rdbm_user
-        if base.argsp.rdbm_password:
+        if getattr(base.argsp, 'rdbm_password', None):
             setupOptions['rdbm_password'] = base.argsp.rdbm_password
 
-        if base.argsp.spanner_project:
+        if getattr(base.argsp, 'spanner_project', None):
             setupOptions['spanner_project'] = base.argsp.spanner_project
-        if base.argsp.spanner_instance:
+        if getattr(base.argsp, 'spanner_instance', None):
             setupOptions['spanner_instance'] = base.argsp.spanner_instance
-        if base.argsp.spanner_database:
+        if getattr(base.argsp, 'spanner_database', None):
             setupOptions['spanner_database'] = base.argsp.spanner_database
-        if base.argsp.spanner_emulator_host:
+        if getattr(base.argsp, 'spanner_emulator_host', None):
             setupOptions['spanner_emulator_host'] = base.argsp.spanner_emulator_host
-        if base.argsp.google_application_credentials:
+        if getattr(base.argsp, 'google_application_credentials', None):
             setupOptions['google_application_credentials'] = base.argsp.google_application_credentials
 
     if base.argsp.no_data:

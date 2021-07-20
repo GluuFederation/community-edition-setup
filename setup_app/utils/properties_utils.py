@@ -666,9 +666,9 @@ class PropertiesUtils(SetupUtils):
         backend_types = ['Local OpenDj',
                          'Remote OpenDj',
                          'Remote Couchbase',
-                         'Local MySQL',
-                         'Remote MySQL',
-                         'Cloud Spanner',
+                         #'Local MySQL',
+                         #'Remote MySQL',
+                         #'Cloud Spanner',
                          ]
 
         if 'couchbase' in self.getBackendTypes():
