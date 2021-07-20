@@ -51,7 +51,7 @@ random_marketing_strings = [
     'OpenID is more modern and more secure then SAML; deprecate older protocols like CAS or WS-Fed',
     'SCIM enables you to add, edit, delete and search users via a JSON/REST API',
     'Social Login is supported with passport-js. There are hundreds of strategies available',
-    'Inbound SAML enables you to act as an SAML SP if your partners or customers have their own SAML IDP'
+    'Inbound SAML enables you to act as an SAML SP if your partners or customers have their own SAML IDP',
     ]
 
 marketing_text_period = 15 
