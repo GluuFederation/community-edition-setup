@@ -24,7 +24,7 @@ from setup_app import static
 from setup_app.utils import base
 from setup_app.utils.properties_utils import propertiesUtils
 from setup_app.utils.progress import gluuProgress
-#from setup_app.utils.spanner import Spanner
+from setup_app.utils.spanner import Spanner
 
 import npyscreen
 
@@ -423,10 +423,10 @@ class DBBackendForm(GluuSetupForm):
         self.backend_types = ['Local OpenDj',
                          'Remote OpenDj',
                          'Remote Couchbase',
-                         #'Local MySQL',
-                         #'Remote MySQL',
-                         #'Cloud Spanner',
-                         #'Spanner Emulator',
+                         'Local MySQL',
+                         'Remote MySQL',
+                         'Cloud Spanner',
+                         'Spanner Emulator',
                          ]
 
         if 'couchbase' in propertiesUtils.getBackendTypes():

@@ -21,15 +21,15 @@ from setup_app.utils import base
 from setup_app.utils.cbm import CBM
 from setup_app.utils import ldif_utils
 from setup_app.utils.attributes import attribDataTypes
-#from setup_app.utils.spanner import Spanner
+from setup_app.utils.spanner import Spanner
 
-#my_path = PurePath(os.path.dirname(os.path.realpath(__file__)))
-#sys.path.append(my_path.parent.joinpath('pylib/sqlalchemy'))
+my_path = PurePath(os.path.dirname(os.path.realpath(__file__)))
+sys.path.append(my_path.parent.joinpath('pylib/sqlalchemy'))
 
 
-#import sqlalchemy
-#import sqlalchemy.orm
-#import sqlalchemy.ext.automap
+import sqlalchemy
+import sqlalchemy.orm
+import sqlalchemy.ext.automap
 
 
 class DBUtils:

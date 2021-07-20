@@ -30,17 +30,15 @@ def arg_parser():
     ldap_group.add_argument('--install-local-wrends', help="Installs local WrenDS", action='store_true')
     ldap_group.add_argument('--disable-local-ldap', help="Disables installing local LDAP server", action='store_true')
 
-    
+    rdbm_group = parser.add_mutually_exclusive_group()
+    rdbm_group.add_argument('-remote-rdbm', choices=['mysql', 'pgsql', 'spanner'], help="Enables using remote RDBM server")
+    rdbm_group.add_argument('-local-rdbm', choices=['mysql', 'pgsql'], help="Enables installing/configuring local RDBM server")
 
-    #rdbm_group = parser.add_mutually_exclusive_group()
-    #rdbm_group.add_argument('-remote-rdbm', choices=['mysql', 'pgsql', 'spanner'], help="Enables using remote RDBM server")
-    #rdbm_group.add_argument('-local-rdbm', choices=['mysql', 'pgsql'], help="Enables installing/configuring local RDBM server")
-
-    #parser.add_argument('-rdbm-user', help="RDBM username")
-    #parser.add_argument('-rdbm-password', help="RDBM password")
-    #parser.add_argument('-rdbm-port', help="RDBM port")
-    #parser.add_argument('-rdbm-db', help="RDBM database")
-    #parser.add_argument('-rdbm-host', help="RDBM host")
+    parser.add_argument('-rdbm-user', help="RDBM username")
+    parser.add_argument('-rdbm-password', help="RDBM password")
+    parser.add_argument('-rdbm-port', help="RDBM port")
+    parser.add_argument('-rdbm-db', help="RDBM database")
+    parser.add_argument('-rdbm-host', help="RDBM host")
 
     parser.add_argument('--remote-couchbase', help="Enables using remote couchbase server", action='store_true')
     parser.add_argument('--local-couchbase', help="Enables installing couchbase server", action='store_true')
@@ -75,18 +73,14 @@ def arg_parser():
     parser.add_argument('--no-progress', help="Use simple progress", action='store_true')
 
     # spanner options
-    #parser.add_argument('-spanner-project', help="Spanner project name")
-    #parser.add_argument('-spanner-instance', help="Spanner instance name")
-    #parser.add_argument('-spanner-database', help="Spanner database name")
-    #spanner_cred_group = parser.add_mutually_exclusive_group()
-    #spanner_cred_group.add_argument('-spanner-emulator-host', help="Use Spanner emulator host")
-    #spanner_cred_group.add_argument('-google-application-credentials', help="Path to Google application credentials json file")
+    parser.add_argument('-spanner-project', help="Spanner project name")
+    parser.add_argument('-spanner-instance', help="Spanner instance name")
+    parser.add_argument('-spanner-database', help="Spanner database name")
+    spanner_cred_group = parser.add_mutually_exclusive_group()
+    spanner_cred_group.add_argument('-spanner-emulator-host', help="Use Spanner emulator host")
+    spanner_cred_group.add_argument('-google-application-credentials', help="Path to Google application credentials json file")
 
 
     argsp = parser.parse_args()
-
-    # set disabled attributes
-    argsp.local_rdbm = None
-    argsp.remote_rdbm = None
 
     return argsp
