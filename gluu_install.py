@@ -380,6 +380,10 @@ shutil.rmtree(tmp_dir)
 
 os.chmod('/install/community-edition-setup/setup.py', 33261)
 
+gluu_install = '/install/community-edition-setup/gluu_install.py'
+if os.path.exists(gluu_install):
+    os.remove(gluu_install)
+
 if not argsp.no_setup:
     print("Launching Gluu Setup")
     setup_cmd = 'python3 {}/setup.py'.format(ces_dir)
