@@ -167,3 +167,13 @@ description: This scope value requests that an OAuth 2.0 Refresh Token be issued
 defaultScope: true
 oxAttributes: {"spontaneousClientId":"","spontaneousClientScopes":[],"showInConfigurationEndpoint":true}
 oxScopeType: openid
+
+dn: inum=C4F7,ou=scopes,o=gluu
+objectClass: top
+objectClass: oxAuthCustomScope
+oxId: stat
+inum: C4F7
+description: This scope is required for calling Statistic Endpoint
+defaultScope: false
+oxAttributes: {"spontaneousClientId":"","spontaneousClientScopes":[],"showInConfigurationEndpoint":false}
+oxScopeType: openid
