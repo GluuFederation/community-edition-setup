@@ -1,6 +1,7 @@
 [Unit]
 Description=OpenDJ Directory Service
 After=syslog.target
+Before=oxauth.service
 
 [Service]
 Environment=OPENDJ_JAVA_HOME=/opt/jre
