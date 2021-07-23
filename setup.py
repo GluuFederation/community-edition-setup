@@ -1985,7 +1985,7 @@ class Setup(object):
     def renderUnitFile(self, serviceName):
         self.templateRenderingDict['thisServiceName'] = 'identity' if serviceName == 'idp' else serviceName
         self.renderTemplateInOut(serviceName+'.service', os.path.join(self.templateFolder, 'systemd'), self.systemdDir)
-
+        self.enable_service_at_start(serviceName)
 
     def installJettyService(self, serviceConfiguration, supportCustomizations=False, supportOnlyPageCustomizations=False):
         serviceName = serviceConfiguration['name']
@@ -2061,9 +2061,7 @@ class Setup(object):
 
         initscript_fn = os.path.join(self.jetty_home, 'bin/jetty.sh')
         self.fix_init_scripts(serviceName, initscript_fn)
-        
-        self.enable_service_at_start(serviceName)
-        
+
         tmpfiles_base = '/usr/lib/tmpfiles.d'
         if self.os_initdaemon == 'systemd' and os.path.exists(tmpfiles_base):
             self.logIt("Creating 'jetty.conf' tmpfiles daemon file")
@@ -5599,8 +5597,6 @@ class Setup(object):
         # Restore SELinux Context
         self.run(['restorecon', '-rv', os.path.join(oxd_root, 'bin')])
 
-        self.enable_service_at_start('oxd-server')
-
     def install_casa(self):
         self.logIt("Installing Casa...")
 
@@ -5686,7 +5682,6 @@ class Setup(object):
             self.run([self.cmd_chown, 'casa:gluu', os.path.join(pylib_folder, scr_name)])
 
         self.run([self.cmd_chown, '-R', 'casa:gluu', jettyServiceWebapps])
-        self.enable_service_at_start('casa')
 
     def parse_url(self, url):
         o = urlparse(url)
