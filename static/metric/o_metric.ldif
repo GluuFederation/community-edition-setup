@@ -2,9 +2,21 @@ dn: o=metric
 objectClass: top
 objectClass: organization
 o: site
+o: metric
 
 dn: ou=statistic,o=metric
 objectClass: top
 objectClass: organizationalUnit
 ou: statistic
 
+# Metric data for oxauth
+dn: ou=oxauth,ou=statistic,o=metric
+objectClass: top
+objectClass: organizationalunit
+ou: oxauth
+
+# Metric data for oxtrust
+dn: ou=oxtrust,ou=statistic,o=metric
+objectClass: top
+objectClass: organizationalunit
+ou: oxtrust
