@@ -3833,39 +3833,41 @@ class Setup(object):
         return argsc
 
     # args = command + args, i.e. ['ls', '-ltr']
-    def run(self, args, cwd=None, env=None, useWait=False, shell=False, get_stderr=False):
+    def run(self, args, cwd=None, env=None, useWait=False, shell=False, get_stderr=False, log=True):
         output = ''
         log_arg = ' '.join(args) if type(args) is list else args
-        self.logIt('Running: %s' % log_arg)
-        
+        if log:
+            self.logIt('Running: %s' % log_arg)
+
         if args[0] == self.cmd_chown:
             argsc = self.get_clean_args(args)
-            if not argsc[2].startswith('/opt'):
+            if not argsc[2].startswith('/opt') and log:
                 self.logOSChanges('Making owner of %s to %s' % (', '.join(argsc[2:]), argsc[1]))
         elif args[0] == self.cmd_chmod:
             argsc = self.get_clean_args(args)
-            if not argsc[2].startswith('/opt'):
+            if not argsc[2].startswith('/opt') and log:
                 self.logOSChanges('Setting permission of %s to %s' % (', '.join(argsc[2:]), argsc[1]))
         elif args[0] == self.cmd_chgrp:
             argsc = self.get_clean_args(args)
-            if not argsc[2].startswith('/opt'):
+            if not argsc[2].startswith('/opt') and log:
                 self.logOSChanges('Making group of %s to %s' % (', '.join(argsc[2:]), argsc[1]))
         elif args[0] == self.cmd_mkdir:
             argsc = self.get_clean_args(args)
-            if not (argsc[1].startswith('/opt') or argsc[1].startswith('.')):
+            if (not (argsc[1].startswith('/opt') or argsc[1].startswith('.')))  and log:
                 self.logOSChanges('Creating directory %s' % (', '.join(argsc[1:])))
 
         try:
             p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, env=env, shell=shell)
             if useWait:
                 code = p.wait()
-                self.logIt('Run: %s with result code: %d' % (' '.join(args), code) )
+                if log:
+                    self.logIt('Run: %s with result code: %d' % (' '.join(args), code) )
             else:
                 output, err = p.communicate()
                 output = output.decode('utf-8')
                 err = err.decode('utf-8')
 
-                if output:
+                if output and log:
                     self.logIt(output)
                 if err:
                     self.logIt(err, True)
@@ -3913,15 +3915,15 @@ class Setup(object):
 
             with open(prop_fn, 'wb') as f:
                 p.store(f, encoding="utf-8")
-            
-            self.run(['openssl', 'enc', '-aes-256-cbc', '-in', prop_fn, '-out', prop_fn+'.enc', '-k', self.oxtrust_admin_password])
-            
+
+            self.run(['openssl', 'enc', '-aes-256-cbc', '-in', prop_fn, '-out', prop_fn+'.enc', '-k', self.oxtrust_admin_password], log=False)
+
             self.post_messages.append(
                 "Encrypted properties file saved to {0}.enc with password {1}\nDecrypt the file with the following command if you want to re-use:\nopenssl enc -d -aes-256-cbc -in {2}.enc -out {3}".format(
                 prop_fn,  self.oxtrust_admin_password, os.path.basename(prop_fn), os.path.basename(self.setup_properties_fn)))
-            
+
             self.run(['rm', '-f', prop_fn])
-            
+
         except:
             self.logIt("Error saving properties", True)
             self.logIt(traceback.format_exc(), True)
