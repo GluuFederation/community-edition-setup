@@ -76,7 +76,7 @@ except:
 try:
     import ruamel.yaml
 except:
-    if os_type == 'red':
+    if os_type in ('red', 'centos'):
         missing_packages.append('python3-ruamel-yaml')
     else:
         missing_packages.append('python3-ruamel.yaml')
@@ -89,7 +89,7 @@ except:
 try:
     import pymysql
 except:
-    if os_type == 'red':
+    if os_type in ('red', 'centos'):
         missing_packages.append('python3-PyMySQL')
     else:
         missing_packages.append('python3-pymysql')
