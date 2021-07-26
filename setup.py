@@ -5387,10 +5387,10 @@ class Setup(object):
 
                 dsconfigCmd = '{1} {2}'.format(self.ldapBaseFolder, self.ldapDsconfigCommand, cmd)
                 self.run(dsconfigCmd, shell=True, cwd=cwd, env={'OPENDJ_JAVA_HOME': self.jre_home})
-            
-            
+
+
             ldap_conn = self.getLdapConnection()
-            
+
             dn = 'ou=configuration,o=gluu'
 
             ldap_conn.search(
@@ -5399,8 +5399,7 @@ class Setup(object):
                 search_filter='(objectclass=*)',
                 attributes=['oxIDPAuthentication']
             )
-            
-            
+
             oxIDPAuthentication = json.loads(ldap_conn.response[0]['attributes']['oxIDPAuthentication'][0])
             oxIDPAuthentication['config']['servers'] = config_servers
             oxIDPAuthentication_js = json.dumps(oxIDPAuthentication, indent=2)
@@ -5837,8 +5836,8 @@ class Setup(object):
         print_version_fn = os.path.join(self.install_dir, 'pylib', 'printVersion.py')
         show_version_fn = os.path.join(self.gluuOptBinFolder, 'show_version.py')
         self.run(['cp', '-f', print_version_fn, show_version_fn])
-        self.run(['chmod', '+x', show_version_fn])
-
+        self.run([self.cmd_chmod, '+x', show_version_fn])
+        self.run(['cp', '-f', os.path.join(self.templateFolder, 'systemd/gluu-serverd.service'), self.systemdDir])
 
     def do_installation(self, queue=None):
         try:
