@@ -263,6 +263,7 @@ class ServicesForm(GluuSetupForm):
 
     services = ('installHttpd', 'installOxTrust', 
                 #'installSaml', 
+                'installScimServer', 'installFido2',
                 'installOxd', 'installCasa')
 
     def create(self):
@@ -622,6 +623,8 @@ class DisplaySummaryForm(GluuSetupForm):
     myfields_2 = ( "installOxAuth", "installOxTrust", 
                     "installHttpd", 
                     #"installSaml",
+                    "installFido2",
+                    "installScimServer",
                     "installOxd", "installCasa", "java_type",
                     "backend_types", 'wrends_storages')
 

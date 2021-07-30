@@ -2627,7 +2627,7 @@ class Setup(object):
 
         jettyServiceWebapps = os.path.join(self.jetty_base, jettyServiceName, 'webapps')
         self.copyFile(os.path.join(self.distGluuFolder,'scim.war'), jettyServiceWebapps)
-        self.run([self.cmd_chown, '-R', 'identity:gluu', jettyServiceWebapps])
+        self.run([self.cmd_chown, '-R', 'scim:gluu', jettyServiceWebapps])
 
         # don't send header to server
         self.set_jetty_param(jettyServiceName, 'jetty.httpConfig.sendServerVersion', 'false')
@@ -6134,7 +6134,7 @@ if __name__ == '__main__':
 
     if argsp.host_name:
         setupOptions['hostname'] = argsp.host_name
-        
+
     if argsp.org_name:
         setupOptions['orgName'] = argsp.org_name
 
