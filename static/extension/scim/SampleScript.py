@@ -62,15 +62,9 @@ class ScimEventHandler(ScimType):
         return True
         
     def postSearchUsers(self, results, configurationAttributes):
-        # Warning: postSearchUsers is a misnomer. This gets actually executed before the 
-        # SCIM search operation is serialized, so modifications on results variable will
-        # take effect on the output of the API call
         return True
 
     def postSearchGroups(self, results, configurationAttributes):
-        # Warning: postSearchGroups is a misnomer. This gets actually executed before the 
-        # SCIM search operation is serialized, so modifications on results variable will
-        # take effect on the output of the API call
         return True
         
     def allowResourceOperation(self, context, entity, configurationAttributes):
