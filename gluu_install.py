@@ -16,7 +16,7 @@ from urllib.parse import urljoin
 
 parser = argparse.ArgumentParser(description="This script downloads Gluu Server components and fires setup")
 parser.add_argument('-u', help="Use downloaded components", action='store_true')
-#parser.add_argument('-upgrade', help="Upgrade Gluu war and jar files", action='store_true')
+parser.add_argument('-upgrade', help="Upgrade Gluu war and jar files", action='store_true')
 parser.add_argument('-uninstall', help="Uninstall Gluu server and removes all files", action='store_true')
 parser.add_argument('--args', help="Arguments to be passed to setup.py")
 parser.add_argument('--keep-downloads', help="Keep downloaded files", action='store_true')
@@ -296,8 +296,9 @@ if not argsp.u:
     download('https://github.com/sqlalchemy/sqlalchemy/archive/rel_1_3_23.zip', os.path.join(app_dir, 'sqlalchemy.zip'))
     download('https://www.apple.com/certificateauthority/Apple_WebAuthn_Root_CA.pem', os.path.join(app_dir, 'Apple_WebAuthn_Root_CA.pem'))
 
-    for uf in services:
-        download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/master/package/systemd/{}'.format(uf), os.path.join('/etc/systemd/system', uf))
+    if not argsp.upgrade:
+        for uf in services:
+            download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/master/package/systemd/{}'.format(uf), os.path.join('/etc/systemd/system', uf))
     package_oxd()
 
 
@@ -343,7 +344,7 @@ if not os.path.exists(dest_dir):
 
 target_dir = '/tmp/{}/ces_tmp'.format(os.urandom(5).hex())
 
-if os.path.exists(ces_dir):
+if not argsp.upgrade and os.path.exists(ces_dir):
     shutil.rmtree(ces_dir)
 
 ces_zip.extractall(target_dir)
@@ -355,39 +356,50 @@ for gdir in (ces_dir, certs_dir):
 shutil.copy(os.path.join(gluu_app_dir, 'casa.pub'), certs_dir)
 
 
-print("Extracting community-edition-setup package")
-source_dir = os.path.join(target_dir, ces_par_dir)
-ces_zip.close()
+if argsp.upgrade:
 
-cmd = 'cp -r -f {}* /install/community-edition-setup'.format(source_dir)
-os.system(cmd)
+    check_installation()
 
-shutil.rmtree(target_dir)
+    for service in os.listdir(jetty_home):
+        source_fn = os.path.join(gluu_app_dir, service +'.war')
+        target_fn = os.path.join(jetty_home, service, 'webapps', service +'.war' )
+        print("Updating", target_fn)
+        shutil.copy(source_fn, target_fn)
+        print("Restarting", service)
+        os.system('systemctl restart ' + service)
+else:
+    print("Extracting community-edition-setup package")
+    source_dir = os.path.join(target_dir, ces_par_dir)
+    ces_zip.close()
 
-download_gcs()
+    cmd = 'cp -r -f {}* /install/community-edition-setup'.format(source_dir)
+    os.system(cmd)
 
+    shutil.rmtree(target_dir)
 
-sqlalchemy_zfn = os.path.join(app_dir, 'sqlalchemy.zip')
-sqlalchemy_zip = zipfile.ZipFile(sqlalchemy_zfn, "r")
-sqlalchemy_par_dir = sqlalchemy_zip.namelist()[0]
-tmp_dir = os.path.join('/tmp', os.urandom(2).hex())
-sqlalchemy_zip.extractall(tmp_dir)
-shutil.copytree(
-        os.path.join(tmp_dir, sqlalchemy_par_dir, 'lib/sqlalchemy'), 
-        os.path.join(ces_dir, 'setup_app/pylib/sqlalchemy')
-        )
-shutil.rmtree(tmp_dir)
+    download_gcs()
 
-os.chmod('/install/community-edition-setup/setup.py', 33261)
+    sqlalchemy_zfn = os.path.join(app_dir, 'sqlalchemy.zip')
+    sqlalchemy_zip = zipfile.ZipFile(sqlalchemy_zfn, "r")
+    sqlalchemy_par_dir = sqlalchemy_zip.namelist()[0]
+    tmp_dir = os.path.join('/tmp', os.urandom(2).hex())
+    sqlalchemy_zip.extractall(tmp_dir)
+    shutil.copytree(
+            os.path.join(tmp_dir, sqlalchemy_par_dir, 'lib/sqlalchemy'), 
+            os.path.join(ces_dir, 'setup_app/pylib/sqlalchemy')
+            )
+    shutil.rmtree(tmp_dir)
 
-gluu_install = '/install/community-edition-setup/gluu_install.py'
-if os.path.exists(gluu_install):
-    os.remove(gluu_install)
+    os.chmod('/install/community-edition-setup/setup.py', 33261)
 
-if not argsp.no_setup:
-    print("Launching Gluu Setup")
-    setup_cmd = 'python3 {}/setup.py'.format(ces_dir)
-    if argsp.args:
-        setup_cmd += ' ' + argsp.args
+    gluu_install = '/install/community-edition-setup/gluu_install.py'
+    if os.path.exists(gluu_install):
+        os.remove(gluu_install)
 
-    os.system(setup_cmd)
+    if not argsp.no_setup:
+        print("Launching Gluu Setup")
+        setup_cmd = 'python3 {}/setup.py'.format(ces_dir)
+        if argsp.args:
+            setup_cmd += ' ' + argsp.args
+
+        os.system(setup_cmd)
