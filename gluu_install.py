@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import zipfile
+import tarfile
 import shutil
 import site
 import argparse
@@ -367,6 +368,19 @@ if argsp.upgrade:
         shutil.copy(source_fn, target_fn)
         print("Restarting", service)
         os.system('systemctl restart ' + service)
+
+    if os.path.exists('/opt/oxd-server'):
+        print("Updating oxd-server")
+        oxd_tar = tarfile.open('/opt/dist/gluu/oxd-server.tgz')
+
+        for member in oxd_tar.getmembers():
+            if member.isfile() and member.path.startswith('oxd-server/lib'):
+                oxd_tar.extract(member, '/opt')
+
+        print("Restarting oxd-server")
+        os.system('systemctl restart oxd-server')
+
+
 else:
     print("Extracting community-edition-setup package")
     source_dir = os.path.join(target_dir, ces_par_dir)
