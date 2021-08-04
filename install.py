@@ -122,7 +122,7 @@ if os.path.exists(npyscreen_package):
         target_dir = '/tmp/npyscreen_tmp'
         npyzip.extractall(target_dir)
         npyzip.close()
-        
+
         shutil.copytree(
             os.path.join(target_dir, parent_dir, 'npyscreen'),
             dest_dir
@@ -130,3 +130,23 @@ if os.path.exists(npyscreen_package):
 
         shutil.rmtree(target_dir)
 
+print("Extracting sqlalchemy")
+sqlalchemy_fn = os.path.join(app_dir, 'sqlalchemy.zip')
+sqlalchemy_zip = zipfile.ZipFile(sqlalchemy_fn)
+sqlalchemy_parent_dir = sqlalchemy_zip.filelist[0].filename
+target_dir = '/tmp/sqlalchemy_tmp'
+
+if os.path.exists(target_dir):
+    shutil.rmtree(target_dir)
+
+sqlalchemy_zip.extractall(target_dir)
+sqlalchemy_zip.close()
+
+sqlalchemy_dir = os.path.join(ces_dir, 'setup_app/pylib/sqlalchemy')
+
+shutil.copytree(
+    os.path.join(target_dir, sqlalchemy_parent_dir, 'lib/sqlalchemy'),
+    sqlalchemy_dir
+    )
+
+shutil.rmtree(target_dir)
