@@ -5318,6 +5318,7 @@
         {
             "kind": "STRUCTURAL", 
             "may": [
+                "o",
                 "associatedPerson", 
                 "displayName", 
                 "description", 
