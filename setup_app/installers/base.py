@@ -24,7 +24,7 @@ class BaseInstaller:
         else:
             pbar_text = self.pbar_text
         self.logIt(pbar_text, pbar=self.service_name)
-        if self.needdb:
+        if self.needdb and not base.argsp.dummy:
             self.dbUtils.bind()
 
         self.check_for_download()
@@ -35,14 +35,15 @@ class BaseInstaller:
         self.create_folders()
 
         self.install()
-        self.copy_static()
-        self.generate_configuration()
+        if not base.argsp.dummy:
+            self.copy_static()
+            self.generate_configuration()
 
-        # before rendering templates, let's push variables of this class to Config.templateRenderingDict
-        self.update_rendering_dict()
+            # before rendering templates, let's push variables of this class to Config.templateRenderingDict
+            self.update_rendering_dict()
 
-        self.render_import_templates()
-        self.update_backend()
+            self.render_import_templates()
+            self.update_backend()
 
     def update_rendering_dict(self):
         mydict = {}

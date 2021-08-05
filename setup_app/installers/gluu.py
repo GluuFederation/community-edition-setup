@@ -75,11 +75,12 @@ class GluuInstaller(BaseInstaller, SetupUtils):
 
         except:
             s = ""
-            for key in list(Config.__dict__):
-                if not key in ('__dict__',):
-                    val = getattr(Config, key)
-                    if not inspect.ismethod(val):
-                        s = s + "%s\n%s\n%s\n\n" % (key, "-" * len(key), val)
+            if not base.argsp.dummy:
+                for key in list(Config.__dict__):
+                    if not key in ('__dict__',):
+                        val = getattr(Config, key)
+                        if not inspect.ismethod(val):
+                            s = s + "%s\n%s\n%s\n\n" % (key, "-" * len(key), val)
             return s
 
 
@@ -142,6 +143,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             self.run([paths.cmd_chmod, 'ga+w', "/tmp"]) # Allow write to /tmp
 
     def customiseSystem(self):
+
         if not base.snap:
             if Config.os_initdaemon == 'init':
                 system_profile_update = Config.system_profile_update_init
@@ -164,6 +166,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             self.run([paths.cmd_chmod, '644', Config.sysemProfile])
 
     def make_salt(self):
+
         if not Config.encode_salt:
             Config.encode_salt= self.getPW() + self.getPW()
 

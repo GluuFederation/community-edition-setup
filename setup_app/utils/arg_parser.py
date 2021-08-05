@@ -8,6 +8,7 @@ def arg_parser():
     '''
 
     parser = argparse.ArgumentParser(description=parser_description)
+    parser.add_argument('--dummy', help="Dummy installation. Used for re-storing backups", action='store_true')
     parser.add_argument('-a', help=argparse.SUPPRESS, action='store_true')
     parser.add_argument('-c', help="Use command line instead of tui", action='store_true')
     parser.add_argument('-d', help="Installation directory")

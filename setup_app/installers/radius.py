@@ -35,6 +35,8 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         self.config_generated = False
 
     def install(self):
+        if base.argsp.dummy:
+            return
 
         oxauth_updates = {
                         'oxauth_legacyIdTokenClaims': True, 

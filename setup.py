@@ -159,7 +159,7 @@ if os.path.exists(Config.gluu_properties_fn):
 if not Config.noPrompt and not GSA and not Config.installed_instance and not setup_loaded:
     propertiesUtils.promptForProperties()
 
-if not GSA:
+if not (GSA or base.argsp.dummy):
     propertiesUtils.check_properties()
 
 # initialize installers, order is important!
@@ -263,8 +263,9 @@ def do_installation():
 
         if not Config.installed_instance:
             gluuInstaller.configureSystem()
-            gluuInstaller.make_salt()
-            oxauthInstaller.make_salt()
+            if not base.argsp.dummy:
+                gluuInstaller.make_salt()
+                oxauthInstaller.make_salt()
 
             if not base.snap:
                 jreInstaller.start_installation()
@@ -272,37 +273,38 @@ def do_installation():
                 jythonInstaller.start_installation()
                 nodeInstaller.start_installation()
 
-            gluuInstaller.copy_scripts()
-            gluuInstaller.encode_passwords()
+            if not base.argsp.dummy:
+                gluuInstaller.copy_scripts()
+                gluuInstaller.encode_passwords()
 
-            oxtrustInstaller.generate_api_configuration()
+                oxtrustInstaller.generate_api_configuration()
 
-            Config.ldapCertFn = Config.opendj_cert_fn
-            Config.ldapTrustStoreFn = Config.opendj_p12_fn
-            Config.encoded_ldapTrustStorePass = Config.encoded_opendj_p12_pass
-            Config.oxTrustConfigGeneration = 'true' if Config.installSaml else 'false'
+                Config.ldapCertFn = Config.opendj_cert_fn
+                Config.ldapTrustStoreFn = Config.opendj_p12_fn
+                Config.encoded_ldapTrustStorePass = Config.encoded_opendj_p12_pass
+                Config.oxTrustConfigGeneration = 'true' if Config.installSaml else 'false'
+    
+                gluuInstaller.prepare_base64_extension_scripts()
+                gluuInstaller.render_templates()
+                gluuInstaller.render_configuration_template()
 
-            gluuInstaller.prepare_base64_extension_scripts()
-            gluuInstaller.render_templates()
-            gluuInstaller.render_configuration_template()
+                if not base.snap:
+                    gluuInstaller.update_hostname()
+                    gluuInstaller.set_ulimits()
 
-            if not base.snap:
-                gluuInstaller.update_hostname()
-                gluuInstaller.set_ulimits()
+                gluuInstaller.copy_output()
+                gluuInstaller.setup_init_scripts()
 
-            gluuInstaller.copy_output()
-            gluuInstaller.setup_init_scripts()
+                # Installing gluu components
 
-            # Installing gluu components
+                if Config.wrends_install:
+                    openDjInstaller.start_installation()
 
-            if Config.wrends_install:
-                openDjInstaller.start_installation()
+                if Config.cb_install:
+                    couchbaseInstaller.start_installation()
 
-            if Config.cb_install:
-                couchbaseInstaller.start_installation()
-
-            if Config.rdbm_install:
-                rdbmInstaller.start_installation()
+                if Config.rdbm_install:
+                    rdbmInstaller.start_installation()
 
         if (Config.installed_instance and 'installHttpd' in Config.addPostSetupService) or (not Config.installed_instance and Config.installHttpd):
             httpdinstaller.configure()
@@ -341,25 +343,26 @@ def do_installation():
         if (Config.installed_instance and 'installGluuRadius' in Config.addPostSetupService) or (not Config.installed_instance and Config.installGluuRadius):
             radiusInstaller.install_gluu_radius()
 
-        gluuProgress.progress(PostSetup.service_name, "Saving properties")
-        propertiesUtils.save_properties()
-        time.sleep(2)
+        if not base.argsp.dummy:
+            gluuProgress.progress(PostSetup.service_name, "Saving properties")
+            propertiesUtils.save_properties()
+            time.sleep(2)
 
-        if argsp.t:
-            base.logIt("Loading test data")
-            testDataLoader.load_test_data()
+            if argsp.t:
+                base.logIt("Loading test data")
+                testDataLoader.load_test_data()
 
-        gluuInstaller.post_install_tasks()
+            gluuInstaller.post_install_tasks()
 
-        for service in gluuProgress.services:
-            if service['app_type'] == static.AppType.SERVICE:
-                gluuProgress.progress(PostSetup.service_name, "Starting {}".format(service['name'].title()))
-                time.sleep(2)
-                service['object'].stop()
-                service['object'].start()
-                if service['name'] == 'oxauth' and Config.get('installOxAuthRP'):
-                    gluuProgress.progress(PostSetup.service_name, "Starting Oxauth-rp")
-                    service['object'].start('oxauth-rp')
+            for service in gluuProgress.services:
+                if service['app_type'] == static.AppType.SERVICE:
+                    gluuProgress.progress(PostSetup.service_name, "Starting {}".format(service['name'].title()))
+                    time.sleep(2)
+                    service['object'].stop()
+                    service['object'].start()
+                    if service['name'] == 'oxauth' and Config.get('installOxAuthRP'):
+                        gluuProgress.progress(PostSetup.service_name, "Starting Oxauth-rp")
+                        service['object'].start('oxauth-rp')
 
         gluuProgress.progress(static.COMPLETED)
 
@@ -376,12 +379,13 @@ def do_installation():
 
 if not GSA and proceed:
     do_installation()
-    print('\n', static.colors.OKGREEN)
-    msg_text = msg.post_installation if Config.installed_instance else msg.installation_completed.format(Config.hostname)
-    print(msg_text)
-    print('\n', static.colors.ENDC)
-    # we need this for progress write last line
-    time.sleep(2)
+    if not base.argsp.dummy:
+        print('\n', static.colors.OKGREEN)
+        msg_text = msg.post_installation if Config.installed_instance else msg.installation_completed.format(Config.hostname)
+        print(msg_text)
+        print('\n', static.colors.ENDC)
+        # we need this for progress write last line
+        time.sleep(2)
 else:
     Config.thread_queue = queue
     GSA.do_installation = do_installation
