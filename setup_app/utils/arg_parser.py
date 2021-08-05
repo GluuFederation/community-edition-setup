@@ -55,7 +55,7 @@ def arg_parser():
     parser.add_argument('--no-data', help="Do not import any data to database backend, used for clustering", action='store_true')
     parser.add_argument('--no-oxauth', help="Do not install oxAuth OAuth2 Authorization Server", action='store_true')
     parser.add_argument('--no-oxtrust', help="Do not install oxTrust Admin UI", action='store_true')
-    parser.add_argument('--install-gluu-radius', help="Install oxTrust Admin UI", action='store_true')
+    parser.add_argument('--install-gluu-radius', help="Install Gluu Radius Server", action='store_true')
     parser.add_argument('-ip-address', help="Used primarily by Apache httpd for the Listen directive")
     parser.add_argument('-host-name', help="Internet-facing FQDN that is used to generate certificates and metadata.")
     parser.add_argument('-org-name', help="Organization name field used for generating X.509 certificates")
