@@ -54,8 +54,9 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         for fn in glob.glob(os.path.join(self.oxd_root,'bin/*')):
             self.run([paths.cmd_chmod, '+x', fn])
 
-        self.modify_config_yml()
-        self.generate_keystore()
+        if not base.argsp.dummy:
+            self.modify_config_yml()
+            self.generate_keystore()
 
         self.enable()
 
