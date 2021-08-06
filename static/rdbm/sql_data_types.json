@@ -946,5 +946,39 @@
     "spanner": {
       "type": "STRING(MAX)"
     }
+  },
+  "oxMobileDevices": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
+  },
+  "oxOTPDevices": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
+  },
+  "oxTrustedDevicesInfo": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "oxTrustProfileURL": {
+    "mysql": {
+      "size": 256,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 256,
+      "type": "STRING"
+    }
   }
 }
