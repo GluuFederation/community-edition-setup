@@ -164,6 +164,10 @@ class PersonAuthentication(PersonAuthenticationType):
                     assertionService = Fido2ClientFactory.instance().createAssertionService(metaDataConfiguration)
                     assertionRequest = json.dumps({'username': userName}, separators=(',', ':'))
                     assertionResponse = assertionService.authenticate(assertionRequest).readEntity(java.lang.String)
+                    if "internal" in assertionResponse:
+                        identity.setWorkingParameter("platformAuthenticatorAvailable", "true")
+                    else:
+                        identity.setWorkingParameter("platformAuthenticatorAvailable", "false")
                 except ClientResponseFailure, ex:
                     print "Fido2. Prepare for step 2. Failed to start assertion flow. Exception:", sys.exc_info()[1]
                     return False
