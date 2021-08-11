@@ -1,7 +1,7 @@
 {
-    "scimTestMode": %(scimTestMode)s,
     "ScimProperties": {
-        "maxCount": 200
+        "maxCount": 200,
+        "protectionMode": "OAUTH"
     },
     "scimUmaClientKeyId": "",
     "scimUmaResourceId": "%(scim_resource_oxid)s",
