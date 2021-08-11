@@ -41,76 +41,25 @@ class IdpExtension(IdpType):
     #   configurationAttributes is java.util.Map<String, SimpleCustomProperty>
     def translateAttributes(self, context, configurationAttributes):
         print "Idp extension. Method: translateAttributes"
-        
-        # Return False to use default method
-        #return False
-        
-        request = context.getRequest()
         userProfile = context.getUserProfile()
-        principalAttributes = self.defaultNameTranslator.produceIdpAttributePrincipal(userProfile.getAttributes())
-        print "Idp extension. Converted user profile: '%s' to attribute principal: '%s'" % (userProfile, principalAttributes)
-
-        if not principalAttributes.isEmpty():
-            print "Idp extension. Found attributes from oxAuth. Processing..."
-            
-            # Start: Custom part
-            # Add givenName attribute
-            givenNameAttribute = IdPAttribute("oxEnrollmentCode")
-            givenNameAttribute.setValues(ArrayList(Arrays.asList(StringAttributeValue("Dummy"))))
-            principalAttributes.add(IdPAttributePrincipal(givenNameAttribute))
-            print "Idp extension. Updated attribute principal: '%s'" % principalAttributes
-            # End: Custom part
-
-            principals = HashSet()
-            principals.addAll(principalAttributes)
-            principals.add(UsernamePrincipal(userProfile.getId()))
-
-            request.setAttribute(ExternalAuthentication.SUBJECT_KEY, Subject(False, Collections.singleton(principals),
-                Collections.emptySet(), Collections.emptySet()))
-
-            print "Created an IdP subject instance with principals containing attributes for: '%s'" % userProfile.getId()
-
-            if False:
-                idpAttributes = ArrayList()
-                for principalAttribute in principalAttributes:
-                    idpAttributes.add(principalAttribute.getAttribute())
-    
-                request.setAttribute(ExternalAuthentication.ATTRIBUTES_KEY, idpAttributes)
-    
-                authenticationKey = context.getAuthenticationKey()
-                profileRequestContext = ExternalAuthentication.getProfileRequestContext(authenticationKey, request)
-                authContext = profileRequestContext.getSubcontext(AuthenticationContext)
-                extContext = authContext.getSubcontext(ExternalAuthenticationContext)
-    
-                extContext.setSubject(Subject(False, Collections.singleton(principals), Collections.emptySet(), Collections.emptySet()));
-    
-                extContext.getSubcontext(AttributeContext, True).setUnfilteredIdPAttributes(idpAttributes)
-                extContext.getSubcontext(AttributeContext).setIdPAttributes(idpAttributes)
-        else:
-            print "No attributes released from oxAuth. Creating an IdP principal for: '%s'" % userProfile.getId()
-            request.setAttribute(ExternalAuthentication.PRINCIPAL_NAME_KEY, userProfile.getId())
-
+        if userProfile is None:
+           print "No valid user profile could be found to translate"
+           return False
+          
+        if userProfile.getId() is None:
+           print "No valid user principal could be found to traslate"
+           return False
+        
+        self.defaultNameTranslator.populateIdpAttributeList(userProfile.getAttributes(),context)
+        
         #Return True to specify that default method is not needed
-        return False
+        return True
 
     # Update attributes before releasing them
     #   context is org.gluu.idp.consent.processor.PostProcessAttributesContext (https://github.com/GluuFederation/shib-oxauth-authn3/blob/master/src/main/java/org/gluu/idp/consent/processor/PostProcessAttributesContext.java)
     #   configurationAttributes is java.util.Map<String, SimpleCustomProperty>
     def updateAttributes(self, context, configurationAttributes):
         print "Idp extension. Method: updateAttributes"
-        attributeContext = context.getAttributeContext()
-
-        customAttributes = HashMap()
-        customAttributes.putAll(attributeContext.getIdPAttributes())
-
-        # Remove givenName attribute
-        customAttributes.remove("givenName")
-
-        # Update surname attribute
-        if customAttributes.containsKey("sn"):
-            customAttributes.get("sn").setValues(ArrayList(Arrays.asList(StringAttributeValue("Dummy"))))
-        
-        # Set updated attributes
-        attributeContext.setIdPAttributes(customAttributes.values())
-
+        # Uncomment this line to remove the uid attribute , if it exists
+        #context.getIdpAttributeMap().remove("uid")
         return True
