@@ -48,6 +48,14 @@ class ScimInstaller(JettyInstaller):
         return os.path.exists(os.path.join(Config.jetty_base, self.service_name, 'start.ini'))
 
     def generate_configuration(self):
+
+        if base.argsp.enable_scim_test_mode:
+            Config.scim_protection_mode = 'TEST'
+        elif base.argsp.enable_scim_uma_mode:
+            Config.scim_protection_mode = 'UMA'
+        else:
+            Config.scim_protection_mode = 'OAUTH'
+
         self.logIt("Generating {} configuration".format(self.service_name))
         client_var_id_list = (
                     ('scim_rs_client_id', '1201.'),
@@ -64,7 +72,6 @@ class ScimInstaller(JettyInstaller):
         if not Config.get('scim_rp_client_jks_pass'):
             Config.scim_rp_client_jks_pass = 'secret'
 
-        Config.scimTestMode = Config.get('scimTestMode', 'false')
         Config.enable_scim_access_policy = 'true' if Config.installPassport else 'false'
 
         #backup current jks files if exists

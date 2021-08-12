@@ -93,9 +93,6 @@ def get_setup_options():
     if base.argsp.no_httpd:
         setupOptions['installHTTPD'] = False
 
-    if base.argsp.enable_scim_test_mode:
-        setupOptions['scimTestMode'] = 'true'
-
     setupOptions['installSaml'] = base.argsp.install_shib
     setupOptions['downloadWars'] = base.argsp.w
     setupOptions['installOxAuthRP'] = base.argsp.install_oxauth_rp

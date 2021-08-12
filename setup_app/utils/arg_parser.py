@@ -23,7 +23,11 @@ def arg_parser():
     parser.add_argument('-t', help="Load test data", action='store_true')
     parser.add_argument('-x', help="Load test data and exit", action='store_true')
     parser.add_argument('-csx', help="Collect setup properties, save and exit", action='store_true')
-    parser.add_argument('-stm', '--enable-scim-test-mode', help="Enable Scim Test Mode", action='store_true')
+
+    scim_mode_group = parser.add_mutually_exclusive_group()
+    scim_mode_group.add_argument('-stm', '--enable-scim-test-mode', help="Enable Scim Test Mode", action='store_true')
+    scim_mode_group.add_argument('-sum', '--enable-scim-uma-mode', help="Enable Scim Uma Mode", action='store_true')
+
     parser.add_argument('--allow-pre-released-features', help="Enable options to install experimental features, not yet officially supported", action='store_true')
     parser.add_argument('--import-ldif', help="Render ldif templates from directory and import them in LDAP")
     parser.add_argument('--listen_all_interfaces', help="Allow the LDAP server to listen on all server interfaces", action='store_true')
