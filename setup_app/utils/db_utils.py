@@ -328,30 +328,32 @@ class DBUtils:
             n1ql = 'UPDATE `{}` USE KEYS "configuration" SET {}=true'.format(self.default_bucket, service)
             self.cbm.exec_query(n1ql)
 
-    def set_configuration(self, component, value):
+    def set_configuration(self, component, value, dn='ou=configuration,o=gluu'):
         if self.moddb == BackendTypes.LDAP:
             ldap_operation_result = self.ldap_conn.modify(
-                'ou=configuration,o=gluu',
+                dn,
                 {component: [ldap3.MODIFY_REPLACE, value]}
                 )
             self.log_ldap_result(ldap_operation_result)
 
         elif self.moddb in (BackendTypes.MYSQL, BackendTypes.PGSQL):
             type_val = self.get_rdbm_val(component, [value])
-            result = self.get_sqlalchObj_for_dn('ou=configuration,o=gluu')
+            result = self.get_sqlalchObj_for_dn(dn)
             table_name = result.objectClass
             sqlalchemy_table = self.Base.classes[table_name]
-            sqlalchemyObj = self.session.query(sqlalchemy_table).filter(sqlalchemy_table.dn =='ou=configuration,o=gluu').first()
+            sqlalchemyObj = self.session.query(sqlalchemy_table).filter(sqlalchemy_table.dn ==dn).first()
             cur_val = getattr(sqlalchemyObj, component)
             setattr(sqlalchemyObj, component, type_val)
             self.session.commit()
 
         elif self.moddb == BackendTypes.SPANNER:
+            table = get_spanner_table_for_dn(dn)
             type_val = self.get_rdbm_val(component, [value])
             self.spanner.update_data(table='gluuConfiguration', columns=["doc_id", component], values=[["configuration", type_val]])
 
         elif self.moddb == BackendTypes.COUCHBASE:
-            n1ql = 'UPDATE `{}` USE KEYS "configuration" SET {}={}'.format(self.default_bucket, component, value)
+            key = ldif_utils.get_key_from(dn)
+            n1ql = 'UPDATE `{}` USE KEYS "{}" SET {}={}'.format(self.default_bucket, key, component, value)
             self.cbm.exec_query(n1ql)
 
 
