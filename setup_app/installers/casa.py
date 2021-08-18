@@ -102,16 +102,17 @@ class CasaInstaller(JettyInstaller):
         for script_fn in glob.glob(os.path.join(Config.staticFolder, 'casa/scripts/*.*')):
             self.run(['cp', script_fn, self.pylib_folder])
 
-    def render_import_templates(self):
+    def render_import_templates(self, import_script=True):
         scripts_template = os.path.join(self.templates_folder, os.path.basename(self.ldif_scripts))
         extensions = base.find_script_names(scripts_template)
         self.prepare_base64_extension_scripts(extensions=extensions)
-        
+
         ldif_files = (self.ldif, self.ldif_scripts)
         for tmp in ldif_files:
             self.renderTemplateInOut(tmp, self.templates_folder, self.output_folder)
 
-        self.dbUtils.import_ldif(ldif_files)
+        if import_script:
+            self.dbUtils.import_ldif(ldif_files)
 
 
     def import_oxd_certificate(self):

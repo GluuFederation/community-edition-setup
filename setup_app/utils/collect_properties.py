@@ -299,5 +299,10 @@ class CollectProperties(SetupUtils, BaseInstaller):
         if not Config.get('ip'):
             Config.ip = self.detect_ip()
 
+        casa_result = dbUtils.dn_exists('ou=casa,ou=configuration,o=gluu')
+        if casa_result:
+            casa_config = json.loads(casa_result['oxConfApplication'])
+            Config.oxd_hostname = casa_config['oxd_config']['host']
+
     def save(self):
         propertiesUtils.save_properties()
