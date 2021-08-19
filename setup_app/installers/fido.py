@@ -38,8 +38,8 @@ class FidoInstaller(JettyInstaller):
 
         self.enable()
 
-    def render_import_templates(self):
-
+    def render_import_templates(self, do_import=True):
+        Config.templateRenderingDict['fido2ConfigFolder'] = self.fido2ConfigFolder
         self.renderTemplateInOut(self.fido2_dynamic_conf_json, self.template_folder, self.output_folder)
         self.renderTemplateInOut(self.fido2_static_conf_json, self.template_folder, self.output_folder)
 
@@ -48,8 +48,9 @@ class FidoInstaller(JettyInstaller):
 
         self.renderTemplateInOut(self.ldif_fido2, self.template_folder, self.output_folder)
 
-        ldif_files = [self.ldif_fido2]
-        self.dbUtils.import_ldif(ldif_files)
+        if do_import:
+            ldif_files = [self.ldif_fido2]
+            self.dbUtils.import_ldif(ldif_files)
 
 
     def create_folders(self):
