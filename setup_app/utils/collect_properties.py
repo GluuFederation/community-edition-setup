@@ -120,7 +120,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
             Config.gluu_radius_client_id = result['inum']
             Config.gluu_ro_encoded_pw = result['oxAuthClientSecret']
             Config.gluu_ro_pw = self.unobscure(Config.gluu_ro_encoded_pw)
-    
+
             result = dbUtils.search('inum=5866-4202,ou=scripts,o=gluu', search_filter='(objectClass=oxCustomScript)', search_scope=ldap3.BASE)
             if result:
                 Config.enableRadiusScripts = result.get('oxEnabled', False)
@@ -159,10 +159,10 @@ class CollectProperties(SetupUtils, BaseInstaller):
 
         if result:
 
-            oxConfApplication = json.loads(result['oxConfApplication'])
+            oxConfApplication = json.loads(result['oxConfApplication']) if isinstance(result['oxConfApplication'], str) else result['oxConfApplication']
             Config.idpClient_encoded_pw = oxConfApplication['openIdClientPassword']
             Config.idpClient_pw =  self.unobscure(Config.idpClient_encoded_pw)
-            
+
             Config.idp_client_id =  oxConfApplication['openIdClientId']
 
             if 'openIdClientPassword' in oxConfApplication:
