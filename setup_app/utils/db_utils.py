@@ -353,6 +353,8 @@ class DBUtils:
 
         elif self.moddb == BackendTypes.COUCHBASE:
             key = ldif_utils.get_key_from(dn)
+            if isinstance(value, str):
+                value = json.dumps(value)
             n1ql = 'UPDATE `{}` USE KEYS "{}" SET {}={}'.format(self.default_bucket, key, component, value)
             self.cbm.exec_query(n1ql)
 
