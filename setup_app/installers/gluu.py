@@ -101,6 +101,10 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             self.logIt("Downloading {}".format(os.path.basename(oxauth_client_jar_url)))
             base.download(oxauth_client_jar_url, Config.non_setup_properties['oxauth_client_jar_fn'])
 
+        self.determine_key_gen_path()
+
+    def determine_key_gen_path(self):
+
         self.logIt("Determining key generator path")
         oxauth_client_jar_zf = zipfile.ZipFile(Config.non_setup_properties['oxauth_client_jar_fn'])
 
