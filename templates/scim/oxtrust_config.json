@@ -1,7 +1,8 @@
 {
     "ScimProperties": {
         "maxCount": 200,
-        "protectionMode": "%(scim_protection_mode)s"
+        "protectionMode": "%(scim_protection_mode)s",
+        "userExtensionSchemaURI": "urn:ietf:params:scim:schemas:extension:gluu:2.0:User"
     },
     "scimUmaClientKeyId": "",
     "scimUmaResourceId": "%(scim_resource_oxid)s",
