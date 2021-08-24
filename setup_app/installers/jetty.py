@@ -73,7 +73,7 @@ class JettyInstaller(BaseInstaller, SetupUtils):
         except:
             self.logIt("Error encountered while extracting archive %s" % jettyArchive)
 
-        jettyDestinationPath = max(glob.glob(os.path.join(jetty_dist, 'jetty-distribution-*')))
+        jettyDestinationPath = max(glob.glob(os.path.join(jetty_dist, '{}-*'.format(self.jetty_dist_string))))
 
         self.run([paths.cmd_ln, '-sf', jettyDestinationPath, self.jetty_home])
         self.run([paths.cmd_chmod, '-R', "755", "%s/bin/" % jettyDestinationPath])
@@ -97,15 +97,19 @@ class JettyInstaller(BaseInstaller, SetupUtils):
         self.run([paths.cmd_chmod, '-R', '755', "%s/bin/jetty.sh" % self.jetty_home])
 
     def get_jetty_info(self):
-        jetty_archive_list = glob.glob(os.path.join(Config.distAppFolder, 'jetty-distribution-*.tar.gz'))
-
+        self.jetty_dist_string = 'jetty-home'
+        # first try latest versions
+        jetty_archive_list = glob.glob(os.path.join(Config.distAppFolder, 'jetty-home-*.tar.gz'))
+        if not jetty_archive_list:
+            jetty_archive_list = glob.glob(os.path.join(Config.distAppFolder, 'jetty-distribution-*.tar.gz'))
+            self.jetty_dist_string = 'jetty-distribution'
         if not jetty_archive_list:
             self.logIt("Jetty archive not found in {}. Exiting...".format(Config.distAppFolder), True, True)
 
         jettyArchive = max(jetty_archive_list)
 
         jettyArchive_fn = os.path.basename(jettyArchive)
-        jetty_regex = re.search('jetty-distribution-(\d*\.\d*)', jettyArchive_fn)
+        jetty_regex = re.search('{}-(\d*\.\d*)'.format(self.jetty_dist_string), jettyArchive_fn)
 
         if not jetty_regex:
             self.logIt("Can't determine Jetty version", True, True)
@@ -215,21 +219,22 @@ class JettyInstaller(BaseInstaller, SetupUtils):
         self.logIt("Seeting jetty parameter {0}={1} for service {2}".format(jetty_param, jetty_val, jettyServiceName))
 
         service_fn = os.path.join(self.jetty_base, jettyServiceName, 'start.ini')
-        start_ini = self.readFile(service_fn)
-        start_ini_list = start_ini.splitlines()
-        param_ln = jetty_param + '=' + jetty_val
+        if os.path.exists(service_fn):
+            start_ini = self.readFile(service_fn)
+            start_ini_list = start_ini.splitlines()
+            param_ln = jetty_param + '=' + jetty_val
 
-        for i, l in enumerate(start_ini_list[:]):
-            if jetty_param in l and l[0]=='#':
-                start_ini_list[i] = param_ln 
-                break
-            elif l.strip().startswith(jetty_param):
-                start_ini_list[i] = param_ln
-                break
-        else:
-            start_ini_list.append(param_ln)
+            for i, l in enumerate(start_ini_list[:]):
+                if jetty_param in l and l[0]=='#':
+                    start_ini_list[i] = param_ln 
+                    break
+                elif l.strip().startswith(jetty_param):
+                    start_ini_list[i] = param_ln
+                    break
+            else:
+                start_ini_list.append(param_ln)
 
-        self.writeFile(service_fn, '\n'.join(start_ini_list))
+            self.writeFile(service_fn, '\n'.join(start_ini_list))
 
     def calculate_aplications_memory(self, application_max_ram, installedComponents):
         self.logIt("Calculating memory setting for applications")

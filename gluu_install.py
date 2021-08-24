@@ -10,7 +10,7 @@ import site
 import argparse
 import csv
 import locale
-
+import re
 from urllib import request
 from urllib.parse import urljoin
 
@@ -21,6 +21,7 @@ parser.add_argument('-upgrade', help="Upgrade Gluu war and jar files", action='s
 parser.add_argument('-uninstall', help="Uninstall Gluu server and removes all files", action='store_true')
 parser.add_argument('--args', help="Arguments to be passed to setup.py")
 parser.add_argument('--keep-downloads', help="Keep downloaded files", action='store_true')
+parser.add_argument('--jetty-version', help="Jetty verison. For example 11.0.6")
 parser.add_argument('-n', help="No prompt", action='store_true')
 parser.add_argument('--no-setup', help="Do not launch setup", action='store_true')
 parser.add_argument('--dist-server-base', help="Download server", default='https://ox.gluu.org/maven')
@@ -147,6 +148,16 @@ app_versions = {
     "JSMPP_VERSION": "2.3.7"
     }
 
+jetty_dist_string = 'jetty-distribution'
+if argsp.jetty_version:
+    result = re.findall('(\d*).', argsp.jetty_version)
+    if result and result[0] and result[0].isdigit():
+        if int(result[0]) > 9:
+            jetty_dist_string = 'jetty-home'
+            app_versions['JETTY_VERSION'] = argsp.jetty_version
+    else:
+        print("Can't determine Jetty Version. Continuing with version {}".format(app_versions['JETTY_VERSION']))
+
 def check_installation():
     if not (os.path.exists(jetty_home) and os.path.exists('/etc/gluu')):
         print("Gluu server seems not installed")
@@ -267,7 +278,7 @@ def package_oxd():
 
 if not argsp.u:
     download('https://corretto.aws/downloads/resources/{0}/amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION']), os.path.join(app_dir, 'amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION'])))
-    download('https://repo1.maven.org/maven2/org/eclipse/jetty/jetty-distribution/{0}/jetty-distribution-{0}.tar.gz'.format(app_versions['JETTY_VERSION']), os.path.join(app_dir,'jetty-distribution-{0}.tar.gz'.format(app_versions['JETTY_VERSION'])))
+    download('https://repo1.maven.org/maven2/org/eclipse/jetty/{1}/{0}/{1}-{0}.tar.gz'.format(app_versions['JETTY_VERSION'], jetty_dist_string), os.path.join(app_dir,'{1}-{0}.tar.gz'.format(app_versions['JETTY_VERSION'], jetty_dist_string)))
     download('https://repo1.maven.org/maven2/org/python/jython-installer/{0}/jython-installer-{0}.jar'.format(app_versions['JYTHON_VERSION']), os.path.join(app_dir, 'jython-installer-{0}.jar'.format(app_versions['JYTHON_VERSION'])))
     download('https://nodejs.org/dist/{0}/node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION']), os.path.join(app_dir, 'node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION'])))
     download('https://github.com/npcole/npyscreen/archive/master.zip', os.path.join(app_dir, 'npyscreen-master.zip'))
