@@ -39,11 +39,10 @@ class OxauthInstaller(JettyInstaller):
 
     def install(self):
         self.logIt("Copying oxauth.war into jetty webapps folder...")
-
         self.installJettyService(self.jetty_app_configuration[self.service_name], True)
-
         jettyServiceWebapps = os.path.join(self.jetty_base, self.service_name,  'webapps')
         self.copyFile(self.source_files[0][0], jettyServiceWebapps)
+        self.war_for_jetty10(os.path.join(jettyServiceWebapps, os.path.basename(self.source_files[0][0])))
         self.enable()
 
     def generate_configuration(self):
@@ -88,13 +87,14 @@ class OxauthInstaller(JettyInstaller):
 
         jettyServiceWebapps = os.path.join(self.jetty_base, jettyServiceName, 'webapps')
         self.copyFile(self.source_files[1][0], jettyServiceWebapps)
-
+        self.war_for_jetty10(os.path.join(jettyServiceWebapps, os.path.basename(self.source_files[1][0])))
         self.enable('oxauth-rp')
 
     def genRandomString(self, N):
         return ''.join(random.SystemRandom().choice(string.ascii_lowercase
                                                     + string.ascii_uppercase
                                                     + string.digits) for _ in range(N))
+
     def make_salt(self, enforce=False):
         if not Config.get('pairwiseCalculationKey') or enforce:
             Config.pairwiseCalculationKey = self.genRandomString(random.randint(20,30))

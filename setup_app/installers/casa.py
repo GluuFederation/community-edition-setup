@@ -42,7 +42,7 @@ class CasaInstaller(JettyInstaller):
 
         jettyServiceWebapps = os.path.join(self.casa_jetty_dir, 'webapps')
         self.copyFile(self.source_files[0][0], jettyServiceWebapps)
-
+        self.war_for_jetty10(os.path.join(jettyServiceWebapps, os.path.basename(self.source_files[0][0])))
         jettyServiceOxAuthCustomLibsPath = os.path.join(self.jetty_base,
                                                         "oxauth", 
                                                         "custom/libs"
