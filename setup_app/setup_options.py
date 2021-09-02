@@ -118,7 +118,6 @@ def get_setup_options():
         if base.argsp.remote_couchbase:
             setupOptions['cb_install'] = InstallTypes.REMOTE
             setupOptions['couchbase_hostname'] = base.argsp.couchbase_hostname
-            
 
         if getattr(base.argsp, 'remote_rdbm', None):
             setupOptions['rdbm_install'] = True

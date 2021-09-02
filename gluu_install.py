@@ -16,12 +16,14 @@ from urllib.parse import urljoin
 
 
 parser = argparse.ArgumentParser(description="This script downloads Gluu Server components and fires setup")
+parser.add_argument('-a', help=argparse.SUPPRESS, action='store_true')
 parser.add_argument('-u', help="Use downloaded components", action='store_true')
 parser.add_argument('-upgrade', help="Upgrade Gluu war and jar files", action='store_true')
 parser.add_argument('-uninstall', help="Uninstall Gluu server and removes all files", action='store_true')
 parser.add_argument('--args', help="Arguments to be passed to setup.py")
 parser.add_argument('--keep-downloads', help="Keep downloaded files", action='store_true')
-parser.add_argument('--jetty-version', help="Jetty verison. For example 11.0.6")
+if '-a' in sys.argv:
+    parser.add_argument('--jetty-version', help="Jetty verison. For example 11.0.6")
 parser.add_argument('-n', help="No prompt", action='store_true')
 parser.add_argument('--no-setup', help="Do not launch setup", action='store_true')
 parser.add_argument('--dist-server-base', help="Download server", default='https://ox.gluu.org/maven')
