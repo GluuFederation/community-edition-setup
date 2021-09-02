@@ -151,7 +151,7 @@ app_versions = {
     }
 
 jetty_dist_string = 'jetty-distribution'
-if argsp.jetty_version:
+if getattr(argsp, 'jetty_version', None):
     result = re.findall('(\d*).', argsp.jetty_version)
     if result and result[0] and result[0].isdigit():
         if int(result[0]) > 9:
