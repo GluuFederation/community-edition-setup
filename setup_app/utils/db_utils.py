@@ -347,7 +347,7 @@ class DBUtils:
             self.session.commit()
 
         elif self.moddb == BackendTypes.SPANNER:
-            table = get_spanner_table_for_dn(dn)
+            table = self.get_spanner_table_for_dn(dn)
             type_val = self.get_rdbm_val(component, [value])
             self.spanner.update_data(table='gluuConfiguration', columns=["doc_id", component], values=[["configuration", type_val]])
 
