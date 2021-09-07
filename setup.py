@@ -1388,6 +1388,8 @@ class Setup(object):
                 'allow perm=any uid=%(uid)s : dir=%(service_dir)s/',
                 'allow perm=any uid=%(uid)s : dir=%(osDefault)s/',
                 'allow perm=any uid=%(uid)s : dir=%(gluuBaseFolder)s/',
+                'allow perm=any uid=%(uid)s : dir=%(gluuOptPythonFolder)s/',
+                'allow perm=any uid=%(uid)s : dir=%(gluuOptPythonFolder)s/libs/',
                 '# give access to gluu service %(uid)s',
                 ]
 
