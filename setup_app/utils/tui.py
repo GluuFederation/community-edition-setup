@@ -239,8 +239,12 @@ class HostForm(GluuSetupForm):
             npyscreen.notify_confirm(msg.enter_valid_ip, title="Info")
             return
 
-        if len(self.countryCode.value) < 2:
+        if len(self.countryCode.value) != 2:
             npyscreen.notify_confirm(msg.enter_valid_countryCode, title="Info")
+            return
+
+        if len(self.city.value) < 3:
+            npyscreen.notify_confirm(msg.enter_valid_city, title="Info")
             return
 
         if len(self.oxtrust_admin_password.value) < 6:

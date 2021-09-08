@@ -92,7 +92,7 @@ class msg:
     enter_valid_email = "Please enter valid email address"
     enter_valid_ip = "Please enter valid IP Address"
     enter_valid_countryCode = "Please enter two letter country code"
-
+    enter_valid_city = "Please enter at least two letters City"
 
     ask_installHttpd = "Install Apache HTTPD Server"
     ask_installSaml = "Install Shibboleth SAML IDP"
