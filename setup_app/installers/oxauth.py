@@ -19,7 +19,6 @@ class OxauthInstaller(JettyInstaller):
 
         self.source_files = [
                     (os.path.join(Config.distGluuFolder, 'oxauth.war'), 'https://ox.gluu.org/maven/org/gluu/oxauth-server/%s/oxauth-server-%s.war' % (Config.oxVersion, Config.oxVersion)),
-                    (os.path.join(Config.distGluuFolder, 'oxauth-rp.war'), 'https://ox.gluu.org/maven/org/gluu/oxauth-rp/%s/oxauth-rp-%s.war' % (Config.oxVersion, Config.oxVersion))
                     ]
 
         self.templates_folder = os.path.join(Config.templateFolder, self.service_name)
@@ -74,21 +73,6 @@ class OxauthInstaller(JettyInstaller):
 
         self.dbUtils.import_ldif([self.ldif_config, self.ldif_clients])
 
-
-    def install_oxauth_rp(self):
-        self.download_files(downloads=[self.source_files[1][0]])
-
-        Config.pbar.progress(self.service_name, "Installing OxAuthRP", False)
-
-        self.logIt("Copying oxauth-rp.war into jetty webapps folder...")
-
-        jettyServiceName = 'oxauth-rp'
-        self.installJettyService(self.jetty_app_configuration[jettyServiceName])
-
-        jettyServiceWebapps = os.path.join(self.jetty_base, jettyServiceName, 'webapps')
-        self.copyFile(self.source_files[1][0], jettyServiceWebapps)
-        self.war_for_jetty10(os.path.join(jettyServiceWebapps, os.path.basename(self.source_files[1][0])))
-        self.enable('oxauth-rp')
 
     def genRandomString(self, N):
         return ''.join(random.SystemRandom().choice(string.ascii_lowercase

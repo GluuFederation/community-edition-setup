@@ -633,20 +633,6 @@ class PropertiesUtils(SetupUtils):
             Config.addPostSetupService.append('installOxd')
 
 
-    def promptForOxAuthRP(self):
-        if Config.installed_instance and Config.installOxAuthRP:
-            return
-
-        promptForOxAuthRP = self.getPrompt("Install oxAuth RP?",
-                                            self.getDefaultOption(Config.installOxAuthRP)
-                                            )[0].lower()
-
-        Config.installOxAuthRP = True if promptForOxAuthRP == 'y'else False
-
-        if Config.installed_instance and Config.installOxAuthRP:
-            Config.addPostSetupService.append('installOxAuthRP')
-
-
     def promptForGluuRadius(self):
         if Config.installed_instance and Config.installGluuRadius:
             return
@@ -948,7 +934,6 @@ class PropertiesUtils(SetupUtils):
         self.promptForScimServer()
         self.promptForFido2Server()
         self.promptForShibIDP()
-        self.promptForOxAuthRP()
         self.promptForPassport()
 
 

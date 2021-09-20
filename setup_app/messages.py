@@ -52,7 +52,6 @@ class msg:
     java_type_label = "Java Type"
     installHttpd_label = "Install Apache" 
     installSaml_label = "Install Saml" 
-    installOxAuthRP_label = "Install OxAuthRP" 
     installPassport_label = "Install Passport" 
     installGluuRadius_label = "Install Radius"
     wrends_storages_label = "Store on OpenDJ"

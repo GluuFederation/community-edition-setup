@@ -307,7 +307,6 @@ def generate_properties(as_dict=False):
             'oxauth':    ('installOxAuth', 0.3, 0.7),
             'identity':  ('installOxTrust', 0.2),
             'idp':       ('installSaml', 0.2),
-            'oxauth-rp': ('installOxAuthRP', 0.1),
             'passport':  ('installPassport', 0.1),
         }
     else:
@@ -315,7 +314,6 @@ def generate_properties(as_dict=False):
             'oxauth':    ('installOxAuth', 0.2, 0.7),
             'identity':  ('installOxTrust', 0.25),
             'idp':       ('installSaml', 0.25),
-            'oxauth-rp': ('installOxAuthRP', 0.1),
             'casa':      ('installCasa', 0.1),
             'passport':  ('installPassport', 0.1),
         }

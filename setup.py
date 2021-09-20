@@ -312,9 +312,6 @@ def do_installation():
         if (Config.installed_instance and 'installOxAuth' in Config.addPostSetupService) or (not Config.installed_instance and Config.installOxAuth):
             oxauthInstaller.start_installation()
 
-        if (Config.installed_instance and 'installOxAuthRP' in Config.addPostSetupService) or (not Config.installed_instance and Config.installOxAuthRP):
-            oxauthInstaller.install_oxauth_rp()
-
         if (Config.installed_instance and 'installOxTrust' in Config.addPostSetupService) or (not Config.installed_instance and Config.installOxTrust):
             oxtrustInstaller.start_installation()
 
@@ -360,9 +357,6 @@ def do_installation():
                     time.sleep(2)
                     service['object'].stop()
                     service['object'].start()
-                    if service['name'] == 'oxauth' and Config.get('installOxAuthRP'):
-                        gluuProgress.progress(PostSetup.service_name, "Starting Oxauth-rp")
-                        service['object'].start('oxauth-rp')
 
         gluuProgress.progress(static.COMPLETED)
 

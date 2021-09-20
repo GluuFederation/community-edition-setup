@@ -12,7 +12,6 @@ def arg_parser():
     parser.add_argument('-a', help=argparse.SUPPRESS, action='store_true')
     parser.add_argument('-c', help="Use command line instead of tui", action='store_true')
     parser.add_argument('-d', help="Installation directory")
-    parser.add_argument('-r', '--install-oxauth-rp', help="Install oxAuth RP", action='store_true')
     parser.add_argument('-p', '--install-passport', help="Install Passport", action='store_true')
     parser.add_argument('-s', '--install-shib', help="Install the Shibboleth IDP", action='store_true')
     parser.add_argument('-f', help="Specify setup.properties file")

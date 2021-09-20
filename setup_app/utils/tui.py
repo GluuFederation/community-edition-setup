@@ -243,7 +243,7 @@ class HostForm(GluuSetupForm):
             npyscreen.notify_confirm(msg.enter_valid_countryCode, title="Info")
             return
 
-        if len(self.city.value) < 3:
+        if len(self.city.value) < 2:
             npyscreen.notify_confirm(msg.enter_valid_city, title="Info")
             return
 
@@ -283,8 +283,8 @@ class ServicesForm(GluuSetupForm):
     if os.environ.get('GLUU_SERVICES'):
         services = os.environ['GLUU_SERVICES'].split()
     else:
-        services = ('installHttpd', 'installSaml', 'installOxAuthRP', 
-                'installPassport', 'installGluuRadius', 'installOxd', 
+        services = ('installHttpd', 'installSaml',
+                'installPassport', 'installGluuRadius', 'installOxd',
                 'installCasa', 'installScimServer', 'installFido2',
                 )
 
@@ -933,7 +933,7 @@ class DisplaySummaryForm(GluuSetupForm):
     if os.environ.get('GLUU_SERVICES'):
         myfields_2 += os.environ['GLUU_SERVICES'].split()
     else:
-        myfields_2 += ["installSaml", "installOxAuthRP",
+        myfields_2 += ["installSaml",
                        "installPassport", "installGluuRadius", 
                        "installOxd", "installCasa",
                        'installScimServer', 'installFido2']

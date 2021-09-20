@@ -162,7 +162,6 @@ class Config:
         self.installOxTrust = True
         self.installHttpd = True
         self.installSaml = False
-        self.installOxAuthRP = False
         self.installPassport = False
         self.installGluuRadius = False
         self.installScimServer = False
@@ -311,7 +310,6 @@ class Config:
                         'casa': ['opendj oxauth', 78],
                         'oxd-server': ['opendj oxauth', 80],
                         'passport': ['opendj oxauth', 82],
-                        'oxauth-rp': ['opendj oxauth', 84],
                         'gluu-radius': ['opendj oxauth', 86],
                         }
 
@@ -329,7 +327,6 @@ class Config:
                 'oxauth':    {'weigth' : 50, "min" : 128},
                 'identity':  {'weigth' : 75, "min" : 128},
                 'idp':       {'weigth' : 25, "min" : 128},
-                'oxauth-rp': {'weigth' :  5, "min" : 128},
                 'passport':  {'weigth' : 10, "min" : 128},
                 'casa':      {'weigth' : 15, "min" : 128},
                 'fido2':     {'weigth' : 10, "min" : 128},

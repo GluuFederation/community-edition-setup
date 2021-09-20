@@ -300,8 +300,6 @@ class JettyInstaller(BaseInstaller, SetupUtils):
             installedComponents.append('identity')
         if Config.installSaml:
             installedComponents.append('idp')
-        if Config.installOxAuthRP:
-            installedComponents.append('oxauth-rp')
         if Config.installCasa:
             installedComponents.append('casa')
         if Config.installScimServer:

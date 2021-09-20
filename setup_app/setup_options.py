@@ -16,7 +16,6 @@ def get_setup_options():
         'wrends_install': InstallTypes.LOCAL,
         'installHTTPD': True,
         'installSaml': False,
-        'installOxAuthRP': False,
         'installPassport': False,
         'installGluuRadius': False,
         'installScimServer': False,
@@ -95,7 +94,6 @@ def get_setup_options():
 
     setupOptions['installSaml'] = base.argsp.install_shib
     setupOptions['downloadWars'] = base.argsp.w
-    setupOptions['installOxAuthRP'] = base.argsp.install_oxauth_rp
     setupOptions['installPassport'] = base.argsp.install_passport
     setupOptions['loadTestData'] = base.argsp.t
     setupOptions['loadTestDataExit'] = base.argsp.x
