@@ -144,7 +144,7 @@ app_versions = {
     "NODE_VERSION": "v14.16.1",
     "OX_VERSION": "4.3.0", 
     "JYTHON_VERSION": "2.7.2",
-    "OPENDJ_VERSION": "4.4.11",
+    "OPENDJ_VERSION": "4.4.12",
     "SETUP_BRANCH": "version_4.3.0",
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7"
