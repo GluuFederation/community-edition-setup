@@ -212,7 +212,7 @@ class PropertiesUtils(SetupUtils):
 
         if not 'oxtrust_admin_password' in properties_list:
             Config.oxtrust_admin_password = p['ldapPass']
-            
+
         if p.get('ldap_hostname') != 'localhost':
             if p.get('remoteLdap','').lower() == 'true':
                 Config.wrends_install = InstallTypes.REMOTE
@@ -273,15 +273,15 @@ class PropertiesUtils(SetupUtils):
         return p
 
     def save_properties(self, prop_fn=None, obj=None):
-        
+
         if not prop_fn:
             prop_fn = Config.savedProperties
-            
+
         if not obj:
             obj = self
 
         self.logIt('Saving properties to %s' % prop_fn)
-        
+
         def getString(value):
             if isinstance(value, str):
                 return str(value).strip()
@@ -300,7 +300,6 @@ class PropertiesUtils(SetupUtils):
                 if obj_name.startswith('cmd_'):
                     continue
 
-                
                 if not obj_name.startswith('__') and (not callable(obj)):
 
                     if obj_name == 'mappingLocations':
@@ -308,22 +307,19 @@ class PropertiesUtils(SetupUtils):
                     else:
                         value = getString(obj)
                         if value != '':
-                            p[obj_name] = value                
+                            p[obj_name] = value
 
             with open(prop_fn, 'wb') as f:
                 p.store(f, encoding="utf-8")
 
-            # TODO: uncomment later
-            return
-            
             self.run([paths.cmd_openssl, 'enc', '-aes-256-cbc', '-in', prop_fn, '-out', prop_fn+'.enc', '-k', Config.oxtrust_admin_password])
-            
+
             Config.post_messages.append(
                 "Encrypted properties file saved to {0}.enc with password {1}\nDecrypt the file with the following command if you want to re-use:\nopenssl enc -d -aes-256-cbc -in {2}.enc -out {3}".format(
                 prop_fn,  Config.oxtrust_admin_password, os.path.basename(prop_fn), os.path.basename(Config.setup_properties_fn)))
-            
+
             self.run(['rm', '-f', prop_fn])
-            
+
         except:
             self.logIt("Error saving properties", True)
 

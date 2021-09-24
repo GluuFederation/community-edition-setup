@@ -47,6 +47,8 @@ class Config:
 
     @classmethod
     def dump(self, dumpFile=False):
+        if not os.environ.get('gdebug'):
+            return
         myDict = {}
         for obj_name, obj in inspect.getmembers(self):
             obj_name = str(obj_name)
