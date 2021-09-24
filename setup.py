@@ -4371,6 +4371,7 @@ class Setup(object):
 
         def calulate_total_weigth(withopendj=True):
             total_weigth = 0
+            self.opendj_ram = int(self.opendj_ram)
 
             if self.wrends_install == LOCAL and withopendj:
                 total_weigth += self.app_mem_weigths['opendj']['weigth']
