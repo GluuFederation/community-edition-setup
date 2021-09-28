@@ -28,8 +28,7 @@ hostname=
 
 
 ### Backend type. For opendj, both will be opendj
-ldap_type=
-opendj_type=
+wrends_install=True
 
 ### This information is needed for self signed certificate
 orgName=

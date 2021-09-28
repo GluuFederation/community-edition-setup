@@ -269,6 +269,9 @@ class PropertiesUtils(SetupUtils):
         if not 'oxtrust_admin_password' in p:
             p['oxtrust_admin_password'] = p['ldapPass']
 
+        if not (Config.cb_install or Config.rdbm_install or Config.wrends_install):
+            p['wrends_install'] = InstallTypes.LOCAL
+            Config.wrends_install = InstallTypes.LOCAL
 
         return p
 
