@@ -138,7 +138,7 @@ if not os.path.exists(scripts_dir):
 jetty_home = '/opt/gluu/jetty'
 services = ['casa.service', 'identity.service', 'opendj.service', 'oxauth.service', 'passport.service', 'fido2.service', 'idp.service', 'oxd-server.service', 'scim.service']
 app_versions = {
-    "JETTY_VERSION": "9.4.35.v20201120", 
+    "JETTY_VERSION": "9.4.43.v20210629", 
     "AMAZON_CORRETTO_VERSION": "11.0.8.10.1", 
     "OX_GITVERISON": ".Final", 
     "NODE_VERSION": "v14.16.1",
