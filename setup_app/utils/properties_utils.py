@@ -188,7 +188,16 @@ class PropertiesUtils(SetupUtils):
 
         properties_list = list(p.keys())
 
+        if not 'oxtrust_admin_password' in p:
+            p['oxtrust_admin_password'] = p['ldapPass']
+
+        if not (Config.cb_install or Config.rdbm_install or Config.wrends_install):
+            p['wrends_install'] = InstallTypes.LOCAL
+
         for prop in properties_list:
+            if prop in ('opendj_ram', 'application_max_ram'):
+                p[prop] = int(p[prop])
+
             if prop in no_update:
                 continue
             try:
@@ -219,7 +228,7 @@ class PropertiesUtils(SetupUtils):
             elif p.get('installLdap','').lower() == 'true':
                 Config.wrends_install = InstallTypes.LOCAL
             elif p.get('wrends_install'):
-                Config.wrends_install = p['wrends_install']   
+                Config.wrends_install = p['wrends_install']
             else:
                 Config.wrends_install = InstallTypes.NONE
 
@@ -265,13 +274,6 @@ class PropertiesUtils(SetupUtils):
                         ):
             if Config.get(si):
                 setattr(Config, se, 'true')
-
-        if not 'oxtrust_admin_password' in p:
-            p['oxtrust_admin_password'] = p['ldapPass']
-
-        if not (Config.cb_install or Config.rdbm_install or Config.wrends_install):
-            p['wrends_install'] = InstallTypes.LOCAL
-            Config.wrends_install = InstallTypes.LOCAL
 
         return p
 
