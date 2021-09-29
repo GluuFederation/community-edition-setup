@@ -136,12 +136,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                           cwd='/opt/opendj',
                       )
 
-        #Append self.jre_home to OpenDj java.properties
-        opendj_java_properties_fn = os.path.join(Config.ldapBaseFolder, 'config/java.properties')
-
-        self.logIt("append self.jre_home to OpenDj %s" % opendj_java_properties_fn)
-        with open(opendj_java_properties_fn,'a') as f:
-            f.write('\ndefault.java-home={}\n'.format(Config.jre_home))
+        self.fix_opendj_java_properties()
 
         try:
             self.logIt('Stopping opendj server')
@@ -341,6 +336,34 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                 self.fix_init_scripts('opendj', init_script_fn)
 
             self.reload_daemon()
+
+
+    def fix_opendj_java_properties(self):
+
+        #Set memory and default.java-home in java.properties   
+        opendj_java_properties_fn = os.path.join(Config.ldapBaseFolder, 'config/java.properties')
+
+        self.logIt("Setting memory and default.java-home in %s" % opendj_java_properties_fn)
+        opendj_java_properties = self.readFile(opendj_java_properties_fn).splitlines()
+        java_home_ln = 'default.java-home={}'.format(Config.jre_home)
+        java_home_ln_w = False
+
+        for i, l in enumerate(opendj_java_properties[:]):
+            n = l.find('=')
+            if n > -1:
+                k = l[:n].strip()
+                if k == 'default.java-home':
+                    opendj_java_properties[i] = java_home_ln
+                    java_home_ln_w = True
+                if k == 'start-ds.java-args':
+                    if os.environ.get('ce_wrends_xms') and os.environ.get('ce_wrends_xmx'):
+                        opendj_java_properties[i] = 'start-ds.java-args=-server -Xms{}m -Xmx{}m -XX:+UseCompressedOops'.format(os.environ['ce_wrends_xms'], os.environ['ce_wrends_xmx'])
+
+        if not java_home_ln_w:
+            opendj_java_properties.append(java_home_ln)
+
+        self.writeFile(opendj_java_properties_fn, '\n'.join(opendj_java_properties))
+
 
 
     def installed(self):

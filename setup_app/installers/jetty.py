@@ -269,10 +269,10 @@ class JettyInstaller(BaseInstaller, SetupUtils):
             return total_weigth
 
         total_weigth = calulate_total_weigth()
-        
+
         if Config.wrends_install == InstallTypes.LOCAL:
             opendj_max_ram = round(Config.app_mem_weigths['opendj']['weigth'] * application_max_ram /total_weigth)
-            
+
             if opendj_max_ram < Config.opendj_ram:
                 total_weigth = calulate_total_weigth(withopendj=False)
                 opendj_max_ram = Config.opendj_ram
@@ -287,7 +287,7 @@ class JettyInstaller(BaseInstaller, SetupUtils):
             Config.templateRenderingDict['{}_min_mem'.format(app)] = Config.app_mem_weigths[app]['min']
 
         return True
-        
+
     def calculate_selected_aplications_memory(self):
         Config.pbar.progress("gluu", "Calculating application memory")
 
