@@ -23,12 +23,12 @@ JVM_ARGS=
 #####################################################
 if [ -z "$GLUU_RADIUS_USER" ]
 then
-    GLUU_RADIUS_USER=gluu
+    GLUU_RADIUS_USER=radius
 fi
 
 if [ -z "$GLUU_RADIUS_GROUP" ]
 then
-    GLUU_RADIUS_GROUP=radius
+    GLUU_RADIUS_GROUP=gluu
 fi
 
 
