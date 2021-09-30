@@ -426,7 +426,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             for f in os.listdir(Config.certFolder):
                 if not f.startswith('passport-'):
                     fpath = os.path.join(Config.certFolder, f)
-                    self.run([paths.cmd_chown, 'jetty:root', fpath])
+                    self.run([paths.cmd_chown, 'root:gluu', fpath])
                     self.run([paths.cmd_chmod, '660', fpath])
                     self.run([paths.cmd_chmod, 'u+X', fpath])
             self.run([paths.cmd_chown, '-R', 'root:gluu', Config.gluuOptPythonFolder])
