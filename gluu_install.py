@@ -140,12 +140,12 @@ services = ['casa.service', 'identity.service', 'opendj.service', 'oxauth.servic
 app_versions = {
     "JETTY_VERSION": "9.4.43.v20210629", 
     "AMAZON_CORRETTO_VERSION": "11.0.8.10.1", 
-    "OX_GITVERISON": ".Final", 
+    "OX_GITVERISON": "-SNAPSHOT", 
     "NODE_VERSION": "v14.16.1",
-    "OX_VERSION": "4.3.0", 
+    "OX_VERSION": "4.3.1", 
     "JYTHON_VERSION": "2.7.2",
     "OPENDJ_VERSION": "4.4.12",
-    "SETUP_BRANCH": "version_4.3.0",
+    "SETUP_BRANCH": "version_4.3.1",
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7"
     }
