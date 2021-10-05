@@ -73,7 +73,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
             for group in ldap_mappings:
                 ldif_files +=  Config.couchbaseBucketDict[group]['ldif']
 
-            Config.pbar.progress(self.service_name, "Importing ldif files to OpenDJ", False)
+            Config.pbar.progress(self.service_name, "Importing base ldif files to OpenDJ", False)
             if not Config.ldif_base in ldif_files:
                 self.dbUtils.import_ldif([Config.ldif_base], force=BackendTypes.LDAP)
 
@@ -136,12 +136,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                           cwd='/opt/opendj',
                       )
 
-        #Append self.jre_home to OpenDj java.properties
-        opendj_java_properties_fn = os.path.join(Config.ldapBaseFolder, 'config/java.properties')
-
-        self.logIt("append self.jre_home to OpenDj %s" % opendj_java_properties_fn)
-        with open(opendj_java_properties_fn,'a') as f:
-            f.write('\ndefault.java-home={}\n'.format(Config.jre_home))
+        self.fix_opendj_java_properties()
 
         try:
             self.logIt('Stopping opendj server')
@@ -156,6 +151,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         except:
             self.logIt("Error deleting OpenDJ properties. Make sure %s/opendj-setup.properties is deleted" % Config.ldapBaseFolder)
 
+        self.enable()
 
     def create_backends(self):
         backends = [
@@ -187,6 +183,9 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                       '-c',
                       dsconfigCmd], cwd=cwd)
 
+        # rebind after creating backends
+        self.dbUtils.ldap_conn.unbind()
+        self.dbUtils.ldap_conn.bind()
 
     def configure_opendj(self):
         self.logIt("Configuring OpenDJ")
@@ -214,9 +213,8 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                      {attr: [change_type, val]}
                     )
         #Create uniqueness for attrbiutes
-        for attr in ('mail', 'uid'):
+        for cn, attr in (('Unique mail address', 'mail'), ('Unique uid entry', 'uid')):
             self.logIt("Creating OpenDJ uniqueness for {}".format(attr))
-            cn = 'Unique {} entry'.format(attr)
             self.dbUtils.ldap_conn.add(
                 'cn={},cn=Plugins,cn=config'.format(cn),
                 attributes={
@@ -229,8 +227,6 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                         'ds-cfg-base-dn': ['o=gluu']
                         }
                 )
-
-
 
 
     def export_opendj_public_cert(self):
@@ -340,6 +336,34 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                 self.fix_init_scripts('opendj', init_script_fn)
 
             self.reload_daemon()
+
+
+    def fix_opendj_java_properties(self):
+
+        #Set memory and default.java-home in java.properties   
+        opendj_java_properties_fn = os.path.join(Config.ldapBaseFolder, 'config/java.properties')
+
+        self.logIt("Setting memory and default.java-home in %s" % opendj_java_properties_fn)
+        opendj_java_properties = self.readFile(opendj_java_properties_fn).splitlines()
+        java_home_ln = 'default.java-home={}'.format(Config.jre_home)
+        java_home_ln_w = False
+
+        for i, l in enumerate(opendj_java_properties[:]):
+            n = l.find('=')
+            if n > -1:
+                k = l[:n].strip()
+                if k == 'default.java-home':
+                    opendj_java_properties[i] = java_home_ln
+                    java_home_ln_w = True
+                if k == 'start-ds.java-args':
+                    if os.environ.get('ce_wrends_xms') and os.environ.get('ce_wrends_xmx'):
+                        opendj_java_properties[i] = 'start-ds.java-args=-server -Xms{}m -Xmx{}m -XX:+UseCompressedOops'.format(os.environ['ce_wrends_xms'], os.environ['ce_wrends_xmx'])
+
+        if not java_home_ln_w:
+            opendj_java_properties.append(java_home_ln)
+
+        self.writeFile(opendj_java_properties_fn, '\n'.join(opendj_java_properties))
+
 
 
     def installed(self):

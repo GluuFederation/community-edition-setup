@@ -17,7 +17,8 @@
     "static" : [
       [["LOWER(`uid`)"], "objectClass = \"gluuPerson\""], 
       [["LOWER(`mail`)"], "objectClass = \"gluuPerson\""], 
-      [["exp"], "del=true"] 
+      [["exp"], "del=true"],
+      [["distinct (array `oxExternalUid_` for `oxExternalUid_` in `oxExternalUid` end)"], "objectClass = \"gluuPerson\""]
     ]
   },
 
@@ -35,7 +36,8 @@
       ["oxAuthUmaScope"], 
       ["mail"], 
       ["oxId"], 
-      ["oxTicket"], 
+      ["jansId"],
+      ["oxTicket"],
       ["del"],
       ["ssnId"],
       ["oxAuthClientId"],
@@ -97,6 +99,7 @@
       ["oxAuthUserDN"]
     ],
     "static" : [
+        [["sid"], "objectClass = \"oxAuthSessionId\""],
         [["exp"], "objectClass = \"oxAuthSessionId\""]
     ]
   },

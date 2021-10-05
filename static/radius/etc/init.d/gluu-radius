@@ -358,7 +358,7 @@ case "$ACTION" in
         			"${RUN_CMD[@]}" > /dev/null &
         			disown $!
         			echo $! > "$PIDFILE"
-				echo "STARTED" > "$RADIUS_STATE"
+				echo "STARTED" > "$GLUU_RADIUS_STATE"
       			fi
 
     		fi

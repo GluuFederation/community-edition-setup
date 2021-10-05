@@ -106,7 +106,7 @@ class SamlInstaller(JettyInstaller):
         self.installJettyService(self.jetty_app_configuration[self.service_name], True)
         jettyServiceWebapps = os.path.join(self.jetty_base, self.service_name,  'webapps')
         self.copyFile(self.source_files[0][0], jettyServiceWebapps)
-
+        self.war_for_jetty10(os.path.join(jettyServiceWebapps, os.path.basename(self.source_files[0][0])))
         # Prepare libraries needed to for command line IDP3 utilities
         self.install_saml_libraries()
 
@@ -120,11 +120,7 @@ class SamlInstaller(JettyInstaller):
                 '--storepass', Config.shibJksPass]
             
         self.run(' '.join(cmd), shell=True)
-
-        # chown -R jetty:jetty /opt/shibboleth-idp
-        # self.run([self.cmd_chown,'-R', 'jetty:jetty', self.idp3Folder], '/opt')
-        self.run([paths.cmd_chown, '-R', 'jetty:jetty', jettyServiceWebapps], '/opt')
-
+        self.run([paths.cmd_chown, '-R', 'jetty:jetty', self.idp3Folder])
         couchbase_mappings = self.getMappingType('couchbase')
         if 'user' in couchbase_mappings:
             self.saml_couchbase_settings()
@@ -191,7 +187,7 @@ class SamlInstaller(JettyInstaller):
             self.logIt("Creating couchbase readonly user for shib")
             self.dbUtils.cbm.create_user(shib_user, Config.couchbaseShibUserPassword, 'Shibboleth IDP', shib_user_roles)
         else:
-            Config.post_messages.append('{}Please create a user on Couchbase Server with the following credidentals and roles{}'.format(gluu_utils.colors.WARNING, gluu_utils.colors.ENDC))
+            Config.post_messages.append('Please create a user on Couchbase Server with the following credidentals and roles')
             Config.post_messages.append('Username: {}'.format(shib_user))
             Config.post_messages.append('Password: {}'.format(Config.couchbaseShibUserPassword))
             Config.post_messages.append('Roles: {}'.format(shib_user_roles))
@@ -232,7 +228,6 @@ class SamlInstaller(JettyInstaller):
             
             self.run([paths.cmd_mkdir, '-p', folder])
 
-        self.run([paths.cmd_chown, '-R', 'jetty:jetty', self.idp3Folder])
 
     def installed(self):
         return os.path.exists(os.path.join(Config.jetty_base, self.service_name, 'start.ini'))

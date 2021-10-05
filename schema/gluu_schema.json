@@ -1447,13 +1447,13 @@
         }, 
         {
             "desc": "oxAuth Client Issued At", 
-            "equality": "caseIgnoreMatch", 
+            "equality": "generalizedTimeMatch",
             "names": [
                 "oxAuthClientIdIssuedAt"
             ], 
             "oid": "oxAttribute", 
-            "substr": "caseIgnoreSubstringsMatch", 
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
+            "ordering": "generalizedTimeOrderingMatch",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.24", 
             "x_origin": "Gluu created attribute"
         }, 
         {
@@ -4692,6 +4692,28 @@
             "x_origin": "Gluu created attribute"
         },
         {
+            "desc": "gluuConfigurationPollingInterval", 
+            "equality": "caseIgnoreMatch", 
+            "names": [
+                "gluuConfigurationPollingInterval"
+            ], 
+            "oid": "oxAttribute", 
+            "substr": "caseIgnoreSubstringsMatch", 
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
+            "x_origin": "Gluu created attribute"
+        },
+        {
+            "desc": "gluuConfigurationDnsServer",
+            "equality": "caseIgnoreMatch",
+            "names": [
+                "gluuConfigurationDnsServer"
+            ],
+            "oid": "oxAttribute",
+            "substr": "caseIgnoreSubstringsMatch",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+            "x_origin": "Gluu created attribute"
+        },
+        {
             "desc": "jans id",
             "equality": "caseIgnoreMatch",
             "names": [
@@ -4744,8 +4766,8 @@
                 "oxAuthPersistentJWT", 
                 "oxCreationTimestamp", 
                 "oxExternalUid",
-		        "oxOTPCache",	
-				"oxLastLogonTime", 
+                "oxOTPCache",
+                "oxLastLogonTime", 
                 "oxTrustActive", 
                 "oxTrustAddresses", 
                 "oxTrustEmail", 
@@ -4821,7 +4843,8 @@
             "sup": [
                 "top"
             ], 
-            "x_origin": "Gluu created objectclass"
+            "x_origin": "Gluu created objectclass",
+            "sql": {"include": ["telephoneNumber"], "includeObjectClass": ["gluuCustomPerson"]}
         }, 
         {
             "kind": "STRUCTURAL", 
@@ -5004,7 +5027,9 @@
                 "gluuPassportEnabled", 
                 "gluuRadiusEnabled", 
                 "gluuSamlEnabled", 
-                "gluuSmtpServerTrust"
+                "gluuSmtpServerTrust",
+                "gluuConfigurationPollingInterval",
+                "gluuConfigurationDnsServer"
             ], 
             "must": [
                 "objectclass"
@@ -5156,7 +5181,9 @@
             "may": [
                 "creationDate", 
                 "oxGuid", 
-                "personInum"
+                "personInum",
+                "del",
+                "exp"
             ], 
             "must": [
                 "objectclass"
@@ -5262,7 +5289,8 @@
             "sup": [
                 "top"
             ], 
-            "x_origin": "Gluu created objectclass"
+            "x_origin": "Gluu created objectclass",
+            "sql": {"ignore": true}
         }, 
         {
             "kind": "STRUCTURAL", 
@@ -5290,6 +5318,7 @@
         {
             "kind": "STRUCTURAL", 
             "may": [
+                "o",
                 "associatedPerson", 
                 "displayName", 
                 "description", 
@@ -5618,7 +5647,8 @@
                 "exp", 
                 "del", 
                 "tknCde", 
-                "usrId", 
+                "usrId",
+                "ssnId",
                 "oxUmaPermission", 
                 "uuid"
             ], 
@@ -6007,7 +6037,8 @@
                 "iat", 
                 "exp", 
                 "del", 
-                "tknCde", 
+                "tknCde",
+                "ssnId",
                 "oxClaimValues"
             ], 
             "must": [
@@ -6116,6 +6147,7 @@
         {
             "kind": "STRUCTURAL", 
             "may": [
+                "inum",
                 "gluuFreeDiskSpace",
                 "gluuFreeMemory",
                 "gluuFreeSwap",

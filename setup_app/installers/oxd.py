@@ -23,7 +23,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         self.oxd_server_yml_fn = os.path.join(self.oxd_root, 'conf/oxd-server.yml')
 
     def install(self):
-        self.logIt("Installing", pbar=self.service_name)
+        self.logIt("Installing {}".format(self.service_name), pbar=self.service_name)
         self.run(['tar', '-zxf', Config.oxd_package, '--no-same-owner', '--strip-components=1', '-C', self.oxd_root])
         self.run(['chown', '-R', 'jetty:jetty', self.oxd_root])
 
@@ -54,8 +54,9 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         for fn in glob.glob(os.path.join(self.oxd_root,'bin/*')):
             self.run([paths.cmd_chmod, '+x', fn])
 
-        self.modify_config_yml()
-        self.generate_keystore()
+        if not base.argsp.dummy:
+            self.modify_config_yml()
+            self.generate_keystore()
 
         self.enable()
 
@@ -79,11 +80,20 @@ class OxdInstaller(SetupUtils, BaseInstaller):
 
         if Config.get('oxd_use_gluu_storage'):
 
-            oxd_yaml['storage_configuration'].pop('dbFileLocation')
+            if 'dbFileLocation' in oxd_yaml['storage_configuration']:
+                oxd_yaml['storage_configuration'].pop('dbFileLocation')
             oxd_yaml['storage'] = 'gluu_server_configuration'
             oxd_yaml['storage_configuration']['baseDn'] = 'o=gluu'
             oxd_yaml['storage_configuration']['type'] = Config.gluu_properties_fn
-            oxd_yaml['storage_configuration']['connection'] = Config.ox_ldap_properties if Config.mappingLocations['default'] == 'ldap' else Config.gluuCouchebaseProperties
+            if Config.mappingLocations['default'] == 'ldap':
+                oxd_yaml['storage_configuration']['connection'] = Config.ox_ldap_properties
+            elif Config.mappingLocations['default'] == 'rdbm':
+                if Config.rdbm_type in ('mysql', 'pgsql'):
+                    oxd_yaml['storage_configuration']['connection'] = Config.gluuRDBMProperties
+                elif Config.rdbm_type == 'spanner':
+                    oxd_yaml['storage_configuration']['connection'] = Config.gluuSpannerProperties
+            elif Config.mappingLocations['default'] == 'couchbase':
+                oxd_yaml['storage_configuration']['connection'] = Config.gluuCouchebaseProperties
             oxd_yaml['storage_configuration']['salt'] = os.path.join(Config.configFolder, "salt")
 
         if base.snap:
@@ -133,7 +143,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         oxd_keystore_fn = os.path.join(self.oxd_root, 'conf/oxd-server.keystore')
         self.run(['cp', '-f', '/tmp/oxd.keystore', oxd_keystore_fn])
         self.run([paths.cmd_chown, 'jetty:jetty', oxd_keystore_fn])
-        
+
         for f in ('/tmp/oxd.crt', '/tmp/oxd.key', '/tmp/oxd.p12', '/tmp/oxd.keystore'):
             self.run([paths.cmd_rm, '-f', f])
 
@@ -149,12 +159,12 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         oxd_tgz_fn = '/tmp/oxd-server.tgz' if base.snap else os.path.join(Config.distGluuFolder, 'oxd-server.tgz')
         tmp_dir = os.path.join('/tmp', os.urandom(5).hex())
         oxd_tmp_dir = os.path.join(tmp_dir, 'oxd-server')
-        
+
         self.run([paths.cmd_mkdir, '-p', oxd_tmp_dir])
         self.download_file(oxd_url, oxd_zip_fn)
         self.run([paths.cmd_unzip, '-qqo', oxd_zip_fn, '-d', oxd_tmp_dir])
         self.run([paths.cmd_mkdir, os.path.join(oxd_tmp_dir, 'data')])
-        
+
         if not base.snap:
             service_file = 'oxd-server.init.d' if base.deb_sysd_clone else 'oxd-server.service'
             service_url = 'https://raw.githubusercontent.com/GluuFederation/community-edition-package/master/package/systemd/oxd-server.service'.format(Config.oxVersion, service_file)
@@ -166,8 +176,8 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         self.run(['tar', '-zcf', oxd_tgz_fn, 'oxd-server'], cwd=tmp_dir)
         #self.run(['rm', '-r', '-f', tmp_dir])
         Config.oxd_package = oxd_tgz_fn
-        
+
     def create_folders(self):
         if not os.path.exists(self.oxd_root):
             self.run([paths.cmd_mkdir, self.oxd_root])
-    
+

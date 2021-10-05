@@ -52,6 +52,7 @@ class ClientRegistration(ClientRegistrationType):
         cal.add(1,10)
         client.setClientSecretExpiresAt(Date(cal.getTimeInMillis()))
         client.setTrustedClient(True)
+        client.setDeletable(False)
         return True
 
     # Update client entry before persistent it

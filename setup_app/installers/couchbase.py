@@ -17,6 +17,7 @@ from setup_app.installers.base import BaseInstaller
 class CouchbaseInstaller(PackageUtils, BaseInstaller):
 
     def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'couchbase-server'
         self.app_type = AppType.SERVICE
         self.install_type = InstallOption.OPTONAL
@@ -29,9 +30,6 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
         self.couchbaseIndexJson = os.path.join(Config.install_dir, 'static/couchbase/index.json')
         self.couchbaseInitScript = os.path.join(Config.install_dir, 'static/system/initd/couchbase-server')
         self.couchebaseCert = os.path.join(Config.certFolder, 'couchbase.pem')
-        
-        self.couchbaseBuckets = []
-
 
     def install(self):
 
@@ -45,11 +43,16 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
             Config.couchbaseTrustStorePass = 'secret'
             Config.encoded_couchbaseTrustStorePass = self.obscure(Config.couchbaseTrustStorePass)
 
+        if not Config.get('couchbase_bucket_prefix'):
+            Config.couchbase_bucket_prefix = 'gluu'
+
+        if Config.cb_install == InstallTypes.LOCAL:
+            Config.couchbase_hostname = Config.hostname
+
         if not Config.get('cb_query_node'):
             Config.cb_query_node = Config.couchbase_hostname
 
-        if not Config.get('couchbase_bucket_prefix'):
-            Config.couchbase_bucket_prefix = 'gluu'
+        self.dbUtils.set_cbm()
 
         if Config.cb_install == InstallTypes.LOCAL:
             self.add_couchbase_post_messages()
@@ -92,17 +95,9 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
         installOutput = self.installPackage(packageName)
         Config.post_messages.append(installOutput)
 
-        if base.os_name == 'ubuntu16':
-            script_name = os.path.basename(self.couchbaseInitScript)
-            target_file = os.path.join('/etc/init.d', script_name)
-            self.copyFile(self.couchbaseInitScript, target_file)
-            self.run([paths.cmd_chmod, '+x', target_file])
-            self.reload_daemon()
-            self.enable()
-            self.start()
 
     def couchebaseCreateCluster(self):
-        
+
         self.logIt("Initializing Couchbase Node")
         result = self.dbUtils.cbm.initialize_node()
         if result.ok:
@@ -215,7 +210,7 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
 
     def couchebaseCreateIndexes(self, bucket):
         
-        self.couchbaseBuckets.append(bucket)
+        Config.couchbaseBuckets.append(bucket)
         couchbase_index_str = self.readFile(self.couchbaseIndexJson)
         couchbase_index_str = couchbase_index_str.replace('!bucket_prefix!', Config.couchbase_bucket_prefix)
         couchbase_index = json.loads(couchbase_index_str)
@@ -254,7 +249,7 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
 
     def couchbaseSSL(self):
         self.logIt("Exporting Couchbase SSL certificate to " + self.couchebaseCert)
-        
+
         for cb_host in base.re_split_host.findall(Config.couchbase_hostname):
 
             cbm_ = CBM(cb_host.strip(), Config.couchebaseClusterAdmin, Config.cb_password)
@@ -272,7 +267,7 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
                     'hostname': ','.join(base.re_split_host.findall(Config.couchbase_hostname)),
                     'couchbase_server_user': Config.couchebaseClusterAdmin,
                     'encoded_couchbase_server_pw': Config.encoded_cb_password,
-                    'couchbase_buckets': ', '.join(self.couchbaseBuckets),
+                    'couchbase_buckets': ', '.join(Config.couchbaseBuckets),
                     'default_bucket': Config.couchbase_bucket_prefix,
                     'encryption_method': 'SSHA-256',
                     'ssl_enabled': 'true',
@@ -286,7 +281,7 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
 
         for group in list(Config.couchbaseBucketDict.keys())[1:]:
             bucket = Config.couchbase_bucket_prefix if group == 'default' else Config.couchbase_bucket_prefix + '_' + group
-            if bucket in self.couchbaseBuckets:
+            if bucket in Config.couchbaseBuckets:
                 cb_key = 'couchbase_{}_mapping'.format(group)
                 if Config.mappingLocations[group] == 'couchbase':
                     if Config.couchbaseBucketDict[group]['mapping']:

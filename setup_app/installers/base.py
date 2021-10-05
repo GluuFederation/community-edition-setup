@@ -24,7 +24,7 @@ class BaseInstaller:
         else:
             pbar_text = self.pbar_text
         self.logIt(pbar_text, pbar=self.service_name)
-        if self.needdb:
+        if self.needdb and not base.argsp.dummy:
             self.dbUtils.bind()
 
         self.check_for_download()
@@ -35,14 +35,15 @@ class BaseInstaller:
         self.create_folders()
 
         self.install()
-        self.copy_static()
-        self.generate_configuration()
+        if not base.argsp.dummy:
+            self.copy_static()
+            self.generate_configuration()
 
-        # before rendering templates, let's push variables of this class to Config.templateRenderingDict
-        self.update_rendering_dict()
+            # before rendering templates, let's push variables of this class to Config.templateRenderingDict
+            self.update_rendering_dict()
 
-        self.render_import_templates()
-        self.update_backend()
+            self.render_import_templates()
+            self.update_backend()
 
     def update_rendering_dict(self):
         mydict = {}
@@ -77,6 +78,9 @@ class BaseInstaller:
         if base.snap:
             service = os.environ['SNAP_NAME'] + '.' + service
 
+        else:
+            self.set_systemd_ulimits(service)
+
         try:
             if base.snap:
                 cmd_list = [base.snapctl, operation, service]
@@ -89,6 +93,14 @@ class BaseInstaller:
                 self.run([base.service_path, service, operation], None, None, True)
         except:
             self.logIt("Error running operation {} for service {}".format(operation, service), True)
+
+
+    def set_systemd_ulimits(self, service):
+        umilit_file = '/etc/systemd/system/{}.service.d/override.conf'.format(service)
+        if not os.path.exists(umilit_file):
+            os.makedirs(os.path.dirname(umilit_file))
+            self.writeFile(umilit_file, '[Service]\nLimitNOFILE=262144\n')
+
 
     def enable(self, service=None):
         if not base.snap:

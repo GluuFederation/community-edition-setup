@@ -38,13 +38,20 @@ class GluuInstaller(BaseInstaller, SetupUtils):
 
                 bc = []
                 if Config.wrends_install:
-                    t_ = 'wrends'
+                    t_ = 'opendj'
                     if Config.wrends_install == InstallTypes.REMOTE:
                         t_ += '[R]'
                     bc.append(t_)
+
                 if Config.cb_install:
                     t_ = 'couchbase'
                     if Config.cb_install == InstallTypes.REMOTE:
+                        t_ += '[R]'
+                    bc.append(t_)
+
+                if Config.rdbm_install:
+                    t_ = Config.rdbm_type
+                    if Config.rdbm_install_type == InstallTypes.REMOTE:
                         t_ += '[R]'
                     bc.append(t_)
 
@@ -58,20 +65,21 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             txt += 'Install Fido2 Server'.ljust(30) + repr(Config.installFido2).rjust(35) + (' *' if 'installFido2' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Scim Server'.ljust(30) + repr(Config.installScimServer).rjust(35) + (' *' if 'installScimServer' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Shibboleth SAML IDP'.ljust(30) + repr(Config.installSaml).rjust(35) + (' *' if 'installSaml' in Config.addPostSetupService else '') + "\n"
-            txt += 'Install oxAuth RP'.ljust(30) + repr(Config.installOxAuthRP).rjust(35) + (' *' if 'installOxAuthRP' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Passport '.ljust(30) + repr(Config.installPassport).rjust(35) + (' *' if 'installPassport' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Casa '.ljust(30) + repr(Config.installCasa).rjust(35) + (' *' if 'installCasa' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Oxd '.ljust(30) + repr(Config.installOxd).rjust(35) + (' *' if 'installOxd' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Gluu Radius '.ljust(30) + repr(Config.installGluuRadius).rjust(35) + (' *' if 'installGluuRadius' in Config.addPostSetupService else '') + "\n"
+            txt += 'Load Test Data '.ljust(30) + repr( base.argsp.t).rjust(35) + "\n"
             return txt
 
         except:
             s = ""
-            for key in list(Config.__dict__):
-                if not key in ('__dict__',):
-                    val = getattr(Config, key)
-                    if not inspect.ismethod(val):
-                        s = s + "%s\n%s\n%s\n\n" % (key, "-" * len(key), val)
+            if not base.argsp.dummy:
+                for key in list(Config.__dict__):
+                    if not key in ('__dict__',):
+                        val = getattr(Config, key)
+                        if not inspect.ismethod(val):
+                            s = s + "%s\n%s\n%s\n\n" % (key, "-" * len(key), val)
             return s
 
 
@@ -91,6 +99,10 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             oxauth_client_jar_url = 'https://ox.gluu.org/maven/org/gluu/oxauth-client/{0}/oxauth-client-{0}-jar-with-dependencies.jar'.format(Config.oxVersion)
             self.logIt("Downloading {}".format(os.path.basename(oxauth_client_jar_url)))
             base.download(oxauth_client_jar_url, Config.non_setup_properties['oxauth_client_jar_fn'])
+
+        self.determine_key_gen_path()
+
+    def determine_key_gen_path(self):
 
         self.logIt("Determining key generator path")
         oxauth_client_jar_zf = zipfile.ZipFile(Config.non_setup_properties['oxauth_client_jar_fn'])
@@ -130,9 +142,11 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         if not base.snap:
             self.run([paths.cmd_chown, '-R', 'root:gluu', Config.certFolder])
             self.run([paths.cmd_chmod, '551', Config.certFolder])
+            
             self.run([paths.cmd_chmod, 'ga+w', "/tmp"]) # Allow write to /tmp
 
     def customiseSystem(self):
+
         if not base.snap:
             if Config.os_initdaemon == 'init':
                 system_profile_update = Config.system_profile_update_init
@@ -155,6 +169,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             self.run([paths.cmd_chmod, '644', Config.sysemProfile])
 
     def make_salt(self):
+
         if not Config.encode_salt:
             Config.encode_salt= self.getPW() + self.getPW()
 
@@ -173,7 +188,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         if not templates:
             templates = Config.ce_templates
 
-        if Config.persistence_type=='couchbase':
+        if Config.persistence_type in ('couchbase', 'sql', 'spanner'):
             Config.ce_templates[Config.ox_ldap_properties] = False
 
         for fullPath in templates:
@@ -266,7 +281,6 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         encode_script = self.readFile(os.path.join(Config.templateFolder, 'encode.py'))
         encode_script = encode_script % self.merge_dicts(Config.__dict__, Config.templateRenderingDict)
         self.writeFile(os.path.join(Config.gluuOptBinFolder, 'encode.py'), encode_script)
-        self.logIt("Error rendering encode script", True)
 
         super_gluu_lisence_renewer_fn = os.path.join(Config.staticFolder, 'scripts', 'super_gluu_license_renewer.py')
 
@@ -359,6 +373,8 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                     self.logIt("Error writing %s to %s" % (output_fn, dest_fn), True)
 
     def post_install_tasks(self):
+        # set systemd timeout
+        self.set_systemd_timeout()
 
         self.deleteLdapPw()
 
@@ -407,6 +423,15 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             self.writeFile(os.path.join(base.snap_common, 'etc/hosts.gluu'), Config.ip + '\t' + Config.hostname)
 
         else:
+            for f in os.listdir(Config.certFolder):
+                if not f.startswith('passport-'):
+                    fpath = os.path.join(Config.certFolder, f)
+                    self.run([paths.cmd_chown, 'root:gluu', fpath])
+                    self.run([paths.cmd_chmod, '660', fpath])
+                    self.run([paths.cmd_chmod, 'u+X', fpath])
+            self.run([paths.cmd_chown, '-R', 'root:gluu', Config.gluuOptPythonFolder])
+
             if not Config.installed_instance:
-                cron_service = 'crond' if base.os_type in ['centos', 'red', 'fedora'] else 'cron'
+                cron_service = 'crond' if base.clone_type == 'rpm' else 'cron'
                 self.restart(cron_service)
+

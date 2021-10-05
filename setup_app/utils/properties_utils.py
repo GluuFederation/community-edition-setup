@@ -8,6 +8,8 @@ import urllib
 import ssl
 import re
 import inspect
+import pymysql
+import ldap3
 
 from setup_app import paths
 from setup_app.utils import base
@@ -16,6 +18,7 @@ from setup_app.static import InstallTypes, colors
 
 from setup_app.config import Config
 from setup_app.utils.setup_utils import SetupUtils
+from setup_app.utils.spanner import Spanner
 from setup_app.utils.db_utils import dbUtils
 from setup_app.pylib.jproperties import Properties
 
@@ -23,21 +26,41 @@ class PropertiesUtils(SetupUtils):
 
     def getDefaultOption(self, val):
         return 'Yes' if val else 'No'
-        
 
-    def getPrompt(self, prompt, defaultValue=None):
+    def check_input_type(self, ival, itype=None):
+        
+        if not itype:
+            return ival
+
+        if itype == int and not ival.isnumeric():
+            raise ValueError("Please enter numeric value")
+
+        if itype == int:
+            return int(ival)
+
+    def getPrompt(self, prompt, defaultValue=None, itype=None, indent=0):
         try:
             if defaultValue:
-                user_input = input("%s [%s] : " % (prompt, defaultValue)).strip()
-                if user_input == '':
-                    return defaultValue
-                else:
-                    return user_input
+                while True:
+                    user_input = input("%s [%s] : " % (prompt, defaultValue)).strip()
+                    if user_input == '':
+                        return defaultValue
+                    else:
+                        try:
+                            retval = self.check_input_type(user_input, itype)
+                            return retval 
+                        except Exception as e:
+                            print(indent*' ', e)
+
             else:
                 while True:
                     user_input = input("%s : " % prompt).strip()
                     if user_input != '':
-                        return user_input
+                        try:
+                            retval = self.check_input_type(user_input, itype)
+                            return retval 
+                        except Exception as e:
+                            print(indent*' ', e)
 
         except KeyboardInterrupt:
             sys.exit()
@@ -86,8 +109,12 @@ class PropertiesUtils(SetupUtils):
         if Config.cb_install and not Config.get('cb_password'):
             Config.cb_password = Config.oxtrust_admin_password
 
-        if Config.cb_install and not Config.wrends_install:
-            Config.mappingLocations = { group: 'couchbase' for group in Config.couchbaseBucketDict }
+        if not Config.wrends_install:
+            if Config.cb_install:
+                Config.mappingLocations = { group: 'couchbase' for group in Config.couchbaseBucketDict }
+
+            if Config.rdbm_install:
+                Config.mappingLocations = { group: 'rdbm' for group in Config.couchbaseBucketDict }
 
         self.set_persistence_type()
 
@@ -161,7 +188,16 @@ class PropertiesUtils(SetupUtils):
 
         properties_list = list(p.keys())
 
+        if not 'oxtrust_admin_password' in p:
+            p['oxtrust_admin_password'] = p['ldapPass']
+
+        if not (Config.cb_install or Config.rdbm_install or Config.wrends_install):
+            p['wrends_install'] = InstallTypes.LOCAL
+
         for prop in properties_list:
+            if prop in ('opendj_ram', 'application_max_ram'):
+                p[prop] = int(p[prop])
+
             if prop in no_update:
                 continue
             try:
@@ -185,14 +221,14 @@ class PropertiesUtils(SetupUtils):
 
         if not 'oxtrust_admin_password' in properties_list:
             Config.oxtrust_admin_password = p['ldapPass']
-            
+
         if p.get('ldap_hostname') != 'localhost':
             if p.get('remoteLdap','').lower() == 'true':
                 Config.wrends_install = InstallTypes.REMOTE
             elif p.get('installLdap','').lower() == 'true':
                 Config.wrends_install = InstallTypes.LOCAL
             elif p.get('wrends_install'):
-                Config.wrends_install = p['wrends_install']   
+                Config.wrends_install = p['wrends_install']
             else:
                 Config.wrends_install = InstallTypes.NONE
 
@@ -239,22 +275,18 @@ class PropertiesUtils(SetupUtils):
             if Config.get(si):
                 setattr(Config, se, 'true')
 
-        if not 'oxtrust_admin_password' in p:
-            p['oxtrust_admin_password'] = p['ldapPass']
-
-
         return p
 
     def save_properties(self, prop_fn=None, obj=None):
-        
+
         if not prop_fn:
             prop_fn = Config.savedProperties
-            
+
         if not obj:
             obj = self
 
         self.logIt('Saving properties to %s' % prop_fn)
-        
+
         def getString(value):
             if isinstance(value, str):
                 return str(value).strip()
@@ -273,7 +305,6 @@ class PropertiesUtils(SetupUtils):
                 if obj_name.startswith('cmd_'):
                     continue
 
-                
                 if not obj_name.startswith('__') and (not callable(obj)):
 
                     if obj_name == 'mappingLocations':
@@ -281,22 +312,19 @@ class PropertiesUtils(SetupUtils):
                     else:
                         value = getString(obj)
                         if value != '':
-                            p[obj_name] = value                
+                            p[obj_name] = value
 
             with open(prop_fn, 'wb') as f:
                 p.store(f, encoding="utf-8")
 
-            # TODO: uncomment later
-            return
-            
             self.run([paths.cmd_openssl, 'enc', '-aes-256-cbc', '-in', prop_fn, '-out', prop_fn+'.enc', '-k', Config.oxtrust_admin_password])
-            
+
             Config.post_messages.append(
                 "Encrypted properties file saved to {0}.enc with password {1}\nDecrypt the file with the following command if you want to re-use:\nopenssl enc -d -aes-256-cbc -in {2}.enc -out {3}".format(
                 prop_fn,  Config.oxtrust_admin_password, os.path.basename(prop_fn), os.path.basename(Config.setup_properties_fn)))
-            
+
             self.run(['rm', '-f', prop_fn])
-            
+
         except:
             self.logIt("Error saving properties", True)
 
@@ -357,24 +385,13 @@ class PropertiesUtils(SetupUtils):
 
         return retval
 
-    def prompt_remote_couchbase(self):
-    
-        while True:
-            Config.couchbase_hostname = self.getPrompt("    Couchbase hosts", Config.get('couchbase_hostname'))
-            Config.couchebaseClusterAdmin = self.getPrompt("    Couchbase User", Config.get('couchebaseClusterAdmin'))
-            Config.cb_password =self.getPrompt("    Couchbase Password", Config.get('cb_password'))
-
-            result = self.test_cb_servers(Config.get('couchbase_hostname'))
-
-            if result['result']:
-                break
 
     def check_remote_ldap(self, ldap_host, ldap_binddn, ldap_password):
         
         result = {'result': True, 'reason': ''}
         
-        ldap_server = Server(ldap_host, port=int(Config.ldaps_port), use_ssl=True)
-        conn = Connection(
+        ldap_server = ldap3.Server(ldap_host, port=int(Config.ldaps_port), use_ssl=True)
+        conn = ldap3.Connection(
             ldap_server,
             user=ldap_binddn,
             password=ldap_password,
@@ -507,12 +524,15 @@ class PropertiesUtils(SetupUtils):
         if Config.installed_instance and Config.installCasa:
             Config.addPostSetupService.append('installCasa')
 
-
     def set_persistence_type(self):
-        if Config.wrends_install and not  Config.cb_install:
+        if Config.wrends_install and (not Config.cb_install) and (not Config.rdbm_install):
             Config.persistence_type = 'ldap'
-        elif not Config.wrends_install and Config.cb_install:
+        elif (not Config.wrends_install) and (not Config.rdbm_install) and Config.cb_install:
             Config.persistence_type = 'couchbase'
+        elif Config.rdbm_type == 'spanner':
+            Config.persistence_type = 'spanner'
+        elif (not Config.wrends_install) and Config.rdbm_install and (not Config.cb_install):
+            Config.persistence_type = 'sql'
         elif Config.wrends_install and Config.cb_install:
             Config.persistence_type = 'hybrid'
 
@@ -614,20 +634,6 @@ class PropertiesUtils(SetupUtils):
             Config.addPostSetupService.append('installOxd')
 
 
-    def promptForOxAuthRP(self):
-        if Config.installed_instance and Config.installOxAuthRP:
-            return
-
-        promptForOxAuthRP = self.getPrompt("Install oxAuth RP?",
-                                            self.getDefaultOption(Config.installOxAuthRP)
-                                            )[0].lower()
-
-        Config.installOxAuthRP = True if promptForOxAuthRP == 'y'else False
-
-        if Config.installed_instance and Config.installOxAuthRP:
-            Config.addPostSetupService.append('installOxAuthRP')
-
-
     def promptForGluuRadius(self):
         if Config.installed_instance and Config.installGluuRadius:
             return
@@ -639,6 +645,167 @@ class PropertiesUtils(SetupUtils):
 
         if Config.installed_instance and Config.installGluuRadius:
             Config.addPostSetupService.append('installGluuRadius')
+
+
+    def prompt_for_backend(self):
+        print('Chose Backend Type:')
+        
+        backend_types = ['Local OpenDj',
+                         'Remote OpenDj',
+                         'Remote Couchbase',
+                         #'Local MySQL',
+                         #'Remote MySQL',
+                         #'Cloud Spanner',
+                         ]
+
+        if 'couchbase' in self.getBackendTypes():
+            backend_types.insert(2, 'Local Couchbase')
+
+        nlist = []
+        for i, btype in enumerate(backend_types):
+            nn = i+1
+            print(" ", nn, btype)
+            nlist.append(str(nn))
+
+        while True:
+            n = input('Selection [1]: ')
+            choice = None
+            if not n:
+                choice = 1
+            elif not n in nlist:
+                print("Please enter one of {}".format(', '.join(nlist)))
+            else:
+                choice = n
+
+            if choice:
+                break
+
+        backend_type_str = backend_types[int(choice)-1]
+
+        if backend_type_str == 'Local OpenDj':
+            Config.wrends_install = InstallTypes.LOCAL
+            ldapPass = Config.ldapPass if Config.ldapPass else Config.oxtrust_admin_password
+
+            while True:
+                ldapPass = self.getPrompt("Enter Password for LDAP Admin ({})".format(Config.ldap_binddn), Config.oxtrust_admin_password)
+
+                if self.checkPassword(ldapPass):
+                    break
+                else:
+                    print("Password must be at least 6 characters and include one uppercase letter, one lowercase letter, one digit, and one special character.")
+
+            Config.ldapPass = ldapPass
+
+
+        elif backend_type_str == 'Remote OpenDj':
+            Config.wrends_install = InstallTypes.REMOTE
+            while True:
+                ldapHost = self.getPrompt("    LDAP hostname")
+                ldapPass = self.getPrompt("    Password for '{0}'".format(Config.ldap_binddn))
+                conn_check = self.check_remote_ldap(ldapHost, Config.ldap_binddn, ldapPass)
+                if conn_check['result']:
+                    break
+                else:
+                    print("    {}Error connecting to LDAP server: {} {}".format(colors.FAIL, conn_check['reason'], colors.ENDC))
+
+            Config.ldapPass = ldapPass
+            Config.ldap_hostname = ldapHost
+
+        elif backend_type_str == 'Local Couchbase':
+            Config.wrends_install = InstallTypes.NONE
+            Config.cb_install = InstallTypes.LOCAL
+            Config.isCouchbaseUserAdmin = True
+
+            while True:
+                cbPass = self.getPrompt("Enter Password for Couchbase {}admin{} user".format(colors.BOLD, colors.ENDC), Config.oxtrust_admin_password)
+
+                if self.checkPassword(cbPass):
+                    break
+                else:
+                    print("Password must be at least 6 characters and include one uppercase letter, one lowercase letter, one digit, and one special character.")
+
+            Config.cb_password = cbPass
+            Config.mappingLocations = { group: 'couchbase' for group in Config.couchbaseBucketDict }
+
+        elif backend_type_str == 'Remote Couchbase':
+            Config.wrends_install = InstallTypes.NONE
+            Config.cb_install = InstallTypes.REMOTE
+
+            while True:
+                Config.couchbase_hostname = self.getPrompt("  Couchbase hosts", Config.get('couchbase_hostname'))
+                Config.couchebaseClusterAdmin = self.getPrompt("  Couchbase User", Config.get('couchebaseClusterAdmin'))
+                Config.cb_password =self.getPrompt("  Couchbase Password", Config.get('cb_password'))
+                result = self.test_cb_servers(Config.get('couchbase_hostname'))
+                if result['result']:
+                    break
+
+            Config.mappingLocations = { group: 'couchbase' for group in Config.couchbaseBucketDict }
+
+        elif backend_type_str == 'Local MySQL':
+            Config.wrends_install = InstallTypes.NONE
+            Config.rdbm_install = True
+            Config.rdbm_install_type = InstallTypes.LOCAL
+            Config.rdbm_type = 'mysql'
+            Config.rdbm_host = 'localhost'
+            Config.rdbm_user = 'gluu'
+            Config.rdbm_password = self.getPW(special='.*=+-()[]{}')
+            Config.rdbm_port = 3306
+            Config.rdbm_db = 'gluudb'
+
+        elif backend_type_str == 'Remote MySQL':
+            Config.wrends_install = InstallTypes.NONE
+            Config.rdbm_install = True
+            Config.rdbm_install_type = InstallTypes.REMOTE
+            Config.rdbm_type = 'mysql'
+
+            while True:
+                Config.rdbm_host = self.getPrompt("  Mysql host", Config.get('rdbm_host'))
+                Config.rdbm_port = self.getPrompt("  Mysql port", 3306, itype=int, indent=1)
+                Config.rdbm_user = self.getPrompt("  Mysql user", Config.get('rdbm_user'))
+                Config.rdbm_password = self.getPrompt("  Mysql password")
+                Config.rdbm_db = self.getPrompt("  Mysql database", Config.get('rdbm_db'))
+
+                try:
+                    pymysql.connect(host=Config.rdbm_host, user=Config.rdbm_user, password=Config.rdbm_password, database=Config.rdbm_db, port=Config.rdbm_port)
+                    print("  {}MySQL connection was successfull{}".format(colors.OKGREEN, colors.ENDC))
+                    break
+                except Exception as e:
+                    print("  {}Can't connect to MySQL: {}{}".format(colors.DANGER, e, colors.ENDC))
+
+        elif backend_type_str == 'Cloud Spanner':
+            Config.wrends_install = InstallTypes.NONE
+            Config.rdbm_type = 'spanner'
+            Config.rdbm_install = True
+            Config.rdbm_install_type = InstallTypes.REMOTE
+
+            emulator = self.getPrompt("Is it emulator?", "N|y")[0].lower()
+            if emulator == 'y':
+                Config.spanner_emulator_host = self.getPrompt("  Emulator host", Config.get('spanner_emulator_host'))
+
+            Config.spanner_project = self.getPrompt("  Spanner project", Config.get('spanner_project'))
+            Config.spanner_instance = self.getPrompt("  Spanner instance", Config.get('spanner_instance'))
+            Config.spanner_database = self.getPrompt("  Spanner database", Config.get('spanner_database'))
+            if not Config.get('spanner_emulator_host'):
+                while True:
+                    cred_fn = self.getPrompt("  Google application creditentals file", Config.get('google_application_credentials'))
+                    if os.path.exists(cred_fn):
+                        try:
+                            with open(cred_fn) as f:
+                                json.load(f)
+                                break
+                        except:
+                            pass
+                    print("  Please enter valid json path")
+                Config.google_application_credentials = cred_fn
+
+            print("  Checking spanner connection")
+            try:
+                spanner = Spanner()
+                spanner.get_session()
+                print("  {}Spanner connection was successfull{}".format(colors.OKGREEN, colors.ENDC))
+            except Exception as e:
+                print("{}ERROR getting session from spanner: {}{}".format(colors.DANGER, e, colors.ENDC))
+                sys.exit()
 
     def promptForProperties(self):
 
@@ -712,79 +879,7 @@ class PropertiesUtils(SetupUtils):
             
             Config.oxtrust_admin_password = oxtrust_admin_password
 
-            available_backends = self.getBackendTypes()
-
-            localWrendsOnly = False
-
-            if (Config.wrends_install != InstallTypes.REMOTE) and (not Config.cb_install) and (available_backends == ['wrends']):
-                Config.wrends_install = InstallTypes.LOCAL
-                
-            elif Config.wrends_install != InstallTypes.REMOTE and (Config.cb_install == InstallTypes.REMOTE or 'couchbase' in available_backends):
-                promptForLDAP = self.getPrompt("Install Local WrenDS Server?", "Yes")[0].lower()
-                if promptForLDAP[0] == 'y':
-                    Config.wrends_install = InstallTypes.LOCAL
-                else:
-                    Config.wrends_install = InstallTypes.NONE
-
-            if Config.wrends_install == InstallTypes.LOCAL:
-
-                ldapPass = Config.ldapPass if Config.ldapPass else Config.oxtrust_admin_password
-
-                while True:
-                    ldapPass = self.getPrompt("Enter Password for LDAP Admin ({})".format(Config.ldap_binddn), Config.oxtrust_admin_password)
-
-                    if self.checkPassword(ldapPass):
-                        break
-                    else:
-                        print("Password must be at least 6 characters and include one uppercase letter, one lowercase letter, one digit, and one special character.")
-
-                Config.ldapPass = ldapPass
-
-            elif Config.wrends_install == InstallTypes.REMOTE:
-                while True:
-                    ldapHost = self.getPrompt("    LDAP hostname")
-                    ldapPass = self.getPrompt("    Password for '{0}'".format(Config.ldap_binddn))
-                    conn_check = self.check_remote_ldap(ldapHost, Config.ldap_binddn, ldapPass)
-                    if conn_check['result']:
-                        break
-                    else:
-                        print("    {}Error connecting to LDAP server: {} {}".format(colors.FAIL, conn_check['reason'], colors.ENDC))
-
-                Config.ldapPass = ldapPass
-                Config.ldap_hostname = ldapHost
-
-            if Config.cb_install == InstallTypes.REMOTE:
-                self.prompt_remote_couchbase()
-
-            elif 'couchbase' in available_backends:
-                promptForCB = self.getPrompt("Install Local Couchbase Server?", "Yes")[0].lower()
-                if promptForCB[0] == 'y':
-                    Config.cb_install = InstallTypes.LOCAL
-                    Config.isCouchbaseUserAdmin = True
-
-                    while True:
-                        cbPass = self.getPrompt("Enter Password for Couchbase {}admin{} user".format(colors.BOLD, colors.ENDC), Config.oxtrust_admin_password)
-
-                        if self.checkPassword(cbPass):
-                            break
-                        else:
-                            print("Password must be at least 6 characters and include one uppercase letter, one lowercase letter, one digit, and one special character.")
-
-                    Config.cb_password = cbPass
-
-            if not (Config.wrends_install or Config.cb_install):
-                print("{}You must have at least one DB backend. Exiting...{}".format(colors.WARNING, colors.ENDC))
-                sys.exit(False)
-
-            if Config.cb_install:
-                Config.cache_provider_type = 'NATIVE_PERSISTENCE'
-
-            if not Config.wrends_install and Config.cb_install:
-                Config.mappingLocations = { group: 'couchbase' for group in Config.couchbaseBucketDict }
-            elif Config.wrends_install and Config.cb_install:
-                self.promptForBackendMappings()
-
-            self.set_persistence_type()
+            self.prompt_for_backend()
 
             if Config.allowPreReleasedFeatures:
                 while True:
@@ -840,7 +935,6 @@ class PropertiesUtils(SetupUtils):
         self.promptForScimServer()
         self.promptForFido2Server()
         self.promptForShibIDP()
-        self.promptForOxAuthRP()
         self.promptForPassport()
 
 

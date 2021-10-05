@@ -4,11 +4,12 @@ import json
 import base64
 
 from setup_app import paths
-from setup_app.static import AppType, InstallOption
+from setup_app.static import AppType, InstallOption, BackendTypes
 from setup_app.utils import base
 from setup_app.config import Config
 from setup_app.utils.setup_utils import SetupUtils
 from setup_app.installers.base import BaseInstaller
+from setup_app.utils.ldif_utils import schema2json
 
 class RadiusInstaller(BaseInstaller, SetupUtils):
 
@@ -34,6 +35,8 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         self.config_generated = False
 
     def install(self):
+        if base.argsp.dummy:
+            return
 
         oxauth_updates = {
                         'oxauth_legacyIdTokenClaims': True, 
@@ -44,7 +47,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
 
 
     def render_import_templates(self):
-        
+
         scripts_dir = os.path.join(self.source_dir,'scripts')
         for scriptFile, scriptName in ( ('super_gluu_ro_session.py', 'super_gluu_ro_session_script'),
                             ('super_gluu_ro.py','super_gluu_ro_script'),
@@ -53,7 +56,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
             base64ScriptFile = self.generate_base64_file(scriptFilePath, 1)
             Config.templateRenderingDict[scriptName] = base64ScriptFile
 
-        
+
         for template in ('gluu_radius_base.ldif', 'gluu_radius_clients.ldif'):
             tmp_fn = os.path.join(self.source_dir, 'templates', template)
             self.renderTemplateInOut(tmp_fn, self.templates_folder, self.output_folder)
@@ -71,6 +74,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
     def update_backend(self):
         self.dbUtils.enable_service('gluuRadiusEnabled')
 
+
     def install_gluu_radius(self):
         self.check_for_download()
         Config.pbar.progress(self.service_name, "Installing Radius Server", False)
@@ -79,11 +83,11 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
 
         result = self.dbUtils.search('ou=clients,o=gluu', '(inum=1701.*)')
 
-        if result:
-            Config.gluu_radius_client_id = result['inum']
-            Config.gluu_ro_encoded_pw = result['oxAuthClientSecret']
-        else:
-            self.logIt("Can't find gluu_radius_client_id in database", True, True)
+        self.check_clients([('gluu_radius_client_id', '1701.')])
+
+        if not Config.get('gluu_ro_encoded_pw'):
+            Config.gluu_ro_pw = self.getPW()
+            Config.gluu_ro_encoded_pw = self.obscure(Config.gluu_ro_pw)
 
         radius_libs = self.source_files[1][0]
         radius_jar = self.source_files[0][0]
@@ -98,12 +102,20 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
 
         self.run(['unzip', '-n', '-q', radius_libs, '-d', self.radius_dir ])
         self.copyFile(radius_jar, self.radius_dir)
+        schema_ldif = os.path.join(self.source_dir, 'schema/98-radius.ldif')
 
-        if Config.mappingLocations['default'] == 'ldap':
-            schema_ldif = os.path.join(self.source_dir, 'schema/98-radius.ldif')
+        if self.dbUtils.moddb == BackendTypes.LDAP:
             self.dbUtils.import_schema(schema_ldif)
             self.dbUtils.ldap_conn.rebind()
-            
+
+        elif self.dbUtils.moddb in (BackendTypes.MYSQL, BackendTypes.PGSQL, BackendTypes.SPANNER):
+            schema_json_fn = schema2json(schema_ldif)
+            self.dbUtils.read_gluu_schema(others=[schema_json_fn])
+
+            base.current_app.RDBMInstaller.create_tables([schema_json_fn])
+            if Config.rdbm_type != 'spanner': 
+                self.dbUtils.rdm_automapper(force=True)
+
         self.dbUtils.import_ldif([ldif_file_server])
         
         self.copyFile(os.path.join(self.source_dir, 'etc/default/gluu-radius'), Config.osDefault)

@@ -3,10 +3,15 @@ class msg:
     MAIN_label = "System Information"
     HostForm_label = "Gathering Information"
     ServicesForm_label = "Select Services to Install"
-    DBBackendForm_label = "Choose to Store in OpenDJ"
+    DBBackendForm_label = "Choose Database Backend"
     StorageSelectionForm_label = "Hybrid Storage Selection"
     InstallStepsForm_label = "Installing Gluu Server"
     DisplaySummaryForm_label = "Gluu Server Installation Summary"
+    DBLDAPForm_label = "LDAP Options"
+    DBCBForm_label = "Couchbase Options"
+    DBRDBMForm_label = "RDBM Options"
+    DBSpannerForm_label = "Spanner Options"
+
     version_label = 'Gluu CE'
     decription = "Use setup.py to configure your Gluu Server and to add initial data required for oxAuth and oxTrust to start. If setup.properties is found in this folder, these properties will automatically be used instead of the interactive setup."
 
@@ -24,14 +29,29 @@ class msg:
     password_label = "Password"
     hosts_label = "Hosts"
     username_label = "Username"
-    
+
+    cb_username_label = "Couchbase Username"
+    cb_password_label = "Couchbase Password"
+    cb_hosts_label = "Couchbase Hosts"
+
+    rdbm_username_label = "{} User"
+    rdbm_password_label = "{} Password"
+    rdbm_host_label = "{} Host"
+    rdbm_db_label = "{} Database"
+    rdbm_db_port_label = "{} Port"
+
+    spanner_project_label = "Spanner Project"
+    spanner_instance_label = "Spanner Instance"
+    spanner_database_label = "Spanner Database"
+    spanner_cred_label = "Google application creditentals file"
+    spanner_emulator_host_label = "Emulator Host"
+
     installOxAuth_label = "Install OxAuth"
     installOxTrust_label = "Install OxTrust"
     backend_types_label = "Backend Types"
     java_type_label = "Java Type"
     installHttpd_label = "Install Apache" 
     installSaml_label = "Install Saml" 
-    installOxAuthRP_label = "Install OxAuthRP" 
     installPassport_label = "Install Passport" 
     installGluuRadius_label = "Install Radius"
     wrends_storages_label = "Store on OpenDJ"
@@ -40,7 +60,8 @@ class msg:
     installCasa_label = "Install Casa"
     installScimServer_label = "Install Scim"
     installFido2_label = "Install Fido2"
-    
+    chose_backend = "Backend"
+
     insufficient_free_disk_space = "Available free disk space was determined to be {1:0.1f} GB. This is less than the required disk space of {} GB."
     insufficient_mem_size = "RAM size was determined to be {:0.1f} GB. This is less than the suggested RAM size of {} GB"
     insufficient_number_of_cpu = "Available CPU Units found was {}. This is less than the required amount of {} CPU Units"
@@ -70,7 +91,7 @@ class msg:
     enter_valid_email = "Please enter valid email address"
     enter_valid_ip = "Please enter valid IP Address"
     enter_valid_countryCode = "Please enter two letter country code"
-
+    enter_valid_city = "Please enter at least two letters City"
 
     ask_installHttpd = "Install Apache HTTPD Server"
     ask_installSaml = "Install Shibboleth SAML IDP"
@@ -85,6 +106,9 @@ class msg:
 
 
     wrends_install_options = ["Don't Install","Install Locally","Use Remote OpenDJ"]
+    ldap_admin_password_label = "LDAP Admin Password"
+    ldap_remote_label =  "LDAP Hostname"
+    opendj_port_availibility = "Setup needs port{0} {1} {2} free. Please stop services listening {3} port{0}."
     oxd_url_label = "oxd Server URL"
     install_oxd_or_url_warning = "Please either enter oxd Server URL or check Install Oxd"
     oxd_connection_error = "Can't connect to oxd-server with url {}. Reason: {}"

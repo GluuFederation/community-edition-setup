@@ -1,10 +1,11 @@
-config.couchbase.couchbase_servers=%(hostname)s
-config.couchbase.couchbase_server_user=%(couchbase_server_user)s
-config.couchbase.encoded_couchbase_server_pw=%(encoded_couchbase_server_pw)s
+# Couchbase
+config.couchbase.couchbase_servers=%(cb_query_node)s
+config.couchbase.couchbase_server_user=%(couchebaseClusterAdmin)s
+config.couchbase.encoded_couchbase_server_pw=%(encoded_cb_password)s
 config.couchbase.couchbase_buckets=%(couchbase_buckets)s
-config.couchbase.default_bucket=%(default_bucket)s
+config.couchbase.default_bucket=%(couchbase_bucket_prefix)s
 
-config.bucket.default: %(default_bucket)s
+config.bucket.default: %(couchbase_bucket_prefix)s
 %(couchbase_test_mappings)s
 
 config.couchbase.encryption_method=%(encryption_method)s
