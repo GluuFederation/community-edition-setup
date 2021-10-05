@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 # The MIT License (MIT)
 #
@@ -24,11 +24,11 @@
 
 import sys, ldap, getpass
 
-bindDN = "cn=directory manager"
-bindPW = "ENTER DM PASSWORD HERE BEFORE YOU RUN THE SCRIPT"
 host = "localhost"
 port = 1636
 ssl = True
+bindDN = "cn=directory manager"
+bindPW = "$ Enter the password before running the script"
 base = "o=gluu"
 scope =  ldap.SCOPE_SUBTREE
 attrVal = None
@@ -40,7 +40,7 @@ try:
     attrVal = sys.argv[1]
     userPassword = sys.argv[2]
 except:
-    attrVal = input("Enter %s: " % attr)
+    attrVal = raw_input("Enter %s: " % attr)
     userPassword = getpass.getpass("Enter password: ")
 
 # CREAT THE FILTER: FOR EXAMPLE UID=*FOO* ; SUBSTRING SEARCH
@@ -60,19 +60,19 @@ res = l.search_s(base, scope, filter)
 l.unbind_s()
 
 if len(res)==0:
-    print("%s not found" % attrVal)
+    print "%s not found" % attrVal
     sys.exit(1)
 
 if len(res)>1:
-    print("Non deterministic uid. Found:")
+    print "Non deterministic uid. Found:"
     for tup in res:
-        print("\t%s" % tup[0])
+        print "\t%s" % tup[0]
     sys.exit(2)
 
 dn = res[0][0]
 
 # IF ONLY 1 MATCH IS FOUND: PRINT DN AND BIND AS THAT USER WITH THE DN
-print("Binding as: %s" % dn)
+print "Binding as: %s" % dn
 l = ldap.initialize("%s://%s:%s" % (protocol, host, port))
 l.protocol_version = ldap.VERSION3
 l.simple_bind_s(dn, userPassword)
