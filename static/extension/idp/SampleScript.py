@@ -1,84 +1,151 @@
-# oxAuth is available under the MIT License (2008). See http://opensource.org/licenses/MIT for full text.
-# Copyright (c) 2017, Gluu
+# oxShibboleth is available under the MIT License (2008). See http://opensource.org/licenses/MIT for full text.
+# Copyright (c) 2020, Gluu
 #
 # Author: Yuriy Movchan
 #
 
-from org.gluu.service.cdi.util import CdiUtil
-from org.gluu.oxauth.security import Identity
-from org.gluu.model.custom.script.type.authz import ConsentGatheringType
+from org.gluu.model.custom.script.type.idp import IdpType
 from org.gluu.util import StringHelper
+from org.gluu.idp.externalauth import AuthenticatedNameTranslator
+from org.gluu.idp.externalauth import ShibOxAuthAuthServlet
+from net.shibboleth.idp.authn.principal import UsernamePrincipal, IdPAttributePrincipal
+from net.shibboleth.idp.authn import ExternalAuthentication
+from net.shibboleth.idp.attribute import IdPAttribute, StringAttributeValue
+from net.shibboleth.idp.authn.context import AuthenticationContext, ExternalAuthenticationContext
+from net.shibboleth.idp.attribute.context import AttributeContext
+from javax.security.auth import Subject
+from java.util import Collections, HashMap, HashSet, ArrayList, Arrays
 
 import java
-import random
 
-class ConsentGathering(ConsentGatheringType):
+class IdpExtension(IdpType):
 
     def __init__(self, currentTimeMillis):
         self.currentTimeMillis = currentTimeMillis
 
     def init(self, customScript, configurationAttributes):
-        print "Consent-Gathering. Initializing ..."
-        print "Consent-Gathering. Initialized successfully"
+        print "Idp extension. Initialization"
+        
+        self.defaultNameTranslator = AuthenticatedNameTranslator()
 
+        self.allowedAcrsList = ArrayList()
+        if configurationAttributes.containsKey("allowed_acrs"):
+            allowed_acrs = configurationAttributes.get("allowed_acrs").getValue2()
+            allowed_acrs_list_array = StringHelper.split(allowed_acrs, ",")
+            self.allowedAcrsList = Arrays.asList(allowed_acrs_list_array)
+
+        print "Idp extension. Initialization. The property allowed_acrs is %s" % self.allowedAcrsList
+        
         return True
 
     def destroy(self, configurationAttributes):
-        print "Consent-Gathering. Destroying ..."
-        print "Consent-Gathering. Destroyed successfully"
-
+        print "Idp extension. Destroy"
         return True
 
     def getApiVersion(self):
-        return 1
+        return 13
 
-    # Main consent-gather method. Must return True (if gathering performed successfully) or False (if fail).
-    # All user entered values can be access via Map<String, String> context.getPageAttributes()
-    def authorize(self, step, context): # context is reference of org.gluu.oxauth.service.external.context.ConsentGatheringContext
-        print "Consent-Gathering. Authorizing..."
+    # Translate attributes from user profile
+    #   context is org.gluu.idp.externalauth.TranslateAttributesContext (https://github.com/GluuFederation/shib-oxauth-authn3/blob/master/src/main/java/org/gluu/idp/externalauth/TranslateAttributesContext.java)
+    #   configurationAttributes is java.util.Map<String, SimpleCustomProperty>
+    def translateAttributes(self, context, configurationAttributes):
+        print "Idp extension. Method: translateAttributes"
+        
+        # Return False to use default method
+        #return False
+        
+        request = context.getRequest()
+        userProfile = context.getUserProfile()
+        principalAttributes = self.defaultNameTranslator.produceIdpAttributePrincipal(userProfile.getAttributes())
+        print "Idp extension. Converted user profile: '%s' to attribute principal: '%s'" % (userProfile, principalAttributes)
 
-        if step == 1:
-            allowButton = context.getRequestParameters().get("authorizeForm:allowButton")
-            if (allowButton != None) and (len(allowButton) > 0):
-                print "Consent-Gathering. Authorization success for step 1"
-                return True
+        if not principalAttributes.isEmpty():
+            print "Idp extension. Found attributes from oxAuth. Processing..."
+            
+            # Start: Custom part
+            # Add givenName attribute
+            givenNameAttribute = IdPAttribute("oxEnrollmentCode")
+            givenNameAttribute.setValues(ArrayList(Arrays.asList(StringAttributeValue("Dummy"))))
+            principalAttributes.add(IdPAttributePrincipal(givenNameAttribute))
+            print "Idp extension. Updated attribute principal: '%s'" % principalAttributes
+            # End: Custom part
 
-            print "Consent-Gathering. Authorization declined for step 1"
-        elif step == 2:
-            allowButton = context.getRequestParameters().get("authorizeForm:allowButton")
-            if (allowButton != None) and (len(allowButton) > 0):
-                print "Consent-Gathering. Authorization success for step 2"
-                return True
+            principals = HashSet()
+            principals.addAll(principalAttributes)
+            principals.add(UsernamePrincipal(userProfile.getId()))
 
-            print "Consent-Gathering. Authorization declined for step 2"
+            request.setAttribute(ExternalAuthentication.SUBJECT_KEY, Subject(False, Collections.singleton(principals),
+                Collections.emptySet(), Collections.emptySet()))
 
+            print "Created an IdP subject instance with principals containing attributes for: '%s'" % userProfile.getId()
+
+            if False:
+                idpAttributes = ArrayList()
+                for principalAttribute in principalAttributes:
+                    idpAttributes.add(principalAttribute.getAttribute())
+    
+                request.setAttribute(ExternalAuthentication.ATTRIBUTES_KEY, idpAttributes)
+    
+                authenticationKey = context.getAuthenticationKey()
+                profileRequestContext = ExternalAuthentication.getProfileRequestContext(authenticationKey, request)
+                authContext = profileRequestContext.getSubcontext(AuthenticationContext)
+                extContext = authContext.getSubcontext(ExternalAuthenticationContext)
+    
+                extContext.setSubject(Subject(False, Collections.singleton(principals), Collections.emptySet(), Collections.emptySet()));
+    
+                extContext.getSubcontext(AttributeContext, True).setUnfilteredIdPAttributes(idpAttributes)
+                extContext.getSubcontext(AttributeContext).setIdPAttributes(idpAttributes)
+        else:
+            print "No attributes released from oxAuth. Creating an IdP principal for: '%s'" % userProfile.getId()
+            request.setAttribute(ExternalAuthentication.PRINCIPAL_NAME_KEY, userProfile.getId())
+
+        #Return True to specify that default method is not needed
         return False
 
-    def getNextStep(self, step, context):
-        return -1
+    # Update attributes before releasing them
+    #   context is org.gluu.idp.consent.processor.PostProcessAttributesContext (https://github.com/GluuFederation/shib-oxauth-authn3/blob/master/src/main/java/org/gluu/idp/consent/processor/PostProcessAttributesContext.java)
+    #   configurationAttributes is java.util.Map<String, SimpleCustomProperty>
+    def updateAttributes(self, context, configurationAttributes):
+        print "Idp extension. Method: updateAttributes"
+        attributeContext = context.getAttributeContext()
 
-    def prepareForStep(self, step, context):
-        if not context.isAuthenticated():
-            print "User is not authenticated. Aborting authorization flow ..."
-            return False
+        customAttributes = HashMap()
+        customAttributes.putAll(attributeContext.getIdPAttributes())
 
-        if step == 2:
-            pageAttributes = context.getPageAttributes()
-            
-            # Generate random consent gathering request
-            consentRequest = "Requested transaction #%s approval for the amount of sum $ %s.00" % ( random.randint(100000, 1000000), random.randint(1, 100) )
-            pageAttributes.put("consent_request", consentRequest)
-            return True
+        # Remove givenName attribute
+        customAttributes.remove("givenName")
+
+        # Update surname attribute
+        if customAttributes.containsKey("sn"):
+            customAttributes.get("sn").setValues(ArrayList(Arrays.asList(StringAttributeValue("Dummy"))))
+        
+        # Set updated attributes
+        attributeContext.setIdPAttributes(customAttributes.values())
 
         return True
 
-    def getStepsCount(self, context):
-        return 11
+    # Check before allowing user to log in
+    #   context is org.gluu.idp.externalauth.PostAuthenticationContext (https://github.com/GluuFederation/shib-oxauth-authn3/blob/master/src/main/java/org/gluu/idp/externalauth/PostAuthenticationContext.java)
+    #   configurationAttributes is java.util.Map<String, SimpleCustomProperty>
+    def postAuthentication(self, context, configurationAttributes):
+        print "Idp extension. Method: postAuthentication"
+        userProfile = context.getUserProfile()
+        authenticationContext = context.getAuthenticationContext()
+        
+        requestedAcr = None
+        if authenticationContext != None:
+            requestedAcr = authenticationContext.getAuthenticationStateMap().get(ShibOxAuthAuthServlet.OXAUTH_ACR_REQUESTED)
 
-    def getPageForStep(self, step, context):
-        if step == 1:
-            return "/authz/authorize.xhtml"
-        elif step == 2:
-            return "/authz/transaction.xhtml"
+        usedAcr = userProfile.getUsedAcr()
 
-        return ""
+        print "Idp extension. Method: postAuthentication. requestedAcr = %s, usedAcr = %s" % (requestedAcr, usedAcr)
+
+        if requestedAcr == None:
+            print "Idp extension. Method: postAuthentication. requestedAcr is not specified"
+            return True
+
+        if not self.allowedAcrsList.contains(usedAcr):
+            print "Idp extension. Method: postAuthentication. usedAcr '%s' is not allowed" % usedAcr
+            return False
+
+        return True
