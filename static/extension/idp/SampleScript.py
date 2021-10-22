@@ -97,3 +97,29 @@ class IdpExtension(IdpType):
             return False
 
         return True
+
+    # Check before allowing user to log in
+    #   context is org.gluu.idp.externalauth.PostAuthenticationContext (https://github.com/GluuFederation/shib-oxauth-authn3/blob/master/src/main/java/org/gluu/idp/externalauth/PostAuthenticationContext.java)
+    #   configurationAttributes is java.util.Map<String, SimpleCustomProperty>
+    def postAuthentication(self, context, configurationAttributes):
+        print "Idp extension. Method: postAuthentication"
+        userProfile = context.getUserProfile()
+        authenticationContext = context.getAuthenticationContext
+        
+        requestedAcr = None
+        if authenticationContext != None:
+            requestedAcr = authenticationContext.getAuthenticationStateMap().get(org.gluu.idp.externalauth.OXAUTH_ACR_REQUESTED)
+
+        usedAcr = userProfile.getUsedAcr()
+
+        print "Idp extension. Method: postAuthentication. requestedAcr = %s, usedAcr = %s" % (requestedAcr, usedAcr)
+
+        if requestedAcr == None:
+            print "Idp extension. Method: postAuthentication. requestedAcr is not specified"
+            return True
+
+        if not self.allowedAcrsList.contains(usedAcr):
+            print "Idp extension. Method: postAuthentication. usedAcr '%s' is not allowed" % usedAcr
+            return False
+
+        return True
