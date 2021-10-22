@@ -7,6 +7,7 @@
 from org.gluu.model.custom.script.type.idp import IdpType
 from org.gluu.util import StringHelper
 from org.gluu.idp.externalauth import AuthenticatedNameTranslator
+from org.gluu.idp.externalauth import ShibOxAuthAuthServlet
 from net.shibboleth.idp.authn.principal import UsernamePrincipal, IdPAttributePrincipal
 from net.shibboleth.idp.authn import ExternalAuthentication
 from net.shibboleth.idp.attribute import IdPAttribute, StringAttributeValue
@@ -42,7 +43,7 @@ class IdpExtension(IdpType):
         return True
 
     def getApiVersion(self):
-        return 12
+        return 13
 
     # Translate attributes from user profile
     #   context is org.gluu.idp.externalauth.TranslateAttributesContext (https://github.com/GluuFederation/shib-oxauth-authn3/blob/master/src/main/java/org/gluu/idp/externalauth/TranslateAttributesContext.java)
@@ -104,11 +105,11 @@ class IdpExtension(IdpType):
     def postAuthentication(self, context, configurationAttributes):
         print "Idp extension. Method: postAuthentication"
         userProfile = context.getUserProfile()
-        authenticationContext = context.getAuthenticationContext
+        authenticationContext = context.getAuthenticationContext()
         
         requestedAcr = None
         if authenticationContext != None:
-            requestedAcr = authenticationContext.getAuthenticationStateMap().get(org.gluu.idp.externalauth.OXAUTH_ACR_REQUESTED)
+            requestedAcr = authenticationContext.getAuthenticationStateMap().get(ShibOxAuthAuthServlet.OXAUTH_ACR_REQUESTED)
 
         usedAcr = userProfile.getUsedAcr()
 
