@@ -56,6 +56,8 @@ with open(os_release_fn) as f:
                     os_type = 'red'
                 elif 'ubuntu-core' in os_type:
                     os_type = 'ubuntu'
+                elif 'sles' in os_type:
+                    os_type = 'suse'                    
             elif row[0] == 'VERSION_ID':
                 os_version = row[1].split('.')[0]
 cmdline = False
@@ -93,7 +95,7 @@ except:
 try:
     import pymysql
 except:
-    if os_type in ('red', 'centos'):
+    if os_type in ('red', 'centos', 'suse'):
         missing_packages.append('python3-PyMySQL')
     else:
         missing_packages.append('python3-pymysql')
