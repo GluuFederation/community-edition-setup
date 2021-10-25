@@ -110,7 +110,7 @@ except:
 try:
     import pymysql
 except:
-    if os_type in ('red', 'centos'):
+    if os_type in ('red', 'centos', 'suse'):
         missing_packages.append('python3-PyMySQL')
     else:
         missing_packages.append('python3-pymysql')

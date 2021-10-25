@@ -28,5 +28,10 @@
   },
   "centos 8": {
       "optional": "",
-      "mondatory": "httpd mod_ssl curl wget tar xz unzip python3-ldap3 python3-requests python3-ruamel-yaml rsyslog python3-certifi python3-PyMySQL bzip2"}
+      "mondatory": "httpd mod_ssl curl wget tar xz unzip python3-ldap3 python3-requests python3-ruamel-yaml rsyslog python3-certifi python3-PyMySQL bzip2"
+  },
+  "suse 15": {
+      "optional": "",
+      "mondatory": "apache2 curl wget tar xz unzip python3-ldap3 python3-requests python3-ruamel.yaml rsyslog python3-certifi python3-PyMySQL bzip2"
+  }  
 }
