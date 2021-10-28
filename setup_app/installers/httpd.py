@@ -126,7 +126,6 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
                 if not os.path.isfile(mod_load_fn):
                     continue
                 with open(mod_load_fn) as f:
-                    print("Reading", mod_load_fn)
                     mod_load_content = f.readlines()
 
                 modified = False
