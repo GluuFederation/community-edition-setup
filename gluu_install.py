@@ -139,11 +139,12 @@ if missing_packages:
         os.system(cmd)
     elif deb_clone:
         os.system('{} update'.format(package_installer))
-    
+
     cmd = "{} install -y {}".format(package_installer, packages_str)
 
     if os_type+os_version == 'centos7':
         cmd = cmd.replace('python3-six', 'python36-six')
+        cmd = cmd.replace('python3-ruamel-yaml', 'python36-ruamel-yaml')
 
     os.system(cmd)
 
