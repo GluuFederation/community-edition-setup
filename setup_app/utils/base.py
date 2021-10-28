@@ -91,6 +91,10 @@ else:
     clone_type = 'deb'
     httpd_name = 'apache2'
 
+if os_type == 'suse':
+    httpd_name = 'apache2'
+
+
 if snap:
     snapctl = shutil.which('snapctl')
 
