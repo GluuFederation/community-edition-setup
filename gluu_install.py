@@ -137,7 +137,7 @@ if missing_packages:
     elif deb_clone:
         os.system('{} update'.format(package_installer))
     
-    cmd = "{} install -y {0}".format(package_installer, packages_str)
+    cmd = "{} install -y {}".format(package_installer, packages_str)
 
     if os_type+os_version == 'centos7':
         cmd = cmd.replace('python3-six', 'python36-six')
