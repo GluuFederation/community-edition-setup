@@ -58,9 +58,26 @@ with open(os_release_fn) as f:
                     os_type = 'red'
                 elif 'ubuntu-core' in os_type:
                     os_type = 'ubuntu'
+<<<<<<< HEAD
+=======
+                elif 'sles' in os_type:
+                    os_type = 'suse'
+>>>>>>> 9ad479e5... fix: installer for suse
             elif row[0] == 'VERSION_ID':
                 os_version = row[1].split('.')[0]
 cmdline = False
+
+if os_type in ('red', 'centos'):
+    package_installer = 'yum'
+elif os_type in ('ubuntu', 'debian'):
+    package_installer = 'apt'
+elif os_type in ('suse'):
+    package_installer = 'zypper'
+else:
+    print("Unsopported OS. Exiting ...")
+    sys.exit()
+
+print("OS type was determined as {}.".format(os_type))
 
 try:
     locale.setlocale(locale.LC_ALL, '')
@@ -108,6 +125,7 @@ if not shutil.which('tar'):
     missing_packages.append('tar')
 
 rpm_clone = shutil.which('rpm')
+deb_clone = shutil.which('deb')
 
 if missing_packages:
     packages_str = ' '.join(missing_packages)
@@ -116,17 +134,16 @@ if missing_packages:
         if result.strip() and result.strip().lower()[0] == 'n':
             sys.exit("Can't continue without installing these packages. Exiting ...")
 
-    if rpm_clone:
-        cmd = 'yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{}.noarch.rpm'.format(os_version)
+    if os_type in ('red', 'centos'):
+        cmd = '{} install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{}.noarch.rpm'.format(package_installer, os_version)
         os.system(cmd)
-        cmd = 'yum clean all'
+        cmd = '{} clean all'
         os.system(cmd)
-        cmd = "yum install -y {0}".format(packages_str)
-    else:
-        os.system('apt-get update')
-        cmd = "apt-get install -y {0}".format(packages_str)
+    elif deb_clone:
+        os.system('{} update'.format(package_installer))
+    
+    cmd = "{} install -y {0}".format(package_installer, packages_str)
 
-    print ("Installing package(s) with command: "+ cmd)
     if os_type+os_version == 'centos7':
         cmd = cmd.replace('python3-six', 'python36-six')
 
@@ -148,7 +165,11 @@ app_versions = {
     "PASSPORT_VERSION": "4.3.1", 
     "JYTHON_VERSION": "2.7.3",
     "OPENDJ_VERSION": "4.4.12",
+<<<<<<< HEAD
     "GIT_BRANCH": "master",
+=======
+    "SETUP_BRANCH": "version_4.3.0_suse",
+>>>>>>> 9ad479e5... fix: installer for suse
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7"
     }

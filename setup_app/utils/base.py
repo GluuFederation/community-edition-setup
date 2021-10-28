@@ -64,6 +64,11 @@ with open(os_release_fn) as f:
                     os_type = 'red'
                 elif 'ubuntu-core' in os_type:
                     os_type = 'ubuntu'
+<<<<<<< HEAD
+=======
+                elif 'sles' in os_type:
+                    os_type = 'suse'
+>>>>>>> 9ad479e5... fix: installer for suse
             elif row[0] == 'VERSION_ID':
                 os_version = row[1].split('.')[0]
 
