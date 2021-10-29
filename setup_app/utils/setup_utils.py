@@ -456,7 +456,7 @@ class SetupUtils(Crypto64):
         try:
             grpdb = grp.getgrnam(groupName)
         except KeyError:
-            createGroup(groupName)
+            self.createGroup(groupName)
             grpdb = grp.getgrnam(groupName)
         if userName in grpdb.gr_mem:
             self.logIt("User {} is already member of {}".format(userName, groupName))
