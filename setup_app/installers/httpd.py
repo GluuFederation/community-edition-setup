@@ -120,6 +120,16 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
             cmd_a2enflag = shutil.which('a2enflag')
             self.run([cmd_a2enflag, 'SSL'])
 
+            httpd_conf_fn = '/etc/apache2/httpd.conf'
+            httpd_conf_txt = self.readFile(httpd_conf_fn)
+            httpd_conf = httpd_conf_txt.splitlines()
+
+            for i, l in enumerate(httpd_conf[:]):
+                if l.strip().startswith('DirectoryIndex'):
+                    httpd_conf[i] = l.replace('DirectoryIndex', '#DirectoryIndex')
+
+            self.writeFile(httpd_conf_fn, '\n'.join(httpd_conf))
+
         else:
             modules_config_dir = '/etc/apache2/sysconfig.d' if base.os_type == 'suse' else '/etc/httpd/conf.modules.d'
             for mod_load_fn in glob.glob(os.path.join(modules_config_dir,'*')):
