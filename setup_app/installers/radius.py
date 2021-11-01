@@ -22,8 +22,8 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         self.register_progess()
 
         self.source_files = [
-                (os.path.join(Config.distGluuFolder, 'super-gluu-radius-server.jar'), 'https://ox.gluu.org/maven/org/gluu/super-gluu-radius-server/{0}/super-gluu-radius-server-{0}.jar'.format(Config.oxVersion)),
-                (os.path.join(Config.distGluuFolder, 'gluu-radius-libs.zip'),  'https://ox.gluu.org/maven/org/gluu/super-gluu-radius-server/{0}/super-gluu-radius-server-{0}-distribution.zip'.format(Config.oxVersion))
+                (os.path.join(Config.distGluuFolder, 'super-gluu-radius-server.jar'), Config.maven_root + '/maven/org/gluu/super-gluu-radius-server/{0}/super-gluu-radius-server-{0}.jar'.format(Config.oxVersion)),
+                (os.path.join(Config.distGluuFolder, 'gluu-radius-libs.zip'), Config.maven_root + '/maven/org/gluu/super-gluu-radius-server/{0}/super-gluu-radius-server-{0}-distribution.zip'.format(Config.oxVersion))
                 ]
 
         self.radius_dir = os.path.join(Config.gluuOptFolder, 'radius')

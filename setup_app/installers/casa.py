@@ -24,7 +24,7 @@ class CasaInstaller(JettyInstaller):
         self.register_progess()
         
         self.source_files = [
-                (os.path.join(Config.distGluuFolder, 'casa.war'), 'https://ox.gluu.org/maven/org/gluu/casa/{0}/casa-{0}.war'.format(Config.oxVersion))
+                (os.path.join(Config.distGluuFolder, 'casa.war'), Config.maven_root + '/maven/org/gluu/casa/{0}/casa-{0}.war'.format(Config.oxVersion))
                 ]
 
         self.templates_folder = os.path.join(Config.templateFolder, 'casa')

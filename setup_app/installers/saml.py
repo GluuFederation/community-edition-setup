@@ -20,9 +20,9 @@ class SamlInstaller(JettyInstaller):
         self.needdb = True
 
         self.source_files = [
-                (os.path.join(Config.distGluuFolder,'idp.war'), 'https://ox.gluu.org/maven/org/gluu/oxshibbolethIdp/{0}/oxshibbolethIdp-{0}.war'.format(Config.oxVersion)),
-                (os.path.join(Config.distGluuFolder,'idp3_cml_keygenerator.jar'), 'https://ox.gluu.org/maven/org/gluu/oxShibbolethKeyGenerator/{0}/oxShibbolethKeyGenerator-{0}.jar'.format(Config.oxVersion)),
-                (os.path.join(Config.distGluuFolder,'shibboleth-idp.jar'), 'https://ox.gluu.org/maven/org/gluu/oxShibbolethStatic/{0}/oxShibbolethStatic-{0}.jar'.format(Config.oxVersion)),
+                (os.path.join(Config.distGluuFolder,'idp.war'), Config.maven_root + '/maven/org/gluu/oxshibbolethIdp/{0}/oxshibbolethIdp-{0}.war'.format(Config.oxVersion)),
+                (os.path.join(Config.distGluuFolder,'idp3_cml_keygenerator.jar'), Config.maven_root + '/maven/org/gluu/oxShibbolethKeyGenerator/{0}/oxShibbolethKeyGenerator-{0}.jar'.format(Config.oxVersion)),
+                (os.path.join(Config.distGluuFolder,'shibboleth-idp.jar'), Config.maven_root + '/maven/org/gluu/oxShibbolethStatic/{0}/oxShibbolethStatic-{0}.jar'.format(Config.oxVersion)),
                 ]
 
         self.templates_folder = os.path.join(Config.templateFolder, 'idp')
