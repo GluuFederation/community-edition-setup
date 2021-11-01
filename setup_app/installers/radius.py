@@ -22,8 +22,8 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         self.register_progess()
 
         self.source_files = [
-                (os.path.join(Config.distGluuFolder, 'super-gluu-radius-server.jar'), Config.maven_root + '/maven/org/gluu/super-gluu-radius-server/{0}/super-gluu-radius-server-{0}.jar'.format(Config.oxVersion)),
-                (os.path.join(Config.distGluuFolder, 'gluu-radius-libs.zip'), Config.maven_root + '/maven/org/gluu/super-gluu-radius-server/{0}/super-gluu-radius-server-{0}-distribution.zip'.format(Config.oxVersion))
+                (os.path.join(Config.distGluuFolder, 'super-gluu-radius-server.jar'), 'https://ox.gluu.org/maven/org/gluu/super-gluu-radius-server/{0}/super-gluu-radius-server-{0}.jar'.format(Config.oxVersion)),
+                (os.path.join(Config.distGluuFolder, 'gluu-radius-libs.zip'),  'https://ox.gluu.org/maven/org/gluu/super-gluu-radius-server/{0}/super-gluu-radius-server-{0}-distribution.zip'.format(Config.oxVersion))
                 ]
 
         self.radius_dir = os.path.join(Config.gluuOptFolder, 'radius')
@@ -31,7 +31,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         self.conf_dir = os.path.join(Config.gluuBaseFolder, 'conf/radius/')
         self.templates_folder = os.path.join(Config.templateFolder, 'radius')
         self.output_folder = os.path.join(Config.outputFolder, 'radius')
-        self.schema_ldif = os.path.join(self.source_dir, 'schema/98-radius.ldif')
+
         self.config_generated = False
 
     def install(self):
@@ -91,14 +91,16 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
 
             ldif_file_server = os.path.join(self.output_folder, 'gluu_radius_server.ldif')
 
+
             self.renderTemplateInOut(ldif_file_server, self.templates_folder, self.output_folder)
 
+
             if self.dbUtils.moddb == BackendTypes.LDAP:
-                self.dbUtils.import_schema(self.schema_ldif)
+                self.dbUtils.import_schema(schema_ldif)
                 self.dbUtils.ldap_conn.rebind()
 
             elif self.dbUtils.moddb in (BackendTypes.MYSQL, BackendTypes.PGSQL, BackendTypes.SPANNER):
-                schema_json_fn = schema2json(self.schema_ldif)
+                schema_json_fn = schema2json(schema_ldif)
                 self.dbUtils.read_gluu_schema(others=[schema_json_fn])
 
                 base.current_app.RDBMInstaller.create_tables([schema_json_fn])
@@ -110,6 +112,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
             self.dbUtils.enable_script('5866-4202')
             self.dbUtils.enable_script('B8FD-4C11')
 
+
         radius_libs = self.source_files[1][0]
         radius_jar = self.source_files[0][0]
 
@@ -118,6 +121,8 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
 
         self.run(['unzip', '-n', '-q', radius_libs, '-d', self.radius_dir ])
         self.copyFile(radius_jar, self.radius_dir)
+        schema_ldif = os.path.join(self.source_dir, 'schema/98-radius.ldif')
+
 
         self.copyFile(os.path.join(self.source_dir, 'etc/default/gluu-radius'), Config.osDefault)
         self.copyFile(os.path.join(self.source_dir, 'etc/gluu/conf/radius/gluu-radius-logging.xml'), self.conf_dir)
@@ -133,7 +138,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         #create empty gluu-radius.private-key.pem
         gluu_radius_private_key_fn = os.path.join(Config.certFolder, 'gluu-radius.private-key.pem')
         self.writeFile(gluu_radius_private_key_fn, '')
-
+        
         self.run([paths.cmd_chown, '-R', 'radius:gluu', self.radius_dir])
         self.run([paths.cmd_chown, '-R', 'root:gluu', self.conf_dir])
         self.run([paths.cmd_chown, 'root:gluu', os.path.join(Config.gluuOptPythonFolder, 'libs/gluu_common.py')])
@@ -145,6 +150,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         self.run([paths.cmd_chmod, '660', os.path.join(Config.certFolder, 'gluu-radius.jks')])
         self.run([paths.cmd_chmod, '660', os.path.join(Config.certFolder, 'gluu-radius.private-key.pem')])
 
+        
         self.reload_daemon()
         self.enable()
 
