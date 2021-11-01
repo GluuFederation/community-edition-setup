@@ -30,6 +30,7 @@ class Config:
     jetty_home = '/opt/jetty'
     jetty_base = os.path.join(gluuOptFolder, 'jetty')
     installed_instance = False
+    maven_root = 'https://jenkins.gluu.org'
 
     @classmethod
     def get(self, attr, default=None):
