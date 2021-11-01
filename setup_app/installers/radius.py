@@ -78,24 +78,43 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
     def install_gluu_radius(self):
         self.check_for_download()
         Config.pbar.progress(self.service_name, "Installing Radius Server", False)
+        logs_dir = os.path.join(self.radius_dir,'logs')
 
-        self.dbUtils.bind()
+        if not base.argsp.dummy:
+            self.dbUtils.bind()
+            result = self.dbUtils.search('ou=clients,o=gluu', '(inum=1701.*)')
+            self.check_clients([('gluu_radius_client_id', '1701.')])
 
-        result = self.dbUtils.search('ou=clients,o=gluu', '(inum=1701.*)')
+            if not Config.get('gluu_ro_encoded_pw'):
+                Config.gluu_ro_pw = self.getPW()
+                Config.gluu_ro_encoded_pw = self.obscure(Config.gluu_ro_pw)
 
-        self.check_clients([('gluu_radius_client_id', '1701.')])
+            ldif_file_server = os.path.join(self.output_folder, 'gluu_radius_server.ldif')
 
-        if not Config.get('gluu_ro_encoded_pw'):
-            Config.gluu_ro_pw = self.getPW()
-            Config.gluu_ro_encoded_pw = self.obscure(Config.gluu_ro_pw)
+
+            self.renderTemplateInOut(ldif_file_server, self.templates_folder, self.output_folder)
+
+
+            if self.dbUtils.moddb == BackendTypes.LDAP:
+                self.dbUtils.import_schema(schema_ldif)
+                self.dbUtils.ldap_conn.rebind()
+
+            elif self.dbUtils.moddb in (BackendTypes.MYSQL, BackendTypes.PGSQL, BackendTypes.SPANNER):
+                schema_json_fn = schema2json(schema_ldif)
+                self.dbUtils.read_gluu_schema(others=[schema_json_fn])
+
+                base.current_app.RDBMInstaller.create_tables([schema_json_fn])
+                if Config.rdbm_type != 'spanner': 
+                    self.dbUtils.rdm_automapper(force=True)
+
+                self.dbUtils.import_ldif([ldif_file_server])
+
+            self.dbUtils.enable_script('5866-4202')
+            self.dbUtils.enable_script('B8FD-4C11')
+
 
         radius_libs = self.source_files[1][0]
         radius_jar = self.source_files[0][0]
-        ldif_file_server = os.path.join(self.output_folder, 'gluu_radius_server.ldif')
-        logs_dir = os.path.join(self.radius_dir,'logs')
-
-        self.renderTemplateInOut(ldif_file_server, self.templates_folder, self.output_folder)
-
 
         if not os.path.exists(logs_dir):
             self.run([paths.cmd_mkdir, '-p', logs_dir])
@@ -104,20 +123,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         self.copyFile(radius_jar, self.radius_dir)
         schema_ldif = os.path.join(self.source_dir, 'schema/98-radius.ldif')
 
-        if self.dbUtils.moddb == BackendTypes.LDAP:
-            self.dbUtils.import_schema(schema_ldif)
-            self.dbUtils.ldap_conn.rebind()
 
-        elif self.dbUtils.moddb in (BackendTypes.MYSQL, BackendTypes.PGSQL, BackendTypes.SPANNER):
-            schema_json_fn = schema2json(schema_ldif)
-            self.dbUtils.read_gluu_schema(others=[schema_json_fn])
-
-            base.current_app.RDBMInstaller.create_tables([schema_json_fn])
-            if Config.rdbm_type != 'spanner': 
-                self.dbUtils.rdm_automapper(force=True)
-
-        self.dbUtils.import_ldif([ldif_file_server])
-        
         self.copyFile(os.path.join(self.source_dir, 'etc/default/gluu-radius'), Config.osDefault)
         self.copyFile(os.path.join(self.source_dir, 'etc/gluu/conf/radius/gluu-radius-logging.xml'), self.conf_dir)
         self.copyFile(os.path.join(self.source_dir, 'scripts/gluu_common.py'), os.path.join(Config.gluuOptPythonFolder, 'libs'))
@@ -125,7 +131,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         if not base.snap:
             self.copyFile(os.path.join(self.source_dir, 'etc/init.d/gluu-radius'), '/etc/init.d')
             self.run([paths.cmd_chmod, '+x', '/etc/init.d/gluu-radius'])
-        
+
             if base.os_name != 'ubuntu16':
                 self.copyFile(os.path.join(self.source_dir, 'systemd/gluu-radius.service'), '/etc/systemd/system')
 
@@ -144,8 +150,6 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         self.run([paths.cmd_chmod, '660', os.path.join(Config.certFolder, 'gluu-radius.jks')])
         self.run([paths.cmd_chmod, '660', os.path.join(Config.certFolder, 'gluu-radius.private-key.pem')])
 
-        self.dbUtils.enable_script('5866-4202')
-        self.dbUtils.enable_script('B8FD-4C11')
         
         self.reload_daemon()
         self.enable()
@@ -171,7 +175,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
 
         radius_jwt_pass = self.obscure(Config.radius_jwt_pass)
         radius_jks_fn = os.path.join(Config.certFolder, 'gluu-radius.jks')
-        
+
         raidus_client_jwks = self.gen_openid_jwks_jks_keys(radius_jks_fn, Config.radius_jwt_pass)
         raidus_client_jwks = ''.join(raidus_client_jwks).replace('\'','').replace(',,',',').replace('{,','{')
         raidus_client_jwks = json.loads(raidus_client_jwks)
@@ -182,7 +186,6 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         for k in raidus_client_jwks['keys']:
             if k.get('alg') == 'RS512':
                 Config.templateRenderingDict['radius_jwt_keyId'] = k['kid']
-        
 
     def installed(self):
         return os.path.exists(self.radius_dir)
