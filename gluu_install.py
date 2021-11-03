@@ -58,13 +58,11 @@ with open(os_release_fn) as f:
                     os_type = 'red'
                 elif 'ubuntu-core' in os_type:
                     os_type = 'ubuntu'
-<<<<<<< HEAD
-=======
                 elif 'sles' in os_type:
                     os_type = 'suse'
->>>>>>> 9ad479e5... fix: installer for suse
             elif row[0] == 'VERSION_ID':
                 os_version = row[1].split('.')[0]
+
 cmdline = False
 
 if os_type in ('red', 'centos'):
@@ -165,11 +163,8 @@ app_versions = {
     "PASSPORT_VERSION": "4.3.1", 
     "JYTHON_VERSION": "2.7.3",
     "OPENDJ_VERSION": "4.4.12",
-<<<<<<< HEAD
     "GIT_BRANCH": "master",
-=======
-    "SETUP_BRANCH": "version_4.3.0_suse",
->>>>>>> 9ad479e5... fix: installer for suse
+    "SETUP_BRANCH": "version_4.3.0",
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7"
     }
