@@ -744,12 +744,11 @@
   },
   "oxAuthUmaScope": {
     "mysql": {
-      "size": 128,
+      "size": 768,
       "type": "VARCHAR"
     },
     "spanner": {
-      "size": 128,
-      "type": "STRING"
+      "type": "STRING(MAX)"
     }
   },
   "oxSoftwareStatement": {
@@ -857,7 +856,7 @@
     "mysql": {
       "type": "TINYTEXT"
     },
-  "pgsql": {
+    "pgsql": {
       "type": "TEXT"
     },
     "spanner": {
