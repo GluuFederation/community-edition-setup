@@ -283,15 +283,16 @@ def do_installation():
                 Config.ldapTrustStoreFn = Config.opendj_p12_fn
                 Config.encoded_ldapTrustStorePass = Config.encoded_opendj_p12_pass
                 Config.oxTrustConfigGeneration = 'true' if Config.installSaml else 'false'
-    
+
                 gluuInstaller.prepare_base64_extension_scripts()
                 gluuInstaller.render_templates()
                 gluuInstaller.render_configuration_template()
 
-                if not base.snap:
-                    gluuInstaller.update_hostname()
-                    gluuInstaller.set_ulimits()
+            if not base.snap:
+                gluuInstaller.update_hostname()
+                gluuInstaller.set_ulimits()
 
+            if not base.argsp.dummy:
                 gluuInstaller.copy_output()
                 gluuInstaller.setup_init_scripts()
 
