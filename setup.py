@@ -292,7 +292,9 @@ def do_installation():
                 gluuInstaller.update_hostname()
                 gluuInstaller.set_ulimits()
 
-            if not base.argsp.dummy:
+            if base.argsp.dummy:
+                gluuInstaller.renderTemplateInOut('hostname', Config.templateFolder, '/etc')
+            else:
                 gluuInstaller.copy_output()
                 gluuInstaller.setup_init_scripts()
 
