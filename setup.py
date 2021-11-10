@@ -156,6 +156,20 @@ if os.path.exists(Config.gluu_properties_fn):
         collectProperties.save()
         sys.exit()
 
+
+    for service, arg in (
+                    ('installSaml', 'install_shib'),
+                    ('installPassport', 'install_passport'),
+                    ('installGluuRadius', 'install_gluu_radius'),
+                    ('installOxd', 'install_oxd'),
+                    ('installCasa', 'install_casa'),
+                    ('installScimServer', 'install_scim'),
+                    ('installFido2', 'install_fido2')
+                    ):
+        if getattr(base.argsp, arg):
+            Config.addPostSetupService.append(service)
+
+
 if not Config.noPrompt and not GSA and not Config.installed_instance and not setup_loaded:
     propertiesUtils.promptForProperties()
 
@@ -215,7 +229,7 @@ if argsp.x:
 
 if not GSA:
 
-    if Config.wrends_install == static.InstallTypes.LOCAL:
+    if Config.wrends_install == static.InstallTypes.LOCAL and not Config.installed_instance:
         # check if opendj ports are available
         used_ports = base.check_port_available((1389, 4444, 1636))
         s, aux = ('', 'is') if len(used_ports) == 1 else ('s', 'are')
