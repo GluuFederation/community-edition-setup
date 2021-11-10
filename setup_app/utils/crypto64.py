@@ -111,7 +111,7 @@ class Crypto64:
                 extension_name = ep.stem.lower()
                 extension_script_name = '{}_{}'.format(extension_type, extension_name)
 
-                if extensions and extension_script_name in extensions:
+                if extensions and extension_script_name not in extensions:
                     continue
 
                 # Prepare key for dictionary
