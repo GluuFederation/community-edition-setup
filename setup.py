@@ -125,7 +125,7 @@ gluuInstaller = GluuInstaller()
 gluuInstaller.initialize()
 
 
-if not GSA:
+if not GSA and not os.path.exists(Config.gluu_properties_fn):
     print()
     print("Installing Gluu Server...\n\nFor more info see:\n  {}  \n  {}\n".format(paths.LOG_FILE, paths.LOG_ERROR_FILE))
     print("Detected OS     :  {} {} {}".format('snap' if base.snap else '', base.os_type, base.os_version))
@@ -155,19 +155,6 @@ if os.path.exists(Config.gluu_properties_fn):
         print("Saving collected properties")
         collectProperties.save()
         sys.exit()
-
-
-    for service, arg in (
-                    ('installSaml', 'install_shib'),
-                    ('installPassport', 'install_passport'),
-                    ('installGluuRadius', 'install_gluu_radius'),
-                    ('installOxd', 'install_oxd'),
-                    ('installCasa', 'install_casa'),
-                    ('installScimServer', 'install_scim'),
-                    ('installFido2', 'install_fido2')
-                    ):
-        if getattr(base.argsp, arg):
-            Config.addPostSetupService.append(service)
 
 
 if not Config.noPrompt and not GSA and not Config.installed_instance and not setup_loaded:
@@ -207,6 +194,26 @@ if Config.installed_instance:
 
     if not GSA:
         propertiesUtils.promptForProperties()
+
+        for service, arg in (
+                        ('installSaml', 'install_shib'),
+                        ('installPassport', 'install_passport'),
+                        ('installGluuRadius', 'install_gluu_radius'),
+                        ('installOxd', 'install_oxd'),
+                        ('installCasa', 'install_casa'),
+                        ('installScimServer', 'install_scim'),
+                        ('installFido2', 'install_fido2')
+                        ):
+            if getattr(base.argsp, arg):
+                Config.addPostSetupService.append(service)
+
+                if service in Config.non_setup_properties['service_enable_dict']:
+                    for attribute in Config.non_setup_properties['service_enable_dict'][service]:
+                        setattr(Config, attribute, 'true')
+
+            if 'installCasa' in Config.addPostSetupService and not 'installOxd' in Config.addPostSetupService and not oxdInstaller.installed():
+                Config.addPostSetupService.append('installOxd')
+
 
         if not Config.addPostSetupService:
             print("No service was selected to install. Exiting ...")
@@ -297,7 +304,7 @@ def do_installation():
                 Config.ldapTrustStoreFn = Config.opendj_p12_fn
                 Config.encoded_ldapTrustStorePass = Config.encoded_opendj_p12_pass
                 Config.oxTrustConfigGeneration = 'true' if Config.installSaml else 'false'
-    
+
                 gluuInstaller.prepare_base64_extension_scripts()
                 gluuInstaller.render_templates()
                 gluuInstaller.render_configuration_template()

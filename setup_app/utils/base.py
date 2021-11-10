@@ -289,7 +289,7 @@ def find_script_names(ldif_file):
                 result = rec.search(l)
                 if result:
                     name_list.append(result.groups()[0])
-                
+
     return name_list
 
 def download(url, dst):

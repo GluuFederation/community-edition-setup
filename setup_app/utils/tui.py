@@ -314,12 +314,6 @@ class ServicesForm(GluuSetupForm):
 
 
     def nextButtonPressed(self):
-        service_enable_dict = {
-                        'installPassport': ['gluuPassportEnabled', 'enable_scim_access_policy'],
-                        'installGluuRadius': ['gluuRadiusEnabled', 'oxauth_legacyIdTokenClaims', 'oxauth_openidScopeBackwardCompatibility', 'enableRadiusScripts'],
-                        'installSaml': ['gluuSamlEnabled'],
-                        'installScimServer': ['gluuScimEnabled', 'enable_scim_access_policy'],
-                        }
 
         for service in self.services:
             cb_val = getattr(self, service).value
@@ -328,8 +322,8 @@ class ServicesForm(GluuSetupForm):
                 Config.addPostSetupService.append(service)
 
             setattr(Config, service, cb_val)
-            if cb_val and service in service_enable_dict:
-                for attribute in service_enable_dict[service]:
+            if cb_val and service in Config.non_setup_properties['service_enable_dict']:
+                for attribute in Config.non_setup_properties['service_enable_dict'][service]:
                     setattr(Config, attribute, 'true')
 
         if Config.installed_instance and not Config.addPostSetupService:
