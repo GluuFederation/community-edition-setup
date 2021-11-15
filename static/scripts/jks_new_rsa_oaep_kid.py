@@ -2,6 +2,12 @@ import os
 import json
 import ldap3
 import zipfile
+import subprocess
+
+def run(args):
+    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output = p.communicate()
+    return output[0].decode('utf-8').strip('\n')
 
 
 ldap_info = {}
@@ -14,8 +20,8 @@ with open('/etc/gluu/conf/gluu-ldap.properties') as f:
                 n = ls.find(':')
                 ldap_info[k] = ls[n+1:].strip()
 
+ldap_info['bindPassword'] = run(['/opt/gluu/bin/encode.py', '-D', ldap_info['bindPassword']])
 
-ldap_info['bindPassword'] = os.popen('/opt/gluu/bin/encode.py -D ' + ldap_info['bindPassword']).readline().strip('\n')
 ldap_host, ldap_port = ldap_info['servers'].split(',')[0].strip().split(':')
 
 
@@ -70,15 +76,25 @@ for i in range(3-len(verl)):
 
 ox_version = '.'.join(verl)
 
-key_gen_cmd = '{} -Dlog4j.defaultInitOverride=true -cp {} org.gluu.oxauth.util.KeyGenerator -keystore {} -keypasswd {} -sig_keys RS256 -enc_keys RSA-OAEP -dnname "CN=oxAuth CA Certificates" -expiration 365'.format(java_path, ox_key_tool_path, new_key_fn, new_key_pw)
-
+key_gen_cmd = [
+    java_path,
+    '-Dlog4j.defaultInitOverride=true',
+    '-cp', ox_key_tool_path,
+    'org.gluu.oxauth.util.KeyGenerator',
+    '-keystore', new_key_fn,
+    '-keypasswd', new_key_pw,
+    '-sig_keys', 'RS256',
+    '-enc_keys', 'RSA-OAEP',
+    '-dnname', 'CN=oxAuth CA Certificates',
+    '-expiration', '365'
+    ]
 
 if ox_version > '4.4.0':
-    key_gen_cmd += ' -key_length 4096'
+    key_gen_cmd.append('-key_length')
+    key_gen_cmd.append('4096')
 
-
-print("Generating new temporary jks", new_key_fn, key_gen_cmd)
-result = os.popen(key_gen_cmd).read()
+print("Generating new temporary jks", new_key_fn)
+result = run(key_gen_cmd)
 keys_json = json.loads(result)
 
 for jkey in keys_json['keys']:
@@ -102,7 +118,7 @@ key_import_cmd = [
     ]
 
 print("Importing kid {} to {}".format(new_kid, keyStoreFile))
-os.system(' '.join(key_import_cmd))
+run(key_import_cmd)
 
 print("Updating oxAuthConfWebKeys")
 oxAuthConfWebKeys_s = json.dumps(oxAuthConfWebKeys, indent=2)
