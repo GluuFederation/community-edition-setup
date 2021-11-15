@@ -5,7 +5,7 @@ import zipfile
 import subprocess
 
 def run(args):
-    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
     output = p.communicate()
     return output[0].decode('utf-8').strip('\n')
 
