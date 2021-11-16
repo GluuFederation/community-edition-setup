@@ -99,11 +99,11 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
                         os.symlink(conf_fn, target_fn)
 
         elif base.clone_type == 'deb':
-            for mod_load_fn in glob.glob('/etc/apache2/mods-enabled/*'):
+            for mod_load_fn in glob.glob('/etc/apache2/mods-enabled/*.load'):
                 mod_load_base_name = os.path.basename(mod_load_fn)
                 f_name, f_ext = os.path.splitext(mod_load_base_name)
                 if not f_name in mods_enabled:
-                    self.run([cmd_a2dismod, mod_load_fn])
+                    self.run([cmd_a2dismod, '-f', f_name])
             for amod in mods_enabled:
                 if os.path.exists('/etc/apache2/mods-available/{}.load'.format(amod)):
                     self.run([cmd_a2enmod, amod])
@@ -113,7 +113,7 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
             current_modules = result.strip().split()
             for amod in current_modules:
                 if not amod in mods_enabled:
-                    self.run([cmd_a2dismod, amod])
+                    self.run([cmd_a2dismod, '-f', amod])
             for amod in mods_enabled:
                 if not amod in current_modules:
                     self.run([cmd_a2enmod, amod])
