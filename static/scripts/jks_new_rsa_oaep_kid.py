@@ -5,8 +5,8 @@ import zipfile
 import subprocess
 
 def run(args):
-    output = subprocess.check_output(args, shell=False)
-    return output.decode().strip('\n')
+    (_, output) = subprocess.getstatusoutput(' '.join(args))
+    return output.strip('\n')
 
 ldap_info = {}
 
