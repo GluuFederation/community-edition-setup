@@ -725,13 +725,10 @@
   },
   "oxAuthLogoutURI": {
     "mysql": {
-      "type": "TINYTEXT"
-    },
-    "pgsql": {
-      "type": "TEXT"
+      "type": "JSON"
     },
     "spanner": {
-      "type": "STRING(MAX)"
+      "type": "ARRAY<STRING(MAX)>"
     }
   },
   "oxAuthJwks": {
