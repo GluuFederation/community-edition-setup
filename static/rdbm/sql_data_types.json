@@ -723,14 +723,6 @@
       "type": "STRING"
     }
   },
-  "oxAuthLogoutURI": {
-    "mysql": {
-      "type": "JSON"
-    },
-    "spanner": {
-      "type": "ARRAY<STRING(MAX)>"
-    }
-  },
   "oxAuthJwks": {
     "mysql": {
       "type": "TEXT"
