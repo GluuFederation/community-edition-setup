@@ -65,7 +65,7 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
             self.copyFile(tmp_fn, '/var/www/html')
 
         # we only need these modules
-        mods_enabled = ['env', 'proxy_http', 'access_compat', 'alias', 'authn_core', 'authz_core', 'authz_host', 'headers', 'mime', 'mpm_event', 'proxy', 'proxy_ajp', 'security2', 'reqtimeout', 'setenvif', 'socache_shmcb', 'ssl', 'unique_id']
+        mods_enabled = ['env', 'proxy_http', 'access_compat', 'alias', 'authn_core', 'authz_core', 'authz_host', 'headers', 'mime', 'mpm_event', 'proxy', 'proxy_ajp', 'security2', 'reqtimeout', 'setenvif', 'socache_shmcb', 'ssl', 'unique_id', 'rewrite']
 
 
         if base.snap:
@@ -120,7 +120,7 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
                 mod_load_base_name = os.path.basename(mod_load_fn)
                 f_name, f_ext = os.path.splitext(mod_load_base_name)
                 if not f_name in mods_enabled:
-                    self.run([cmd_a2dismod, mod_load_fn])
+                    self.run([cmd_a2dismod, '-f', f_name])
 
             for amod in mods_enabled:
                 if os.path.exists('/etc/apache2/mods-available/{}.load'.format(amod)):
