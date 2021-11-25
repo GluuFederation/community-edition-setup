@@ -971,7 +971,6 @@ class DisplaySummaryForm(GluuSetupForm):
 
 
     def do_beforeEditing(self):
-        ldap_storages_widget = getattr(self, 'ldap_storages')
 
         for wn in self.myfields_1+self.myfields_2:
             w = getattr(self, wn)
