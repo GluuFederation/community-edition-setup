@@ -152,7 +152,7 @@ class MAIN(GluuSetupForm):
 
         self.description_label = self.add(npyscreen.MultiLineEdit, value='\n'.join(desc_wrap), max_height=6, rely=2, editable=False)
         self.description_label.autowrap = True
-        os_string = "{} {} {}".format('snap' if base.snap else '', base.os_type, base.os_version)
+        os_string = "{} {} {}".format('snap' if base.snap else '', base.os_type, base.os_version).strip()
         self.os_type = self.add(npyscreen.TitleFixedText, name=msg.os_type_label, begin_entry_at=18, value=os_string, editable=False)
         self.init_type = self.add(npyscreen.TitleFixedText, name=msg.init_type_label, begin_entry_at=18, value=base.os_initdaemon, editable=False)
         self.httpd_type = self.add(npyscreen.TitleFixedText, name=msg.httpd_type_label, begin_entry_at=18, value=base.httpd_name, field_width=40, editable=False)
@@ -314,12 +314,6 @@ class ServicesForm(GluuSetupForm):
 
 
     def nextButtonPressed(self):
-        service_enable_dict = {
-                        'installPassport': ['gluuPassportEnabled', 'enable_scim_access_policy'],
-                        'installGluuRadius': ['gluuRadiusEnabled', 'oxauth_legacyIdTokenClaims', 'oxauth_openidScopeBackwardCompatibility', 'enableRadiusScripts'],
-                        'installSaml': ['gluuSamlEnabled'],
-                        'installScimServer': ['gluuScimEnabled', 'enable_scim_access_policy'],
-                        }
 
         for service in self.services:
             cb_val = getattr(self, service).value
@@ -328,8 +322,8 @@ class ServicesForm(GluuSetupForm):
                 Config.addPostSetupService.append(service)
 
             setattr(Config, service, cb_val)
-            if cb_val and service in service_enable_dict:
-                for attribute in service_enable_dict[service]:
+            if cb_val and service in Config.non_setup_properties['service_enable_dict']:
+                for attribute in Config.non_setup_properties['service_enable_dict'][service]:
                     setattr(Config, attribute, 'true')
 
         if Config.installed_instance and not Config.addPostSetupService:

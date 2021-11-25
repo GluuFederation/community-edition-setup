@@ -89,6 +89,10 @@ else:
     clone_type = 'deb'
     httpd_name = 'apache2'
 
+if os_type == 'suse':
+    httpd_name = 'apache2'
+
+
 if snap:
     snapctl = shutil.which('snapctl')
 
@@ -285,7 +289,7 @@ def find_script_names(ldif_file):
                 result = rec.search(l)
                 if result:
                     name_list.append(result.groups()[0])
-                
+
     return name_list
 
 def download(url, dst):

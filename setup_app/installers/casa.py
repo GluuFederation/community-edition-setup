@@ -22,9 +22,9 @@ class CasaInstaller(JettyInstaller):
         self.install_type = InstallOption.OPTONAL
         self.install_var = 'installCasa'
         self.register_progess()
-        
+
         self.source_files = [
-                (os.path.join(Config.distGluuFolder, 'casa.war'), 'https://ox.gluu.org/maven/org/gluu/casa/{0}/casa-{0}.war'.format(Config.oxVersion))
+                (os.path.join(Config.distGluuFolder, 'casa.war'), Config.maven_root + '/maven/org/gluu/casa/{0}/casa-{0}.war'.format(Config.oxVersion))
                 ]
 
         self.templates_folder = os.path.join(Config.templateFolder, 'casa')
@@ -35,6 +35,9 @@ class CasaInstaller(JettyInstaller):
         self.casa_jetty_dir = os.path.join(self.jetty_base, 'casa')
 
     def install(self):
+
+        if not os.path.exists(self.pylib_folder):
+            self.run([paths.cmd_mkdir , '-p', self.pylib_folder])
 
         self.run([paths.cmd_chmod , 'g+w', self.pylib_folder])
         self.logIt("Copying casa.war into jetty webapps folder...")

@@ -31,7 +31,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         self.conf_dir = os.path.join(Config.gluuBaseFolder, 'conf/radius/')
         self.templates_folder = os.path.join(Config.templateFolder, 'radius')
         self.output_folder = os.path.join(Config.outputFolder, 'radius')
-
+        self.schema_ldif = os.path.join(self.source_dir, 'schema/98-radius.ldif')
         self.config_generated = False
 
     def install(self):
@@ -96,11 +96,11 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
 
 
             if self.dbUtils.moddb == BackendTypes.LDAP:
-                self.dbUtils.import_schema(schema_ldif)
+                self.dbUtils.import_schema(self.schema_ldif)
                 self.dbUtils.ldap_conn.rebind()
 
             elif self.dbUtils.moddb in (BackendTypes.MYSQL, BackendTypes.PGSQL, BackendTypes.SPANNER):
-                schema_json_fn = schema2json(schema_ldif)
+                schema_json_fn = schema2json(self.schema_ldif)
                 self.dbUtils.read_gluu_schema(others=[schema_json_fn])
 
                 base.current_app.RDBMInstaller.create_tables([schema_json_fn])
@@ -121,7 +121,6 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
 
         self.run(['unzip', '-n', '-q', radius_libs, '-d', self.radius_dir ])
         self.copyFile(radius_jar, self.radius_dir)
-        schema_ldif = os.path.join(self.source_dir, 'schema/98-radius.ldif')
 
 
         self.copyFile(os.path.join(self.source_dir, 'etc/default/gluu-radius'), Config.osDefault)

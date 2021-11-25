@@ -11,6 +11,8 @@ import argparse
 import csv
 import locale
 import re
+import shlex
+import subprocess
 from urllib import request
 from urllib.parse import urljoin
 
@@ -26,12 +28,14 @@ if '-a' in sys.argv:
     parser.add_argument('--jetty-version', help="Jetty verison. For example 11.0.6")
 parser.add_argument('-n', help="No prompt", action='store_true')
 parser.add_argument('--no-setup', help="Do not launch setup", action='store_true')
-parser.add_argument('--dist-server-base', help="Download server", default='https://ox.gluu.org/maven')
+parser.add_argument('--dist-server-base', help="Download server", default='https://jenkins.gluu.org/maven')
 
 
 argsp = parser.parse_args()
 
 maven_base = argsp.dist_server_base.rstrip('/')
+maven_root = '/'.join(maven_base.split('/')[:-1]).rstrip('/')
+
 
 cur_dir = os.path.dirname(os.path.realpath(__file__))
 gluu_app_dir = '/opt/dist/gluu'
@@ -56,9 +60,24 @@ with open(os_release_fn) as f:
                     os_type = 'red'
                 elif 'ubuntu-core' in os_type:
                     os_type = 'ubuntu'
+                elif 'sles' in os_type:
+                    os_type = 'suse'
             elif row[0] == 'VERSION_ID':
                 os_version = row[1].split('.')[0]
+
 cmdline = False
+
+if os_type in ('red', 'centos'):
+    package_installer = 'yum'
+elif os_type in ('ubuntu', 'debian'):
+    package_installer = 'apt'
+elif os_type in ('suse'):
+    package_installer = 'zypper'
+else:
+    print("Unsopported OS. Exiting ...")
+    sys.exit()
+
+print("OS type was determined as {}.".format(os_type))
 
 try:
     locale.setlocale(locale.LC_ALL, '')
@@ -93,7 +112,7 @@ except:
 try:
     import pymysql
 except:
-    if os_type in ('red', 'centos'):
+    if os_type in ('red', 'centos', 'suse'):
         missing_packages.append('python3-PyMySQL')
     else:
         missing_packages.append('python3-pymysql')
@@ -106,6 +125,7 @@ if not shutil.which('tar'):
     missing_packages.append('tar')
 
 rpm_clone = shutil.which('rpm')
+deb_clone = shutil.which('deb')
 
 if missing_packages:
     packages_str = ' '.join(missing_packages)
@@ -114,19 +134,19 @@ if missing_packages:
         if result.strip() and result.strip().lower()[0] == 'n':
             sys.exit("Can't continue without installing these packages. Exiting ...")
 
-    if rpm_clone:
-        cmd = 'yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{}.noarch.rpm'.format(os_version)
+    if os_type in ('red', 'centos'):
+        cmd = '{} install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{}.noarch.rpm'.format(package_installer, os_version)
         os.system(cmd)
-        cmd = 'yum clean all'
+        cmd = '{} clean all'
         os.system(cmd)
-        cmd = "yum install -y {0}".format(packages_str)
-    else:
-        os.system('apt-get update')
-        cmd = "apt-get install -y {0}".format(packages_str)
+    elif deb_clone:
+        subprocess.run(shlex.split('{} update'.format(package_installer)))
 
-    print ("Installing package(s) with command: "+ cmd)
+    cmd = "{} install -y {}".format(package_installer, packages_str)
+
     if os_type+os_version == 'centos7':
         cmd = cmd.replace('python3-six', 'python36-six')
+        cmd = cmd.replace('python3-ruamel-yaml', 'python36-ruamel-yaml')
 
     os.system(cmd)
 
@@ -138,15 +158,15 @@ if not os.path.exists(scripts_dir):
 jetty_home = '/opt/gluu/jetty'
 services = ['casa.service', 'identity.service', 'opendj.service', 'oxauth.service', 'passport.service', 'fido2.service', 'idp.service', 'oxd-server.service', 'scim.service']
 app_versions = {
-    "JETTY_VERSION": "9.4.43.v20210629", 
-    "AMAZON_CORRETTO_VERSION": "11.0.8.10.1", 
+    "JETTY_VERSION": "9.4.44.v20210927", 
+    "AMAZON_CORRETTO_VERSION": "11.0.13.8.1", 
     "OX_GITVERISON": "-SNAPSHOT", 
     "NODE_VERSION": "v14.16.1",
     "OX_VERSION": "4.3.1", 
-    "PASSPORT_VERSION": "4.2.2", 
+    "PASSPORT_VERSION": "4.3.1", 
     "JYTHON_VERSION": "2.7.3",
     "OPENDJ_VERSION": "4.4.12",
-    "GIT_BRANCH": "master",
+    "SETUP_BRANCH": "version_4.3.1",
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7"
     }
@@ -264,7 +284,7 @@ def package_oxd():
     oxd_tmp_root = '/tmp/{}'.format(os.urandom(5).hex())
     oxd_tmp_dir = os.path.join(oxd_tmp_root, 'oxd-server')
     download(maven_base + '/org/gluu/oxd-server/{0}{1}/oxd-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), oxd_zip_fn)
-    download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/master/package/systemd/oxd-server.service', os.path.join(oxd_tmp_dir, 'oxd-server.service'))
+    download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/version_{}/package/systemd/oxd-server.service'.format(app_versions['OX_VERSION']), os.path.join(oxd_tmp_dir, 'oxd-server.service'))
     cmd = 'unzip -qqo {} -d {}'.format(oxd_zip_fn, oxd_tmp_dir)
     print("Excuting", cmd)
     os.system(cmd)
@@ -282,7 +302,7 @@ def package_oxd():
 if not argsp.u:
     download('https://corretto.aws/downloads/resources/{0}/amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION']), os.path.join(app_dir, 'amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION'])))
     download('https://repo1.maven.org/maven2/org/eclipse/jetty/{1}/{0}/{1}-{0}.tar.gz'.format(app_versions['JETTY_VERSION'], jetty_dist_string), os.path.join(app_dir,'{1}-{0}.tar.gz'.format(app_versions['JETTY_VERSION'], jetty_dist_string)))
-    download('https://ox.gluu.org/maven/org/gluufederation/jython-installer/{0}/jython-installer-{0}.jar'.format(app_versions['JYTHON_VERSION']), os.path.join(app_dir, 'jython-installer-{0}.jar'.format(app_versions['JYTHON_VERSION'])))
+    download(maven_base + '/org/gluufederation/jython-installer/{0}/jython-installer-{0}.jar'.format(app_versions['JYTHON_VERSION']), os.path.join(app_dir, 'jython-installer-{0}.jar'.format(app_versions['JYTHON_VERSION'])))
     download('https://nodejs.org/dist/{0}/node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION']), os.path.join(app_dir, 'node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION'])))
     download('https://github.com/npcole/npyscreen/archive/master.zip', os.path.join(app_dir, 'npyscreen-master.zip'))
     download(maven_base + '/org/gluufederation/opendj/opendj-server-legacy/{0}/opendj-server-legacy-{0}.zip'.format(app_versions['OPENDJ_VERSION']), os.path.join(app_dir,'opendj-server-{0}.zip'.format(app_versions['OPENDJ_VERSION'])))
@@ -292,16 +312,16 @@ if not argsp.u:
     download(maven_base + '/org/gluu/casa/{0}{1}/casa-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'casa.war'))
     download('https://repo1.maven.org/maven2/com/twilio/sdk/twilio/{0}/twilio-{0}.jar'.format(app_versions['TWILIO_VERSION']), os.path.join(gluu_app_dir,'twilio-{0}.jar'.format(app_versions['TWILIO_VERSION'])))
     download('https://repo1.maven.org/maven2/org/jsmpp/jsmpp/{0}/jsmpp-{0}.jar'.format(app_versions['JSMPP_VERSION']), os.path.join(gluu_app_dir,'jsmpp-{0}.jar'.format(app_versions['JSMPP_VERSION'])))
-    download('https://github.com/GluuFederation/casa/raw/{}/extras/casa.pub'.format(app_versions['GIT_BRANCH']), os.path.join(gluu_app_dir,'casa.pub'))
-    download('https://raw.githubusercontent.com/GluuFederation/casa/master/plugins/account-linking/extras/login.xhtml', os.path.join(gluu_app_dir,'login.xhtml'))
-    download('https://raw.githubusercontent.com/GluuFederation/casa/master/plugins/account-linking/extras/casa.py', os.path.join(gluu_app_dir,'casa.py'))
+    download('https://github.com/GluuFederation/casa/raw/{}/extras/casa.pub'.format(app_versions['SETUP_BRANCH']), os.path.join(gluu_app_dir,'casa.pub'))
+    download('https://raw.githubusercontent.com/GluuFederation/casa/version_{}/plugins/account-linking/extras/login.xhtml'.format(app_versions['OX_VERSION']), os.path.join(gluu_app_dir,'login.xhtml'))
+    download('https://raw.githubusercontent.com/GluuFederation/casa/version_{}/plugins/account-linking/extras/casa.py'.format(app_versions['OX_VERSION']), os.path.join(gluu_app_dir,'casa.py'))
     download('https://raw.githubusercontent.com/GluuFederation/gluu-snap/master/facter/facter', os.path.join(gluu_app_dir,'facter'))
     download(maven_base + '/org/gluu/scim-server/{0}{1}/scim-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'scim.war'))
     download(maven_base + '/org/gluu/fido2-server/{0}{1}/fido2-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'fido2.war'))
-    download('https://raw.githubusercontent.com/GluuFederation/oxd/master/debian/oxd-server', os.path.join(gluu_app_dir,'oxd-server-start.sh'))
-    download('https://github.com/GluuFederation/community-edition-setup/archive/{}.zip'.format(app_versions['GIT_BRANCH']), os.path.join(gluu_app_dir,'community-edition-setup.zip'))
-    download('https://ox.gluu.org/npm/passport/passport-{}.tgz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport.tgz'))
-    download('https://ox.gluu.org/npm/passport/passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION'])))
+    download('https://raw.githubusercontent.com/GluuFederation/oxd/version_{}/debian/oxd-server'.format(app_versions['OX_VERSION']), os.path.join(gluu_app_dir,'oxd-server-start.sh'))
+    download('https://github.com/GluuFederation/community-edition-setup/archive/{}.zip'.format(app_versions['SETUP_BRANCH']), os.path.join(gluu_app_dir,'community-edition-setup.zip'))
+    download(maven_root + '/npm/passport/passport-{}.tgz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport.tgz'))
+    download(maven_root + '/npm/passport/passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION'])))
     download(maven_base + '/org/gluu/oxShibbolethStatic/{0}{1}/oxShibbolethStatic-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'shibboleth-idp.jar'))
     download(maven_base + '/org/gluu/oxshibbolethIdp/{0}{1}/oxshibbolethIdp-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'idp.war'))
     download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'super-gluu-radius-server.jar'))

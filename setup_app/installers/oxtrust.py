@@ -17,7 +17,7 @@ class OxtrustInstaller(JettyInstaller):
         self.register_progess()
 
         self.source_files = [
-                (os.path.join(Config.distGluuFolder,'identity.war'), 'https://ox.gluu.org/maven/org/gluu/oxtrust-server/%s/oxtrust-server-%s.war' % (Config.oxVersion, Config.oxVersion))
+                (os.path.join(Config.distGluuFolder,'identity.war'), Config.maven_root + '/maven/org/gluu/oxtrust-server/%s/oxtrust-server-%s.war' % (Config.oxVersion, Config.oxVersion))
                 ]
 
         self.templates_folder = os.path.join(Config.templateFolder, 'oxtrust')
