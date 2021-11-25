@@ -37,9 +37,9 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                 txt += 'Install oxTrust'.ljust(30) + repr(Config.installOxTrust).rjust(35) + "\n"
 
                 bc = []
-                if Config.wrends_install:
+                if Config.ldap_install:
                     t_ = 'opendj'
-                    if Config.wrends_install == InstallTypes.REMOTE:
+                    if Config.ldap_install == InstallTypes.REMOTE:
                         t_ += '[R]'
                     bc.append(t_)
 

@@ -1,5 +1,5 @@
 class msg:
-    
+
     MAIN_label = "System Information"
     HostForm_label = "Gathering Information"
     ServicesForm_label = "Select Services to Install"
@@ -54,7 +54,7 @@ class msg:
     installSaml_label = "Install Saml" 
     installPassport_label = "Install Passport" 
     installGluuRadius_label = "Install Radius"
-    wrends_storages_label = "Store on OpenDJ"
+    ldap_storages_label = "Store on OpenDJ"
     installing_label = "Current"
     installOxd_label = "Install Oxd"
     installCasa_label = "Install Casa"
@@ -100,12 +100,12 @@ class msg:
     ask_installGluuRadius = "Install Gluu Radius"
     ask_installCasa = "Install Casa"
     ask_installOxd = "Install Oxd"
-    ask_wrends_install = "Install OpenDJ"
+    ask_ldap_install = "Install OpenDJ"
     ask_installScimServer = "Install Scim Server"
     ask_installFido2 = "Install Fido2"
 
 
-    wrends_install_options = ["Don't Install","Install Locally","Use Remote OpenDJ"]
+    ldap_install_options = ["Don't Install","Install Locally","Use Remote OpenDJ"]
     ldap_admin_password_label = "LDAP Admin Password"
     ldap_remote_label =  "LDAP Hostname"
     opendj_port_availibility = "Setup needs port{0} {1} {2} free. Please stop services listening {3} port{0}."

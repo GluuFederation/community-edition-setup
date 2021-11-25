@@ -63,7 +63,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
     def load_test_data(self):
         Config.pbar.progress(self.service_name, "Loading Test Data", False)
         # we need ldap rebind
-        if Config.wrends_install:
+        if Config.ldap_install:
             try:
                 self.dbUtils.ldap_conn.unbind()
             except:
@@ -329,7 +329,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
             self.dbUtils.cbm.exec_query('CREATE INDEX def_gluu_myCustomAttr2 ON `gluu`(myCustomAttr2) USING GSI WITH {"defer_build":true}')
             self.dbUtils.cbm.exec_query('BUILD INDEX ON `gluu` (def_gluu_myCustomAttr1, def_gluu_myCustomAttr2)')
 
-        if Config.wrends_install:
+        if Config.ldap_install:
             try:
                 self.dbUtils.ldap_conn.unbind()
             except:

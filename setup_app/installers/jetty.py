@@ -260,7 +260,7 @@ class JettyInstaller(BaseInstaller, SetupUtils):
         def calulate_total_weigth(withopendj=True):
             total_weigth = 0
 
-            if Config.wrends_install == InstallTypes.LOCAL and withopendj:
+            if Config.ldap_install == InstallTypes.LOCAL and withopendj:
                 total_weigth += Config.app_mem_weigths['opendj']['weigth']
 
             for app in installedComponents:
@@ -270,7 +270,7 @@ class JettyInstaller(BaseInstaller, SetupUtils):
 
         total_weigth = calulate_total_weigth()
 
-        if Config.wrends_install == InstallTypes.LOCAL:
+        if Config.ldap_install == InstallTypes.LOCAL:
             opendj_max_ram = round(Config.app_mem_weigths['opendj']['weigth'] * application_max_ram /total_weigth)
 
             if opendj_max_ram < Config.opendj_ram:
@@ -278,8 +278,8 @@ class JettyInstaller(BaseInstaller, SetupUtils):
                 opendj_max_ram = Config.opendj_ram
                 application_max_ram -= Config.opendj_ram
 
-            os.environ['ce_wrends_xms'] = str(Config.app_mem_weigths['opendj']['min'])
-            os.environ['ce_wrends_xmx'] = str(opendj_max_ram)
+            os.environ['ce_ldap_xms'] = str(Config.app_mem_weigths['opendj']['min'])
+            os.environ['ce_ldap_xmx'] = str(opendj_max_ram)
 
         for app in installedComponents:
             app_max_mem = round(Config.app_mem_weigths[app]['weigth'] * application_max_ram /total_weigth)

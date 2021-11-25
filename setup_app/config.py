@@ -130,7 +130,7 @@ class Config:
         self.encoded_cb_password = ''
 
         #DB installation types
-        self.wrends_install = InstallTypes.LOCAL
+        self.ldap_install = InstallTypes.LOCAL
         self.cb_install = InstallTypes.NONE
         self.rdbm_install = False
 
