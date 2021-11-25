@@ -236,7 +236,7 @@ if argsp.x:
 
 if not GSA:
 
-    if Config.wrends_install == static.InstallTypes.LOCAL and not Config.installed_instance:
+    if Config.ldap_install == static.InstallTypes.LOCAL and not Config.installed_instance:
         # check if opendj ports are available
         used_ports = base.check_port_available((1389, 4444, 1636))
         s, aux = ('', 'is') if len(used_ports) == 1 else ('s', 'are')
@@ -318,7 +318,7 @@ def do_installation():
 
                 # Installing gluu components
 
-                if Config.wrends_install:
+                if Config.ldap_install:
                     openDjInstaller.start_installation()
 
                 if Config.cb_install:

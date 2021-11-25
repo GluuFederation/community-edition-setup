@@ -493,7 +493,7 @@ class SetupUtils(Crypto64):
         if Config.persistence_type == 'couchbase' or 'default' in couchbase_mappings:
             changeTo = 'couchbase-server'
 
-        if Config.wrends_install == InstallTypes.REMOTE or Config.cb_install == InstallTypes.REMOTE:
+        if Config.ldap_install == InstallTypes.REMOTE or Config.cb_install == InstallTypes.REMOTE:
             changeTo = ''
 
         if changeTo != None:
