@@ -11,6 +11,8 @@ import argparse
 import csv
 import locale
 import re
+import shlex
+import subprocess
 from urllib import request
 from urllib.parse import urljoin
 
@@ -138,7 +140,7 @@ if missing_packages:
         cmd = '{} clean all'
         os.system(cmd)
     elif deb_clone:
-        os.system('{} update'.format(package_installer))
+        subprocess.run(shlex.split('{} update'.format(package_installer)))
 
     cmd = "{} install -y {}".format(package_installer, packages_str)
 
