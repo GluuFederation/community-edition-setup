@@ -17,6 +17,9 @@ class colors:
 class BackendTypes:
     LDAP      = 1
     COUCHBASE = 2
+    MYSQL     = 3
+    PGSQL     = 4
+    SPANNER   = 5
 
 class AppType:
     APPLICATION = 1

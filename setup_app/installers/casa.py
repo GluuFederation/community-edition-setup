@@ -22,9 +22,9 @@ class CasaInstaller(JettyInstaller):
         self.install_type = InstallOption.OPTONAL
         self.install_var = 'installCasa'
         self.register_progess()
-        
+
         self.source_files = [
-                (os.path.join(Config.distGluuFolder, 'casa.war'), 'https://ox.gluu.org/maven/org/gluu/casa/{0}/casa-{0}.war'.format(Config.oxVersion))
+                (os.path.join(Config.distGluuFolder, 'casa.war'), Config.maven_root + '/maven/org/gluu/casa/{0}/casa-{0}.war'.format(Config.oxVersion))
                 ]
 
         self.templates_folder = os.path.join(Config.templateFolder, 'casa')
@@ -36,13 +36,16 @@ class CasaInstaller(JettyInstaller):
 
     def install(self):
 
+        if not os.path.exists(self.pylib_folder):
+            self.run([paths.cmd_mkdir , '-p', self.pylib_folder])
+
         self.run([paths.cmd_chmod , 'g+w', self.pylib_folder])
         self.logIt("Copying casa.war into jetty webapps folder...")
         self.installJettyService(self.jetty_app_configuration['casa'])
 
         jettyServiceWebapps = os.path.join(self.casa_jetty_dir, 'webapps')
         self.copyFile(self.source_files[0][0], jettyServiceWebapps)
-
+        self.war_for_jetty10(os.path.join(jettyServiceWebapps, os.path.basename(self.source_files[0][0])))
         jettyServiceOxAuthCustomLibsPath = os.path.join(self.jetty_base,
                                                         "oxauth", 
                                                         "custom/libs"
@@ -56,60 +59,63 @@ class CasaInstaller(JettyInstaller):
 
         self.run([paths.cmd_chown, '-R', 'jetty:jetty', jettyServiceOxAuthCustomLibsPath])
 
-        #Adding twilio jar path to oxauth.xml
-        oxauth_xml_fn = os.path.join(self.jetty_base,  'oxauth/webapps/oxauth.xml')
-        if os.path.exists(oxauth_xml_fn):
-            
-            class CommentedTreeBuilder(ElementTree.TreeBuilder):
-                def comment(self, data):
-                    self.start(ElementTree.Comment, {})
-                    self.data(data)
-                    self.end(ElementTree.Comment)
+        if not base.argsp.dummy:
 
-            parser = ElementTree.XMLParser(target=CommentedTreeBuilder())
-            tree = ElementTree.parse(oxauth_xml_fn, parser)
-            root = tree.getroot()
+            #Adding twilio jar path to oxauth.xml
+            oxauth_xml_fn = os.path.join(self.jetty_base,  'oxauth/webapps/oxauth.xml')
+            if os.path.exists(oxauth_xml_fn):
+                
+                class CommentedTreeBuilder(ElementTree.TreeBuilder):
+                    def comment(self, data):
+                        self.start(ElementTree.Comment, {})
+                        self.data(data)
+                        self.end(ElementTree.Comment)
 
-            xml_headers = '<?xml version="1.0"  encoding="ISO-8859-1"?>\n<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">\n\n'
+                parser = ElementTree.XMLParser(target=CommentedTreeBuilder())
+                tree = ElementTree.parse(oxauth_xml_fn, parser)
+                root = tree.getroot()
 
-            for element in root:
-                if element.tag == 'Set' and element.attrib.get('name') == 'extraClasspath':
-                    break
-            else:
-                element = ElementTree.SubElement(root, 'Set', name='extraClasspath')
-                element.text = ''
+                xml_headers = '<?xml version="1.0"  encoding="ISO-8859-1"?>\n<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">\n\n'
 
-            extraClasspath_list = element.text.split(',')
+                for element in root:
+                    if element.tag == 'Set' and element.attrib.get('name') == 'extraClasspath':
+                        break
+                else:
+                    element = ElementTree.SubElement(root, 'Set', name='extraClasspath')
+                    element.text = ''
 
-            for ecp in extraClasspath_list[:]:
-                if (not ecp) or re.search('twilio-(.*)\.jar', ecp) or re.search('jsmpp-(.*)\.jar', ecp):
-                    extraClasspath_list.remove(ecp)
+                extraClasspath_list = element.text.split(',')
 
-            extraClasspath_list.append('./custom/libs/{}'.format(os.path.basename(twillo_package)))
-            extraClasspath_list.append('./custom/libs/{}'.format(os.path.basename(jsmpp_package)))
-            element.text = ','.join(extraClasspath_list)
+                for ecp in extraClasspath_list[:]:
+                    if (not ecp) or re.search('twilio-(.*)\.jar', ecp) or re.search('jsmpp-(.*)\.jar', ecp):
+                        extraClasspath_list.remove(ecp)
 
-            self.writeFile(oxauth_xml_fn, xml_headers+ElementTree.tostring(root).decode('utf-8'))
-        
-        self.import_oxd_certificate()
-        
+                extraClasspath_list.append('./custom/libs/{}'.format(os.path.basename(twillo_package)))
+                extraClasspath_list.append('./custom/libs/{}'.format(os.path.basename(jsmpp_package)))
+                element.text = ','.join(extraClasspath_list)
+
+                self.writeFile(oxauth_xml_fn, xml_headers+ElementTree.tostring(root).decode('utf-8'))
+
+            self.import_oxd_certificate()
+
         self.enable('casa')
 
     def copy_static(self):
+
         for script_fn in glob.glob(os.path.join(Config.staticFolder, 'casa/scripts/*.*')):
             self.run(['cp', script_fn, self.pylib_folder])
 
-    def render_import_templates(self):
-
+    def render_import_templates(self, import_script=True):
         scripts_template = os.path.join(self.templates_folder, os.path.basename(self.ldif_scripts))
         extensions = base.find_script_names(scripts_template)
         self.prepare_base64_extension_scripts(extensions=extensions)
-        
+
         ldif_files = (self.ldif, self.ldif_scripts)
         for tmp in ldif_files:
             self.renderTemplateInOut(tmp, self.templates_folder, self.output_folder)
 
-        self.dbUtils.import_ldif(ldif_files)
+        if import_script:
+            self.dbUtils.import_ldif(ldif_files)
 
 
     def import_oxd_certificate(self):
@@ -142,9 +148,9 @@ class CasaInstaller(JettyInstaller):
             oxd_alias = 'oxd_' + oxd_hostname.replace('.','_')
             oxd_cert_tmp_fn = '/tmp/{}.crt'.format(oxd_alias)
             self.writeFile(oxd_cert_tmp_fn, oxd_cert)
-            
+
             self.run([Config.cmd_keytool, '-import', '-trustcacerts', '-keystore', 
-                            '/opt/jre/jre/lib/security/cacerts', '-storepass', 'changeit', 
+                            Config.defaultTrustStoreFN, '-storepass', 'changeit', 
                             '-noprompt', '-alias', oxd_alias, '-file', oxd_cert_tmp_fn])
             
             os.remove(oxd_cert_tmp_fn)

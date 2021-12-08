@@ -20,8 +20,8 @@ class PassportInstaller(NodeInstaller):
 
         passport_version = Config.oxVersion.replace('-SNAPSHOT','').replace('.Final','')
         self.source_files = [
-                (os.path.join(Config.distGluuFolder, 'passport.tgz'), 'https://ox.gluu.org/npm/passport/passport-{}.tgz'.format(passport_version)),
-                (os.path.join(Config.distGluuFolder, 'passport-node_modules.tar.gz'), 'https://ox.gluu.org/npm/passport/passport-version_{}-node_modules.tar.gz'.format(passport_version))
+                (os.path.join(Config.distGluuFolder, 'passport.tgz'), Config.maven_root + '/npm/passport/passport-{}.tgz'.format(passport_version)),
+                (os.path.join(Config.distGluuFolder, 'passport-node_modules.tar.gz'), Config.maven_root + '/npm/passport/passport-version_{}-node_modules.tar.gz'.format(passport_version))
                 ]
 
         self.gluu_passport_base = os.path.join(self.node_base, 'passport')
@@ -47,7 +47,6 @@ class PassportInstaller(NodeInstaller):
 
 
     def install(self):
-        self.logIt("Installing passport", pbar=self.service_name)
         self.logIt("Preparing passport service base folders")
         self.run([paths.cmd_mkdir, '-p', self.gluu_passport_base])
 
@@ -135,12 +134,6 @@ class PassportInstaller(NodeInstaller):
         # create certificates
         self.gen_cert('passport-sp', Config.passportSpKeyPass, 'ldap', Config.ldap_hostname)
 
-        # set owner and mode of certificate files
-        cert_files = glob.glob(os.path.join(Config.certFolder, 'passport*'))
-        for fn in cert_files:
-            self.run([paths.cmd_chmod, '500', fn])
-            self.run([paths.cmd_chown, 'root:gluu', fn])
-
         Config.passport_rs_client_jwks = self.gen_openid_jwks_jks_keys(self.passport_rs_client_jks_fn, Config.passport_rs_client_jks_pass)
         Config.templateRenderingDict['passport_rs_client_base64_jwks'] = self.generate_base64_string(Config.passport_rs_client_jwks, 1)
 
@@ -158,6 +151,11 @@ class PassportInstaller(NodeInstaller):
 
         self.export_openid_key(self.passport_rp_client_jks_fn, Config.passport_rp_client_jks_pass, Config.passport_rp_client_cert_alias, self.passport_rp_client_cert_fn)
 
+        # set owner and mode of certificate files
+        cert_files = glob.glob(os.path.join(Config.certFolder, 'passport*'))
+        for fn in cert_files:
+            self.run([paths.cmd_chmod, '440', fn])
+            self.run([paths.cmd_chown, 'root:gluu', fn])
 
     def render_import_templates(self):
 

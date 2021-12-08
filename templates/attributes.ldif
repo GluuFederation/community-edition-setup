@@ -218,8 +218,7 @@ urn: http://openid.net/specs/openid-connect-core-1_0.html/StandardClaims/gen
  der
 
 dn: inum=98FC,ou=attributes,o=gluu
-description:: RW5kLVVzZXIncyBiaXJ0aGRheSwgcmVwcmVzZW50ZWQgYXMgYW4gSVNPIDg2MD
- E6MjAwNCBbSVNPODYwMeKAkTIwMDRdIFlZWVktTU0tREQgZm9ybWF0Lg==
+description: End-User's birthday, represented as an ISO 8601:2004 [ISO8601] YYYY-MM-DD format.
 displayName: Birthdate
 gluuAttributeEditType: user
 gluuAttributeEditType: admin
@@ -278,14 +277,12 @@ urn: http://openid.net/specs/openid-connect-core-1_0.html/StandardClaims/zon
  einfo
 
 dn: inum=36D9,ou=attributes,o=gluu
-description:: RW5kLVVzZXIncyBsb2NhbGUsIHJlcHJlc2VudGVkIGFzIGEgQkNQNDcgKFJGQz
- U2NDYpIGxhbmd1YWdlIHRhZy4gVGhpcyBpcyB0eXBpY2FsbHkgYW5JU08gNjM5LTEgQWxwaGEtM
- iBbSVNPNjM54oCRMV0gbGFuZ3VhZ2UgY29kZSBpbiBsb3dlcmNhc2UgYW5kIGFuIElTTyAzMTY2
- LTEgQWxwaGEtMmNvdW50cnkgY29kZSBpbiB1cHBlcmNhc2UsIHNlcGFyYXRlZCBieSBhIGRhc2g
- uIEZvciBleGFtcGxlLCBlbi1VUyBvciBmci1DQS4gQXMgYSBjb21wYXRpYmlsaXR5IG5vdGUsc2
- 9tZSBpbXBsZW1lbnRhdGlvbnMgaGF2ZSB1c2VkIGFuIHVuZGVyc2NvcmUgYXMgdGhlIHNlcGFyY
- XRvciByYXRoZXIgdGhhbiBhIGRhc2gsIGZvciBleGFtcGxlLCBlbl9VUztSZWx5aW5nIFBhcnRp
- ZXMgTUFZIGNob29zZSB0byBhY2NlcHQgdGhpcyBsb2NhbGUgc3ludGF4IGFzIHdlbGwu
+description: End-User's locale, represented as a BCP47 (RFC5646) language tag.
+ This is typically anISO 639-1 Alpha-2 [ISO639] language code in lowercase and
+ an ISO 3166-1 Alpha-2country code in uppercase, separated by a dash. For example,
+ en-US or fr-CA. As a compatibility note,some implementations have used an underscore
+ as the separator rather than a dash, for example, en_US;Relying Parties MAY choose
+ to accept this locale syntax as well.
 displayName: Locale
 gluuAttributeEditType: user
 gluuAttributeEditType: admin
@@ -1138,9 +1135,7 @@ description: Specifies the person's affiliation within a particular security
  alName since both identify a security domain. Multiple "@" signsare not rec
  ommended, but in any case, the first occurrence of the "@" sign starting fr
  om theleft is to be taken as the delimiter between components. Thus, user i
- dentifier is to the left,security domain to the right of the first "@". Thi
- s parsing rule conforms to the POSIX "greedy"disambiguation method in regul
- ar expression processing.
+ dentifier is to the left,security domain to the right of the first "@".
 displayName: eduPersonScopedAffiliation
 gluuAttributeEditType: admin
 gluuAttributeName: eduPersonScopedAffiliation
@@ -1262,7 +1257,7 @@ gluuAttributeEditType: admin
 gluuAttributeEditType: user
 gluuAttributeName: gluuIMAPData
 gluuAttributeOrigin: gluuPerson
-gluuAttributeType: imapdata
+gluuAttributeType: json
 gluuAttributeViewType: admin
 gluuAttributeViewType: user
 gluuSAML1URI: urn:mace:dir:attribute-def:gluuIMAPData

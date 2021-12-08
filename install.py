@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
+import sys
+sys.path.append('/usr/lib/python3.6/gluu-packaged/')
+
 import site
 import re
 import glob
-import sys
 import os
 import subprocess
 import argparse
@@ -18,6 +20,7 @@ from urllib.parse import urljoin
 
 run_time = time.strftime("%Y-%m-%d_%H-%M-%S")
 ces_dir = '/install/community-edition-setup'
+app_dir = '/opt/dist/app'
 
 parser = argparse.ArgumentParser(description="This script extracts community-edition-setup package and runs setup.py without arguments")
 parser.add_argument('-o', help="download latest package from github and override current community-edition-setup", action='store_true')
@@ -98,6 +101,10 @@ post_setup = '/install/community-edition-setup/post-setup-add-components.py'
 if os.path.exists(post_setup):
     os.chmod(post_setup, 33261)
 
+gluu_install = '/install/community-edition-setup/gluu_install.py'
+if os.path.exists(gluu_install):
+    os.remove(gluu_install)
+
 if argsp.o:
     npy_download_link = 'https://github.com/npcole/npyscreen/archive/master.zip'
     result = requests.get(npy_download_link, allow_redirects=True)
@@ -115,7 +122,7 @@ if os.path.exists(npyscreen_package):
         target_dir = '/tmp/npyscreen_tmp'
         npyzip.extractall(target_dir)
         npyzip.close()
-        
+
         shutil.copytree(
             os.path.join(target_dir, parent_dir, 'npyscreen'),
             dest_dir
@@ -123,3 +130,23 @@ if os.path.exists(npyscreen_package):
 
         shutil.rmtree(target_dir)
 
+print("Extracting sqlalchemy")
+sqlalchemy_fn = os.path.join(app_dir, 'sqlalchemy.zip')
+sqlalchemy_zip = zipfile.ZipFile(sqlalchemy_fn)
+sqlalchemy_parent_dir = sqlalchemy_zip.filelist[0].filename
+target_dir = '/tmp/sqlalchemy_tmp'
+
+if os.path.exists(target_dir):
+    shutil.rmtree(target_dir)
+
+sqlalchemy_zip.extractall(target_dir)
+sqlalchemy_zip.close()
+
+sqlalchemy_dir = os.path.join(ces_dir, 'setup_app/pylib/sqlalchemy')
+
+shutil.copytree(
+    os.path.join(target_dir, sqlalchemy_parent_dir, 'lib/sqlalchemy'),
+    sqlalchemy_dir
+    )
+
+shutil.rmtree(target_dir)

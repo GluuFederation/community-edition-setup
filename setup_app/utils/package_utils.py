@@ -1,8 +1,11 @@
+import os
+import sys
 
 from setup_app import paths
 from setup_app.config import Config
 from setup_app.utils import base
 from setup_app.utils.setup_utils import SetupUtils
+from setup_app.static import InstallTypes
 
 class PackageUtils(SetupUtils):
 
@@ -14,12 +17,12 @@ class PackageUtils(SetupUtils):
             query_command = 'dpkg-query -W -f=\'${{Status}}\' {} 2>/dev/null | grep -c "ok installed"'
             check_text = '0'
 
-        elif self.os_type in ('centos', 'red', 'fedora'):
+        elif base.clone_type == 'rpm':
             install_command = 'yum install -y {0}'
             update_command = 'yum install -y epel-release'
             query_command = 'rpm -q {0}'
             check_text = 'is not installed'
-            
+
         return install_command, update_command, query_command, check_text
 
     def check_and_install_packages(self):
@@ -28,18 +31,17 @@ class PackageUtils(SetupUtils):
 
         install_list = {'mondatory': [], 'optional': []}
 
-        package_list = {
-                'debian 10': {'mondatory': 'apache2 curl wget tar xz-utils unzip facter python3 rsyslog python3-ldap3 python3-requests python3-ruamel.yaml bzip2', 'optional': 'memcached'},
-                'debian 9': {'mondatory': 'apache2 curl wget tar xz-utils unzip facter python3 rsyslog python3-ldap3 python3-requests python3-ruamel.yaml bzip2', 'optional': 'memcached'},
-                'debian 8': {'mondatory': 'apache2 curl wget tar xz-utils unzip facter python3 rsyslog python3-ldap3 python3-requests python3-ruamel.yaml bzip2', 'optional': 'memcached'},
-                'ubuntu 16': {'mondatory': 'apache2 curl wget xz-utils unzip facter python3 rsyslog python3-ldap3 python3-requests python3-ruamel.yaml bzip2', 'optional': 'memcached'},
-                'ubuntu 18': {'mondatory': 'apache2 curl wget xz-utils unzip facter python3 rsyslog python3-ldap3 net-tools python3-requests python3-ruamel.yaml bzip2', 'optional': 'memcached'},
-                'centos 7': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip facter python3 python3-ldap3 python3-ruamel-yaml rsyslog bzip2', 'optional': 'memcached'},
-                'red 7': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip facter python3 rsyslog python3-ldap3 python3-requests python3-ruamel-yaml bzip2', 'optional': 'memcached'},
-                'fedora 22': {'mondatory': 'httpd mod_ssl curl wget tar xz unzip facter python3 rsyslog python3-ldap3 python3-requests python3-ruamel-yaml bzip2', 'optional': 'memcached'},
-                }
 
-        os_type_version = self.os_type+' '+self.os_version
+        package_list = base.get_os_package_list()
+
+        os_type_version = base.os_type + ' ' + base.os_version
+
+        if hasattr(base.argsp,'local_rdbm') and (base.argsp.local_rdbm == 'mysql' or (Config.get('rdbm_install_type') == InstallTypes.LOCAL and Config.rdbm_type == 'mysql')):
+            package_list[os_type_version]['mondatory'] += ' mysql-server'
+        if hasattr(base.argsp,'local_rdbm') and (base.argsp.local_rdbm == 'pgsql' or (Config.get('rdbm_install_type') == InstallTypes.LOCAL and Config.rdbm_type == 'pgsql')):
+            package_list[os_type_version]['mondatory'] += ' postgresql python3-psycopg2'
+            if base.clone_type == 'deb':
+                package_list[os_type_version]['mondatory'] += ' postgresql-contrib'
 
         for install_type in install_list:
             for package in package_list[os_type_version][install_type].split():
@@ -60,7 +62,7 @@ class PackageUtils(SetupUtils):
             if install_list[install_type]:
                 packages = " ".join(install_list[install_type])
 
-                if not setupOptions['noPrompt']:
+                if not base.argsp.n:
                     if install_type == 'mondatory':
                         print("The following packages are required for Gluu Server")
                         print(packages)
@@ -81,11 +83,11 @@ class PackageUtils(SetupUtils):
                 if install[install_type]:
                     self.logIt("Installing packages " + packages)
                     print("Installing packages", packages)
-                    if not self.os_type == 'fedora':
+                    if not base.os_type == 'fedora':
                         sout, serr = self.run(update_command, shell=True, get_stderr=True)
                     self.run(install_command.format(packages), shell=True)
 
-        if self.os_type in ('ubuntu', 'debian'):
+        if base.clone_type == 'deb':
             self.run('a2enmod ssl headers proxy proxy_http proxy_ajp', shell=True)
             default_site = '/etc/apache2/sites-enabled/000-default.conf'
             if os.path.exists(default_site):
@@ -99,3 +101,5 @@ class PackageUtils(SetupUtils):
             output = self.run([paths.cmd_rpm, '--install', '--verbose', '--hash', packageName])
 
         return output
+
+packageUtils = PackageUtils()

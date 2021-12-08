@@ -16,13 +16,13 @@ class SamlInstaller(JettyInstaller):
         self.install_type = InstallOption.OPTONAL
         self.install_var = 'installSaml'
         self.register_progess()
-        
+
         self.needdb = True
 
         self.source_files = [
-                (os.path.join(Config.distGluuFolder,'idp.war'), 'https://ox.gluu.org/maven/org/gluu/oxshibbolethIdp/{0}/oxshibbolethIdp-{0}.war'.format(Config.oxVersion)),
-                (os.path.join(Config.distGluuFolder,'idp3_cml_keygenerator.jar'), 'https://ox.gluu.org/maven/org/gluu/oxShibbolethKeyGenerator/{0}/oxShibbolethKeyGenerator-{0}.jar'.format(Config.oxVersion)),
-                (os.path.join(Config.distGluuFolder,'shibboleth-idp.jar'), 'https://ox.gluu.org/maven/org/gluu/oxShibbolethStatic/{0}/oxShibbolethStatic-{0}.jar'.format(Config.oxVersion)),
+                (os.path.join(Config.distGluuFolder,'idp.war'), Config.maven_root + '/maven/org/gluu/oxshibbolethIdp/{0}/oxshibbolethIdp-{0}.war'.format(Config.oxVersion)),
+                (os.path.join(Config.distGluuFolder,'idp3_cml_keygenerator.jar'), Config.maven_root + '/maven/org/gluu/oxShibbolethKeyGenerator/{0}/oxShibbolethKeyGenerator-{0}.jar'.format(Config.oxVersion)),
+                (os.path.join(Config.distGluuFolder,'shibboleth-idp.jar'), Config.maven_root + '/maven/org/gluu/oxShibbolethStatic/{0}/oxShibbolethStatic-{0}.jar'.format(Config.oxVersion)),
                 ]
 
         self.templates_folder = os.path.join(Config.templateFolder, 'idp')
@@ -65,65 +65,68 @@ class SamlInstaller(JettyInstaller):
     def install(self):
         self.logIt("Install SAML Shibboleth IDP v3...")
 
-        if not Config.get('shibJksPass'):
-            Config.shibJksPass = self.getPW()
-            Config.encoded_shib_jks_pw = self.obscure(Config.shibJksPass)
+        self.unpack_idp3()
 
-        # generate crypto
-        self.gen_cert('shibIDP', Config.shibJksPass, 'jetty')
-        self.gen_cert('idp-encryption', Config.shibJksPass, 'jetty')
-        self.gen_cert('idp-signing', Config.shibJksPass, 'jetty')
+        if not base.argsp.dummy:
+            if not Config.get('shibJksPass'):
+                Config.shibJksPass = self.getPW()
+                Config.encoded_shib_jks_pw = self.obscure(Config.shibJksPass)
 
-        self.gen_keystore('shibIDP',
+            # generate crypto
+            self.gen_cert('shibIDP', Config.shibJksPass, 'jetty')
+            self.gen_cert('idp-encryption', Config.shibJksPass, 'jetty')
+            self.gen_cert('idp-signing', Config.shibJksPass, 'jetty')
+
+            self.gen_keystore('shibIDP',
                               self.shibJksFn,
                               Config.shibJksPass,
                               self.shib_key_file,
                               self.shib_crt_file
                               )
 
-        self.unpack_idp3()
 
-        if Config.mappingLocations['user'] == 'couchbase':
-            Config.templateRenderingDict['idp_attribute_resolver_ldap.search_filter'] = '(&(|(lower(uid)=$requestContext.principalName)(mail=$requestContext.principalName))(objectClass=gluuPerson))'
 
-        # Process templates
-        self.renderTemplateInOut(self.idp3_configuration_properties, self.staticIDP3FolderConf, self.idp3ConfFolder)
-        self.renderTemplateInOut(self.idp3_configuration_ldap_properties, self.staticIDP3FolderConf, self.idp3ConfFolder)
-        self.renderTemplateInOut(self.idp3_configuration_saml_nameid, self.staticIDP3FolderConf, self.idp3ConfFolder)
-        self.renderTemplateInOut(self.idp3_configuration_services, self.staticIDP3FolderConf, self.idp3ConfFolder)
-        self.renderTemplateInOut(
+            if Config.mappingLocations['user'] == 'couchbase':
+                Config.templateRenderingDict['idp_attribute_resolver_ldap.search_filter'] = '(&(|(lower(uid)=$requestContext.principalName)(mail=$requestContext.principalName))(objectClass=gluuPerson))'
+
+            # Process templates
+            self.renderTemplateInOut(self.idp3_configuration_properties, self.staticIDP3FolderConf, self.idp3ConfFolder)
+            self.renderTemplateInOut(self.idp3_configuration_ldap_properties, self.staticIDP3FolderConf, self.idp3ConfFolder)
+            self.renderTemplateInOut(self.idp3_configuration_saml_nameid, self.staticIDP3FolderConf, self.idp3ConfFolder)
+            self.renderTemplateInOut(self.idp3_configuration_services, self.staticIDP3FolderConf, self.idp3ConfFolder)
+            self.renderTemplateInOut(
                         self.idp3_configuration_password_authn, 
                         os.path.join(self.staticIDP3FolderConf, 'authn'),
                         os.path.join(self.idp3ConfFolder, 'authn')
                         )
 
-        # load certificates to update metadata
-        Config.templateRenderingDict['idp3EncryptionCertificateText'] = self.load_certificate_text(self.idp_encryption_crt_file)
-        Config.templateRenderingDict['idp3SigningCertificateText'] = self.load_certificate_text(self.idp_signing_crt_file)
-        # update IDP3 metadata
-        self.renderTemplateInOut(self.idp3_metadata, self.staticIDP3FolderMetadata, self.idp3MetadataFolder)
+            # load certificates to update metadata
+            Config.templateRenderingDict['idp3EncryptionCertificateText'] = self.load_certificate_text(self.idp_encryption_crt_file)
+            Config.templateRenderingDict['idp3SigningCertificateText'] = self.load_certificate_text(self.idp_signing_crt_file)
+            # update IDP3 metadata
+            self.renderTemplateInOut(self.idp3_metadata, self.staticIDP3FolderMetadata, self.idp3MetadataFolder)
 
         self.installJettyService(self.jetty_app_configuration[self.service_name], True)
         jettyServiceWebapps = os.path.join(self.jetty_base, self.service_name,  'webapps')
         self.copyFile(self.source_files[0][0], jettyServiceWebapps)
-
+        self.war_for_jetty10(os.path.join(jettyServiceWebapps, os.path.basename(self.source_files[0][0])))
         # Prepare libraries needed to for command line IDP3 utilities
+
         self.install_saml_libraries()
 
-        # generate new keystore with AES symmetric key
-        # there is one throuble with Shibboleth IDP 3.x - it doesn't load keystore from /etc/certs. It accepts %{idp.home}/credentials/sealer.jks  %{idp.home}/credentials/sealer.kver path format only.
-        cmd = [Config.cmd_java,'-classpath', '"{}"'.format(os.path.join(self.idp3Folder,'webapp/WEB-INF/lib/*')),
+
+        if not base.argsp.dummy:
+            # generate new keystore with AES symmetric key
+            # there is one throuble with Shibboleth IDP 3.x - it doesn't load keystore from /etc/certs. It accepts %{idp.home}/credentials/sealer.jks  %{idp.home}/credentials/sealer.kver path format only.
+            cmd = [Config.cmd_java,'-classpath', '"{}"'.format(os.path.join(self.idp3Folder,'webapp/WEB-INF/lib/*')),
                 'net.shibboleth.utilities.java.support.security.BasicKeystoreKeyStrategyTool',
                 '--storefile', os.path.join(self.idp3Folder,'credentials/sealer.jks'),
                 '--versionfile',  os.path.join(self.idp3Folder, 'credentials/sealer.kver'),
                 '--alias secret',
                 '--storepass', Config.shibJksPass]
-            
-        self.run(' '.join(cmd), shell=True)
 
-        # chown -R jetty:jetty /opt/shibboleth-idp
-        # self.run([self.cmd_chown,'-R', 'jetty:jetty', self.idp3Folder], '/opt')
-        self.run([paths.cmd_chown, '-R', 'jetty:jetty', jettyServiceWebapps], '/opt')
+            self.run(' '.join(cmd), shell=True)
+            self.run([paths.cmd_chown, '-R', 'jetty:jetty', self.idp3Folder])
 
         couchbase_mappings = self.getMappingType('couchbase')
         if 'user' in couchbase_mappings:
@@ -191,7 +194,7 @@ class SamlInstaller(JettyInstaller):
             self.logIt("Creating couchbase readonly user for shib")
             self.dbUtils.cbm.create_user(shib_user, Config.couchbaseShibUserPassword, 'Shibboleth IDP', shib_user_roles)
         else:
-            Config.post_messages.append('{}Please create a user on Couchbase Server with the following credidentals and roles{}'.format(gluu_utils.colors.WARNING, gluu_utils.colors.ENDC))
+            Config.post_messages.append('Please create a user on Couchbase Server with the following credidentals and roles')
             Config.post_messages.append('Username: {}'.format(shib_user))
             Config.post_messages.append('Password: {}'.format(Config.couchbaseShibUserPassword))
             Config.post_messages.append('Roles: {}'.format(shib_user_roles))
@@ -225,14 +228,13 @@ class SamlInstaller(JettyInstaller):
         self.createDirs(os.path.join(Config.gluuBaseFolder, 'conf/shibboleth3'))
         self.createDirs(os.path.join(self.jetty_base, 'identity/conf/shibboleth3/idp'))
         self.createDirs(os.path.join(self.jetty_base, 'identity/conf/shibboleth3/sp'))
-        
+
         for folder in (self.idp3Folder, self.idp3MetadataFolder, self.idp3MetadataCredentialsFolder,
                         self.idp3LogsFolder, self.idp3LibFolder, self.idp3ConfFolder, 
                         self.idp3ConfAuthnFolder, self.idp3CredentialsFolder, self.idp3WebappFolder):
-            
+
             self.run([paths.cmd_mkdir, '-p', folder])
 
-        self.run([paths.cmd_chown, '-R', 'jetty:jetty', self.idp3Folder])
 
     def installed(self):
         return os.path.exists(os.path.join(Config.jetty_base, self.service_name, 'start.ini'))

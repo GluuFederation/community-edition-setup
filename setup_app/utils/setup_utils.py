@@ -10,6 +10,8 @@ import base64
 import json
 import string
 import random
+import pwd
+import grp
 import hashlib
 import ruamel.yaml
 
@@ -51,7 +53,7 @@ class SetupUtils(Crypto64):
         base.logIt(*args, **kwargs)
 
 
-    def backupFile(self, inFile, destFolder=None, move=False):
+    def backupFile(self, inFile, destFolder=None, move=False, cur_content=''):
 
         if destFolder:
             if os.path.isfile(destFolder):
@@ -61,6 +63,15 @@ class SetupUtils(Crypto64):
                 destFile = os.path.join(destFolder, inName)
         else:
             destFile = inFile
+
+        # check if file is the same
+        if os.path.isfile(destFile):
+            with open(destFile, 'rb') as f:
+                old_content = f.read()
+            if isinstance(cur_content, str):
+                cur_content = cur_content.encode()
+            if cur_content == old_content:
+                return
 
         bc = 1
         while True:
@@ -74,6 +85,7 @@ class SetupUtils(Crypto64):
 
         if not destFile.startswith('/opt'):
             self.logOSChanges("File %s was backed up as %s" % (destFile, backupFile_fn))
+
 
 
     def appendLine(self, line, fileName=False):
@@ -163,7 +175,7 @@ class SetupUtils(Crypto64):
 
         inFilePathText = None
         if backup:
-            self.backupFile(outFilePath)
+            self.backupFile(outFilePath, cur_content=text)
         try:
             with open(outFilePath, 'w') as w:
                 w.write(text)
@@ -172,20 +184,20 @@ class SetupUtils(Crypto64):
 
         return inFilePathText
 
-    def insertLinesInFile(self, inFilePath, index, text):        
-            inFilePathLines = None                    
-            try:            
-                inFilePathLines = self.readFile(inFilePath).splitlines()            
-                try:
-                    self.backupFile(inFilePath)
-                    inFilePathLines.insert(index, text)    
-                    inFileText = ''.join(inFilePathLines)
-                    self.writeFile(inFilePath, inFileText)
-                except:            
-                    self.logIt("Error writing %s" % inFilePathLines, True)            
-            except:            
-                self.logIt("Error reading %s" % inFilePathLines, True)
-                    
+    def insertLinesInFile(self, inFilePath, index, text):
+        inFilePathLines = None
+        try:
+            inFilePathLines = self.readFile(inFilePath).splitlines()
+            try:
+
+                inFilePathLines.insert(index, text)
+                inFileText = ''.join(inFilePathLines)
+                self.writeFile(inFilePath, inFileText)
+            except:
+                self.logIt("Error writing %s" % inFilePathLines, True)
+        except:
+            self.logIt("Error reading %s" % inFilePathLines, True)
+
     def commentOutText(self, text):
         textLines = text.splitlines()
 
@@ -216,8 +228,14 @@ class SetupUtils(Crypto64):
             self.logIt("Wrote updated %s file %s..." % (changes['name'], file))
 
 
-    def copyFile(self, inFile, destFolder):
-        self.backupFile(inFile, destFolder)
+    def copyFile(self, inFile, destFolder, backup=True):
+        if os.path.isfile(inFile):
+            with open(inFile, 'rb') as f:
+                cur_content = f.read()
+        else:
+            cur_content = ''
+        if backup:
+            self.backupFile(inFile, destFolder, cur_content=cur_content)
         self.logIt("Copying file {} to {}".format(inFile, destFolder))
         try:
             shutil.copy(inFile, destFolder)
@@ -240,8 +258,11 @@ class SetupUtils(Crypto64):
                         self.removeFile(d)
 
                     if not os.path.exists(d) or os.stat(s).st_mtime - os.stat(d).st_mtime > 1:
+                        with open(s, 'rb') as fi:
+                            cur_content = fi.read()
+                        self.backupFile(s, d, cur_content=cur_content)    
                         shutil.copy2(s, d)
-                        self.backupFile(s, d)
+                        
 
             self.logIt("Copied tree %s to %s" % (src, dst))
         except:
@@ -399,37 +420,67 @@ class SetupUtils(Crypto64):
     def createUser(self, userName, homeDir, shell='/bin/bash'):
 
         try:
-            useradd = '/usr/sbin/useradd'
-            cmd = [useradd, '--system', '--user-group', '--shell', shell, userName]
-            if homeDir:
-                cmd.insert(-1, '--create-home')
-                cmd.insert(-1, '--home-dir')
-                cmd.insert(-1, homeDir)
-            else:
-                cmd.insert(-1, '--no-create-home')
-            self.run(cmd)
-            if homeDir:
-                self.logOSChanges("User %s with homedir %s was created" % (userName, homeDir))
-            else:
-                self.logOSChanges("User %s without homedir was created" % (userName))
-        except:
-            self.logIt("Error adding user", True)
+            pwd.getpwnam(userName)
+            self.logIt("User {} exists".format(userName))
+        except KeyError:
+            try:
+                useradd = '/usr/sbin/useradd'
+                cmd = [useradd, '--system', '--user-group', '--shell', shell, userName]
+                if homeDir:
+                    cmd.insert(-1, '--create-home')
+                    cmd.insert(-1, '--home-dir')
+                    cmd.insert(-1, homeDir)
+                else:
+                    cmd.insert(-1, '--no-create-home')
+                self.run(cmd)
+                if homeDir:
+                    self.logOSChanges("User %s with homedir %s was created" % (userName, homeDir))
+                else:
+                    self.logOSChanges("User %s without homedir was created" % (userName))
+            except:
+                self.logIt("Error adding user", True)
 
     def createGroup(self, groupName):
         try:
-            groupadd = '/usr/sbin/groupadd'
-            self.run([groupadd, groupName])
-            self.logOSChanges("Group %s was created" % (groupName))
-        except:
-            self.logIt("Error adding group", True)
+            grp.getgrnam(groupName)
+            self.logIt("Group {} exists".format(groupName))
+        except KeyError:
+            try:
+                groupadd = '/usr/sbin/groupadd'
+                self.run([groupadd, groupName])
+                self.logOSChanges("Group %s was created" % (groupName))
+            except:
+                self.logIt("Error adding group", True)
 
     def addUserToGroup(self, groupName, userName):
+        try:
+            grpdb = grp.getgrnam(groupName)
+        except KeyError:
+            self.createGroup(groupName)
+            grpdb = grp.getgrnam(groupName)
+        if userName in grpdb.gr_mem:
+            self.logIt("User {} is already member of {}".format(userName, groupName))
+            return
         try:
             usermod = '/usr/sbin/usermod'
             self.run([usermod, '-a', '-G', groupName, userName])
             self.logOSChanges("User %s was added to group %s" % (userName,groupName))
         except:
             self.logIt("Error adding group", True)
+
+    def set_systemd_timeout(self, t=300):
+        systemd_conf_fn = '/etc/systemd/system.conf'
+        systemd_conf = []
+
+        for l in open(systemd_conf_fn):
+            tl = l.strip('#')
+            if tl.startswith('DefaultTimeoutStartSec'):
+                systemd_conf.append('DefaultTimeoutStartSec=300s\n')
+            else:
+                systemd_conf.append(l)
+
+        self.writeFile(systemd_conf_fn, ''.join(systemd_conf))
+
 
     def fix_init_scripts(self, serviceName, initscript_fn):
         if base.snap:
@@ -442,7 +493,7 @@ class SetupUtils(Crypto64):
         if Config.persistence_type == 'couchbase' or 'default' in couchbase_mappings:
             changeTo = 'couchbase-server'
 
-        if Config.wrends_install == InstallTypes.REMOTE or Config.cb_install == InstallTypes.REMOTE:
+        if Config.ldap_install == InstallTypes.REMOTE or Config.cb_install == InstallTypes.REMOTE:
             changeTo = ''
 
         if changeTo != None:
@@ -478,13 +529,22 @@ class SetupUtils(Crypto64):
         certificate_text = certificate_text.replace('-----BEGIN CERTIFICATE-----', '').replace('-----END CERTIFICATE-----', '').strip()
         return certificate_text
 
-    def render_templates_folder(self, templatesFolder):
+    def render_templates_folder(self, templatesFolder, ignoredirs=[], ignorefiles=[]):
         self.logIt("Rendering templates folder: %s" % templatesFolder)
 
-        #coucbase_dict = self.couchbaseDict()
+        def in_ignoredirs(p):
+            for idir in ignoredirs:
+                if p.as_posix().startswith(idir):
+                    return True
 
         tp = Path(templatesFolder)
         for te in tp.rglob('*'):
+            if in_ignoredirs(te):
+                continue
+
+            if te.is_file() and te.name in ignorefiles:
+                continue
+
             if te.is_file() and not te.name.endswith('.nrnd'):
                 self.logIt("Rendering template {}".format(te))
                 rp = te.relative_to(Config.templateFolder)

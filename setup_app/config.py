@@ -30,6 +30,7 @@ class Config:
     jetty_home = '/opt/jetty'
     jetty_base = os.path.join(gluuOptFolder, 'jetty')
     installed_instance = False
+    maven_root = 'https://jenkins.gluu.org'
 
     @classmethod
     def get(self, attr, default=None):
@@ -47,6 +48,8 @@ class Config:
 
     @classmethod
     def dump(self, dumpFile=False):
+        if not os.environ.get('gdebug'):
+            return
         myDict = {}
         for obj_name, obj in inspect.getmembers(self):
             obj_name = str(obj_name)
@@ -127,8 +130,29 @@ class Config:
         self.encoded_cb_password = ''
 
         #DB installation types
-        self.wrends_install = InstallTypes.LOCAL
+        self.ldap_install = InstallTypes.LOCAL
         self.cb_install = InstallTypes.NONE
+        self.rdbm_install = False
+
+        #rdbm
+        self.rdbm_install_type = InstallTypes.NONE
+        self.rdbm_type = 'mysql'
+        self.rdbm_host = 'localhost'
+        self.rdbm_port = 3306
+        self.rdbm_db = 'gluudb'
+        self.rdbm_user = None
+        self.rdbm_password = None
+        self.static_rdbm_dir = os.path.join(self.install_dir, 'static/rdbm')
+
+        #spanner
+        self.spanner_project = 'gluu-project'
+        self.spanner_instance = 'gluu-instance'
+        self.spanner_database = 'gluudb' 
+        self.spanner_emulator_host = None
+        self.google_application_credentials = None
+
+        #couchbase
+        self.couchbaseBuckets = []
 
         # Gluu components installation status
         self.loadData = True
@@ -141,7 +165,6 @@ class Config:
         self.installOxTrust = True
         self.installHttpd = True
         self.installSaml = False
-        self.installOxAuthRP = False
         self.installPassport = False
         self.installGluuRadius = False
         self.installScimServer = False
@@ -181,7 +204,7 @@ class Config:
         self.state = None
         self.admin_email = None
         self.encoded_ox_ldap_pw = None
-        self.application_max_ram = int(base.current_mem_size * .83 * 1000) # 83% of physical memory
+        self.application_max_ram = int(base.current_mem_size * .83 * 1024) # 83% of physical memory
         self.encode_salt = None
         self.admin_inum = None
 
@@ -221,7 +244,11 @@ class Config:
         self.redhat_services = ['httpd', 'rsyslog']
         self.debian_services = ['apache2', 'rsyslog']
 
-        self.defaultTrustStoreFN = os.path.join(self.jre_home, 'jre/lib/security/cacerts')
+        if base.snap:
+            self.defaultTrustStoreFN = os.path.join(self.certFolder, 'java-cacerts')
+        else:
+            self.defaultTrustStoreFN = os.path.join(self.jre_home, 'jre/lib/security/cacerts')
+
         self.defaultTrustStorePW = 'changeit'
 
 
@@ -231,7 +258,9 @@ class Config:
         self.gluu_python_readme = os.path.join(self.gluuOptPythonFolder, 'libs/python.txt')
         self.ox_ldap_properties = os.path.join(self.configFolder, 'gluu-ldap.properties')
         self.gluuCouchebaseProperties = os.path.join(self.configFolder, 'gluu-couchbase.properties')
-        
+        self.gluuRDBMProperties = os.path.join(self.configFolder, 'gluu-sql.properties')
+        self.gluuSpannerProperties = os.path.join(self.configFolder, 'gluu-spanner.properties')
+
         self.ldif_base = os.path.join(self.outputFolder, 'base.ldif')
         self.ldif_attributes = os.path.join(self.outputFolder, 'attributes.ldif')
         self.ldif_scopes = os.path.join(self.outputFolder, 'scopes.ldif')
@@ -262,7 +291,6 @@ class Config:
                            self.ldif_configuration,
                            ]
 
-
         self.ce_templates = {
                              self.gluu_python_readme: True,
                              self.ox_ldap_properties: True,
@@ -285,12 +313,29 @@ class Config:
                         'casa': ['opendj oxauth', 78],
                         'oxd-server': ['opendj oxauth', 80],
                         'passport': ['opendj oxauth', 82],
-                        'oxauth-rp': ['opendj oxauth', 84],
                         'gluu-radius': ['opendj oxauth', 86],
                         }
 
         self.install_time_ldap = None
 
+        if base.current_mem_size < 4.0:
+            self.system_ram =  500 #MB
+            self.opendj_ram = 1280 #MB
+        else:
+            self.system_ram =  750 #MB
+            self.opendj_ram = 1500 #MB
+
+        self.app_mem_weigths = {
+                'opendj':    {'weigth' : 75, "min" : 512},
+                'oxauth':    {'weigth' : 50, "min" : 128},
+                'identity':  {'weigth' : 75, "min" : 128},
+                'idp':       {'weigth' : 25, "min" : 128},
+                'passport':  {'weigth' : 10, "min" : 128},
+                'casa':      {'weigth' : 15, "min" : 128},
+                'fido2':     {'weigth' : 10, "min" : 128},
+                'scim':      {'weigth' : 10, "min" : 128},
+                'oxd':       {'weigth' : 10, "min" : 128},
+            }
 
         self.couchbaseBucketDict = OrderedDict((
                         ('default', { 'ldif':[
@@ -339,6 +384,12 @@ class Config:
 
         self.mappingLocations = { group: 'ldap' for group in self.couchbaseBucketDict }  #default locations are OpenDJ
         self.non_setup_properties = {
-            'oxauth_client_jar_fn': os.path.join(self.distGluuFolder, 'oxauth-client-jar-with-dependencies.jar')
+            'oxauth_client_jar_fn': os.path.join(self.distGluuFolder, 'oxauth-client-jar-with-dependencies.jar'),
+            'service_enable_dict': {
+                        'installPassport': ('gluuPassportEnabled', 'enable_scim_access_policy'),
+                        'installGluuRadius': ('gluuRadiusEnabled', 'oxauth_legacyIdTokenClaims', 'oxauth_openidScopeBackwardCompatibility', 'enableRadiusScripts'),
+                        'installSaml': ('gluuSamlEnabled',),
+                        'installScimServer': ('gluuScimEnabled', 'enable_scim_access_policy'),
+                    },
                 }
         Config.addPostSetupService = []

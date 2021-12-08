@@ -9,6 +9,7 @@
     "idpUrl":"https://%(hostname)s",
     "applicationUrl":"https://%(hostname)s",
 
+
     "personObjectClassTypes":[
         "gluuCustomPerson",
         "gluuPerson",
@@ -22,10 +23,10 @@
 
     "svnConfigurationStoreRoot":"unused",
     "svnConfigurationStorePassword":"unused",
-    "persistSVN":false,
+    "persistSVN": false,
 
-    "allowPersonModification":true,
-    "updateStatus":true,
+    "allowPersonModification": true,
+    "updateStatus": true,
 
     "clientAssociationAttribute":"inum",
 
@@ -39,10 +40,11 @@
     ],
 
     "photoRepositoryRootDir":"/var/gluu/photos",
-    "photoRepositoryThumbWidth":300,
-    "photoRepositoryThumbHeight":300,
-    "photoRepositoryCountLeveles":3,
-    "photoRepositoryCountFoldersPerLevel":20,
+    "photoRepositoryThumbWidth": 300,
+    "photoRepositoryThumbHeight": 300,
+    "photoRepositoryCountLeveles": 3,
+    "photoRepositoryCountFoldersPerLevel": 20,
+
 
     "spMetadataPath":"",
 
@@ -52,8 +54,10 @@
 
     ],
 
-    "configGeneration":false,
-    "ignoreValidation":false,
+    "configGeneration": %(oxTrustConfigGeneration)s,
+    "ignoreValidation": false,
+
+    "gluuSpCert":"/etc/certs/shibIDP.crt",
 
     "idpBindDn":"cn=Directory Manager",
     "idpBindPassword":"%(encoded_ox_ldap_pw)s",
@@ -97,12 +101,11 @@
     "cssLocation":"",
     "jsLocation":"",
 
-    "rptConnectionPoolUseConnectionPooling":true,
-    "rptConnectionPoolMaxTotal":200,
-    "rptConnectionPoolDefaultMaxPerRoute":20,
-    "rptConnectionPoolValidateAfterInactivity":10,
-    "rptConnectionPoolCustomKeepAliveTimeout":5,
-
+    "rptConnectionPoolUseConnectionPooling": true,
+    "rptConnectionPoolMaxTotal": 200,
+    "rptConnectionPoolDefaultMaxPerRoute": 20,
+    "rptConnectionPoolValidateAfterInactivity": 10,
+    "rptConnectionPoolCustomKeepAliveTimeout": 5,
 
     "organizationName":"%(orgName)s",
 
@@ -110,12 +113,10 @@
     "clientBlackList": ["*.attacker.com/*"],
 
     "oxTrustApiTestMode": false,
-    "ScimProperties": {
-        "maxCount": 200
-    },
+
     "cleanServiceInterval":300,
     "loggingLevel": "INFO",
     "loggingLayout": "text",
     "passwordResetRequestExpirationTime":600,
-    "useLocalCache":true
+    "useLocalCache": true
 }

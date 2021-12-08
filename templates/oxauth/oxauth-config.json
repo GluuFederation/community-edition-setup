@@ -52,6 +52,7 @@
         "public",
         "pairwise"
     ],
+    "statWebServiceIntervalLimitInSeconds":60,
     "defaultSubjectType": "pairwise",
     "userInfoSigningAlgValuesSupported":[
         "HS256",
@@ -239,6 +240,7 @@
     "invalidateSessionCookiesAfterAuthorizationFlow":false,
     "clientAuthenticationFiltersEnabled":false,
     "clientRegDefaultToCodeFlowWithRefresh": true,
+    "grantTypesAndResponseTypesAutofixEnabled": false,
     "authenticationFilters":[
         {
             "filter":"(&(mail=*{0}*)(inum={1}))",
@@ -284,7 +286,7 @@
     "endSessionWithAccessToken":false,
     "clientWhiteList": ["*"],
     "clientBlackList": ["*.attacker.com/*"],
-    "legacyIdTokenClaims": false,
+    "legacyIdTokenClaims": %(oxauth_legacyIdTokenClaims)s,
     "customHeadersWithAuthorizationResponse": true,
     "frontChannelLogoutSessionSupported":true,
     "updateUserLastLogonTime": false,
@@ -315,7 +317,8 @@
         "customParam3"
     ],
     "legacyDynamicRegistrationScopeParam": false,
-    "openidScopeBackwardCompatibility": false,
+    "openidScopeBackwardCompatibility": %(oxauth_openidScopeBackwardCompatibility)s,
+    "useCacheForAllImplicitFlowObjects":false,
     "disableU2fEndpoint":false,
     "authenticationProtectionConfiguration": {
         "attemptExpiration": 15,

@@ -565,9 +565,24 @@ inum: 8AF7.D82B
 oxEnabled: false
 oxLevel: 100
 oxModuleProperty: {"value1":"location_type","value2":"ldap","description":""}
+oxModuleProperty: {"value1":"allowed_acrs","value2":"passport_saml","description":""}
 oxRevision: 1
 oxScript::%(idp_samplescript)s
 oxScriptType: idp
+programmingLanguage: python
+
+dn: inum=2D3E.5A03,ou=scripts,o=gluu
+objectClass: top
+objectClass: oxCustomScript
+description: Update token sample script
+displayName: update_token_sample
+inum: 2D3E.5A03
+oxEnabled: false
+oxLevel: 1
+oxModuleProperty: {"value1":"location_type","value2":"ldap","description":""}
+oxRevision: 12
+oxScript::%(update_token_sample_script)s
+oxScriptType: update_token
 programmingLanguage: python
 
 dn: inum=C1BA-C1BA,ou=scripts,o=gluu

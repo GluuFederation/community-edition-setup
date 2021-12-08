@@ -28,7 +28,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
         pass
 
     def collect(self):
-        print("Please wait while collectiong properties...")
+        print("Please wait while collecting properties...")
         self.logIt("Previously installed instance. Collecting properties")
         salt_fn = os.path.join(Config.configFolder,'salt')
         if os.path.exists(salt_fn):
@@ -42,12 +42,13 @@ class CollectProperties(SetupUtils, BaseInstaller):
         oxidp_ConfigurationEntryDN = gluu_prop['oxidp_ConfigurationEntryDN']
         gluu_ConfigurationDN = 'ou=configuration,o=gluu'
 
-        if Config.persistence_type == 'couchbase':
-            Config.mappingLocations = { group: 'couchbase' for group in Config.couchbaseBucketDict }
-            default_storage = 'couchbase'
+        if Config.persistence_type in ('couchbase', 'sql', 'spanner'):
+            ptype = 'rdbm' if Config.persistence_type in ('sql', 'spanner') else 'couchbase'
+            Config.mappingLocations = { group: ptype for group in Config.couchbaseBucketDict }
+            default_storage = Config.persistence_type
 
-        if Config.persistence_type != 'ldap' and os.path.exists(Config.gluuCouchebaseProperties):
 
+        if not Config.persistence_type in ('ldap', 'sql', 'spanner') and os.path.exists(Config.gluuCouchebaseProperties):
             gluu_cb_prop = base.read_properties_file(Config.gluuCouchebaseProperties)
 
             Config.couchebaseClusterAdmin = gluu_cb_prop['auth.userName']
@@ -58,14 +59,44 @@ class CollectProperties(SetupUtils, BaseInstaller):
             Config.couchbase_hostname = gluu_cb_prop['servers'].split(',')[0].strip()
             Config.encoded_couchbaseTrustStorePass = gluu_cb_prop['ssl.trustStore.pin']
             Config.couchbaseTrustStorePass = self.unobscure(gluu_cb_prop['ssl.trustStore.pin'])
+            Config.cb_query_node = Config.couchbase_hostname
+            Config.couchbaseBuckets = [b.strip() for b in gluu_cb_prop['buckets'].split(',')]
 
-        if Config.persistence_type != 'couchbase' and os.path.exists(Config.ox_ldap_properties):
+        if not Config.persistence_type in ('couchbase', 'sql') and os.path.exists(Config.ox_ldap_properties):
             gluu_ldap_prop = base.read_properties_file(Config.ox_ldap_properties)
             Config.ldap_binddn = gluu_ldap_prop['bindDN']
             Config.ldapPass = self.unobscure(gluu_ldap_prop['bindPassword'])
             Config.opendj_p12_pass = self.unobscure(gluu_ldap_prop['ssl.trustStorePin'])
             Config.ldap_hostname, Config.ldaps_port = gluu_ldap_prop['servers'].split(',')[0].split(':')
 
+
+        if not Config.persistence_type in ('couchbase', 'ldap') and os.path.exists(Config.gluuRDBMProperties):
+            gluu_sql_prop = base.read_properties_file(Config.gluuRDBMProperties)
+
+            uri_re = re.match('jdbc:(.*?)://(.*?):(.*?)/(.*)', gluu_sql_prop['connection.uri'])
+            Config.rdbm_type, Config.rdbm_host, self.rdbm_port, self.rdbm_db = uri_re.groups()
+            Config.rdbm_port = int(self.rdbm_port)
+            Config.rdbm_install_type = static.InstallTypes.LOCAL if Config.rdbm_host == 'localhost' else static.InstallTypes.REMOTE
+            Config.rdbm_user = gluu_sql_prop['auth.userName']
+            Config.rdbm_password_enc = gluu_sql_prop['auth.userPassword']
+            Config.rdbm_password = self.unobscure(Config.rdbm_password_enc)
+            Config.rdbm_db = gluu_sql_prop['db.schema.name']
+
+        if not Config.persistence_type in ('couchbase', 'ldap') and os.path.exists(Config.gluuSpannerProperties):
+            Config.rdbm_type = 'spanner'
+            gluu_spanner_prop = base.read_properties_file(Config.gluuSpannerProperties)
+
+            Config.spanner_project = gluu_spanner_prop['connection.project']
+            Config.spanner_instance = gluu_spanner_prop['connection.instance']
+            Config.spanner_database = gluu_spanner_prop['connection.database']
+
+            if 'connection.emulator-host' in gluu_spanner_prop:
+                Config.spanner_emulator_host = gluu_spanner_prop['connection.emulator-host'].split(':')[0]
+                Config.templateRenderingDict['spanner_creds'] = 'connection.emulator-host={}:9010'.format(Config.spanner_emulator_host)
+
+            elif 'auth.credentials-file' in gluu_spanner_prop:
+                Config.google_application_credentials = gluu_spanner_prop['auth.credentials-file']
+                Config.templateRenderingDict['spanner_creds'] = 'auth.credentials-file={}'.format(Config.google_application_credentials)
 
         if Config.persistence_type in ['hybrid']:
              gluu_hybrid_properties = base.read_properties_file(gluu_hybrid_properties_fn)
@@ -83,26 +114,28 @@ class CollectProperties(SetupUtils, BaseInstaller):
         # It is time to bind database
         dbUtils.bind()
 
-        result = dbUtils.search('ou=clients,o=gluu', search_filter='(inum=1701.*)', search_scope=ldap3.SUBTREE)
+        result = dbUtils.search('ou=clients,o=gluu', search_filter='(&(inum=1701.*)(objectClass=oxAuthClient))', search_scope=ldap3.SUBTREE)
 
         if result:
             Config.gluu_radius_client_id = result['inum']
             Config.gluu_ro_encoded_pw = result['oxAuthClientSecret']
             Config.gluu_ro_pw = self.unobscure(Config.gluu_ro_encoded_pw)
-    
-            result = dbUtils.search('inum=5866-4202,ou=scripts,o=gluu', search_scope=ldap3.BASE)
-            if result:
-                Config.enableRadiusScripts = result['oxEnabled']
 
-            result = dbUtils.search('ou=clients,o=gluu', search_filter='(inum=1402.*)', search_scope=ldap3.SUBTREE)
+            result = dbUtils.search('inum=5866-4202,ou=scripts,o=gluu', search_filter='(objectClass=oxCustomScript)', search_scope=ldap3.BASE)
+            if result:
+                Config.enableRadiusScripts = result.get('oxEnabled', False)
+
+            result = dbUtils.search('ou=clients,o=gluu', search_filter='(&(inum=1402.*)(objectClass=oxAuthClient))', search_scope=ldap3.SUBTREE)
             if result:
                 Config.oxtrust_requesting_party_client_id = result['inum']
 
         admin_dn = None
-        result = dbUtils.search('o=gluu', search_filter='(gluuGroupType=gluuManagerGroup)', search_scope=ldap3.SUBTREE)
+        result = dbUtils.search('o=gluu', search_filter='(&(gluuGroupType=gluuManagerGroup)(objectClass=gluuGroup))', search_scope=ldap3.SUBTREE)
         if result:
-            admin_dn = result['member'][0]
-
+            if Config.persistence_type in ('sql',):
+                admin_dn = result['member']['v'][0]
+            else:
+                admin_dn = result['member'][0]
 
         if admin_dn:
             for rd in dnutils.parse_dn(admin_dn):
@@ -110,21 +143,26 @@ class CollectProperties(SetupUtils, BaseInstaller):
                     Config.admin_inum = str(rd[1])
                     break
 
-        oxConfiguration = dbUtils.search(gluu_ConfigurationDN, search_scope=ldap3.BASE)
+
+        oxConfiguration = dbUtils.search(gluu_ConfigurationDN, search_filter='(objectClass=gluuConfiguration)', search_scope=ldap3.BASE)
         if 'gluuIpAddress' in oxConfiguration:
             Config.ip = oxConfiguration['gluuIpAddress']
 
-        oxCacheConfiguration = json.loads(oxConfiguration['oxCacheConfiguration'])
+        if isinstance(oxConfiguration['oxCacheConfiguration'], dict):
+            oxCacheConfiguration = oxConfiguration['oxCacheConfiguration']
+        else:
+            oxCacheConfiguration = json.loads(oxConfiguration['oxCacheConfiguration'])
+
         Config.cache_provider_type = str(oxCacheConfiguration['cacheProviderType'])
 
         result = dbUtils.search(oxidp_ConfigurationEntryDN, search_filter='(objectClass=oxApplicationConfiguration)', search_scope=ldap3.BASE)
 
         if result:
 
-            oxConfApplication = json.loads(result['oxConfApplication'])
+            oxConfApplication = json.loads(result['oxConfApplication']) if isinstance(result['oxConfApplication'], str) else result['oxConfApplication']
             Config.idpClient_encoded_pw = oxConfApplication['openIdClientPassword']
             Config.idpClient_pw =  self.unobscure(Config.idpClient_encoded_pw)
-            
+
             Config.idp_client_id =  oxConfApplication['openIdClientId']
 
             if 'openIdClientPassword' in oxConfApplication:
@@ -137,7 +175,6 @@ class CollectProperties(SetupUtils, BaseInstaller):
 
         if 'apiUmaClientId' in oxTrustConfApplication:
             Config.oxtrust_resource_server_client_id =  oxTrustConfApplication['apiUmaClientId']
-
 
         if 'apiUmaClientKeyStorePassword' in oxTrustConfApplication:
             Config.api_rs_client_jks_pass = self.unobscure(oxTrustConfApplication['apiUmaClientKeyStorePassword'])
@@ -163,10 +200,13 @@ class CollectProperties(SetupUtils, BaseInstaller):
         if 'scimUmaClientId' in oxTrustConfApplication:
             Config.scim_rs_client_id =  oxTrustConfApplication['scimUmaClientId']
 
-        if 'scimUmaClientId' in oxTrustConfApplication:
+        if 'scimUmaResourceId' in oxTrustConfApplication:
             Config.scim_resource_oxid =  oxTrustConfApplication['scimUmaResourceId']
-        if 'scimTestMode' in oxTrustConfApplication:
-            Config.scimTestMode =  oxTrustConfApplication['scimTestMode']
+
+        if 'ScimProperties' in oxTrustConfApplication and 'protectionMode' in oxTrustConfApplication['ScimProperties']:
+            Config.scim_protection_mode = oxTrustConfApplication['ScimProperties']['protectionMode']
+        else:
+            Config.scim_protection_mode = 'OAUTH'
 
         if 'apiUmaClientKeyStorePassword' in oxTrustConfApplication:
             Config.api_rp_client_jks_pass = self.unobscure(oxTrustConfApplication['apiUmaClientKeyStorePassword'])
@@ -258,6 +298,15 @@ class CollectProperties(SetupUtils, BaseInstaller):
 
         if not Config.get('ip'):
             Config.ip = self.detect_ip()
+
+        casa_result = dbUtils.dn_exists('ou=casa,ou=configuration,o=gluu')
+        if casa_result:
+            casa_config = casa_result['oxConfApplication'][0] if isinstance(casa_result['oxConfApplication'], list) else casa_result['oxConfApplication']
+            casa_config = json.loads(casa_config) if isinstance(casa_config, str) else casa_config
+            Config.oxd_hostname = casa_config['oxd_config']['host']
+        elif os.path.exists('/etc/gluu/conf/casa.json'):
+            casa_config = json.load(open('/etc/gluu/conf/casa.json'))
+            Config.oxd_hostname = casa_config['oxd_config']['host']
 
     def save(self):
         propertiesUtils.save_properties()

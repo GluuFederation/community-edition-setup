@@ -13,11 +13,14 @@ import subprocess
 import traceback
 import re
 import shutil
+import socket
 import multiprocessing
 import ssl
 
+from pathlib import Path
 from collections import OrderedDict
 from urllib.request import urlretrieve
+from types import SimpleNamespace
 
 # disable ssl certificate check
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -29,8 +32,11 @@ from setup_app.pylib.jproperties import Properties
 
 # Note!!! This module should be imported after paths
 
-cur_dir = os.path.dirname(os.path.realpath(__file__))
-ces_dir = os.path.split(cur_dir)[0]
+cur_dir = Path(__file__).parent.as_posix()
+ces_dir = Path(__file__).parent.parent.as_posix()
+par_dir = Path(__file__).parent.parent.parent.as_posix()
+
+current_app = SimpleNamespace()
 
 snap = os.environ.get('SNAP','')
 snap_common = snap_common_dir = os.environ.get('SNAP_COMMON','')
@@ -82,6 +88,10 @@ if os_type in ('centos', 'red', 'fedora'):
 else:
     clone_type = 'deb'
     httpd_name = 'apache2'
+
+if os_type == 'suse':
+    httpd_name = 'apache2'
+
 
 if snap:
     snapctl = shutil.which('snapctl')
@@ -279,7 +289,7 @@ def find_script_names(ldif_file):
                 result = rec.search(l)
                 if result:
                     name_list.append(result.groups()[0])
-                
+
     return name_list
 
 def download(url, dst):
@@ -288,6 +298,27 @@ def download(url, dst):
         logIt("Creating driectory", pardir)
         os.makedirs(pardir)
     logIt("Downloading {} to {}".format(url, dst))
-    result = urlretrieve(url, dst)
-    f_size = result[1].get('Content-Length','0')
-    logIt("Download size: {} bytes".format(f_size))
+    download_tries = 1
+    while download_tries < 4:
+        try:
+            result = urlretrieve(url, dst)
+            f_size = result[1].get('Content-Length','0')
+            logIt("Download size: {} bytes".format(f_size))
+            time.sleep(0.1)
+        except:
+             logIt("Error downloading {}. Download will be re-tried once more".format(url))
+             download_tries += 1
+             time.sleep(1)
+        else:
+            break
+
+def check_port_available(port_list, host='localhost'):
+    open_ports = []
+    for port in port_list:
+        socket_object = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        check_port = socket_object.connect_ex((host, port))
+        if check_port == 0:
+            open_ports.append(str(port))
+        socket_object.close()
+
+    return open_ports

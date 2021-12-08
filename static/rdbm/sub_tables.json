@@ -1,0 +1,12 @@
+{
+  "pgsql": {},
+  "mysql": {},
+  "spanner": {
+    "gluuPerson": [
+      [
+        "oxExternalUid",
+        "STRING(MAX)"
+      ]
+    ]
+  }
+}

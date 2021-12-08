@@ -9,6 +9,7 @@ import sys
 import base64
 import platform
 import glob
+import csv
 
 cur_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -25,9 +26,19 @@ if ((3, 0) <= sys.version_info <= (3, 9)):
 elif ((2, 0) <= sys.version_info <= (2, 9)):
     from urlparse import urlparse
 
-p = platform.linux_distribution()
-os_type = p[0].split()[0].lower()
-os_version = p[1].split('.')[0]
+os_type, os_version = '', ''
+with open("/etc/os-release") as f:
+    reader = csv.reader(f, delimiter="=")
+    for row in reader:
+        if row:
+            if row[0] == 'ID':
+                os_type = row[1].lower()
+                if os_type in  ('rhel', 'redhat'):
+                    os_type = 'red'
+            elif row[0] == 'VERSION_ID':
+                os_version = row[1].split('.')[0]
+
+print("Detected OS", os_type, os_version)
 
 
 if os.path.exists('/etc/yum.repos.d/'):
@@ -81,7 +92,7 @@ if missing_packages:
     else:
         packages_str = ' '.join(missing_packages)
         os.system('apt-get update')
-        
+
         if ('python3-ldap' in missing_packages) and (os_type=='ubuntu' and os_version=='16'):
             cmd_list = ('wget -nv http://162.243.99.240/icrby8xcvbcv/python3-ldap/python3-ldap_3.0.0-1_amd64.deb -O /tmp/python3-ldap_3.0.0-1_amd64.deb',
                         'dpkg -i /tmp/python3-ldap_3.0.0-1_amd64.deb',
@@ -296,7 +307,6 @@ def generate_properties(as_dict=False):
             'oxauth':    ('installOxAuth', 0.3, 0.7),
             'identity':  ('installOxTrust', 0.2),
             'idp':       ('installSaml', 0.2),
-            'oxauth-rp': ('installOxAuthRP', 0.1),
             'passport':  ('installPassport', 0.1),
         }
     else:
@@ -304,7 +314,6 @@ def generate_properties(as_dict=False):
             'oxauth':    ('installOxAuth', 0.2, 0.7),
             'identity':  ('installOxTrust', 0.25),
             'idp':       ('installSaml', 0.25),
-            'oxauth-rp': ('installOxAuthRP', 0.1),
             'casa':      ('installCasa', 0.1),
             'passport':  ('installPassport', 0.1),
         }
@@ -597,6 +606,15 @@ def generate_properties(as_dict=False):
 
     if not 'githubBranchName' in setup_prop:
         setup_prop['githubBranchName'] = 'version_'+gluu_version
+
+    if os.path.exists('/opt/gluu/jetty/scim/start.ini'):
+        setup_prop['installScimServer'] = True
+
+    if os.path.exists('/opt/gluu/jetty/fido2/start.ini'):
+        setup_prop['installFido2'] = True
+
+    if os.path.exists('/opt/oxd-server/conf/oxd-server.yml'):
+        setup_prop['installOxd'] = True
 
 
     return setup_prop

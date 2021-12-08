@@ -1,7 +1,10 @@
 #!/usr/bin/python3
-
+import os
 import sys
 import base64
+
+sys.path.append(os.path.join("%(install_dir)s", 'setup_app/pylib'))
+
 from pyDes import *
 
 saltFn = "%(configFolder)s/salt"
