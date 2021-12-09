@@ -301,8 +301,8 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                 out_file = os.path.join(Config.install_dir, 'static/opendj', data['schemaFile'])
                 schemaManager.generate(jsf, 'opendj', out_file)
 
-        openDjschemaFiles = glob.glob(os.path.join(Config.install_dir, 'static/opendj/*.ldif'))
-        for schema_file in openDjschemaFiles:
+        opendj_schema_files = glob.glob(os.path.join(Config.install_dir, 'static/opendj/*.ldif'))
+        for schema_file in opendj_schema_files:
             self.copyFile(schema_file, self.openDjSchemaFolder)
 
         self.run([paths.cmd_chmod, '-R', 'a+rX', Config.ldapBaseFolder])
