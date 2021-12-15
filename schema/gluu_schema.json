@@ -5570,7 +5570,7 @@
             ],
             "oid": "oxObjectClass",
             "sup": [
-                "top"
+                "token"
             ],
             "x_origin": "Gluu created objectclass"
         },
