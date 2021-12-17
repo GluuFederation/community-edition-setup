@@ -384,7 +384,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                     out_file_p.parent.mkdir(parents=True)
                     try:
                         self.renderTemplateInOut(p.as_posix(), p.parent.as_posix(), out_file_p.parent.as_posix())
-                    except:
+                    except Exception:
                         self.logIt("Error writing template {}".format(out_file_p), True)
 
 
@@ -399,7 +399,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             self.logIt("Importing rendered custom ldif {}".format(ldif))
             try:
                 self.dbUtils.import_ldif([ldif])
-            except:
+            except Exception:
                 self.logIt("Error importing custom ldif file {}".format(ldif), True)
 
 
