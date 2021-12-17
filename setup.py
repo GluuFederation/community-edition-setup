@@ -402,7 +402,7 @@ def do_installation():
 
 if not GSA and proceed:
     do_installation()
-    if not base.argsp.dummy:
+    if not (base.argsp.dummy or base.argsp.base.argsp.no_data):
         print('\n', static.colors.OKGREEN)
         msg_text = msg.post_installation if Config.installed_instance else msg.installation_completed.format(Config.hostname)
         print(msg_text)
