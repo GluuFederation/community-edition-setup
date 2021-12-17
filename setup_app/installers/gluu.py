@@ -372,9 +372,43 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                 except:
                     self.logIt("Error writing %s to %s" % (output_fn, dest_fn), True)
 
+
+    def render_custom_templates(self, ldif_dir):
+        output_dir_p = Path(ldif_dir + '.output')
+        self.logIt("Rendering custom templates from {} to {}".format(ldif_dir, output_dir_p))
+
+        for p in Path(ldif_dir).rglob('*'):
+            if p.is_file():
+                out_file_p = output_dir_p.joinpath(p.relative_to(ldif_dir))
+                if not out_file_p.parent.exists():
+                    out_file_p.parent.mkdir(parents=True)
+                    try:
+                        self.renderTemplateInOut(p.as_posix(), p.parent.as_posix(), out_file_p.parent.as_posix())
+                    except:
+                        self.logIt("Error writing template {}".format(out_file_p), True)
+
+
+    def import_custom_ldif_dir(self, ldif_dir):
+        self.logIt("Importing Custom LDIF files", pbar='post-setup')
+        self.render_custom_templates(ldif_dir)
+
+        output_dir = ldif_dir + '.output'
+
+        for p in Path(output_dir).rglob('*.ldif'):
+            ldif = p.as_posix()
+            self.logIt("Importing rendered custom ldif {}".format(ldif))
+            try:
+                self.dbUtils.import_ldif([ldif])
+            except:
+                self.logIt("Error importing custom ldif file {}".format(ldif), True)
+
+
     def post_install_tasks(self):
         # set systemd timeout
         self.set_systemd_timeout()
+
+        if base.argsp.import_ldif:
+            self.import_custom_ldif_dir(base.argsp.import_ldif)
 
         self.deleteLdapPw()
 
@@ -382,7 +416,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             #write post-install.py script
             self.logIt("Writing snap-post-setup.py", pbar='post-setup')
             post_setup_script = self.readFile(os.path.join(Config.templateFolder, 'snap-post-setup.py'))
-            
+
             for key, val in (('{{SNAP_NAME}}', os.environ['SNAP_NAME']),
                              ('{{SNAP_PY3}}', paths.cmd_py3),
                              ('{{SNAP}}', base.snap),
