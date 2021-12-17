@@ -69,6 +69,7 @@ from setup_app.installers.oxd import OxdInstaller
 from setup_app.installers.casa import CasaInstaller
 from setup_app.installers.rdbm import RDBMInstaller
 
+
 if base.snap:
     try:
         open('/proc/mounts').close()
@@ -144,6 +145,12 @@ elif os.path.isfile(Config.setup_properties_fn):
 elif os.path.isfile(Config.setup_properties_fn+'.enc'):
     base.logIt('%s Properties found!\n' % Config.setup_properties_fn+'.enc')
     setup_loaded = propertiesUtils.load_properties(Config.setup_properties_fn+'.enc')
+
+if argsp.import_ldif:
+    if os.path.isdir(argsp.import_ldif):
+        base.logIt("Found setup LDIF import directory {}".format(argsp.import_ldif))
+    else:
+        base.logIt("The custom LDIF import directory {} does not exist. Exiting...".format(argsp.import_ldif, True, True))
 
 
 collectProperties = CollectProperties()
@@ -360,6 +367,7 @@ def do_installation():
 
         if (Config.installed_instance and 'installGluuRadius' in Config.addPostSetupService) or (not Config.installed_instance and Config.installGluuRadius):
             radiusInstaller.install_gluu_radius()
+
 
         if not base.argsp.dummy:
             gluuProgress.progress(PostSetup.service_name, "Saving properties")
