@@ -174,6 +174,9 @@ class DBUtils:
         self.cbm = CBM(Config.get('cb_query_node', Config.couchbase_hostname), Config.get('couchebaseClusterAdmin'), Config.get('cb_password'))
 
     def get_oxAuthConfDynamic(self):
+        if base.argsp.no_data:
+            return '', {}
+
         if self.moddb == BackendTypes.LDAP:
             self.ldap_conn.search(
                         search_base='ou=oxauth,ou=configuration,o=gluu',
@@ -200,6 +203,9 @@ class DBUtils:
         return dn, oxAuthConfDynamic
 
     def get_oxTrustConfApplication(self):
+        if base.argsp.no_data:
+            return '', {}
+
         if self.moddb == BackendTypes.LDAP:
             self.ldap_conn.search(
                         search_base='o=gluu',
@@ -226,6 +232,9 @@ class DBUtils:
 
 
     def set_oxAuthConfDynamic(self, entries):
+        if base.argsp.no_data:
+            return
+
         if self.moddb == BackendTypes.LDAP:
             dn, oxAuthConfDynamic = self.get_oxAuthConfDynamic()
             oxAuthConfDynamic.update(entries)
@@ -255,8 +264,10 @@ class DBUtils:
                 n1ql = 'UPDATE `{}` USE KEYS "configuration_oxauth" SET oxAuthConfDynamic.{}={}'.format(self.default_bucket, k, json.dumps(entries[k]))
                 self.cbm.exec_query(n1ql)
 
-    # TODO: modify this for sql and spanner
     def set_oxTrustConfApplication(self, entries):
+        if base.argsp.no_data:
+            return
+
         dn, oxTrustConfApplication = self.get_oxTrustConfApplication()
         oxTrustConfApplication.update(entries)
         oxTrustConfApplication_js = json.dumps(oxTrustConfApplication, indent=2)
@@ -285,6 +296,9 @@ class DBUtils:
             self.cbm.exec_query(n1ql)
 
     def enable_script(self, inum):
+        if base.argsp.no_data:
+            return
+
         if self.moddb == BackendTypes.LDAP:
             ldap_operation_result = self.ldap_conn.modify(
                     'inum={},ou=scripts,o=gluu'.format(inum),
@@ -329,6 +343,9 @@ class DBUtils:
             self.cbm.exec_query(n1ql)
 
     def set_configuration(self, component, value, dn='ou=configuration,o=gluu'):
+        if base.argsp.no_data:
+            return
+
         if self.moddb == BackendTypes.LDAP:
             ldap_operation_result = self.ldap_conn.modify(
                 dn,
@@ -430,6 +447,9 @@ class DBUtils:
             return retVal
 
     def search(self, search_base, search_filter='(objectClass=*)', search_scope=ldap3.LEVEL, fetchmany=False):
+        if base.argsp.no_data:
+            return {}
+
         base.logIt("Searching database for dn {} with filter {}".format(search_base, search_filter))
         backend_location = self.get_backend_location_for_dn(search_base)
 
@@ -586,6 +606,9 @@ class DBUtils:
         return ','.join(value2)
 
     def add_client2script(self, script_inum, client_id):
+        if base.argsp.no_data:
+            return
+
         dn = 'inum={},ou=scripts,o=gluu'.format(script_inum)
 
         backend_location = self.get_backend_location_for_dn(dn)
@@ -829,6 +852,8 @@ class DBUtils:
         return msha.digest().hex()
 
     def import_ldif(self, ldif_files, bucket=None, force=None):
+        if base.argsp.no_data:
+            return
 
         base.logIt("Importing ldif file(s): {} ".format(', '.join(ldif_files)))
 

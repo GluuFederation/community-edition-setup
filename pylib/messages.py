@@ -1,5 +1,5 @@
 class msg:
-    
+
     MAIN_label = "System Information"
     HostForm_label = "Gathering Information"
     ServicesForm_label = "Select Services to Install"
@@ -65,7 +65,7 @@ class msg:
     acknowledge_lisence = "I acknowledge that use of the Gluu Server is under the Apache-2.0 license"
     acknowledge_lisence_ask = "Please check License Agreement"
     setup_properties_warning = "** All clear text passwords contained in\n/install/community-edition-setup/setup.properties.last."
-    
+
     enter_hostname = "Please enter hostname"
     enter_hostname_local = "Hostname can't be localhost"
     enter_valid_email = "Please enter valid email address"
@@ -96,16 +96,16 @@ class msg:
     cb_install_options = ["Don't Install","Install Locally","Use Remote Couchbase"]
     cb_not_available = "Couchbase package is not found in /opt/dist/couchbase. Please put and retry."
     cb_bucket_rolese = "Please check user {} has roles {} on bucket(s) {}"
-    
+
     ask_use_gluu_storage_oxd = "oxd includes a built-in h2 database for persistence. Do you want to change it to the Authorization Server's persistence mechanism instead (recommended for high load only)?"
     ask_use_gluu_storage_oxd_title = "Use Authorization Server's persistence for oxd?"
-    
+
     notify_select_backend = "Please select one of the backends either local install or remote" 
     weak_password = "Password for {} must be at least 6 characters and include one uppercase letter, one lowercase letter, one digit, and one special character."
     unselected_storages = "Note: Unselected storages will go Couchbase Server"
 
     no_help = "No help is provided for this screen."
-    
+
     MainFromHelp = "Detected OS type, system init type, and Apache version is displayed. Inorder to continue to next step, you must check lisecnce acknowledgement."
     HostFromHelp = ("IP Address: ip address of this server. Detected ip address will be provided\n"
                    "Hostname: hostname of this server. Detected hostname will be provided.\n"
@@ -128,7 +128,7 @@ class msg:
     installation_description_casa = "Gluu Casa is a self-service web portal for end-users to manage authentication and authorization preferences for their account in a Gluu Server."
     installation_description_scim = "The Gluu Server implements SCIM to offer standard REST APIs for performing CRUD operations (create, read, update and delete) against user data."
     installation_description_fido2 = "FIDO 2.0 (FIDO2) is an open authentication standard that enables people to leverage common devices to authenticate to online services in both mobile and desktop environments"
-    
+
     installation_description_scripts = "Interception scripts can be used to implement custom business logic for authentication, authorization and more in a way that is upgrade-proof and doesn't require forking the Gluu Server code."
 
     installation_error = "The following error occurred while installing Gluu Server:"
