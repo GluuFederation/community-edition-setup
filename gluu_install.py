@@ -13,6 +13,7 @@ import locale
 import re
 import shlex
 import subprocess
+import ssl
 from urllib import request
 from urllib.parse import urljoin
 
@@ -32,6 +33,8 @@ parser.add_argument('--dist-server-base', help="Download server", default='https
 
 
 argsp = parser.parse_args()
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 maven_base = argsp.dist_server_base.rstrip('/')
 maven_root = '/'.join(maven_base.split('/')[:-1]).rstrip('/')
