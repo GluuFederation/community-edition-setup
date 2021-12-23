@@ -107,12 +107,15 @@ def package_oxd():
     oxd_zip_fn = os.path.join(gluu_app_dir, 'oxd-server.zip')
     oxd_tmp_root = '/tmp/{}'.format(os.urandom(5).hex())
     oxd_tmp_dir = os.path.join(oxd_tmp_root, 'oxd-server')
-    download('https://ox.gluu.org/maven/org/gluu/oxd-server/{0}{1}/oxd-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), oxd_zip_fn)
-    os.makedirs(oxd_tmp_dir)
+    download('https://raw.githubusercontent.com/GluuFederation/oxd/version_{}/debian/oxd-server'.format(app_versions['OX_VERSION']), os.path.join(gluu_app_dir,'oxd-server-start.sh'))
+    download('https://ox.gluu.org/maven//org/gluu/oxd-server/{0}{1}/oxd-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), oxd_zip_fn)
+    download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/version_{}/package/systemd/oxd-server.service'.format(app_versions['OX_VERSION']), os.path.join(oxd_tmp_dir, 'oxd-server.service'))
     cmd = 'unzip -qqo {} -d {}'.format(oxd_zip_fn, oxd_tmp_dir)
     print("Excuting", cmd)
     os.system(cmd)
     cmd = 'mkdir ' + os.path.join(oxd_tmp_dir, 'data')
+    shutil.copy(os.path.join(gluu_app_dir, 'oxd-server-start.sh'), os.path.join(oxd_tmp_dir, 'bin/oxd-server'))
+    os.chmod(os.path.join(oxd_tmp_dir, 'bin/oxd-server'), 33261)
     print("Excuting", cmd)
     os.system(cmd)
     cmd = 'cd {}; tar -zcf {} oxd-server'.format(oxd_tmp_root, oxd_tgz_fn)
@@ -120,6 +123,7 @@ def package_oxd():
     os.system(cmd)
     os.remove(oxd_zip_fn)
     shutil.rmtree(oxd_tmp_root)
+
 
 if not argsp.u:
     download('https://corretto.aws/downloads/resources/{0}/amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION']), os.path.join(app_dir, 'amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION'])))
