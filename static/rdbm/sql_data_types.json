@@ -931,7 +931,7 @@
       "type": "VARCHAR"
     },
     "spanner": {
-      "size": 128,
+      "size": 512,
       "type": "STRING"
     }
   },
@@ -941,7 +941,7 @@
       "type": "VARCHAR"
     },
     "spanner": {
-      "size": 128,
+      "size": 512,
       "type": "STRING"
     }
   },
