@@ -53,7 +53,7 @@ if not argsp.no_verify_ssl:
         ca_dir = argsp.ca_dir
     ssl_ver_ctx = ssl._create_default_https_context(capath=ca_dir, cafile=ca_file)
 else:
-    print("Warn: All https connections will not be verifyed. Files downloaded during installation can be dangerous.")
+    print("Warn: All https connections will not be verified. Files downloaded during installation can be dangerous.")
     ssl_ver_ctx = ssl_unver_ctx
 
 maven_base = argsp.dist_server_base.rstrip('/')
