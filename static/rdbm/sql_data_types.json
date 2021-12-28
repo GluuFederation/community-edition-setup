@@ -927,18 +927,22 @@
   },
   "oxMobileDevices": {
     "mysql": {
-      "type": "JSON"
+      "size": 512,
+      "type": "VARCHAR"
     },
     "spanner": {
-      "type": "ARRAY<STRING(MAX)>"
+      "size": 128,
+      "type": "STRING"
     }
   },
-  "oxOTPDevices": {
+  "oxOTPDevices":  {
     "mysql": {
-      "type": "JSON"
+      "size": 512,
+      "type": "VARCHAR"
     },
     "spanner": {
-      "type": "ARRAY<STRING(MAX)>"
+      "size": 128,
+      "type": "STRING"
     }
   },
   "oxTrustedDevicesInfo": {
