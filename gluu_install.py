@@ -39,7 +39,7 @@ parser.add_argument('--no-verify-ssl', help="Don't verify SSL connection (verify
 
 argsp = parser.parse_args()
 
-ssl_unver_ctx = ssl._create_unverified_context()
+ssl_unver_ctx = ssl._create_unverified_context()            #NOSONAR
 ssl_ver_ctx = None
 
 if not argsp.no_verify_ssl:
