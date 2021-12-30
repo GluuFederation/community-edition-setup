@@ -41,11 +41,11 @@ def arg_parser():
         rdbm_group.add_argument('-remote-rdbm', choices=['mysql', 'pgsql', 'spanner'], help="Enables using remote RDBM server")
         rdbm_group.add_argument('-local-rdbm', choices=['mysql', 'pgsql'], help="Enables installing/configuring local RDBM server")
 
-    parser.add_argument('-rdbm-user', help="RDBM username" if '-a' in sys.argv else argparse.SUPPRESS)
-    parser.add_argument('-rdbm-password', help="RDBM password" if '-a' in sys.argv else argparse.SUPPRESS)
-    parser.add_argument('-rdbm-port', help="RDBM port" if '-a' in sys.argv else argparse.SUPPRESS)
-    parser.add_argument('-rdbm-db', help="RDBM database" if '-a' in sys.argv else argparse.SUPPRESS)
-    parser.add_argument('-rdbm-host', help="RDBM host" if '-a' in sys.argv else argparse.SUPPRESS)
+    parser.add_argument('-rdbm-user', help="RDBM username")
+    parser.add_argument('-rdbm-password', help="RDBM password")
+    parser.add_argument('-rdbm-port', help="RDBM port")
+    parser.add_argument('-rdbm-db', help="RDBM database")
+    parser.add_argument('-rdbm-host', help="RDBM host")
 
     parser.add_argument('--remote-couchbase', help="Enables using remote couchbase server", action='store_true')
     parser.add_argument('--local-couchbase', help="Enables installing couchbase server", action='store_true')
@@ -80,12 +80,12 @@ def arg_parser():
     parser.add_argument('--no-progress', help="Use simple progress", action='store_true')
 
     # spanner options
-    parser.add_argument('-spanner-project', help="Spanner project name" if '-a' in sys.argv else argparse.SUPPRESS)
-    parser.add_argument('-spanner-instance', help="Spanner instance name" if '-a' in sys.argv else argparse.SUPPRESS)
-    parser.add_argument('-spanner-database', help="Spanner database name" if '-a' in sys.argv else argparse.SUPPRESS)
+    parser.add_argument('-spanner-project', help="Spanner project name")
+    parser.add_argument('-spanner-instance', help="Spanner instance name")
+    parser.add_argument('-spanner-database', help="Spanner database name")
     spanner_cred_group = parser.add_mutually_exclusive_group()
-    spanner_cred_group.add_argument('-spanner-emulator-host', help="Use Spanner emulator host" if '-a' in sys.argv else argparse.SUPPRESS)
-    spanner_cred_group.add_argument('-google-application-credentials', help="Path to Google application credentials json file" if '-a' in sys.argv else argparse.SUPPRESS)
+    spanner_cred_group.add_argument('-spanner-emulator-host', help="Use Spanner emulator host")
+    spanner_cred_group.add_argument('-google-application-credentials', help="Path to Google application credentials json file")
 
 
     argsp = parser.parse_args()

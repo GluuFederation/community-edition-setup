@@ -15,6 +15,7 @@ from setup_app import paths
 from setup_app.utils import base
 from setup_app.utils.cbm import CBM
 from setup_app.static import InstallTypes, colors
+from setup_app.messages import msg
 
 from setup_app.config import Config
 from setup_app.utils.setup_utils import SetupUtils
@@ -654,9 +655,9 @@ class PropertiesUtils(SetupUtils):
         backend_types = ['Local OpenDj',
                          'Remote OpenDj',
                          'Remote Couchbase',
-                         #'Local MySQL',
-                         #'Remote MySQL',
-                         #'Cloud Spanner',
+                         'Local MySQL',
+                         'Remote MySQL',
+                         'Cloud Spanner',
                          ]
 
         if 'couchbase' in self.getBackendTypes():
@@ -682,6 +683,9 @@ class PropertiesUtils(SetupUtils):
                 break
 
         backend_type_str = backend_types[int(choice)-1]
+
+        if 'mysql' in backend_type_str.lower() or 'spanner' in backend_type_str.lower():
+            print("{}{}{}".format(colors.WARNING, msg.mysql_spanner_beta, colors.ENDC))
 
         if backend_type_str == 'Local OpenDj':
             Config.ldap_install = InstallTypes.LOCAL
