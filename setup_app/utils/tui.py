@@ -416,29 +416,33 @@ class DBBackendForm(GluuSetupForm):
     def create(self):
         self.backends = self.add(npyscreen.TitleSelectOne, max_height=8, value = [0,], name=msg.chose_backend,
             values = [], scroll_exit=True)
+        self.beta_warning_label = self.add(npyscreen.TitleFixedText, name=msg.mysql_spanner_beta, relx=23, editable=False, labelColor='WARNING', hidden=True)
+
+        self.backends.value_changed_callback = self.backend_changed
 
     def do_beforeEditing(self):
         self.backend_types = ['Local OpenDj',
                          'Remote OpenDj',
                          'Remote Couchbase',
-                         #'Local MySQL',
-                         #'Remote MySQL',
-                         #'Cloud Spanner',
-                         #'Spanner Emulator',
+                         'Local MySQL',
+                         'Remote MySQL',
+                         'Cloud Spanner',
+                         'Spanner Emulator',
                          ]
 
         if 'couchbase' in propertiesUtils.getBackendTypes():
             self.backend_types.insert(2, 'Local Couchbase')
 
         self.backends.values = self.backend_types
-
         self.backends.update()
+
+    def backend_changed(self, widget):
+        self.beta_warning_label.hidden = True if self.backends.value[0] < 3 else False
+        self.beta_warning_label.update()
 
     def nextButtonPressed(self):
         self.parentApp.backend_type_str = self.backend_types[self.backends.value[0]]
-        #npyscreen.notify_confirm(backend_type_str, title="Selection")
 
-        
 
         if self.parentApp.backend_type_str == 'Local OpenDj':
             Config.ldap_install = static.InstallTypes.LOCAL
