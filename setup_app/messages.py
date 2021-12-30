@@ -1,5 +1,5 @@
 class msg:
-    
+
     MAIN_label = "System Information"
     HostForm_label = "Gathering Information"
     ServicesForm_label = "Select Services to Install"
@@ -85,7 +85,7 @@ class msg:
     acknowledge_lisence = "I acknowledge that use of the Gluu Server is under the Apache-2.0 license"
     acknowledge_lisence_ask = "Please check License Agreement"
     setup_properties_warning = "** All clear text passwords contained in\n/install/community-edition-setup/setup.properties.last."
-    
+
     enter_hostname = "Please enter hostname"
     enter_hostname_local = "Hostname can't be localhost"
     enter_valid_email = "Please enter valid email address"
@@ -149,9 +149,9 @@ class msg:
     installation_description_casa = "Gluu Casa is a self-service web portal for end-users to manage authentication and authorization preferences for their account in a Gluu Server."
     installation_description_scim = "The Gluu Server implements SCIM to offer standard REST APIs for performing CRUD operations (create, read, update and delete) against user data."
     installation_description_fido2 = "FIDO 2.0 (FIDO2) is an open authentication standard that enables people to leverage common devices to authenticate to online services in both mobile and desktop environments"
-    
+
     installation_description_scripts = "Interception scripts can be used to implement custom business logic for authentication, authorization and more in a way that is upgrade-proof and doesn't require forking the Gluu Server code."
-    
-    
+
     installation_error = "The following error occurred while installing Gluu Server:"
     exit_post_setup = "No service was selected to install. Exit now?"
+    mysql_spanner_beta = "Note MySQL and Spanner supports are in beta phase."
