@@ -1248,6 +1248,7 @@ inum: 5039
 objectClass: top
 objectClass: gluuAttribute
 oxSCIMCustomAttribute: true
+oxMultivaluedAttribute: false
 urn: urn:gluu:dir:attribute-def:oxEnrollmentCode
 
 dn: inum=42E1,ou=attributes,o=gluu
