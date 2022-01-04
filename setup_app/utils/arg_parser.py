@@ -33,13 +33,12 @@ def arg_parser():
 
     ldap_group = parser.add_mutually_exclusive_group()
     ldap_group.add_argument('--remote-ldap', help="Enables using remote LDAP server", action='store_true')
-    ldap_group.add_argument('--install-local-ldap', help="Installs local WrenDS", action='store_true')
+    ldap_group.add_argument('--install-local-wrends', help="Installs local WrenDS", action='store_true')
     ldap_group.add_argument('--disable-local-ldap', help="Disables installing local LDAP server", action='store_true')
 
-    if '-a' in sys.argv:
-        rdbm_group = parser.add_mutually_exclusive_group()
-        rdbm_group.add_argument('-remote-rdbm', choices=['mysql', 'pgsql', 'spanner'], help="Enables using remote RDBM server")
-        rdbm_group.add_argument('-local-rdbm', choices=['mysql', 'pgsql'], help="Enables installing/configuring local RDBM server")
+    rdbm_group = parser.add_mutually_exclusive_group()
+    rdbm_group.add_argument('-remote-rdbm', choices=['mysql', 'spanner'], help="Enables using remote RDBM server")
+    rdbm_group.add_argument('-local-rdbm', choices=['mysql'], help="Enables installing/configuring local RDBM server")
 
     parser.add_argument('-rdbm-user', help="RDBM username")
     parser.add_argument('-rdbm-password', help="RDBM password")
@@ -67,6 +66,7 @@ def arg_parser():
     parser.add_argument('-state', help="State field used for generating X.509 certificates")
     parser.add_argument('-country', help="Two letters country coude used for generating X.509 certificates")
     parser.add_argument('-oxtrust-admin-password', help="Used as the default admin user for oxTrust")
+    parser.add_argument('-testadmin-password', help="Used as password for testadmin for oxTrust")
     parser.add_argument('-ldap-admin-password', help="Used as the LDAP directory manager password")
     parser.add_argument('-application-max-ram', help="Application max ram")
     parser.add_argument('-properties-password', help="Encoded setup.properties file password")
