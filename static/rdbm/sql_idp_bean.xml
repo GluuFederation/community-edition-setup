@@ -4,6 +4,7 @@
         p:maxActive="10" p:maxIdle="5" p:maxWait="2000" p:testOnBorrow="true"
         p:validationQuery="select 1" p:validationQueryTimeout="5">
         <property name="connectionProperties">
-            <value>EnableSSL=true</value>
+            <value>enabledTLSProtocols=TLSv1.2</value>
+            <value>serverTimezone=UTC-0000</value>
         </property>
     </bean>
