@@ -5,6 +5,6 @@
         p:validationQuery="select 1" p:validationQueryTimeout="5">
         <property name="connectionProperties">
             <value>enabledTLSProtocols=TLSv1.2</value>
-            <value>serverTimezone=UTC-0000</value>
+            <value>serverTimezone=%{idp.attribute.resolver.datasource.serverTimezone}</value>
         </property>
     </bean>
