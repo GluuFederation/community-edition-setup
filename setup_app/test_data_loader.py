@@ -3,6 +3,7 @@ import glob
 import time
 import json
 import ldap3
+import uuid
 
 from setup_app import paths
 from setup_app import static
@@ -60,10 +61,32 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         self.copyFile(client_keystore_fn, os.path.join(Config.outputFolder, 'test/oxauth/server'))
         self.copyFile(keys_json_fn, os.path.join(Config.outputFolder, 'test/oxauth/server'))
 
+    def encode_test_passwords(self):
+        self.logIt("Encoding test passwords")
+        hostname = Config.hostname.split('.')[0]
+        try:
+            Config.templateRenderingDict['oxauthClient_2_pw'] = Config.templateRenderingDict['oxauthClient_2_inum'] + '-' + hostname
+            Config.templateRenderingDict['oxauthClient_2_encoded_pw'] = self.obscure(Config.templateRenderingDict['oxauthClient_2_pw'])
+
+            Config.templateRenderingDict['oxauthClient_3_pw'] =  Config.templateRenderingDict['oxauthClient_3_inum'] + '-' + hostname
+            Config.templateRenderingDict['oxauthClient_3_encoded_pw'] = self.obscure(Config.templateRenderingDict['oxauthClient_3_pw'])
+
+            Config.templateRenderingDict['oxauthClient_4_pw'] = Config.templateRenderingDict['oxauthClient_4_inum'] + '-' + hostname
+            Config.templateRenderingDict['oxauthClient_4_encoded_pw'] = self.obscure(Config.templateRenderingDict['oxauthClient_4_pw'])
+
+            testadmin_inum = str(uuid.uuid4())
+            oxtrust_testadmin_password = base.argsp.testadmin_password or self.getPW()
+            encoded_oxtrust_testadmin_password = self.ldap_encode(oxtrust_testadmin_password)
+            Config.templateRenderingDict['testadmin_inum'] = testadmin_inum
+            Config.templateRenderingDict['encoded_oxtrust_testadmin_password'] = encoded_oxtrust_testadmin_password
+        except Exception:
+            self.logIt("Error encoding test passwords", True)
+
+
     def load_test_data(self):
         Config.pbar.progress(self.service_name, "Loading Test Data", False)
         # we need ldap rebind
-        if Config.ldap_install:
+        if Config.persistence_type == 'ldap':
             try:
                 self.dbUtils.ldap_conn.unbind()
             except:
@@ -329,7 +352,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
             self.dbUtils.cbm.exec_query('CREATE INDEX def_gluu_myCustomAttr2 ON `gluu`(myCustomAttr2) USING GSI WITH {"defer_build":true}')
             self.dbUtils.cbm.exec_query('BUILD INDEX ON `gluu` (def_gluu_myCustomAttr1, def_gluu_myCustomAttr2)')
 
-        if Config.ldap_install:
+        if Config.persistence_type == 'ldap':
             try:
                 self.dbUtils.ldap_conn.unbind()
             except:
