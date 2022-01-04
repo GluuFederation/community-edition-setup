@@ -79,7 +79,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
             encoded_oxtrust_testadmin_password = self.ldap_encode(oxtrust_testadmin_password)
             Config.templateRenderingDict['testadmin_inum'] = testadmin_inum
             Config.templateRenderingDict['encoded_oxtrust_testadmin_password'] = encoded_oxtrust_testadmin_password
-        except Exception as e:
+        except Exception:
             self.logIt("Error encoding test passwords", True)
 
 
