@@ -21,6 +21,10 @@ class BackendTypes:
     PGSQL     = 4
     SPANNER   = 5
 
+class PersistenceType:
+    sql       = 'sql'
+    couchbase = 'couchbase'
+
 class AppType:
     APPLICATION = 1
     SERVICE     = 2
