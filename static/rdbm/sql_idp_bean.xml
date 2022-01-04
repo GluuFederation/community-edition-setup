@@ -4,10 +4,6 @@
         p:maxActive="10" p:maxIdle="5" p:maxWait="2000" p:testOnBorrow="true"
         p:validationQuery="select 1" p:validationQueryTimeout="5">
         <property name="connectionProperties">
-            <value>enabledTLSProtocols=TLSv1.2</value>
-            <value>serverTimezone=%{idp.attribute.resolver.datasource.serverTimezone}</value>
-        </property>
-        <property name="connectionProperties">
             <props merge="true">
                 <prop key="enabledTLSProtocols">TLSv1.2</prop>
                 <prop key="serverTimezone">%{idp.attribute.resolver.datasource.serverTimezone}</prop>
