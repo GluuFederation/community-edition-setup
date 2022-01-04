@@ -1089,5 +1089,16 @@
     "spanner": {
       "type": "STRING(MAX)"
     }
+  },
+  "oxTrustConfAttributeResolver": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
   }
 }
