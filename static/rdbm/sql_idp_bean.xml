@@ -7,4 +7,11 @@
             <value>enabledTLSProtocols=TLSv1.2</value>
             <value>serverTimezone=%{idp.attribute.resolver.datasource.serverTimezone}</value>
         </property>
+        <property name="connectionProperties">
+            <props merge="true">
+                <prop key="enabledTLSProtocols">TLSv1.2</prop>
+                <prop key="serverTimezone">%{idp.attribute.resolver.datasource.serverTimezone}</prop>
+            </props>
+        </property>
+
     </bean>
