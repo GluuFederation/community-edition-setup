@@ -3,6 +3,7 @@ import sys
 
 from setup_app.static import InstallTypes
 from setup_app.utils import base
+from setup_app.messages import msg
 
 def get_setup_options():
 
@@ -172,5 +173,9 @@ def get_setup_options():
         setupOptions['wrends_install'] = InstallTypes.NONE
 
     setupOptions['properties_password'] = base.argsp.properties_password
+
+    if base.argsp.install_shib and base.argsp.remote_rdbm == 'spanner':
+        print(msg.spanner_idp_warning)
+        sys.exit(2)
 
     return setupOptions

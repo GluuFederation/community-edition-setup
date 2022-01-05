@@ -22,6 +22,7 @@ class BackendTypes:
     SPANNER   = 5
 
 class PersistenceType:
+    ldap      = 'ldap'
     sql       = 'sql'
     couchbase = 'couchbase'
 
