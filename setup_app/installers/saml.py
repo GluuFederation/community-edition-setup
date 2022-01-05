@@ -127,14 +127,14 @@ class SamlInstaller(JettyInstaller):
                 '--storepass', Config.shibJksPass]
 
             self.run(' '.join(cmd), shell=True)
-            self.run([paths.cmd_chown, '-R', 'jetty:jetty', self.idp3Folder])
+
 
         couchbase_mappings = self.getMappingType('couchbase')
         if 'user' in couchbase_mappings:
             self.saml_couchbase_settings()
 
         self.saml_persist_configurations()
-
+        self.run([paths.cmd_chown, '-R', 'jetty:jetty', self.idp3Folder])
         self.enable()
 
     def unpack_idp3(self):
@@ -207,18 +207,6 @@ class SamlInstaller(JettyInstaller):
 
         if Config.persistence_type in (PersistenceType.couchbase, PersistenceType.sql):
 
-            # Add persist bean to global.xml
-            if Config.persistence_type == PersistenceType.couchbase:
-                persist_bean_xml_fn = os.path.join(Config.staticFolder, 'couchbase/couchbase_bean.xml')
-            elif Config.persistence_type == PersistenceType.sql:
-                persist_bean_xml_fn = os.path.join(Config.staticFolder, 'rdbm/sql_idp_bean.xml')
-
-            global_xml_fn = os.path.join(self.idp3ConfFolder, 'global.xml')
-            persist_bean_xml = self.readFile(persist_bean_xml_fn)
-            global_xml = self.readFile(global_xml_fn)
-            global_xml = global_xml.replace('</beans>', persist_bean_xml + '\n\n</beans>')
-            self.writeFile(global_xml_fn, global_xml, backup=False)
-
             # Add datasource.properties to idp.properties
             idp3_configuration_properties_fn = os.path.join(self.idp3ConfFolder, self.idp3_configuration_properties)
 
@@ -234,12 +222,18 @@ class SamlInstaller(JettyInstaller):
 
             if Config.persistence_type == 'sql':
                 self.data_source_properties = self.data_source_properties + '.sql'
+                bean_formatter = 'rdbm'
+            else:
+                bean_formatter = 'couchbase'
 
             self.renderTemplateInOut(self.data_source_properties, self.templates_folder, self.output_folder)
 
             idp_data_source_fn = os.path.join(self.idp3ConfFolder, 'datasource.properties')
             self.copyFile(self.data_source_properties, idp_data_source_fn)
             self.run([paths.cmd_chmod, '0600', idp_data_source_fn])
+            bean_xml = os.path.join(self.staticIDP3FolderConf, 'gluu-{}-bean.xml'.format(bean_formatter))
+            self.copyFile(bean_xml, self.idp3ConfFolder)
+
 
     def create_folders(self):
         self.createDirs(os.path.join(Config.gluuBaseFolder, 'conf/shibboleth3'))
