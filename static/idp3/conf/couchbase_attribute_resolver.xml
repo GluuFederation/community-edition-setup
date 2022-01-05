@@ -1,0 +1,7 @@
+    <DataConnector id="siteDataConnector" xsi:type="RelationalDatabase">
+      <BeanManagedConnection>siteDataSource</BeanManagedConnection>
+
+      <QueryTemplate>
+        <![CDATA[%{idp.attribute.resolver.N1QL.searchFilter}]]>
+      </QueryTemplate>
+    </DataConnector>

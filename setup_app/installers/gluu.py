@@ -4,6 +4,7 @@ import zipfile
 import inspect
 import base64
 import shutil
+import glob
 import re
 
 from pathlib import Path
@@ -469,3 +470,23 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                 cron_service = 'crond' if base.clone_type == 'rpm' else 'cron'
                 self.restart(cron_service)
 
+
+
+    def after_setup_tasks(self):
+        if Config.installSaml and Config.persistence_type in (static.PersistenceType.couchbase, static.PersistenceType.sql):
+            attrib_resolver_fn = os.path.join(base.current_app.SamlInstaller.idp3ConfFolder, 'attribute-resolver.xml')
+            attrib_resolver = self.readFile(attrib_resolver_fn)
+            re_result = re.search(r'<DataConnector(.*?)</DataConnector>', attrib_resolver, re.DOTALL)
+            data_connector_fn = os.path.join(base.current_app.SamlInstaller.staticIDP3FolderConf, Config.persistence_type + '_attribute_resolver.xml')
+            data_connector = self.readFile(data_connector_fn)
+
+            if re_result:
+                replace_string = re_result.group()
+                new_attrib_resolver = attrib_resolver.replace(replace_string, data_connector)
+                self.writeFile(attrib_resolver_fn, new_attrib_resolver)
+
+            self.stop('idp')
+            logs = glob.glob(os.path.join(base.current_app.SamlInstaller.idp3Folder, 'logs/*.log'))
+            for log_fn in logs:
+                os.remove(log_fn)
+            self.start('idp')

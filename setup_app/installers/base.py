@@ -17,6 +17,7 @@ class BaseInstaller:
 
     def register_progess(self):
         gluuProgress.register(self)
+        setattr(base.current_app, self.__class__.__name__, self)
 
     def start_installation(self):
         if not hasattr(self, 'pbar_text'):
