@@ -133,6 +133,8 @@ class SamlInstaller(JettyInstaller):
         if 'user' in couchbase_mappings:
             self.saml_couchbase_settings()
 
+        self.saml_persist_configurations()
+
         self.enable()
 
     def unpack_idp3(self):
@@ -180,8 +182,6 @@ class SamlInstaller(JettyInstaller):
         idp3WebappLibFolder = os.path.join(self.idp3WebappFolder, 'WEB-INF/lib')
         self.createDirs(idp3WebappLibFolder)
         self.copyTree(os.path.join(tmpIdpDir, 'WEB-INF/lib'), idp3WebappLibFolder)
-
-        self.saml_persist_configurations()
 
         self.removeDirs(tmpIdpDir)
 
