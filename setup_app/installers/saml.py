@@ -217,7 +217,7 @@ class SamlInstaller(JettyInstaller):
             persist_bean_xml = self.readFile(persist_bean_xml_fn)
             global_xml = self.readFile(global_xml_fn)
             global_xml = global_xml.replace('</beans>', persist_bean_xml + '\n\n</beans>')
-            self.writeFile(global_xml_fn, global_xml)
+            self.writeFile(global_xml_fn, global_xml, backup=False)
 
             # Add datasource.properties to idp.properties
             idp3_configuration_properties_fn = os.path.join(self.idp3ConfFolder, self.idp3_configuration_properties)
@@ -230,14 +230,16 @@ class SamlInstaller(JettyInstaller):
                     idp3_properties[i] = l.strip() + ', /conf/datasource.properties\n'
 
             new_idp3_props = ''.join(idp3_properties)
-            self.writeFile(idp3_configuration_properties_fn, new_idp3_props)
+            self.writeFile(idp3_configuration_properties_fn, new_idp3_props, backup=False)
 
             if Config.persistence_type == 'sql':
                 self.data_source_properties = self.data_source_properties + '.sql'
 
             self.renderTemplateInOut(self.data_source_properties, self.templates_folder, self.output_folder)
 
-            self.copyFile(self.data_source_properties, os.path.join(self.idp3ConfFolder, 'datasource.properties'))
+            idp_data_source_fn = os.path.join(self.idp3ConfFolder, 'datasource.properties')
+            self.copyFile(self.data_source_properties, idp_data_source_fn)
+            self.run([paths.cmd_chmod, '0600', idp_data_source_fn])
 
     def create_folders(self):
         self.createDirs(os.path.join(Config.gluuBaseFolder, 'conf/shibboleth3'))
