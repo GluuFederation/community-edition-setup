@@ -939,7 +939,8 @@ class PropertiesUtils(SetupUtils):
         self.promptForHTTPD()
         self.promptForScimServer()
         self.promptForFido2Server()
-        self.promptForShibIDP()
+        if Config.rdbm_type != 'spanner':
+            self.promptForShibIDP()
         self.promptForPassport()
 
 
