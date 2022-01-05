@@ -395,7 +395,7 @@ class SetupUtils(Crypto64):
         return text % dictionary
 
 
-    def renderTemplateInOut(self, filePath, templateFolder, outputFolder, me=''):
+    def renderTemplateInOut(self, filePath, templateFolder, outputFolder, me='', backup=False):
         fn = os.path.basename(filePath)
         in_fp = os.path.join(templateFolder, fn) 
         self.logIt("Rendering template %s" % in_fp)
@@ -412,7 +412,7 @@ class SetupUtils(Crypto64):
 
         rendered_text = self.fomatWithDict(template_text, format_dict)
         out_fp = os.path.join(outputFolder, fn)
-        self.writeFile(out_fp, rendered_text)
+        self.writeFile(out_fp, rendered_text, backup=backup)
 
     def renderTemplate(self, filePath):
         self.renderTemplateInOut(filePath, Config.templateFolder, Config.outputFolder)
