@@ -127,19 +127,13 @@ class SamlInstaller(JettyInstaller):
                 '--storepass', Config.shibJksPass]
 
             self.run(' '.join(cmd), shell=True)
-            
+            self.run([paths.cmd_chown, '-R', 'jetty:jetty', self.idp3Folder])
 
         couchbase_mappings = self.getMappingType('couchbase')
         if 'user' in couchbase_mappings:
             self.saml_couchbase_settings()
 
         self.saml_persist_configurations()
-
-        if not base.argsp.dummy:
-            self.run([paths.cmd_chown, '-R', 'jetty:jetty', self.idp3Folder])
-
-        self.start()
-        self.stop()
 
         self.enable()
 
@@ -246,8 +240,6 @@ class SamlInstaller(JettyInstaller):
             idp_data_source_fn = os.path.join(self.idp3ConfFolder, 'datasource.properties')
             self.copyFile(self.data_source_properties, idp_data_source_fn)
             self.run([paths.cmd_chmod, '0600', idp_data_source_fn])
-            self.run([paths.cmd_chmod, '0600', idp_data_source_fn])
-
 
     def create_folders(self):
         self.createDirs(os.path.join(Config.gluuBaseFolder, 'conf/shibboleth3'))

@@ -19,6 +19,7 @@ from setup_app.utils.package_utils import packageUtils
 class RDBMInstaller(BaseInstaller, SetupUtils):
 
     def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
         self.needdb = False # we will connect later
         self.service_name = 'rdbm-server'
         self.app_type = AppType.APPLICATION

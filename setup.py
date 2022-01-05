@@ -387,9 +387,6 @@ def do_installation():
                     service['object'].stop()
                     service['object'].start()
 
-            gluuProgress.progress(PostSetup.service_name, "After setup tasks")
-            gluuInstaller.after_setup_tasks()
-
         gluuProgress.progress(static.COMPLETED)
 
         if not GSA:
