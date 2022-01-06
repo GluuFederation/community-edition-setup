@@ -165,14 +165,14 @@ class PersonAuthentication(PersonAuthenticationType):
         print "Passport. prepareForStep called %s"  % str(step)
         identity = CdiUtil.bean(Identity)
 
-        facesContext = CdiUtil.bean(FacesContext)
-        requestParameters = facesContext.getExternalContext().getRequestParameterMap()
+        faces_context = CdiUtil.bean(FacesContext)
+        request_parameters = faces_context.getExternalContext().getRequestParameterMap()
 
-        passportStrategyFailed = None
+        passport_strategy_failed = None
         try:
-            passportStrategyFailed = requestParameters['failure']
-            print "Passport. failure return from passport: %s, Check Passport logs " % passportStrategyFailed
-        except:
+            passport_strategy_failed = request_parameters['failure']
+            print("Passport. failure return from passport: %s, Check Passport logs " % passport_strategy_failed)
+        except Exception as _:
             pass
 
         if step == 1:
@@ -203,8 +203,8 @@ class PersonAuthentication(PersonAuthenticationType):
                         print "Passport. prepareForStep. A provider value could not be extracted from custom authorization request parameter"
                     elif not provider in self.registeredProviders:
                         print "Passport. prepareForStep. Provider '%s' not part of known configured IDPs/OPs" % provider
-                    elif passportStrategyFailed != None:
-                        print "Passport. passport strategy failed : %s, Check Passport logs" % passportStrategyFailed
+                    elif passport_strategy_failed != None:
+                        print("Passport. passport strategy failed : %s, Check Passport logs" % passport_strategy_failed)
                     else:
                         url = self.getPassportRedirectUrl(provider)
 
