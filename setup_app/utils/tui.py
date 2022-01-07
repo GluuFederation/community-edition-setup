@@ -485,6 +485,9 @@ class DBBackendForm(GluuSetupForm):
             self.parentApp.switchForm('DBRDBMForm')
 
         elif self.parentApp.backend_type_str in ('Cloud Spanner', 'Spanner Emulator'):
+            if Config.installSaml:
+                npyscreen.notify_confirm(msg.spanner_idp_warning + ' ' + msg.idp_unselect, title="Warning")
+                return
             Config.rdbm_type = 'spanner'
             Config.rdbm_install = True
             Config.ldap_install = static.InstallTypes.NONE

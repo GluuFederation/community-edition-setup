@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:c="http://www.springframework.org/schema/c"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd"
+                           
+       default-init-method="initialize"
+       default-destroy-method="destroy">
+
+       <bean id="siteDataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close"
+       	     p:driverClassName="%{idp.attribute.resolver.datasource.driverClass}"
+             p:url="%{idp.attribute.resolver.datasource.jdbcUrl}" p:username="%{idp.attribute.resolver.datasource.user}" 
+             p:password="%{idp.attribute.resolver.datasource.password}"
+             p:maxActive="10" p:maxIdle="5" p:maxWait="2000" p:testOnBorrow="true"
+             p:validationQuery="select 1" p:validationQueryTimeout="5">
+             
+             <property name="connectionProperties">
+                <value>EnableSSL=true</value>
+             </property>
+       </bean>
+    
+</beans>
