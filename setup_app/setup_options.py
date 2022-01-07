@@ -14,7 +14,7 @@ def get_setup_options():
         'downloadWars': False,
         'installOxAuth': True,
         'installOxTrust': True,
-        'ldap_install': InstallTypes.LOCAL,
+        'wrends_install': InstallTypes.LOCAL,
         'installHTTPD': True,
         'installSaml': False,
         'installPassport': False,
@@ -33,8 +33,8 @@ def get_setup_options():
     }
 
 
-    if base.argsp.install_local_ldap:
-        setupOptions['ldap_install'] = InstallTypes.LOCAL
+    if base.argsp.install_local_wrends:
+        setupOptions['wrends_install'] = InstallTypes.LOCAL
 
     if base.argsp.local_couchbase:
         setupOptions['cb_install'] = InstallTypes.LOCAL
@@ -106,13 +106,13 @@ def get_setup_options():
     setupOptions['installFido2'] = base.argsp.install_fido2
 
     if base.argsp.remote_ldap:
-        setupOptions['ldap_install'] = InstallTypes.REMOTE
+        setupOptions['wrends_install'] = InstallTypes.REMOTE
         setupOptions['listenAllInterfaces'] = True
 
     if not (base.argsp.remote_couchbase or getattr(base.argsp, 'remote_rdbm', None) or getattr(base.argsp, 'local_rdbm', None)):
-        setupOptions['ldap_install'] = InstallTypes.LOCAL
+        setupOptions['wrends_install'] = InstallTypes.LOCAL
     else:
-        setupOptions['ldap_install'] = InstallTypes.NONE
+        setupOptions['wrends_install'] = InstallTypes.NONE
 
         if base.argsp.remote_couchbase:
             setupOptions['cb_install'] = InstallTypes.REMOTE
@@ -170,7 +170,7 @@ def get_setup_options():
             sys.exit(2)
 
     if base.argsp.disable_local_ldap:
-        setupOptions['ldap_install'] = InstallTypes.NONE
+        setupOptions['wrends_install'] = InstallTypes.NONE
 
     setupOptions['properties_password'] = base.argsp.properties_password
 
