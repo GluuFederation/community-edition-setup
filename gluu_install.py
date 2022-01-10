@@ -13,6 +13,8 @@ import locale
 import re
 import shlex
 import subprocess
+import ssl
+import certifi
 from urllib import request
 from urllib.parse import urljoin
 
@@ -29,9 +31,30 @@ if '-a' in sys.argv:
 parser.add_argument('-n', help="No prompt", action='store_true')
 parser.add_argument('--no-setup', help="Do not launch setup", action='store_true')
 parser.add_argument('--dist-server-base', help="Download server", default='https://jenkins.gluu.org/maven')
+parser.add_argument('--ca-dir', help="Directory, that contains CA", default='')
+parser.add_argument('--ca-file', help="File, that contains CA", default='')
+parser.add_argument('--use-certifi', help="Use file, that contains CA, defined by the certifi module", default=False, action='store_true')
+parser.add_argument('--no-verify-ssl', help="Don't verify SSL connection (verify mode, hostname)", default=False, action='store_true')
 
 
 argsp = parser.parse_args()
+
+ssl_unver_ctx = ssl._create_unverified_context()            #NOSONAR
+ssl_ver_ctx = None
+
+if not argsp.no_verify_ssl:
+    ca_dir = None
+    ca_file = None
+    if argsp.use_certifi:
+        ca_file = certifi.where()
+    if len(argsp.ca_file) > 0:
+        ca_file = argsp.ca_file
+    if len(argsp.ca_dir) > 0:
+        ca_dir = argsp.ca_dir
+    ssl_ver_ctx = ssl._create_default_https_context(capath=ca_dir, cafile=ca_file)
+else:
+    print("Warn: All https connections will not be verified. Files downloaded during installation can be dangerous.")
+    ssl_ver_ctx = ssl_unver_ctx
 
 maven_base = argsp.dist_server_base.rstrip('/')
 maven_root = '/'.join(maven_base.split('/')[:-1]).rstrip('/')
@@ -231,13 +254,14 @@ if argsp.uninstall:
 
     sys.exit()
 
-def download(url, target_fn):
+def download(url, target_fn, ssl_ctx):
     dst = os.path.join(app_dir, target_fn)
     pardir, fn = os.path.split(dst)
     if not os.path.exists(pardir):
         os.makedirs(pardir)
     print("Downloading", url, "to", dst)
-    request.urlretrieve(url, dst)
+    with request.urlopen(url, context=ssl_ctx) as response, open(dst, 'wb') as out_file:
+        shutil.copyfileobj(response, out_file)
 
 
 def download_gcs():
@@ -246,10 +270,10 @@ def download_gcs():
         gcs_download_url = 'http://162.243.99.240/icrby8xcvbcv/spanner/gcs.tgz'
         tmp_dir = '/tmp/' + os.urandom(5).hex()
         target_fn = os.path.join(tmp_dir, 'gcs.tgz')
-        download(gcs_download_url, target_fn)
+        download(gcs_download_url, target_fn, ssl_unver_ctx)
         shutil.unpack_archive(target_fn, app_dir)
 
-        req = request.urlopen('https://pypi.org/pypi/grpcio/1.37.0/json')
+        req = request.urlopen('https://pypi.org/pypi/grpcio/1.37.0/json', context=ssl_ver_ctx)
         data_s = req.read()
         data = json.loads(data_s)
 
@@ -265,7 +289,7 @@ def download_gcs():
 
         if package.get('url'):
             target_whl_fn = os.path.join(tmp_dir, os.path.basename(package['url']))
-            download(package['url'], target_whl_fn)
+            download(package['url'], target_whl_fn, ssl_ver_ctx)
             whl_zip = zipfile.ZipFile(target_whl_fn)
 
             for member in  whl_zip.filelist:
@@ -283,8 +307,8 @@ def package_oxd():
     oxd_zip_fn = os.path.join(gluu_app_dir, 'oxd-server.zip')
     oxd_tmp_root = '/tmp/{}'.format(os.urandom(5).hex())
     oxd_tmp_dir = os.path.join(oxd_tmp_root, 'oxd-server')
-    download(maven_base + '/org/gluu/oxd-server/{0}{1}/oxd-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), oxd_zip_fn)
-    download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/version_{}/package/systemd/oxd-server.service'.format(app_versions['OX_VERSION']), os.path.join(oxd_tmp_dir, 'oxd-server.service'))
+    download(maven_base + '/org/gluu/oxd-server/{0}{1}/oxd-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), oxd_zip_fn, ssl_ver_ctx)
+    download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/version_{}/package/systemd/oxd-server.service'.format(app_versions['OX_VERSION']), os.path.join(oxd_tmp_dir, 'oxd-server.service'), ssl_ver_ctx)
     cmd = 'unzip -qqo {} -d {}'.format(oxd_zip_fn, oxd_tmp_dir)
     print("Excuting", cmd)
     os.system(cmd)
@@ -300,39 +324,39 @@ def package_oxd():
     shutil.rmtree(oxd_tmp_root)
 
 if not argsp.u:
-    download('https://corretto.aws/downloads/resources/{0}/amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION']), os.path.join(app_dir, 'amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION'])))
-    download('https://repo1.maven.org/maven2/org/eclipse/jetty/{1}/{0}/{1}-{0}.tar.gz'.format(app_versions['JETTY_VERSION'], jetty_dist_string), os.path.join(app_dir,'{1}-{0}.tar.gz'.format(app_versions['JETTY_VERSION'], jetty_dist_string)))
-    download(maven_base + '/org/gluufederation/jython-installer/{0}/jython-installer-{0}.jar'.format(app_versions['JYTHON_VERSION']), os.path.join(app_dir, 'jython-installer-{0}.jar'.format(app_versions['JYTHON_VERSION'])))
-    download('https://nodejs.org/dist/{0}/node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION']), os.path.join(app_dir, 'node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION'])))
-    download('https://github.com/npcole/npyscreen/archive/master.zip', os.path.join(app_dir, 'npyscreen-master.zip'))
-    download(maven_base + '/org/gluufederation/opendj/opendj-server-legacy/{0}/opendj-server-legacy-{0}.zip'.format(app_versions['OPENDJ_VERSION']), os.path.join(app_dir,'opendj-server-{0}.zip'.format(app_versions['OPENDJ_VERSION'])))
-    download(maven_base + '/org/gluu/oxauth-server/{0}{1}/oxauth-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'oxauth.war'))
-    download(maven_base + '/org/gluu/oxtrust-server/{0}{1}/oxtrust-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'identity.war'))
-    download(maven_base + '/org/gluu/oxauth-client/{0}{1}/oxauth-client-{0}{1}-jar-with-dependencies.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'oxauth-client-jar-with-dependencies.jar'))
-    download(maven_base + '/org/gluu/casa/{0}{1}/casa-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'casa.war'))
-    download('https://repo1.maven.org/maven2/com/twilio/sdk/twilio/{0}/twilio-{0}.jar'.format(app_versions['TWILIO_VERSION']), os.path.join(gluu_app_dir,'twilio-{0}.jar'.format(app_versions['TWILIO_VERSION'])))
-    download('https://repo1.maven.org/maven2/org/jsmpp/jsmpp/{0}/jsmpp-{0}.jar'.format(app_versions['JSMPP_VERSION']), os.path.join(gluu_app_dir,'jsmpp-{0}.jar'.format(app_versions['JSMPP_VERSION'])))
-    download('https://github.com/GluuFederation/casa/raw/{}/extras/casa.pub'.format(app_versions['SETUP_BRANCH']), os.path.join(gluu_app_dir,'casa.pub'))
-    download('https://raw.githubusercontent.com/GluuFederation/casa/version_{}/plugins/account-linking/extras/login.xhtml'.format(app_versions['OX_VERSION']), os.path.join(gluu_app_dir,'login.xhtml'))
-    download('https://raw.githubusercontent.com/GluuFederation/casa/version_{}/plugins/account-linking/extras/casa.py'.format(app_versions['OX_VERSION']), os.path.join(gluu_app_dir,'casa.py'))
-    download('https://raw.githubusercontent.com/GluuFederation/gluu-snap/master/facter/facter', os.path.join(gluu_app_dir,'facter'))
-    download(maven_base + '/org/gluu/scim-server/{0}{1}/scim-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'scim.war'))
-    download(maven_base + '/org/gluu/fido2-server/{0}{1}/fido2-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'fido2.war'))
-    download('https://raw.githubusercontent.com/GluuFederation/oxd/version_{}/debian/oxd-server'.format(app_versions['OX_VERSION']), os.path.join(gluu_app_dir,'oxd-server-start.sh'))
-    download('https://github.com/GluuFederation/community-edition-setup/archive/{}.zip'.format(app_versions['SETUP_BRANCH']), os.path.join(gluu_app_dir,'community-edition-setup.zip'))
-    download(maven_root + '/npm/passport/passport-{}.tgz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport.tgz'))
-    download(maven_root + '/npm/passport/passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION'])))
-    download(maven_base + '/org/gluu/oxShibbolethStatic/{0}{1}/oxShibbolethStatic-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'shibboleth-idp.jar'))
-    download(maven_base + '/org/gluu/oxshibbolethIdp/{0}{1}/oxshibbolethIdp-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'idp.war'))
-    download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'super-gluu-radius-server.jar'))
-    download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'gluu-radius-libs.zip'))
-    download(maven_base + '/org/gluu/oxShibbolethKeyGenerator/{0}{1}/oxShibbolethKeyGenerator-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'idp3_cml_keygenerator.jar'))
-    download('https://github.com/sqlalchemy/sqlalchemy/archive/rel_1_3_23.zip', os.path.join(app_dir, 'sqlalchemy.zip'))
-    download('https://www.apple.com/certificateauthority/Apple_WebAuthn_Root_CA.pem', os.path.join(app_dir, 'Apple_WebAuthn_Root_CA.pem'))
+    download('https://corretto.aws/downloads/resources/{0}/amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION']), os.path.join(app_dir, 'amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION'])), ssl_ver_ctx)
+    download('https://repo1.maven.org/maven2/org/eclipse/jetty/{1}/{0}/{1}-{0}.tar.gz'.format(app_versions['JETTY_VERSION'], jetty_dist_string), os.path.join(app_dir,'{1}-{0}.tar.gz'.format(app_versions['JETTY_VERSION'], jetty_dist_string)), ssl_ver_ctx)
+    download(maven_base + '/org/gluufederation/jython-installer/{0}/jython-installer-{0}.jar'.format(app_versions['JYTHON_VERSION']), os.path.join(app_dir, 'jython-installer-{0}.jar'.format(app_versions['JYTHON_VERSION'])), ssl_ver_ctx)
+    download('https://nodejs.org/dist/{0}/node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION']), os.path.join(app_dir, 'node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION'])), ssl_ver_ctx)
+    download('https://github.com/npcole/npyscreen/archive/master.zip', os.path.join(app_dir, 'npyscreen-master.zip'), ssl_ver_ctx)
+    download(maven_base + '/org/gluufederation/opendj/opendj-server-legacy/{0}/opendj-server-legacy-{0}.zip'.format(app_versions['OPENDJ_VERSION']), os.path.join(app_dir,'opendj-server-{0}.zip'.format(app_versions['OPENDJ_VERSION'])), ssl_ver_ctx)
+    download(maven_base + '/org/gluu/oxauth-server/{0}{1}/oxauth-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'oxauth.war'), ssl_ver_ctx)
+    download(maven_base + '/org/gluu/oxtrust-server/{0}{1}/oxtrust-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'identity.war'), ssl_ver_ctx)
+    download(maven_base + '/org/gluu/oxauth-client/{0}{1}/oxauth-client-{0}{1}-jar-with-dependencies.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'oxauth-client-jar-with-dependencies.jar'), ssl_ver_ctx)
+    download(maven_base + '/org/gluu/casa/{0}{1}/casa-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'casa.war'), ssl_ver_ctx)
+    download('https://repo1.maven.org/maven2/com/twilio/sdk/twilio/{0}/twilio-{0}.jar'.format(app_versions['TWILIO_VERSION']), os.path.join(gluu_app_dir,'twilio-{0}.jar'.format(app_versions['TWILIO_VERSION'])), ssl_ver_ctx)
+    download('https://repo1.maven.org/maven2/org/jsmpp/jsmpp/{0}/jsmpp-{0}.jar'.format(app_versions['JSMPP_VERSION']), os.path.join(gluu_app_dir,'jsmpp-{0}.jar'.format(app_versions['JSMPP_VERSION'])), ssl_ver_ctx)
+    download('https://github.com/GluuFederation/casa/raw/{}/extras/casa.pub'.format(app_versions['SETUP_BRANCH']), os.path.join(gluu_app_dir,'casa.pub'), ssl_ver_ctx)
+    download('https://raw.githubusercontent.com/GluuFederation/casa/version_{}/plugins/account-linking/extras/login.xhtml'.format(app_versions['OX_VERSION']), os.path.join(gluu_app_dir,'login.xhtml'), ssl_ver_ctx)
+    download('https://raw.githubusercontent.com/GluuFederation/casa/version_{}/plugins/account-linking/extras/casa.py'.format(app_versions['OX_VERSION']), os.path.join(gluu_app_dir,'casa.py'), ssl_ver_ctx)
+    download('https://raw.githubusercontent.com/GluuFederation/gluu-snap/master/facter/facter', os.path.join(gluu_app_dir,'facter'), ssl_ver_ctx)
+    download(maven_base + '/org/gluu/scim-server/{0}{1}/scim-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'scim.war'), ssl_ver_ctx)
+    download(maven_base + '/org/gluu/fido2-server/{0}{1}/fido2-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'fido2.war'), ssl_ver_ctx)
+    download('https://raw.githubusercontent.com/GluuFederation/oxd/version_{}/debian/oxd-server'.format(app_versions['OX_VERSION']), os.path.join(gluu_app_dir,'oxd-server-start.sh'), ssl_ver_ctx)
+    download('https://github.com/GluuFederation/community-edition-setup/archive/{}.zip'.format(app_versions['SETUP_BRANCH']), os.path.join(gluu_app_dir,'community-edition-setup.zip'), ssl_ver_ctx)
+    download(maven_root + '/npm/passport/passport-{}.tgz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport.tgz'), ssl_ver_ctx)
+    download(maven_root + '/npm/passport/passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION'])), ssl_ver_ctx)
+    download(maven_base + '/org/gluu/oxShibbolethStatic/{0}{1}/oxShibbolethStatic-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'shibboleth-idp.jar'), ssl_ver_ctx)
+    download(maven_base + '/org/gluu/oxshibbolethIdp/{0}{1}/oxshibbolethIdp-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'idp.war'), ssl_ver_ctx)
+    download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'super-gluu-radius-server.jar'), ssl_ver_ctx)
+    download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'gluu-radius-libs.zip'), ssl_ver_ctx)
+    download(maven_base + '/org/gluu/oxShibbolethKeyGenerator/{0}{1}/oxShibbolethKeyGenerator-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'idp3_cml_keygenerator.jar'), ssl_ver_ctx)
+    download('https://github.com/sqlalchemy/sqlalchemy/archive/rel_1_3_23.zip', os.path.join(app_dir, 'sqlalchemy.zip'), ssl_ver_ctx)
+    download('https://www.apple.com/certificateauthority/Apple_WebAuthn_Root_CA.pem', os.path.join(app_dir, 'Apple_WebAuthn_Root_CA.pem'), ssl_ver_ctx)
 
     if not argsp.upgrade:
         for uf in services:
-            download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/master/package/systemd/{}'.format(uf), os.path.join('/etc/systemd/system', uf))
+            download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/master/package/systemd/{}'.format(uf), os.path.join('/etc/systemd/system', uf), ssl_ver_ctx)
     package_oxd()
 
 
