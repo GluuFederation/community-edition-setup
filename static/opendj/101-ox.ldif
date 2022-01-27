@@ -2459,6 +2459,35 @@ attributeTypes: ( 1.3.6.1.4.1.48710.1.3.425 NAME 'jansId'
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   X-ORIGIN 'Gluu created attribute' )
+attributeTypes: ( 1.3.6.1.4.1.48710.1.3.433 NAME 'remoteIdpName'
+  DESC 'remoteIdp name of Passport config entries'
+  EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE 
+  X-ORIGIN 'RFC 2798' )
+  
+attributeTypes: ( 1.3.6.1.4.1.48710.1.3.434 NAME 'remoteIdpHost'
+  DESC 'remoteIdp host of Passport config entries'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256}
+  X-ORIGIN 'RFC 4524' )
+  
+attributeTypes: ( 1.3.6.1.4.1.48710.1.3.435 NAME 'supportedSingleSignOnServices'
+  DESC 'Passport supported Single Sign on'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  X-ORIGIN 'Gluu created attribute' )
+  
+attributeTypes: ( 1.3.6.1.4.1.48710.1.3.436 NAME 'selectedSingleSignOnService'
+  DESC 'Passport Selected Single Sign on Service'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  X-ORIGIN 'Gluu created attribute' )
+attributeTypes: ( 1.3.6.1.4.1.48710.1.3.437 NAME 'signingCertificates'
+  EQUALITY caseIgnoreMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 
+  X-ORIGIN 'Gluu created attribute' )
 objectClasses: ( 1.3.6.1.4.1.48710.1.4.1 NAME 'pairwiseIdentifier'
   SUP ( top )
   STRUCTURAL
@@ -2771,5 +2800,10 @@ objectClasses: ( 1.3.6.1.4.1.48710.1.4.52 NAME 'jansStatEntry'
   MUST ( objectclass )
   MAY ( jansId $ dat $ attr )
   X-ORIGIN 'Gluu created objectclass' )
-
+objectClasses: ( 1.3.6.1.4.1.48710.1.4.53 NAME 'oxTrustedIdp'
+  SUP ( top )
+  STRUCTURAL
+  MUST ( objectclass )
+  MAY ( inum $ remoteIdpName $ remoteIdpHost $ supportedSingleSignOnServices $ selectedSingleSignOnService $  signingCertificates)
+  X-ORIGIN 'Gluu created objectclass' )
 
