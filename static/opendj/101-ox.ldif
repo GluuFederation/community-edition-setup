@@ -1878,7 +1878,7 @@ attributeTypes: ( 1.3.6.1.4.1.48710.1.3.325 NAME 'gender'
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   X-ORIGIN 'OpenID Connect 1.0 Standard Claim' )
 attributeTypes: ( 1.3.6.1.4.1.48710.1.3.326 NAME 'birthdate'
-  DESC 'Birthday of the person, represented as an ISO 8601:2004 [ISO8601‑2004] YYYY-MM-DD format'
+  DESC 'Birthday of the person, represented as an ISO 8601:2004 [ISO8601-2004] YYYY-MM-DD format'
   EQUALITY generalizedTimeMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.24
   ORDERING generalizedTimeOrderingMatch
@@ -2459,6 +2459,36 @@ attributeTypes: ( 1.3.6.1.4.1.48710.1.3.425 NAME 'jansId'
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   X-ORIGIN 'Gluu created attribute' )
+attributeTypes: ( 1.3.6.1.4.1.48710.1.3.426 NAME 'remoteIdpName'
+  DESC 'remoteIdp name'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  X-ORIGIN 'Gluu created attribute' )
+attributeTypes: ( 1.3.6.1.4.1.48710.1.3.427 NAME 'remoteIdpHost'
+  DESC 'remoteIdp host'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  X-ORIGIN 'Gluu created attribute' )
+attributeTypes: ( 1.3.6.1.4.1.48710.1.3.428 NAME 'supportedSingleSignOnServices'
+  DESC 'supportedSingleSignOnServices'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  X-ORIGIN 'Gluu created attribute' )
+attributeTypes: ( 1.3.6.1.4.1.48710.1.3.429 NAME 'selectedSingleSignOnService'
+  DESC 'selectedSingleSignOnService'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  X-ORIGIN 'Gluu created attribute' )
+attributeTypes: ( 1.3.6.1.4.1.48710.1.3.430 NAME 'signingCertificates'
+  DESC 'signingCertificates'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  X-ORIGIN 'Gluu created attribute' )
 objectClasses: ( 1.3.6.1.4.1.48710.1.4.1 NAME 'pairwiseIdentifier'
   SUP ( top )
   STRUCTURAL
@@ -2610,7 +2640,7 @@ objectClasses: ( 1.3.6.1.4.1.48710.1.4.25 NAME 'token'
   MAY ( authnTime $ authzCode $ iat $ exp $ del $ grtId $ grtTyp $ jwtReq $ nnc $ scp $ tknCde $ tknTyp $ usrId $ clnId $ acr $ uuid $ chlng $ chlngMth $ clms $ ssnId $ attr $ tknBndCnf )
   X-ORIGIN 'Gluu created objectclass' )
 objectClasses: ( 1.3.6.1.4.1.48710.1.4.26 NAME 'oxAuthUmaRPT'
-  SUP ( top )
+  SUP ( token )
   STRUCTURAL
   MUST ( objectclass )
   MAY ( authnTime $ clnId $ iat $ exp $ del $ tknCde $ usrId $ ssnId $ oxUmaPermission $ uuid )
@@ -2770,6 +2800,12 @@ objectClasses: ( 1.3.6.1.4.1.48710.1.4.52 NAME 'jansStatEntry'
   STRUCTURAL
   MUST ( objectclass )
   MAY ( jansId $ dat $ attr )
+  X-ORIGIN 'Gluu created objectclass' )
+objectClasses: ( 1.3.6.1.4.1.48710.1.4.53 NAME 'oxTrustedIdp'
+  SUP ( top )
+  STRUCTURAL
+  MUST ( objectclass )
+  MAY ( inum $ remoteIdpName $ remoteIdpHost $ supportedSingleSignOnServices $ selectedSingleSignOnService $ signingCertificates )
   X-ORIGIN 'Gluu created objectclass' )
 
 
