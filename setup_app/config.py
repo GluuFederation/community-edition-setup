@@ -267,7 +267,7 @@ class Config:
         if base.snap:
             self.defaultTrustStoreFN = os.path.join(self.certFolder, 'java-cacerts')
         else:
-            self.defaultTrustStoreFN = os.path.join(self.jre_home, 'jre/lib/security/cacerts')
+            self.defaultTrustStoreFN = os.path.join(self.jre_home, 'lib/security/cacerts')
 
         self.defaultTrustStorePW = 'changeit'
 
