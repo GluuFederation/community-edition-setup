@@ -2,6 +2,7 @@ import os
 import uuid
 import inspect
 
+from pathlib import Path
 from distutils.version import LooseVersion
 
 from setup_app import paths
@@ -32,6 +33,15 @@ class BaseInstaller:
         if not base.snap:
             self.create_user()
 
+        if not hasattr(self, 'service_user'):
+            if Config.profile == static.SetupProfiles.DISA_STIG:
+                self.service_user = service_name.lower()
+                self.createUser(self.service_user)
+            else:
+                self.service_user = 'jetty'
+
+        self.profile_templates()
+
         self.create_folders()
 
         self.install()
@@ -44,6 +54,22 @@ class BaseInstaller:
 
             self.render_import_templates()
             self.update_backend()
+
+    def profile_templates(self, temp_dir=None, recursive=False):
+        if not temp_dir:
+            if not hasattr(self, 'templates_folder'):
+                return
+            temp_dir = self.templates_folder
+
+        glob_param = '*.' + Config.profile
+        if recursive:
+            glob_param = '**/' + glob_param
+
+        for temp_p in Path(temp_dir).glob(glob_param):
+            target_p = temp_p.with_suffix('')
+            base.logIt("Renaming {} to {} target_p".format(temp_p, target_p))
+            temp_p.rename(target_p)
+
 
     def update_rendering_dict(self):
         mydict = {}

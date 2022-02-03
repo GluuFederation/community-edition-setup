@@ -1,0 +1,14 @@
+[Unit]
+Description=Gluu services
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/gluu-serverd start
+ExecStop=/usr/sbin/gluu-serverd stop
+User=root
+Group=root
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target

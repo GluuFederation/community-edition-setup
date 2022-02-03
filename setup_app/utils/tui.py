@@ -102,7 +102,7 @@ class GluuSetupForm(npyscreen.FormBaseNew):
 
         form_name = getClassName(self)
 
-        self.add(npyscreen.TitleFixedText, name=msg.version_label + ' ' + Config.oxVersion, rely=self.lines-5,  editable=False, labelColor='CONTROL')
+        self.add(npyscreen.TitleFixedText, name=msg.version_label.format(Config.profile.upper()) + ' ' + Config.oxVersion, rely=self.lines-5,  editable=False, labelColor='CONTROL')
         self.add(npyscreen.MultiLineEdit, value='=' * (self.columns - 4), max_height=1, rely=self.lines-4, editable=False)
 
         if form_name != 'InstallStepsForm':
@@ -421,18 +421,7 @@ class DBBackendForm(GluuSetupForm):
         self.backends.value_changed_callback = self.backend_changed
 
     def do_beforeEditing(self):
-        self.backend_types = ['Local OpenDj',
-                         'Remote OpenDj',
-                         'Remote Couchbase',
-                         'Local MySQL',
-                         'Remote MySQL',
-                         'Cloud Spanner',
-                         'Spanner Emulator',
-                         ]
-
-        if 'couchbase' in propertiesUtils.getBackendTypes():
-            self.backend_types.insert(2, 'Local Couchbase')
-
+        self.backend_types = propertiesUtils.get_backend_list()
         self.backends.values = self.backend_types
         self.backends.update()
 

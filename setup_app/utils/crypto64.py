@@ -41,22 +41,48 @@ class Crypto64:
 
     def gen_cert(self, suffix, password, user='root', cn=None, truststore_fn=None):
         self.logIt('Generating Certificate for %s' % suffix)
-        key_with_password = '%s/%s.key.orig' % (Config.certFolder, suffix)
+        key_with_password = os.path.join(Config.certFolder, suffix + '.key.orig')
+        key_without_password = os.path.join(Config.certFolder, suffix + '.key.noenc')
         key = '%s/%s.key' % (Config.certFolder, suffix)
         csr = '%s/%s.csr' % (Config.certFolder, suffix)
         public_certificate = '%s/%s.crt' % (Config.certFolder, suffix)
         if not truststore_fn:
             truststore_fn = Config.defaultTrustStoreFN
 
-        self.run([paths.cmd_openssl,
+
+        if Config.profile == static.SetupProfiles.DISA_STIG:
+            self.run([paths.cmd_openssl,
                   'genrsa',
-                  '-des3',
+                  '-out',
+                  key_without_password,
+                  ])
+
+            self.run([paths.cmd_openssl,
+                  'pkey',
+                  '-in',
+                  key_without_password,
                   '-out',
                   key_with_password,
+                  '-des3',
                   '-passout',
                   'pass:%s' % password,
-                  '2048'
                   ])
+
+            # remove unencrypted key
+            os.remove(key_without_password)
+
+        else:
+
+            self.run([paths.cmd_openssl,
+                      'genrsa',
+                      '-des3',
+                      '-out',
+                      key_with_password,
+                      '-passout',
+                      'pass:%s' % password,
+                      '2048'
+                      ])
+
         self.run([paths.cmd_openssl,
                   'rsa',
                   '-in',
@@ -191,39 +217,6 @@ class Crypto64:
         if not enc_keys:
             enc_keys = key_algs
 
-        # We can remove this once KeyGenerator will do the same
-        if jks_create == True:
-            self.logIt("Creating empty JKS keystore")
-            # Create JKS with dummy key
-            cmd = " ".join([Config.cmd_keytool,
-                            '-genkey',
-                            '-alias',
-                            'dummy',
-                            '-keystore',
-                            jks_path,
-                            '-storepass',
-                            jks_pwd,
-                            '-keypass',
-                            jks_pwd,
-                            '-dname',
-                            '"%s"' % dn_name])
-            self.run([cmd], shell=True)
-
-            # Delete dummy key from JKS
-            cmd = " ".join([Config.cmd_keytool,
-                            '-delete',
-                            '-alias',
-                            'dummy',
-                            '-keystore',
-                            jks_path,
-                            '-storepass',
-                            jks_pwd,
-                            '-keypass',
-                            jks_pwd,
-                            '-dname',
-                            '"%s"' % dn_name])
-            self.run([cmd], shell=True)
-
         cmd = " ".join([Config.cmd_java,
                         "-Dlog4j.defaultInitOverride=true",
                         "-cp", Config.non_setup_properties['oxauth_client_jar_fn'], 
@@ -276,7 +269,7 @@ class Crypto64:
         try:
             jwks_text = '\n'.join(jwks)
             self.writeFile(fn, jwks_text)
-            self.run([Config.cmd_chown, 'jetty:jetty', fn])
+            self.run([Config.cmd_chown, 'gluu:gluu', fn])
             self.run([Config.cmd_chmod, '600', fn])
             self.logIt("Wrote oxAuth OpenID Connect key to %s" % fn)
         except:
@@ -299,14 +292,16 @@ class Crypto64:
     def encode_passwords(self):
         self.logIt("Encoding passwords")
 
-        try:
-            if Config.ldapPass:
-                Config.encoded_ox_ldap_pw = self.obscure(Config.ldapPass)
-            if Config.cb_password:
-                Config.encoded_cb_password = self.obscure(Config.cb_password)
-            Config.encoded_opendj_p12_pass = self.obscure(Config.opendj_p12_pass)
-        except:
-            self.logIt("Error encoding passwords", True, True)
+        if Config.ldapPass:
+            Config.encoded_ox_ldap_pw = self.obscure(Config.ldapPass)
+
+        if Config.cb_password:
+            Config.encoded_cb_password = self.obscure(Config.cb_password)
+
+        if not Config.get('opendj_truststore_pass'):
+            Config.opendj_truststore_pass = os.urandom(6).hex()
+
+        Config.opendj_truststore_pass_enc = self.obscure(Config.opendj_truststore_pass)
 
     def encode_test_passwords(self):
         self.logIt("Encoding test passwords")
@@ -322,3 +317,11 @@ class Crypto64:
             Config.templateRenderingDict['oxauthClient_4_encoded_pw'] = self.obscure(Config.templateRenderingDict['oxauthClient_4_pw'])
         except:
             self.logIt("Error encoding test passwords", True)
+
+    def remove_pcks11_keys(self, keys=['server-cert', 'admin-cert', 'dummy']):
+        output = self.run([Config.cmd_keytool, '-list', '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
+        for l in output.splitlines():
+            if 'PrivateKeyEntry' in l:
+                alias = l.split(',')[0]
+                if alias in keys:
+                    self.run([Config.cmd_keytool, '-delete', '-alias', alias, '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])

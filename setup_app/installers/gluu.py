@@ -25,6 +25,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         txt = ''
         try:
             if not Config.installed_instance:
+                txt += 'profile'.ljust(30) + Config.profile.rjust(35) + "\n"
                 txt += 'hostname'.ljust(30) + Config.hostname.rjust(35) + "\n"
                 txt += 'orgName'.ljust(30) + Config.orgName.rjust(35) + "\n"
                 txt += 'os'.ljust(30) + Config.os_type.rjust(35) + "\n"
@@ -101,6 +102,11 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             base.download(oxauth_client_jar_url, Config.non_setup_properties['oxauth_client_jar_fn'])
 
         self.determine_key_gen_path()
+
+        if Config.profile == static.SetupProfiles.DISA_STIG:
+            self.remove_pcks11_keys()
+
+        self.profile_templates(Config.templateFolder)
 
     def determine_key_gen_path(self):
 
@@ -464,8 +470,32 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                     self.run([paths.cmd_chmod, '660', fpath])
                     self.run([paths.cmd_chmod, 'u+X', fpath])
             self.run([paths.cmd_chown, '-R', 'root:gluu', Config.gluuOptPythonFolder])
+            self.run([paths.cmd_chown, 'gluu:gluu', Config.jetty_base])
+
+            self.run([paths.cmd_chown, 'gluu:gluu', '/opt/gluu/'])
+            self.run([paths.cmd_chown, 'root:gluu', '/etc/gluu/'])
+            self.run([paths.cmd_chown, 'root:gluu', '/var/gluu'])
+            self.run([paths.cmd_chmod, '770', '/var/gluu'])
 
             if not Config.installed_instance:
                 cron_service = 'crond' if base.clone_type == 'rpm' else 'cron'
                 self.restart(cron_service)
+
+
+        if Config.profile == static.SetupProfiles.DISA_STIG:
+
+
+            jettyAbsoluteDir = Path('/opt/jetty').resolve()
+
+            # selinux proxypass
+            setsebool_cmd = shutil.which('setsebool')
+            self.run([setsebool_cmd, 'httpd_can_network_connect', '1'])
+            # make it permanent
+            self.run([setsebool_cmd, 'httpd_can_network_connect', '1', '-P'])
+
+            self.run([paths.cmd_chmod, 'g+rwX', '-R', Config.jetty_base])
+            self.run([paths.cmd_chmod, 'g+rwX', '-R', jettyAbsoluteDir.as_posix()])
+            self.run([paths.cmd_chown, '-R', 'jetty:gluu', jettyAbsoluteDir.parent.as_posix()])
+            self.run([paths.cmd_chmod, 'g+rwX', '-R', Config.gluuBaseFolder])
+            self.run([paths.cmd_chmod, 'g+rwX', '-R', os.path.join(Config.distFolder,'scripts')])
 

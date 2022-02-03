@@ -14,7 +14,7 @@ import ldap3
 from setup_app import paths
 from setup_app.utils import base
 from setup_app.utils.cbm import CBM
-from setup_app.static import InstallTypes, colors
+from setup_app.static import InstallTypes, SetupProfiles, colors
 from setup_app.messages import msg
 
 from setup_app.config import Config
@@ -119,8 +119,8 @@ class PropertiesUtils(SetupUtils):
 
         self.set_persistence_type()
 
-        if not Config.opendj_p12_pass:
-            Config.opendj_p12_pass = self.getPW()
+        if not Config.opendj_truststore_pass:
+            Config.opendj_truststore_pass = self.getPW()
 
         if not Config.encode_salt:
             Config.encode_salt = self.getPW() + self.getPW()
@@ -649,19 +649,27 @@ class PropertiesUtils(SetupUtils):
             Config.addPostSetupService.append('installGluuRadius')
 
 
-    def prompt_for_backend(self):
-        print('Chose Backend Type:')
-        
-        backend_types = ['Local OpenDj',
-                         'Remote OpenDj',
+    def get_backend_list(self):
+
+        backend_list = ['Local OpenDj', 'Remote OpenDj']
+
+        if Config.profile != SetupProfiles.DISA_STIG:
+            backend_list += [
                          'Remote Couchbase',
                          'Local MySQL',
                          'Remote MySQL',
                          'Cloud Spanner',
-                         ]
+                         'Spanner Emulator',
+                        ]
+            if 'couchbase' in self.getBackendTypes():
+                backend_list.insert(2, 'Local Couchbase')
 
-        if 'couchbase' in self.getBackendTypes():
-            backend_types.insert(2, 'Local Couchbase')
+        return backend_list
+
+    def prompt_for_backend(self):
+        print('Chose Backend Type:')
+
+        backend_types = self.get_backend_list()
 
         nlist = []
         for i, btype in enumerate(backend_types):
@@ -937,11 +945,14 @@ class PropertiesUtils(SetupUtils):
 
 
         self.promptForHTTPD()
-        self.promptForScimServer()
-        self.promptForFido2Server()
-        if Config.rdbm_type != 'spanner':
-            self.promptForShibIDP()
-        self.promptForPassport()
+        if Config.profile != SetupProfiles.DISA_STIG:
+            self.promptForScimServer()
+            self.promptForFido2Server()
+
+            if Config.rdbm_type != 'spanner':
+                self.promptForShibIDP()
+
+            self.promptForPassport()
 
 
         if os.path.exists(os.path.join(Config.distGluuFolder, 'casa.war')):
@@ -949,8 +960,8 @@ class PropertiesUtils(SetupUtils):
 
         if (not Config.installOxd) and Config.oxd_package:
             self.promptForOxd()
-            
-        self.promptForGluuRadius()
 
+        if Config.profile != SetupProfiles.DISA_STIG:
+            self.promptForGluuRadius()
 
 propertiesUtils = PropertiesUtils()

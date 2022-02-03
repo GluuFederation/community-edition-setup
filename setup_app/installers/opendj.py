@@ -9,7 +9,7 @@ from setup_app import paths
 from setup_app.static import AppType, InstallOption
 from setup_app.config import Config
 from setup_app.utils import base
-from setup_app.static import InstallTypes, BackendTypes
+from setup_app.static import InstallTypes, BackendTypes, SetupProfiles
 from setup_app.utils.setup_utils import SetupUtils
 from setup_app.installers.base import BaseInstaller
 
@@ -31,6 +31,11 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         self.opendj_service_centos7 = os.path.join(Config.install_dir, 'static/opendj/systemd/opendj.service')
         self.ldapDsconfigCommand = os.path.join(Config.ldapBinFolder, 'dsconfig')
         self.ldapDsCreateRcCommand = os.path.join(Config.ldapBinFolder, 'create-rc-script')
+
+        self.opendj_setup_properties = os.path.join(Config.templateFolder, 'opendj-setup.properties')
+        self.opendj_pck11_setup_key_fn = '/root/.keystore.pin'
+        self.opendj_admin_truststore_fn = os.path.join(Config.ldapBaseFolder, 'config', 'admin-truststore')
+        self.opendj_key_store_password_fn = os.path.join(Config.ldapBaseFolder, 'config', 'keystore.pin')
 
 
     def install(self):
@@ -86,7 +91,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
 
     def extractOpenDJ(self):
 
-        openDJArchive = max(glob.glob(os.path.join(Config.distFolder, 'app/opendj-server-*4*.zip')))
+        openDJArchive = max(glob.glob(os.path.join(Config.distFolder, 'app/opendj-*4*.zip')))
 
         try:
             self.logIt("Unzipping %s in /opt/" % openDJArchive)
@@ -112,31 +117,56 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         #    self.run([paths.cmd_mkdir, Config.ldapBaseFolder])
 
         # Copy opendj-setup.properties so user ldap can find it in /opt/opendj
+
+        Config.templateRenderingDict['opendj_pck11_setup_key_fn'] = self.opendj_pck11_setup_key_fn
+        self.renderTemplateInOut(self.opendj_setup_properties, Config.templateFolder, Config.outputFolder)
+
         setupPropsFN = os.path.join(Config.ldapBaseFolder, 'opendj-setup.properties')
         shutil.copy("%s/opendj-setup.properties" % Config.outputFolder, setupPropsFN)
 
         self.run([paths.cmd_chown, 'ldap:ldap', setupPropsFN])
 
+        if Config.profile == SetupProfiles.DISA_STIG:
+
+            self.writeFile(self.opendj_pck11_setup_key_fn, 'changeit')
+
+            # create PKCS11 server cert
+            self.run([Config.cmd_keytool, '-genkey', '-alias', 'admin-cert', '-keyalg', 'rsa', '-dname', 'CN={},O=Administration Connector RSA Self-Signed Certificate'.format(Config.hostname), '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
+            self.run([Config.cmd_keytool, '-genkey', '-alias', 'server-cert', '-keyalg', 'rsa', '-dname', 'CN={},O=OpenDJ RSA Self-Signed Certificate'.format(Config.hostname), '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
+
+            self.run([Config.cmd_keytool, '-selfcert', '-alias', 'admin-cert', '-validity', '3650', '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
+            self.run([Config.cmd_keytool, '-selfcert', '-alias', 'server-cert', '-validity', '3650', '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
+
 
         ldapSetupCommand = os.path.join(os.path.dirname(Config.ldapBinFolder), 'setup')
 
-        setupCmd = " ".join([ldapSetupCommand,
-                                '--no-prompt',
-                                '--cli',
-                                '--propertiesFilePath',
-                                setupPropsFN,
-                                '--acceptLicense'])
+        setupCmd = [ldapSetupCommand,
+                    '--no-prompt',
+                    '--cli',
+                    '--propertiesFilePath',
+                    setupPropsFN,
+                    '--acceptLicense']
+
         if base.snap:
             self.run(setupCmd, shell=True)
         else:
-            self.run(['/bin/su',
-                          'ldap',
-                          '-c',
-                          setupCmd],
-                          cwd='/opt/opendj',
+            self.run(setupCmd,
+                      cwd='/opt/opendj',
+                      env={'OPENDJ_JAVA_HOME': Config.jre_home}
                       )
 
         self.fix_opendj_java_properties()
+
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            opendj_fapolicyd_rules = [
+                    'allow perm=any uid=ldap : dir={}'.format(Config.jre_home),
+                    'allow perm=any uid=ldap : dir={}'.format(Config.ldapBaseFolder),
+                    '# give access to opendj server',
+                    ]
+
+            self.apply_fapolicyd_rules(opendj_fapolicyd_rules)
+
 
         try:
             self.logIt('Stopping opendj server')
@@ -144,6 +174,15 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
             self.run(cmd, shell=True)
         except:
             self.logIt("Error stopping opendj", True)
+
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            # Restore SELinux Context
+            self.run(['restorecon', '-rv', os.path.join(Config.ldapBaseFolder, 'bin')])
+
+            config_fn = os.path.join(Config.ldapBaseFolder, 'config/config.ldif')
+            self.logIt("Fixing {} for stig".format(config_fn))
+
 
     def post_install_opendj(self):
         try:
@@ -247,11 +286,11 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                   '-file',
                   Config.opendj_cert_fn,
                   '-keystore',
-                  Config.opendj_p12_fn,
+                  Config.opendj_trust_store_fn,
                   '-storetype',
-                  'PKCS12',
+                  Config.opendj_truststore_format.upper(),
                   '-storepass',
-                  Config.opendj_p12_pass
+                  Config.opendj_truststore_pass
                   ])
 
         # Import OpenDJ certificate into java truststore
@@ -365,11 +404,20 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         self.writeFile(opendj_java_properties_fn, '\n'.join(opendj_java_properties))
 
 
+    def remove_pcks11_keys(self, keys=['server-cert', 'admin-cert', 'dummy']):
+        output = self.run([Config.cmd_keytool, '-list', '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
+        for l in output.splitlines():
+            if 'PrivateKeyEntry' in l:
+                alias = l.split(',')[0]
+                if alias in keys:
+                    self.run([Config.cmd_keytool, '-delete', '-alias', alias, '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
+
+
 
     def installed(self):
         if os.path.exists(self.openDjSchemaFolder):
             wrends_install = InstallTypes.LOCAL
-        elif os.path.exists(Config.opendj_p12_fn):
+        elif os.path.exists(Config.opendj_trust_store_fn):
             wrends_install = InstallTypes.REMOTE
         else:
             wrends_install = 0

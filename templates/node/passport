@@ -11,7 +11,7 @@ APP_ARGS=""
 
 if [ -z "$NODE_USER" ]
 then
-    NODE_USER=node
+    NODE_USER=%(service_user)s
 fi
 
 TMPDIR=%(node_home)s/temp

@@ -27,8 +27,7 @@ if '-a' in sys.argv:
 parser.add_argument('-n', help="No prompt", action='store_true')
 parser.add_argument('--no-setup', help="Do not launch setup", action='store_true')
 parser.add_argument('--dist-server-base', help="Download server", default='https://jenkins.gluu.org/maven')
-
-
+parser.add_argument('-profile', help="Setup profile", choices=['CE', 'DISA-STIG'], default='CE')
 argsp = parser.parse_args()
 
 maven_base = argsp.dist_server_base.rstrip('/')
@@ -36,10 +35,11 @@ maven_root = '/'.join(maven_base.split('/')[:-1]).rstrip('/')
 
 
 cur_dir = os.path.dirname(os.path.realpath(__file__))
-gluu_app_dir = '/opt/dist/gluu'
-app_dir = '/opt/dist/app'
+opt_dist_dir = '/var/gluu/dist' if argsp.profile == 'DISA-STIG' else '/opt/dist/'
+gluu_app_dir = os.path.join(opt_dist_dir, 'gluu')
+app_dir = os.path.join(opt_dist_dir, 'app')
 ces_dir = '/install/community-edition-setup'
-scripts_dir = '/opt/dist/scripts'
+scripts_dir = os.path.join(opt_dist_dir, 'scripts')
 certs_dir = '/etc/certs'
 
 os_type, os_version = '', ''
@@ -298,10 +298,19 @@ def package_oxd():
     shutil.rmtree(oxd_tmp_root)
 
 if not argsp.u:
-    download('https://corretto.aws/downloads/resources/{0}/amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION']), os.path.join(app_dir, 'amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION'])))
+    if argsp.profile != 'DISA-STIG':
+        download('https://corretto.aws/downloads/resources/{0}/amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION']), os.path.join(app_dir, 'amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION'])))
+        download('https://nodejs.org/dist/{0}/node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION']), os.path.join(app_dir, 'node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION'])))
+        download(maven_base + '/org/gluu/scim-server/{0}{1}/scim-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'scim.war'))
+        download(maven_base + '/org/gluu/fido2-server/{0}{1}/fido2-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'fido2.war'))
+        download(maven_root + '/npm/passport/passport-{}.tgz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport.tgz'))
+        download(maven_root + '/npm/passport/passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION'])))
+        download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'super-gluu-radius-server.jar'))
+        download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'gluu-radius-libs.zip'))
+        download('https://www.apple.com/certificateauthority/Apple_WebAuthn_Root_CA.pem', os.path.join(app_dir, 'Apple_WebAuthn_Root_CA.pem'))
+
     download('https://repo1.maven.org/maven2/org/eclipse/jetty/{1}/{0}/{1}-{0}.tar.gz'.format(app_versions['JETTY_VERSION'], jetty_dist_string), os.path.join(app_dir,'{1}-{0}.tar.gz'.format(app_versions['JETTY_VERSION'], jetty_dist_string)))
     download(maven_base + '/org/gluufederation/jython-installer/{0}/jython-installer-{0}.jar'.format(app_versions['JYTHON_VERSION']), os.path.join(app_dir, 'jython-installer-{0}.jar'.format(app_versions['JYTHON_VERSION'])))
-    download('https://nodejs.org/dist/{0}/node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION']), os.path.join(app_dir, 'node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION'])))
     download('https://github.com/npcole/npyscreen/archive/master.zip', os.path.join(app_dir, 'npyscreen-master.zip'))
     download(maven_base + '/org/gluufederation/opendj/opendj-server-legacy/{0}/opendj-server-legacy-{0}.zip'.format(app_versions['OPENDJ_VERSION']), os.path.join(app_dir,'opendj-server-{0}.zip'.format(app_versions['OPENDJ_VERSION'])))
     download(maven_base + '/org/gluu/oxauth-server/{0}{1}/oxauth-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'oxauth.war'))
@@ -314,23 +323,13 @@ if not argsp.u:
     download('https://raw.githubusercontent.com/GluuFederation/casa/version_{}/plugins/account-linking/extras/login.xhtml'.format(app_versions['OX_VERSION']), os.path.join(gluu_app_dir,'login.xhtml'))
     download('https://raw.githubusercontent.com/GluuFederation/casa/version_{}/plugins/account-linking/extras/casa.py'.format(app_versions['OX_VERSION']), os.path.join(gluu_app_dir,'casa.py'))
     download('https://raw.githubusercontent.com/GluuFederation/gluu-snap/master/facter/facter', os.path.join(gluu_app_dir,'facter'))
-    download(maven_base + '/org/gluu/scim-server/{0}{1}/scim-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'scim.war'))
-    download(maven_base + '/org/gluu/fido2-server/{0}{1}/fido2-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'fido2.war'))
     download('https://raw.githubusercontent.com/GluuFederation/oxd/version_{}/debian/oxd-server'.format(app_versions['OX_VERSION']), os.path.join(gluu_app_dir,'oxd-server-start.sh'))
     download('https://github.com/GluuFederation/community-edition-setup/archive/{}.zip'.format(app_versions['SETUP_BRANCH']), os.path.join(gluu_app_dir,'community-edition-setup.zip'))
-    download(maven_root + '/npm/passport/passport-{}.tgz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport.tgz'))
-    download(maven_root + '/npm/passport/passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION'])))
     download(maven_base + '/org/gluu/oxShibbolethStatic/{0}{1}/oxShibbolethStatic-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'shibboleth-idp.jar'))
     download(maven_base + '/org/gluu/oxshibbolethIdp/{0}{1}/oxshibbolethIdp-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'idp.war'))
-    download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'super-gluu-radius-server.jar'))
-    download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'gluu-radius-libs.zip'))
     download(maven_base + '/org/gluu/oxShibbolethKeyGenerator/{0}{1}/oxShibbolethKeyGenerator-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'idp3_cml_keygenerator.jar'))
     download('https://github.com/sqlalchemy/sqlalchemy/archive/rel_1_3_23.zip', os.path.join(app_dir, 'sqlalchemy.zip'))
-    download('https://www.apple.com/certificateauthority/Apple_WebAuthn_Root_CA.pem', os.path.join(app_dir, 'Apple_WebAuthn_Root_CA.pem'))
 
-    if not argsp.upgrade:
-        for uf in services:
-            download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/master/package/systemd/{}'.format(uf), os.path.join('/etc/systemd/system', uf))
     package_oxd()
 
 
@@ -417,8 +416,11 @@ else:
     source_dir = os.path.join(target_dir, ces_par_dir)
     ces_zip.close()
 
-    cmd = 'cp -r -f {}* /install/community-edition-setup'.format(source_dir)
+    cmd = 'cp -r -f {}* {}'.format(source_dir, ces_dir)
     os.system(cmd)
+
+    if argsp.profile != 'DISA-STIG':
+        open(os.path.join(ces_dir, 'disa-stig'), 'w').close()
 
     shutil.rmtree(target_dir)
 

@@ -1,3 +1,5 @@
+from enum import Enum
+
 class InstallTypes:
     NONE = 0
     LOCAL = '1'
@@ -33,6 +35,11 @@ class AppType:
 class InstallOption:
     MONDATORY = 1
     OPTONAL   = 2
+
+class SetupProfiles:
+    CE          = 'ce'
+    DISA_STIG   = 'disa-stig'
+
 
 COMPLETED = -99
 ERROR = -101

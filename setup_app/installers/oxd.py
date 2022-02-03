@@ -6,7 +6,7 @@ from setup_app import paths
 from setup_app.static import AppType, InstallOption
 from setup_app.utils import base
 from setup_app.config import Config
-from setup_app.utils.setup_utils import SetupUtils
+from setup_app.utils.setup_utils import SetupUtils, SetupProfiles
 from setup_app.installers.base import BaseInstaller
 
 class OxdInstaller(SetupUtils, BaseInstaller):
@@ -25,7 +25,13 @@ class OxdInstaller(SetupUtils, BaseInstaller):
     def install(self):
         self.logIt("Installing {}".format(self.service_name), pbar=self.service_name)
         self.run(['tar', '-zxf', Config.oxd_package, '--no-same-owner', '--strip-components=1', '-C', self.oxd_root])
-        self.run(['chown', '-R', 'jetty:jetty', self.oxd_root])
+
+        oxd_user = 'oxd-server' if Config.profile == SetupProfiles.DISA_STIG else Config.jetty_user
+        Config.templateRenderingDict['service_user'] = oxd_user 
+        self.render_unit_file(self.service_name)
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            self.service_user(oxd_user)
 
         if base.snap:
             self.log_dir = os.path.join(base.snap_common, 'gluu/oxd-server/log/')
@@ -41,7 +47,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             self.run([paths.cmd_mkdir, self.log_dir])
 
         oxd_default = self.readFile(os.path.join(Config.install_dir, 'static/oxd/oxd-server.default'))
-        rendered_oxd_default = self.fomatWithDict(oxd_default, Config.__dict__)
+        rendered_oxd_default = self.fomatWithDict(oxd_default, self.merge_dicts(Config.__dict__, Config.templateRenderingDict))
         self.writeFile(os.path.join(Config.osDefault, 'oxd-server'), rendered_oxd_default)
 
         self.log_file = os.path.join(self.log_dir, 'oxd-server.log')
@@ -49,7 +55,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             open(self.log_file, 'w').close()
 
         if not base.snap:
-            self.run(['chown', '-R', 'jetty:jetty', self.log_dir])
+            self.run([paths.cmd_chown, '-R', '{0}:{0}'.format(oxd_user), self.log_dir])
 
         for fn in glob.glob(os.path.join(self.oxd_root,'bin/*')):
             self.run([paths.cmd_chmod, '+x', fn])
@@ -57,6 +63,22 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         if not base.argsp.dummy:
             self.modify_config_yml()
             self.generate_keystore()
+
+        self.run([paths.cmd_chown, '-R', '{0}:{0}'.format(oxd_user), self.oxd_root])
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+
+            oxd_fapolicyd_rules = [
+                    'allow perm=any uid={} : dir=/usr/lib/jvm/java-11-openjdk-11.0.11.0.9-2.el8_4.x86_64/'.format(oxd_user),
+                    'allow perm=any uid={} : dir={}'.format(oxd_user, log_dir),
+                    'allow perm=any uid={} : dir={}'.format(oxd_user, oxd_root),
+                    '# give access to oxd-server',
+                    ]
+
+            self.apply_fapolicyd_rules(oxd_fapolicyd_rules)
+            # Restore SELinux Context
+            self.run(['restorecon', '-rv', os.path.join(oxd_root, 'bin')])
+
 
         self.enable()
 
@@ -95,6 +117,18 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             elif Config.mappingLocations['default'] == 'couchbase':
                 oxd_yaml['storage_configuration']['connection'] = Config.gluuCouchebaseProperties
             oxd_yaml['storage_configuration']['salt'] = os.path.join(Config.configFolder, "salt")
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            oxd_yaml['server']['applicationConnectors'][0]['type']='http'
+            oxd_yaml['server']['applicationConnectors'][0].pop('keyStorePath')
+            oxd_yaml['server']['applicationConnectors'][0].pop('keyStorePassword')
+            oxd_yaml['server']['applicationConnectors'][0].pop('validateCerts')
+            oxd_yaml['server']['adminConnectors'][0]['type']='http'
+            oxd_yaml['server']['adminConnectors'][0].pop('keyStorePath')
+            oxd_yaml['server']['adminConnectors'][0].pop('keyStorePassword')
+            oxd_yaml['server']['adminConnectors'][0].pop('validateCerts')
+
+
 
         if base.snap:
             for appenders in oxd_yaml['logging']['appenders']:

@@ -5,7 +5,7 @@ from setup_app import paths
 from setup_app.utils import base
 from setup_app.static import AppType, InstallOption
 from setup_app.config import Config
-from setup_app.utils.setup_utils import SetupUtils
+from setup_app.utils.setup_utils import SetupUtils, SetupProfiles
 from setup_app.installers.base import BaseInstaller
 
 class NodeInstaller(BaseInstaller, SetupUtils):
@@ -49,8 +49,6 @@ class NodeInstaller(BaseInstaller, SetupUtils):
         self.run([paths.cmd_ln, '-sf', nodeDestinationPath, Config.node_home])
         self.run([paths.cmd_chmod, '-R', "755", "%s/bin/" % nodeDestinationPath])
 
-        self.render_templates()
-
         # Create temp folder
         self.run([paths.cmd_mkdir, '-p', "%s/temp" % Config.node_home])
 
@@ -58,11 +56,12 @@ class NodeInstaller(BaseInstaller, SetupUtils):
         self.copyFile(self.node_initd_script, Config.gluuOptSystemFolder)
         self.run([paths.cmd_chmod, '-R', "755", "%s/node" % Config.gluuOptSystemFolder])
 
-        self.run([paths.cmd_chown, '-R', 'node:node', nodeDestinationPath])
-        self.run([paths.cmd_chown, '-h', 'node:node', Config.node_home])
+        self.run([paths.cmd_chown, '-R', 'node:gluu', nodeDestinationPath])
+        self.run([paths.cmd_chown, '-h', 'node:gluu', Config.node_home])
 
         self.run([paths.cmd_mkdir, '-p', self.node_base])
-        self.run([paths.cmd_chown, '-R', 'node:node', self.node_base])
+        self.run([paths.cmd_chown, '-R', 'node:gluu', self.node_base])
+
 
     def render_templates(self):
         self.logIt("Rendering node templates")
@@ -73,10 +72,25 @@ class NodeInstaller(BaseInstaller, SetupUtils):
         nodeTepmplatesFolder = os.path.join(Config.templateFolder, 'node')
         self.render_templates_folder(nodeTepmplatesFolder)
 
+
     def installNodeService(self, serviceName):
         self.logIt("Installing node service %s..." % serviceName)
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            Config.templateRenderingDict['service_user'] = serviceName
+            Config.service_user(serviceName)
+        else:
+            Config.templateRenderingDict['service_user'] = 'node'
+
         if not self.templates_rendered:
             self.render_templates()
+
+        try:
+            self.renderTemplateInOut(serviceName, os.path.join(Config.templateFolder, 'node'), os.path.join(Config.outputFolder, 'node'))
+        except:
+            self.logIt("Error rendering service '%s' defaults" % serviceName, True)
+            self.logIt(traceback.format_exc(), True)
+
 
         nodeServiceConfiguration = os.path.join(Config.outputFolder, 'node', serviceName)
         self.copyFile(nodeServiceConfiguration, Config.osDefault)
@@ -87,3 +101,10 @@ class NodeInstaller(BaseInstaller, SetupUtils):
             self.fix_init_scripts(serviceName, initscript_fn)
         else:
             self.run([paths.cmd_ln, '-sf', '%s/node' % Config.gluuOptSystemFolder, '/etc/init.d/%s' % serviceName])
+
+        self.render_unit_file(serviceName)
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            self.fapolicyd_access(serviceName, nodeServiceConfiguration)
+
+        self.run([paths.cmd_chown, '-R', '{}:gluu'.format(Config.templateRenderingDict['service_user']), nodeServiceConfiguration])

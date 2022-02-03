@@ -66,7 +66,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
             gluu_ldap_prop = base.read_properties_file(Config.ox_ldap_properties)
             Config.ldap_binddn = gluu_ldap_prop['bindDN']
             Config.ldapPass = self.unobscure(gluu_ldap_prop['bindPassword'])
-            Config.opendj_p12_pass = self.unobscure(gluu_ldap_prop['ssl.trustStorePin'])
+            Config.ldap_truststore_pass = self.unobscure(gluu_ldap_prop['ssl.trustStorePin'])
             Config.ldap_hostname, Config.ldaps_port = gluu_ldap_prop['servers'].split(',')[0].split(':')
 
 
@@ -203,7 +203,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
         if 'scimUmaResourceId' in oxTrustConfApplication:
             Config.scim_resource_oxid =  oxTrustConfApplication['scimUmaResourceId']
 
-        if 'ScimProperties' in oxTrustConfApplication and 'protectionMode' in oxTrustConfApplication['ScimProperties']:
+        if 'ScimProperties' in oxTrustConfApplication and oxTrustConfApplication['ScimProperties'] and 'protectionMode' in oxTrustConfApplication['ScimProperties']:
             Config.scim_protection_mode = oxTrustConfApplication['ScimProperties']['protectionMode']
         else:
             Config.scim_protection_mode = 'OAUTH'
