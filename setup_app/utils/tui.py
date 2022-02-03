@@ -340,7 +340,7 @@ class ServicesForm(GluuSetupForm):
             Config.shibboleth_version = 'v3'
 
         if self.installOxd.value:
-            Config.oxd_server_https = 'https://{}:8443'.format(Config.hostname)
+            Config.oxd_server_https = 'https://{}:8443'.format('localhost' if Config.profile == SetupProfiles.DISA_STIG else Config.hostname)
 
         if self.installCasa.value:
             if not self.installOxd.value and not self.oxd_url.value:

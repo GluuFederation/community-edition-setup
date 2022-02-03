@@ -62,23 +62,23 @@ class OxdInstaller(SetupUtils, BaseInstaller):
 
         if not base.argsp.dummy:
             self.modify_config_yml()
-            self.generate_keystore()
+            if Config.profile != SetupProfiles.DISA_STIG:
+                self.generate_keystore()
 
         self.run([paths.cmd_chown, '-R', '{0}:{0}'.format(oxd_user), self.oxd_root])
 
         if Config.profile == SetupProfiles.DISA_STIG:
-
+            log_dir = '/var/log/oxd-server/'
             oxd_fapolicyd_rules = [
-                    'allow perm=any uid={} : dir=/usr/lib/jvm/java-11-openjdk-11.0.11.0.9-2.el8_4.x86_64/'.format(oxd_user),
+                    'allow perm=any uid={} : dir={}'.format(oxd_user, Config.jre_home),
                     'allow perm=any uid={} : dir={}'.format(oxd_user, log_dir),
-                    'allow perm=any uid={} : dir={}'.format(oxd_user, oxd_root),
+                    'allow perm=any uid={} : dir={}'.format(oxd_user, self.oxd_root),
                     '# give access to oxd-server',
                     ]
 
             self.apply_fapolicyd_rules(oxd_fapolicyd_rules)
             # Restore SELinux Context
-            self.run(['restorecon', '-rv', os.path.join(oxd_root, 'bin')])
-
+            self.run(['restorecon', '-rv', os.path.join(self.oxd_root, 'bin')])
 
         self.enable()
 
@@ -96,7 +96,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             else:
                 i = 1
             addr_list = [Config.ip]
-            if base.snap:
+            if base.snap or Config.profile == SetupProfiles.DISA_STIG:
                 addr_list.append('127.0.0.1')
             oxd_yaml.insert(i, 'bind_ip_addresses',  addr_list)
 

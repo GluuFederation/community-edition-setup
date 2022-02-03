@@ -138,7 +138,7 @@ class PropertiesUtils(SetupUtils):
                 Config.templateRenderingDict['oxd_port'] = 8443
         else:
             Config.templateRenderingDict['oxd_hostname'] = Config.hostname
-            Config.oxd_server_https = 'https://{}:8443'.format(Config.hostname)
+            Config.oxd_server_https = 'https://{}:8443'.format('localhost' if Config.profile == SetupProfiles.DISA_STIG else Config.hostname)
 
     def decrypt_properties(self, fn, passwd):
         out_file = fn[:-4] + '.' + uuid.uuid4().hex[:8] + '-DEC~'
@@ -854,7 +854,7 @@ class PropertiesUtils(SetupUtils):
                 else:
                     print("Hostname can't be \033[;1mlocalhost\033[0;0m")
 
-            Config.oxd_server_https = 'https://{}:8443'.format(Config.hostname)
+            Config.oxd_server_https = 'https://{}:8443'.format('localhost' if Config.profile == SetupProfiles.DISA_STIG else Config.hostname)
 
             # Get city and state|province code
             Config.city = self.getPrompt("Enter your city or locality", Config.city)
