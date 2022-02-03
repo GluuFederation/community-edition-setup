@@ -200,27 +200,39 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         if Config.mappingLocations['site'] == 'ldap':
             backends.append(['create-backend', '--backend-name', 'site', '--set', 'base-dn:o=site', '--type %s' % Config.ldap_backend_type, '--set', 'enabled:true', '--set', 'db-cache-percent:20'])
 
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            dsconfigCmd = [
+                            self.ldapDsconfigCommand,
+                            '--no-prompt',
+                            '--hostname',
+                            Config.ldap_hostname,
+                            '--port',
+                            Config.ldap_admin_port,
+                            '--bindDN',
+                            '"%s"' % Config.ldap_binddn,
+                            '--bindPasswordFile', Config.ldapPassFn,
+                            '--trustStorePath', self.opendj_admin_truststore_fn,
+                            '--keyStorePassword', self.opendj_key_store_password_fn,
+                            ]
+        else:
+            dsconfigCmd = [
+                            self.ldapDsconfigCommand,
+                            '--trustAll',
+                            '--no-prompt',
+                            '--hostname',
+                            Config.ldap_hostname,
+                            '--port',
+                            Config.ldap_admin_port,
+                            '--bindDN',
+                            '"%s"' % Config.ldap_binddn,
+                            '--bindPasswordFile',
+                            Config.ldapPassFn
+                            ]
+
         for changes in backends:
             cwd = os.path.join(Config.ldapBinFolder)
-            dsconfigCmd = " ".join([
-                                    self.ldapDsconfigCommand,
-                                    '--trustAll',
-                                    '--no-prompt',
-                                    '--hostname',
-                                    Config.ldap_hostname,
-                                    '--port',
-                                    Config.ldap_admin_port,
-                                    '--bindDN',
-                                    '"%s"' % Config.ldap_binddn,
-                                    '--bindPasswordFile',
-                                    Config.ldapPassFn] + changes)
-            if base.snap:
-                self.run(dsconfigCmd, shell=True)
-            else:
-                self.run(['/bin/su',
-                      'ldap',
-                      '-c',
-                      dsconfigCmd], cwd=cwd)
+            self.run(' '.join(dsconfigCmd + changes), shell=True, cwd=cwd, env={'OPENDJ_JAVA_HOME': Config.jre_home})
 
         # rebind after creating backends
         self.dbUtils.ldap_conn.unbind()
