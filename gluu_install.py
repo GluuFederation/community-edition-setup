@@ -320,7 +320,7 @@ if not argsp.u:
     download(maven_base + '/org/gluu/casa/{0}{1}/casa-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'casa.war'))
     download('https://repo1.maven.org/maven2/com/twilio/sdk/twilio/{0}/twilio-{0}.jar'.format(app_versions['TWILIO_VERSION']), os.path.join(gluu_app_dir,'twilio-{0}.jar'.format(app_versions['TWILIO_VERSION'])))
     download('https://repo1.maven.org/maven2/org/jsmpp/jsmpp/{0}/jsmpp-{0}.jar'.format(app_versions['JSMPP_VERSION']), os.path.join(gluu_app_dir,'jsmpp-{0}.jar'.format(app_versions['JSMPP_VERSION'])))
-    download('https://github.com/GluuFederation/casa/raw/{}/extras/casa.pub'.format(app_versions['SETUP_BRANCH']), os.path.join(gluu_app_dir,'casa.pub'))
+    download('https://github.com/GluuFederation/casa/raw/version_{}/extras/casa.pub'.format(app_versions['OX_VERSION']), os.path.join(gluu_app_dir,'casa.pub'))
     download('https://raw.githubusercontent.com/GluuFederation/casa/version_{}/plugins/account-linking/extras/login.xhtml'.format(app_versions['OX_VERSION']), os.path.join(gluu_app_dir,'login.xhtml'))
     download('https://raw.githubusercontent.com/GluuFederation/casa/version_{}/plugins/account-linking/extras/casa.py'.format(app_versions['OX_VERSION']), os.path.join(gluu_app_dir,'casa.py'))
     download('https://raw.githubusercontent.com/GluuFederation/gluu-snap/master/facter/facter', os.path.join(gluu_app_dir,'facter'))
@@ -420,7 +420,7 @@ else:
     cmd = 'cp -r -f {}* {}'.format(source_dir, ces_dir)
     os.system(cmd)
 
-    if argsp.profile != 'DISA-STIG':
+    if argsp.profile == 'DISA-STIG':
         open(os.path.join(ces_dir, 'disa-stig'), 'w').close()
 
     shutil.rmtree(target_dir)
