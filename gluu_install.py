@@ -28,6 +28,7 @@ parser.add_argument('-n', help="No prompt", action='store_true')
 parser.add_argument('--no-setup', help="Do not launch setup", action='store_true')
 parser.add_argument('--dist-server-base', help="Download server", default='https://jenkins.gluu.org/maven')
 parser.add_argument('-profile', help="Setup profile", choices=['CE', 'DISA-STIG'], default='CE')
+parser.add_argument('-setup-branch', help="Gluu setup github branch", default="version_4.3.1")
 argsp = parser.parse_args()
 
 maven_base = argsp.dist_server_base.rstrip('/')
@@ -164,7 +165,7 @@ app_versions = {
     "PASSPORT_VERSION": "4.3.1", 
     "JYTHON_VERSION": "2.7.3",
     "OPENDJ_VERSION": "4.4.12",
-    "SETUP_BRANCH": "version_4.3.1",
+    "SETUP_BRANCH": argsp.setup_branch,
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7"
     }
