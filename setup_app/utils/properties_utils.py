@@ -945,13 +945,13 @@ class PropertiesUtils(SetupUtils):
 
 
         self.promptForHTTPD()
+
+        if Config.rdbm_type != 'spanner':
+            self.promptForShibIDP()
+
         if Config.profile != SetupProfiles.DISA_STIG:
             self.promptForScimServer()
             self.promptForFido2Server()
-
-            if Config.rdbm_type != 'spanner':
-                self.promptForShibIDP()
-
             self.promptForPassport()
 
 

@@ -232,7 +232,10 @@ class JettyInstaller(BaseInstaller, SetupUtils):
         self.run([paths.cmd_chown, '-R', '{}:gluu'.format(Config.templateRenderingDict['service_user']), jettyServiceBase])
 
         if Config.profile == SetupProfiles.DISA_STIG:
-            self.fapolicyd_access(Config.templateRenderingDict['service_user'], jettyServiceBase)
+            additional_rules = []
+            if serviceName == base.current_app.OxtrustInstaller.service_name:
+                additional_rules.append('allow perm=any uid=%(uid)s : dir={}'.format(base.current_app.SamlInstaller.idp3Folder))
+            self.fapolicyd_access(Config.templateRenderingDict['service_user'], jettyServiceBase, additional_rules)
 
 
     def set_jetty_param(self, jettyServiceName, jetty_param, jetty_val, inifile='start.ini'):

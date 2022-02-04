@@ -629,7 +629,7 @@ class SetupUtils(Crypto64):
             self.writeFile(fapolicyd_rules_fn, '\n'.join(fapolicyd_rules))
             self.run_service_command('restart', 'fapolicyd')
 
-    def fapolicyd_access(self, uid, service_dir):
+    def fapolicyd_access(self, uid, service_dir, additional_rules=[]):
 
         self.jettyAbsoluteDir = Path('/opt/jetty').resolve().parent.as_posix()
         self.jythonAbsoluteDir = Path('/opt/jython').resolve().as_posix()
@@ -647,6 +647,9 @@ class SetupUtils(Crypto64):
                 'allow perm=any uid=%(uid)s : dir=%(gluuOptPythonFolder)s/libs/',
                 '# give access to gluu service %(uid)s',
                 ]
+
+        for a_rule in additional_rules:
+            facl_tmp.insert(0, a_rule)
 
         rules = []
         for acl in facl_tmp:

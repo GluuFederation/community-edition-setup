@@ -4,7 +4,7 @@ import shutil
 
 from setup_app import paths
 from setup_app.static import PersistenceType
-from setup_app.static import AppType, InstallOption
+from setup_app.static import AppType, InstallOption, SetupProfiles
 from setup_app.config import Config
 from setup_app.utils import base
 from setup_app.installers.jetty import JettyInstaller
@@ -12,6 +12,7 @@ from setup_app.installers.jetty import JettyInstaller
 class SamlInstaller(JettyInstaller):
 
     def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'idp'
         self.app_type = AppType.SERVICE
         self.install_type = InstallOption.OPTONAL
@@ -134,7 +135,8 @@ class SamlInstaller(JettyInstaller):
             self.saml_couchbase_settings()
 
         self.saml_persist_configurations()
-        self.run([paths.cmd_chown, '-R', 'jetty:jetty', self.idp3Folder])
+        user_group = 'identity:gluu' if Config.profile == SetupProfiles.DISA_STIG else 'jetty:gluu'
+        self.run([paths.cmd_chown, '-R', user_group, self.idp3Folder])
         self.enable()
 
     def unpack_idp3(self):
