@@ -229,6 +229,12 @@ class JettyInstaller(BaseInstaller, SetupUtils):
         self.run([paths.cmd_chown, '{}:gluu'.format(Config.templateRenderingDict['service_user']), os.path.join(Config.osDefault, serviceName)])
 
         self.render_unit_file(serviceName)
+
+        jettyServiceWebapps = os.path.join(jettyServiceBase, 'webapps')
+        target_war_fn = os.path.join(jettyServiceWebapps, os.path.basename(self.source_files[0][0]))
+        self.copyFile(self.source_files[0][0], jettyServiceWebapps)
+        self.war_for_jetty10(target_war_fn)
+
         self.run([paths.cmd_chown, '-R', '{}:gluu'.format(Config.templateRenderingDict['service_user']), jettyServiceBase])
 
         if Config.profile == SetupProfiles.DISA_STIG:

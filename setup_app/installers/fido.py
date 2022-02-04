@@ -31,11 +31,6 @@ class FidoInstaller(JettyInstaller):
     def install(self):
 
         self.installJettyService(self.jetty_app_configuration[self.service_name], True)
-
-        self.logIt("Copying fido.war into jetty webapps folder...")
-        jettyServiceWebapps = os.path.join(self.jetty_base, self.service_name, 'webapps')
-        self.copyFile(self.source_files[0][0], jettyServiceWebapps)
-        self.war_for_jetty10(os.path.join(jettyServiceWebapps, os.path.basename(self.source_files[0][0])))
         self.enable()
 
     def render_import_templates(self, do_import=True):

@@ -52,12 +52,7 @@ class OxtrustInstaller(JettyInstaller):
 
     def install(self):
         self.logIt("Copying identity.war into jetty webapps folder...")
-
         self.installJettyService(self.jetty_app_configuration[self.service_name], True)
-
-        jettyServiceWebapps = os.path.join(self.jetty_base, self.service_name, 'webapps')
-        self.copyFile(self.source_files[0][0], jettyServiceWebapps)
-        self.war_for_jetty10(os.path.join(jettyServiceWebapps, os.path.basename(self.source_files[0][0])))
         self.enable()
 
     def generate_api_configuration(self):
@@ -141,7 +136,7 @@ class OxtrustInstaller(JettyInstaller):
 
         for folder in (self.oxPhotosFolder, self.oxTrustRemovedFolder, self.oxTrustCacheRefreshFolder):
             self.run([paths.cmd_mkdir, '-m', '775', '-p', folder])
-            self.run([paths.cmd_chown, '-R', 'root:gluu', folder])
+            self.run([paths.cmd_chown, '-R', self.service_name+':gluu', folder])
 
     def installed(self):
         return os.path.exists(os.path.join(Config.jetty_base, self.service_name, 'start.ini'))

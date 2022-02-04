@@ -404,6 +404,7 @@ class Config:
         self.mappingLocations = { group: 'ldap' for group in self.couchbaseBucketDict }  #default locations are OpenDJ
         self.non_setup_properties = {
             'oxauth_client_jar_fn': os.path.join(self.distGluuFolder, 'oxauth-client-jar-with-dependencies.jar'),
+            'oxauth_client_noprivder_jar_fn': os.path.join(self.distGluuFolder, 'oxauth-client-jar-without-provider-dependencies.jar'),
             'service_enable_dict': {
                         'installPassport': ('gluuPassportEnabled', 'enable_scim_access_policy'),
                         'installGluuRadius': ('gluuRadiusEnabled', 'oxauth_legacyIdTokenClaims', 'oxauth_openidScopeBackwardCompatibility', 'enableRadiusScripts'),

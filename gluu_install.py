@@ -11,6 +11,7 @@ import argparse
 import csv
 import locale
 import re
+from pathlib import Path
 from urllib import request
 from urllib.parse import urljoin
 
@@ -153,7 +154,7 @@ if missing_packages:
 if not os.path.exists(scripts_dir):
     os.makedirs(scripts_dir)
 
-
+oxauth_war_fn = os.path.join(gluu_app_dir, 'oxauth.war')
 jetty_home = '/opt/gluu/jetty'
 services = ['casa.service', 'identity.service', 'opendj.service', 'oxauth.service', 'passport.service', 'fido2.service', 'idp.service', 'oxd-server.service', 'scim.service']
 app_versions = {
@@ -309,12 +310,15 @@ if not argsp.u:
         download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'super-gluu-radius-server.jar'))
         download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'gluu-radius-libs.zip'))
         download('https://www.apple.com/certificateauthority/Apple_WebAuthn_Root_CA.pem', os.path.join(app_dir, 'Apple_WebAuthn_Root_CA.pem'))
+        download(maven_base + '/org/gluu/oxauth-server/{0}{1}/oxauth-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), oxauth_war_fn)
+    else:
+        download('https://maven.gluu.org/maven/org/gluu/oxauth-client-jar-without-provider-dependencies/4.4.0-SNAPSHOT/oxauth-client-jar-without-provider-dependencies-4.4.0-SNAPSHOT.jar', os.path.join(gluu_app_dir, 'oxauth-client-jar-without-provider-dependencies.jar'))
+        download('https://maven.gluu.org/maven/org/gluu/oxauth-server-fips/4.4.0-SNAPSHOT/oxauth-server-fips-4.4.0-SNAPSHOT.war', oxauth_war_fn)
 
     download('https://repo1.maven.org/maven2/org/eclipse/jetty/{1}/{0}/{1}-{0}.tar.gz'.format(app_versions['JETTY_VERSION'], jetty_dist_string), os.path.join(app_dir,'{1}-{0}.tar.gz'.format(app_versions['JETTY_VERSION'], jetty_dist_string)))
     download(maven_base + '/org/gluufederation/jython-installer/{0}/jython-installer-{0}.jar'.format(app_versions['JYTHON_VERSION']), os.path.join(app_dir, 'jython-installer-{0}.jar'.format(app_versions['JYTHON_VERSION'])))
     download('https://github.com/npcole/npyscreen/archive/master.zip', os.path.join(app_dir, 'npyscreen-master.zip'))
     download(maven_base + '/org/gluufederation/opendj/opendj-server-legacy/{0}/opendj-server-legacy-{0}.zip'.format(app_versions['OPENDJ_VERSION']), os.path.join(app_dir,'opendj-server-{0}.zip'.format(app_versions['OPENDJ_VERSION'])))
-    download(maven_base + '/org/gluu/oxauth-server/{0}{1}/oxauth-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'oxauth.war'))
     download(maven_base + '/org/gluu/oxtrust-server/{0}{1}/oxtrust-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'identity.war'))
     download(maven_base + '/org/gluu/oxauth-client/{0}{1}/oxauth-client-{0}{1}-jar-with-dependencies.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'oxauth-client-jar-with-dependencies.jar'))
     download(maven_base + '/org/gluu/casa/{0}{1}/casa-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'casa.war'))
@@ -348,6 +352,22 @@ def extract_from_ces(src, target_fn):
         os.makedirs(p)
     with open(dst, 'wb') as w:
         w.write(content)
+
+
+def extract_file(zip_fn, source, target, ren=False):
+    zip_obj = zipfile.ZipFile(zip_fn, "r")
+    for member in zip_obj.infolist():
+        if not member.is_dir() and member.filename.endswith(source):
+            if ren:
+                target_p = Path(target)
+            else:
+                p = Path(member.filename)
+                target_p = Path(target).joinpath(p.name)
+                if not target_p.parent.exists():
+                    target_p.parent.mkdir(parents=True)
+            target_p.write_bytes(zip_obj.read(member))
+            break
+    zip_obj.close()
 
 extract_from_ces('templates/jetty.conf.tmpfiles.d', 'jetty.conf')
 shutil.copy(os.path.join(gluu_app_dir, 'facter'), '/usr/bin')
@@ -437,6 +457,10 @@ else:
             os.path.join(ces_dir, 'setup_app/pylib/sqlalchemy')
             )
     shutil.rmtree(tmp_dir)
+
+    if argsp.profile == 'DISA-STIG':
+        for jar_fn in ('bc-fips-1.0.2.1.jar', 'bcpkix-fips-1.0.5.jar'):
+            extract_file(oxauth_war_fn, jar_fn, app_dir)
 
     os.chmod('/install/community-edition-setup/setup.py', 33261)
 
