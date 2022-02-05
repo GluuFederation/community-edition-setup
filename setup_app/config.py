@@ -78,6 +78,7 @@ class Config:
         self.gluu_group = 'gluu'
         self.use_existing_java = base.argsp.j
         self.system_dir = '/etc/systemd/system'
+        self.user_group = '{}:{}'.format(self.jetty_user, self.gluu_group)
 
         self.ldapBinFolder = os.path.join(self.ldapBaseFolder, 'bin')
         if base.snap:
@@ -94,15 +95,12 @@ class Config:
             self.distFolder = '/var/gluu/dist'
             os.environ['GLUU_SERVICES'] = 'installHttpd installSaml installOxd installCasa'
             self.opendj_truststore_format = 'jks'
-            self.user_group = '{}:{}'.format(self.jetty_user, self.gluu_group)
-
         else:
             self.profile = SetupProfiles.CE
             self.cmd_java = os.path.join(self.jre_home, 'bin/java')
             self.cmd_keytool = os.path.join(self.jre_home, 'bin/keytool')
             self.cmd_jar = os.path.join(self.jre_home, 'bin/jar')
             self.opendj_truststore_format = 'pkcs12'
-            self.user_group = '{}:{}'.format(self.gluu_user, self.gluu_group)
 
         os.environ['OPENDJ_JAVA_HOME'] =  self.jre_home
 
