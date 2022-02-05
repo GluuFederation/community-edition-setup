@@ -524,7 +524,7 @@ class SetupUtils(Crypto64):
         self.run([paths.cmd_chmod, '+x', service_init_script_fn])
 
         if Config.profile == SetupProfiles.DISA_STIG:
-            self.run([paths.cmd_chown, '{}:{}'.format(serviceName, serviceName), service_init_script_fn])
+            self.run([paths.cmd_chown, '{}:{}'.format(Config.templateRenderingDict['service_user'], Config.gluu_group), service_init_script_fn])
             self.run(['semanage', 'fcontext', '-a', '-t', 'usr_t', service_init_script_fn])
             self.run(['restorecon', '-v', service_init_script_fn])
 

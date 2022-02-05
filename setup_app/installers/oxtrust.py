@@ -53,6 +53,11 @@ class OxtrustInstaller(JettyInstaller):
     def install(self):
         self.logIt("Copying identity.war into jetty webapps folder...")
         self.installJettyService(self.jetty_app_configuration[self.service_name], True)
+
+        for folder in (self.oxPhotosFolder, self.oxTrustRemovedFolder, self.oxTrustCacheRefreshFolder):
+            self.run([paths.cmd_mkdir, '-m', '775', '-p', folder])
+            self.run([paths.cmd_chown, '-R', '{}:{}'.format(self.service_name, Config.gluu_group), folder])
+
         self.enable()
 
     def generate_api_configuration(self):
@@ -131,12 +136,6 @@ class OxtrustInstaller(JettyInstaller):
 
         self.dbUtils.import_ldif(ldif_files)
 
-
-    def create_folders(self):
-
-        for folder in (self.oxPhotosFolder, self.oxTrustRemovedFolder, self.oxTrustCacheRefreshFolder):
-            self.run([paths.cmd_mkdir, '-m', '775', '-p', folder])
-            self.run([paths.cmd_chown, '-R', self.service_name+':gluu', folder])
 
     def installed(self):
         return os.path.exists(os.path.join(Config.jetty_base, self.service_name, 'start.ini'))

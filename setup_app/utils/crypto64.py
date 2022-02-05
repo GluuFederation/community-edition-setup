@@ -279,7 +279,7 @@ class Crypto64:
         try:
             jwks_text = '\n'.join(jwks)
             self.writeFile(fn, jwks_text)
-            self.run([Config.cmd_chown, 'gluu:gluu', fn])
+            self.run([Config.cmd_chown, Config.user_group, fn])
             self.run([Config.cmd_chmod, '600', fn])
             self.logIt("Wrote oxAuth OpenID Connect key to %s" % fn)
         except:

@@ -469,15 +469,15 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             for f in os.listdir(Config.certFolder):
                 if not f.startswith('passport-'):
                     fpath = os.path.join(Config.certFolder, f)
-                    self.run([paths.cmd_chown, 'root:gluu', fpath])
+                    self.run([paths.cmd_chown, 'root:{}'.format(Config.gluu_group), fpath])
                     self.run([paths.cmd_chmod, '660', fpath])
                     self.run([paths.cmd_chmod, 'u+X', fpath])
             self.run([paths.cmd_chown, '-R', 'root:gluu', Config.gluuOptPythonFolder])
-            self.run([paths.cmd_chown, 'gluu:gluu', Config.jetty_base])
+            self.run([paths.cmd_chown, Config.user_group, Config.jetty_base])
 
-            self.run([paths.cmd_chown, 'gluu:gluu', '/opt/gluu/'])
-            self.run([paths.cmd_chown, 'root:gluu', '/etc/gluu/'])
-            self.run([paths.cmd_chown, 'root:gluu', '/var/gluu'])
+            self.run([paths.cmd_chown, Config.user_group, '/opt/gluu/'])
+            self.run([paths.cmd_chown, 'root:{}'.format(Config.gluu_group), '/etc/gluu/'])
+            self.run([paths.cmd_chown, 'root:{}'.format(Config.gluu_group), '/var/gluu'])
             self.run([paths.cmd_chmod, '770', '/var/gluu'])
 
             if not Config.installed_instance:
@@ -498,7 +498,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
 
             self.run([paths.cmd_chmod, 'g+rwX', '-R', Config.jetty_base])
             self.run([paths.cmd_chmod, 'g+rwX', '-R', jettyAbsoluteDir.as_posix()])
-            self.run([paths.cmd_chown, '-R', 'jetty:gluu', jettyAbsoluteDir.parent.as_posix()])
+            self.run([paths.cmd_chown, '-R', Config.user_group, jettyAbsoluteDir.parent.as_posix()])
             self.run([paths.cmd_chmod, 'g+rwX', '-R', Config.gluuBaseFolder])
             self.run([paths.cmd_chmod, 'g+rwX', '-R', os.path.join(Config.distFolder,'scripts')])
 
