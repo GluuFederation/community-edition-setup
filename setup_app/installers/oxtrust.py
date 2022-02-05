@@ -4,7 +4,7 @@ import uuid
 
 from setup_app import paths
 from setup_app.utils import base
-from setup_app.static import AppType, InstallOption
+from setup_app.static import AppType, InstallOption, SetupProfiles
 from setup_app.config import Config
 from setup_app.installers.jetty import JettyInstaller
 
@@ -56,7 +56,8 @@ class OxtrustInstaller(JettyInstaller):
 
         for folder in (self.oxPhotosFolder, self.oxTrustRemovedFolder, self.oxTrustCacheRefreshFolder):
             self.run([paths.cmd_mkdir, '-m', '775', '-p', folder])
-            self.run([paths.cmd_chown, '-R', '{}:{}'.format(self.service_name, Config.gluu_group), folder])
+            user_group = '{}:{}'.format(self.service_name, Config.gluu_group) if Config.profile == SetupProfiles.DISA_STIG else Config.user_group
+            self.run([paths.cmd_chown, '-R', user_group, folder])
 
         self.enable()
 
