@@ -203,7 +203,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
         if 'scimUmaResourceId' in oxTrustConfApplication:
             Config.scim_resource_oxid =  oxTrustConfApplication['scimUmaResourceId']
 
-        if 'ScimProperties' in oxTrustConfApplication and 'protectionMode' in oxTrustConfApplication['ScimProperties']:
+        if 'ScimProperties' in oxTrustConfApplication and oxTrustConfApplication.get('ScimProperties') is not None and 'protectionMode' in oxTrustConfApplication['ScimProperties']:
             Config.scim_protection_mode = oxTrustConfApplication['ScimProperties']['protectionMode']
         else:
             Config.scim_protection_mode = 'OAUTH'
@@ -212,7 +212,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
             Config.api_rp_client_jks_pass = self.unobscure(oxTrustConfApplication['apiUmaClientKeyStorePassword'])
             Config.api_rs_client_jks_fn = oxTrustConfApplication['apiUmaClientKeyStoreFile']
 
-        if 'scimUmaClientKeyStorePassword' in oxTrustConfApplication:
+        if 'scimUmaClientKeyStorePassword' in oxTrustConfApplication and oxTrustConfApplication.get('scimUmaClientKeyStorePassword') is not None:
             Config.scim_rs_client_jks_pass = self.unobscure(oxTrustConfApplication['scimUmaClientKeyStorePassword'])
             Config.scim_rs_client_jks_fn = str(oxTrustConfApplication['scimUmaClientKeyStoreFile'])
 
