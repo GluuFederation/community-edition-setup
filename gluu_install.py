@@ -284,7 +284,7 @@ def package_oxd():
     oxd_tmp_root = '/tmp/{}'.format(os.urandom(5).hex())
     oxd_tmp_dir = os.path.join(oxd_tmp_root, 'oxd-server')
     download(maven_base + '/org/gluu/oxd-server/{0}{1}/oxd-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), oxd_zip_fn)
-    download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/version_{}/package/systemd/oxd-server.service'.format(app_versions['OX_VERSION']), os.path.join(oxd_tmp_dir, 'oxd-server.service'))
+    download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/{}/package/systemd/oxd-server.service'.format(app_versions['OX_GITVERISON']), os.path.join(oxd_tmp_dir, 'oxd-server.service'))
     cmd = 'unzip -qqo {} -d {}'.format(oxd_zip_fn, oxd_tmp_dir)
     print("Excuting", cmd)
     os.system(cmd)
