@@ -332,7 +332,7 @@ if not argsp.u:
 
     if not argsp.upgrade:
         for uf in services:
-            download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/master/package/systemd/{}'.format(uf), os.path.join('/etc/systemd/system', uf))
+            download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/{}/package/systemd/{}'.format(app_versions['SETUP_BRANCH'], uf), os.path.join('/etc/systemd/system', uf))
     package_oxd()
 
 
