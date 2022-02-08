@@ -163,7 +163,7 @@ app_versions = {
     "OX_GITVERISON": "-SNAPSHOT", 
     "NODE_VERSION": "v14.16.1",
     "OX_VERSION": "4.4.0", 
-    "PASSPORT_VERSION": "4.4.0", 
+    "PASSPORT_VERSION": "master", 
     "JYTHON_VERSION": "2.7.3",
     "OPENDJ_VERSION": "4.4.12",
     "SETUP_BRANCH": "master",
