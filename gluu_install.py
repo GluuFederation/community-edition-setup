@@ -162,11 +162,11 @@ app_versions = {
     "AMAZON_CORRETTO_VERSION": "11.0.13.8.1", 
     "OX_GITVERISON": "-SNAPSHOT", 
     "NODE_VERSION": "v14.16.1",
-    "OX_VERSION": "4.3.1", 
-    "PASSPORT_VERSION": "4.3.1", 
+    "OX_VERSION": "4.4.0", 
+    "PASSPORT_VERSION": "4.4.0", 
     "JYTHON_VERSION": "2.7.3",
     "OPENDJ_VERSION": "4.4.12",
-    "SETUP_BRANCH": "version_4.3.1",
+    "SETUP_BRANCH": "master",
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7"
     }
