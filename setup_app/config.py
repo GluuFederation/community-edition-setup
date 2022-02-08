@@ -93,7 +93,7 @@ class Config:
             self.cmd_keytool = shutil.which('keytool')
             self.cmd_jar = shutil.which('jar')
             self.distFolder = '/var/gluu/dist'
-            os.environ['GLUU_SERVICES'] = 'installHttpd installSaml installOxd installCasa'
+            os.environ['GLUU_SERVICES'] = 'installHttpd installOxd installCasa'
             self.opendj_truststore_format = 'jks'
         else:
             self.profile = SetupProfiles.CE

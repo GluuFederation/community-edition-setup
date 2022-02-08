@@ -63,11 +63,11 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                 txt += 'Java Type'.ljust(30) + Config.java_type.rjust(35) + "\n"
 
             txt += 'Install Apache 2 web server'.ljust(30) + repr(Config.installHttpd).rjust(35) + (' *' if 'installHttpd' in Config.addPostSetupService else '') + "\n"
-            txt += 'Install Shibboleth SAML IDP'.ljust(30) + repr(Config.installSaml).rjust(35) + (' *' if 'installSaml' in Config.addPostSetupService else '') + "\n"            
             txt += 'Install Casa '.ljust(30) + repr(Config.installCasa).rjust(35) + (' *' if 'installCasa' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Oxd '.ljust(30) + repr(Config.installOxd).rjust(35) + (' *' if 'installOxd' in Config.addPostSetupService else '') + "\n"
 
             if Config.profile != static.SetupProfiles.DISA_STIG:
+                txt += 'Install Shibboleth SAML IDP'.ljust(30) + repr(Config.installSaml).rjust(35) + (' *' if 'installSaml' in Config.addPostSetupService else '') + "\n"
                 txt += 'Install Passport '.ljust(30) + repr(Config.installPassport).rjust(35) + (' *' if 'installPassport' in Config.addPostSetupService else '') + "\n"
                 txt += 'Install Fido2 Server'.ljust(30) + repr(Config.installFido2).rjust(35) + (' *' if 'installFido2' in Config.addPostSetupService else '') + "\n"
                 txt += 'Install Scim Server'.ljust(30) + repr(Config.installScimServer).rjust(35) + (' *' if 'installScimServer' in Config.addPostSetupService else '') + "\n"
