@@ -321,6 +321,10 @@ class JettyInstaller(BaseInstaller, SetupUtils):
             shutil.unpack_archive(war_file, tmp_dir, format='zip')
             jetty_env_fn = os.path.join(tmp_dir, 'WEB-INF/jetty-env.xml')
 
+            if not os.path.exists(jetty_env_fn):
+                shutil.rmtree(tmp_dir)
+                return
+
             tree = ET.parse(jetty_env_fn)
             root = tree.getroot()
 
