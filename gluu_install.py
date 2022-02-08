@@ -321,7 +321,7 @@ if not argsp.u:
     download('https://raw.githubusercontent.com/GluuFederation/oxd/{}/debian/oxd-server'.format(app_versions['SETUP_BRANCH']), os.path.join(gluu_app_dir,'oxd-server-start.sh'))
     download('https://github.com/GluuFederation/community-edition-setup/archive/{}.zip'.format(app_versions['SETUP_BRANCH']), os.path.join(gluu_app_dir,'community-edition-setup.zip'))
     download(maven_root + '/npm/passport/passport-{}.tgz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport.tgz'))
-    download(maven_root + '/npm/passport/passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION'])))
+    download(maven_root + '/npm/passport/passport-{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION'])))
     download(maven_base + '/org/gluu/oxShibbolethStatic/{0}{1}/oxShibbolethStatic-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'shibboleth-idp.jar'))
     download(maven_base + '/org/gluu/oxshibbolethIdp/{0}{1}/oxshibbolethIdp-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'idp.war'))
     download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'super-gluu-radius-server.jar'))
