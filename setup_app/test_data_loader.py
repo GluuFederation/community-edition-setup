@@ -208,6 +208,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                                     'dynamicRegistrationCustomObjectClass':  'oxAuthClientCustomAttributes',
                                     'dynamicRegistrationCustomAttributes': [ "oxAuthTrustedClient", "myCustomAttr1", "myCustomAttr2", "oxIncludeClaimsInIdToken" ],
                                     'dynamicRegistrationExpirationTime': 86400,
+                                    'grantTypesAndResponseTypesAutofixEnabled': True,
                                     'dynamicGrantTypeDefault': [ "authorization_code", "implicit", "password", "client_credentials", "refresh_token", "urn:ietf:params:oauth:grant-type:uma-ticket", "urn:openid:params:grant-type:ciba", "urn:ietf:params:oauth:grant-type:device_code" ],
                                     'legacyIdTokenClaims': True,
                                     'authenticationFiltersEnabled': True,
@@ -242,7 +243,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                                     'sessionIdRequestParameterEnabled': True,
                                     'skipRefreshTokenDuringRefreshing': False,
                                     'enabledComponents': ['unknown', 'health_check', 'userinfo', 'clientinfo', 'id_generation', 'registration', 'introspection', 'revoke_token', 'revoke_session', 'end_session', 'status_session', 'gluu_configuration', 'ciba', 'uma', 'u2f', 'device_authz', 'stat'],
-                                    'cleanServiceInterval':3600
+                                    'cleanServiceInterval':7200
                                     }
 
         custom_scripts = ('2DAF-F995', '2DAF-F996', '4BBE-C6A8', 'A51E-76DA')
