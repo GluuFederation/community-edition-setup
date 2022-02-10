@@ -176,6 +176,6 @@ def get_setup_options():
 
     if base.argsp.install_shib and base.argsp.remote_rdbm == 'spanner':
         print(msg.spanner_idp_warning)
-        sys.exit(2)
+        setupOptions['installSaml'] = False
 
     return setupOptions
