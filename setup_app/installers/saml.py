@@ -245,7 +245,3 @@ class SamlInstaller(JettyInstaller):
                         self.idp3ConfAuthnFolder, self.idp3CredentialsFolder, self.idp3WebappFolder):
 
             self.run([paths.cmd_mkdir, '-p', folder])
-
-
-    def installed(self):
-        return os.path.exists(os.path.join(Config.jetty_base, self.service_name, 'start.ini'))

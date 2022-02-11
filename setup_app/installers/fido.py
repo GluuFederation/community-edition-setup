@@ -78,5 +78,3 @@ class FidoInstaller(JettyInstaller):
             self.run([paths.cmd_mkdir, '-p', target_dir])
             self.copyFile(apple_webauthn, target_dir)
 
-    def installed(self):
-        return os.path.exists(os.path.join(Config.jetty_base, self.service_name, 'start.ini'))

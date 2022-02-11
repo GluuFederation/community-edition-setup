@@ -164,6 +164,3 @@ class CasaInstaller(JettyInstaller):
             if not os.path.exists(path):
                 self.run([paths.cmd_mkdir, '-p', path])
             self.run([paths.cmd_chown, '-R', 'jetty:jetty', path])
-
-    def installed(self):
-        return os.path.exists(os.path.join(Config.jetty_base, self.service_name, 'start.ini'))
