@@ -340,6 +340,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
     def rdbmProperties(self):
         if Config.rdbm_type in ('sql', 'mysql'):
+            self.server_time_zone()
             Config.rdbm_password_enc = self.obscure(Config.rdbm_password)
             self.renderTemplateInOut(Config.gluuRDBMProperties, Config.templateFolder, Config.configFolder)
 
@@ -352,6 +353,10 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                 Config.templateRenderingDict['spanner_creds'] = 'auth.credentials-file={}'.format(auth_cred_target_fn)
 
             self.renderTemplateInOut(Config.gluuSpannerProperties, Config.templateFolder, Config.configFolder)
+
+
+    def server_time_zone(self):
+        Config.templateRenderingDict['server_time_zone'] = 'UTC' + time.strftime("%z")
 
     def create_folders(self):
         self.createDirs(Config.static_rdbm_dir)
