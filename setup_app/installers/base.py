@@ -172,6 +172,9 @@ class BaseInstaller:
 
         return True
 
+    def installed(self):
+        return os.path.exists(os.path.join(Config.jetty_base, self.service_name, 'start.ini')) or os.path.exists(os.path.join(Config.jetty_base, self.service_name, 'start.d/server.ini'))
+
 
     def create_user(self):
         pass
@@ -182,8 +185,5 @@ class BaseInstaller:
     def copy_static(self):
         pass
 
-    def installed(self):
-        return None
-    
     def check_need_for_download(self):
         pass

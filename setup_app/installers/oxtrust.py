@@ -141,5 +141,3 @@ class OxtrustInstaller(JettyInstaller):
             self.run([paths.cmd_mkdir, '-m', '775', '-p', folder])
             self.run([paths.cmd_chown, '-R', 'root:gluu', folder])
 
-    def installed(self):
-        return os.path.exists(os.path.join(Config.jetty_base, self.service_name, 'start.ini'))
