@@ -382,10 +382,10 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                 out_file_p = output_dir_p.joinpath(p.relative_to(ldif_dir))
                 if not out_file_p.parent.exists():
                     out_file_p.parent.mkdir(parents=True)
-                    try:
-                        self.renderTemplateInOut(p.as_posix(), p.parent.as_posix(), out_file_p.parent.as_posix())
-                    except Exception:
-                        self.logIt("Error writing template {}".format(out_file_p), True)
+                try:
+                    self.renderTemplateInOut(p.as_posix(), p.parent.as_posix(), out_file_p.parent.as_posix())
+                except Exception:
+                    self.logIt("Error writing template {}".format(out_file_p), True)
 
 
     def import_custom_ldif_dir(self, ldif_dir):
