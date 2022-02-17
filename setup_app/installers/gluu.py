@@ -106,7 +106,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
 
         self.determine_key_gen_path()
 
-        if Config.profile == static.SetupProfiles.DISA_STIG:
+        if not Config.installed_instance and Config.profile == static.SetupProfiles.DISA_STIG:
             self.remove_pcks11_keys()
 
         self.profile_templates(Config.templateFolder)

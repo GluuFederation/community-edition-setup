@@ -115,7 +115,7 @@ if (not argsp.c) and sys.stdout.isatty() and (int(tty_rows) > 24) and (int(tty_c
         from setup_app.utils.tui import GSA
         on_tui = True
 
-if not argsp.n and not GSA:
+if not argsp.n and not GSA and not os.path.exists(Config.gluu_properties_fn):
     base.check_resources()
 
 
@@ -168,6 +168,9 @@ if os.path.exists(Config.gluu_properties_fn):
         collectProperties.save()
         sys.exit()
 
+if argsp.shell:
+    code.interact(local=locals())
+    sys.exit()
 
 if not Config.noPrompt and not GSA and not Config.installed_instance and not setup_loaded:
     propertiesUtils.promptForProperties()
@@ -281,9 +284,6 @@ gluuProgress.register(PostSetup)
 if not argsp.no_progress:
     gluuProgress.queue = queue
 
-if argsp.shell:
-    code.interact(local=locals())
-    sys.exit()
 
 def do_installation():
 
