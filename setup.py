@@ -86,6 +86,9 @@ if base.snap:
 Config.init(paths.INSTALL_DIR)
 Config.determine_version()
 
+if os.path.exists(Config.gluu_properties_fn):
+    Config.installed_instance = True
+
 # we must initilize SetupUtils after initilizing Config
 SetupUtils.init()
 
@@ -115,7 +118,7 @@ if (not argsp.c) and sys.stdout.isatty() and (int(tty_rows) > 24) and (int(tty_c
         from setup_app.utils.tui import GSA
         on_tui = True
 
-if not argsp.n and not GSA and not os.path.exists(Config.gluu_properties_fn):
+if not argsp.n and not GSA and not Config.installed_instance:
     base.check_resources()
 
 
@@ -131,7 +134,7 @@ gluuInstaller = GluuInstaller()
 gluuInstaller.initialize()
 
 
-if not GSA and not os.path.exists(Config.gluu_properties_fn):
+if not GSA and not Config.installed_instance:
     print()
     print("Installing Gluu Server...\n\nFor more info see:\n  {}  \n  {}\n".format(paths.LOG_FILE, paths.LOG_ERROR_FILE))
     print("Detected OS     :  {} {} {}".format('snap' if base.snap else '', base.os_type, base.os_version))
@@ -159,9 +162,8 @@ if argsp.import_ldif:
 
 
 collectProperties = CollectProperties()
-if os.path.exists(Config.gluu_properties_fn):
+if Config.installed_instance:
     collectProperties.collect()
-    Config.installed_instance = True
 
     if argsp.csx:
         print("Saving collected properties")
