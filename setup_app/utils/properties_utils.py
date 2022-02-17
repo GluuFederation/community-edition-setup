@@ -949,8 +949,9 @@ class PropertiesUtils(SetupUtils):
         if Config.rdbm_type != 'spanner':
             self.promptForShibIDP()
 
+        self.promptForScimServer()
+
         if Config.profile != SetupProfiles.DISA_STIG:
-            self.promptForScimServer()
             self.promptForFido2Server()
             self.promptForPassport()
 

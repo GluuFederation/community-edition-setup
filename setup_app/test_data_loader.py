@@ -69,7 +69,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
             except:
                 pass
             self.dbUtils.ldap_conn.bind()
-        
+
         if not self.scimInstaller.installed():
     
             self.logIt("Scim was not installed. Installing")
