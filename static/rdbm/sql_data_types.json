@@ -534,7 +534,7 @@
   },
   "oxAuthRequestURI": {
     "mysql": {
-      "type": "TINYTEXT"
+      "type": "JSON"
     },
     "pgsql": {
       "type": "TEXT"
