@@ -389,6 +389,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
 
 
     def import_custom_ldif_dir(self, ldif_dir):
+        ldif_dir = ldif_dir.rstrip('/')
         self.logIt("Importing Custom LDIF files", pbar='post-setup')
         self.render_custom_templates(ldif_dir)
 
@@ -408,6 +409,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         self.set_systemd_timeout()
 
         if base.argsp.import_ldif:
+            self.dbUtils.bind(force=True)
             self.import_custom_ldif_dir(base.argsp.import_ldif)
 
         self.deleteLdapPw()
