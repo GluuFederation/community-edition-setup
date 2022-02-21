@@ -107,7 +107,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
                 if Config.rdbm_type != 'spanner': 
                     self.dbUtils.rdm_automapper(force=True)
 
-                self.dbUtils.import_ldif([ldif_file_server])
+            self.dbUtils.import_ldif([ldif_file_server])
 
             self.dbUtils.enable_script('5866-4202')
             self.dbUtils.enable_script('B8FD-4C11')
