@@ -950,11 +950,10 @@ class PropertiesUtils(SetupUtils):
             self.promptForShibIDP()
 
         self.promptForScimServer()
+        self.promptForFido2Server()
 
         if Config.profile != SetupProfiles.DISA_STIG:
-            self.promptForFido2Server()
             self.promptForPassport()
-
 
         if os.path.exists(os.path.join(Config.distGluuFolder, 'casa.war')):
             self.promptForCasaInstallation()
