@@ -184,7 +184,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
 
         if 'idpSecurityKeyPassword' in oxTrustConfApplication:
             Config.encoded_shib_jks_pw = oxTrustConfApplication['idpSecurityKeyPassword']
-            Config.shibJksPass =  self.unobscure(Config.encoded_shib_jks_pw)
+            Config.shibJksPass =  self.unobscure(Config.encoded_shib_jks_pw) if Config.encoded_shib_jks_pw else None
 
         Config.admin_email =  oxTrustConfApplication['orgSupportEmail']
 
@@ -203,7 +203,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
         if 'scimUmaResourceId' in oxTrustConfApplication:
             Config.scim_resource_oxid =  oxTrustConfApplication['scimUmaResourceId']
 
-        if 'ScimProperties' in oxTrustConfApplication and 'protectionMode' in oxTrustConfApplication['ScimProperties']:
+        if 'ScimProperties' in oxTrustConfApplication and oxTrustConfApplication['ScimProperties'] and protectionMode in oxTrustConfApplication['ScimProperties']:
             Config.scim_protection_mode = oxTrustConfApplication['ScimProperties']['protectionMode']
         else:
             Config.scim_protection_mode = 'OAUTH'
@@ -213,8 +213,8 @@ class CollectProperties(SetupUtils, BaseInstaller):
             Config.api_rs_client_jks_fn = oxTrustConfApplication['apiUmaClientKeyStoreFile']
 
         if 'scimUmaClientKeyStorePassword' in oxTrustConfApplication:
-            Config.scim_rs_client_jks_pass = self.unobscure(oxTrustConfApplication['scimUmaClientKeyStorePassword'])
-            Config.scim_rs_client_jks_fn = str(oxTrustConfApplication['scimUmaClientKeyStoreFile'])
+            Config.scim_rs_client_jks_pass = self.unobscure(oxTrustConfApplication['scimUmaClientKeyStorePassword']) if oxTrustConfApplication['scimUmaClientKeyStorePassword'] else None
+            Config.scim_rs_client_jks_fn = str(oxTrustConfApplication['scimUmaClientKeyStoreFile']) if oxTrustConfApplication['scimUmaClientKeyStoreFile'] else ''
 
         # Other clients
         client_var_id_list = (
