@@ -1100,5 +1100,15 @@
     "spanner": {
       "type": "STRING(MAX)"
     }
+  },
+  "oxAlias": {
+    "mysql": {
+      "size": 128,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 128,
+      "type": "STRING"
+    }
   }
 }
