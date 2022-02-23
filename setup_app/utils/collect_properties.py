@@ -203,7 +203,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
         if 'scimUmaResourceId' in oxTrustConfApplication:
             Config.scim_resource_oxid =  oxTrustConfApplication['scimUmaResourceId']
 
-        if 'ScimProperties' in oxTrustConfApplication and oxTrustConfApplication['ScimProperties'] and protectionMode in oxTrustConfApplication['ScimProperties']:
+        if 'ScimProperties' in oxTrustConfApplication and oxTrustConfApplication['ScimProperties'] and 'protectionMode' in oxTrustConfApplication['ScimProperties']:
             Config.scim_protection_mode = oxTrustConfApplication['ScimProperties']['protectionMode']
         else:
             Config.scim_protection_mode = 'OAUTH'
