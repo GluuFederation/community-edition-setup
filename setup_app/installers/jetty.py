@@ -84,8 +84,15 @@ class JettyInstaller(BaseInstaller, SetupUtils):
 
         self.applyChangesInFiles(self.app_custom_changes['jetty'])
 
+        self.run([paths.cmd_chown, '-R', Config.user_group, jetty_dist])
         self.run([paths.cmd_chown, '-R', Config.user_group, jettyDestinationPath])
         self.run([paths.cmd_chown, '-h', Config.user_group, self.jetty_home])
+
+        self.run([paths.cmd_chmod, '-R', "u+rwX,g+rwX,o-rwX", jetty_dist])
+        self.run([paths.cmd_chmod, '-R', "u+rwX,g+rwX,o-rwX", jettyDestinationPath])
+
+        self.logIt("jetty_dist = %s" % jetty_dist)
+        self.logIt("jettyDestinationPath = %s" % jettyDestinationPath)
 
         self.run([paths.cmd_mkdir, '-p', self.jetty_base])
         self.run([paths.cmd_chown, '-R', Config.user_group, self.jetty_base])

@@ -252,10 +252,18 @@ class Crypto64:
     def export_openid_key(self, jks_path, jks_pwd, cert_alias, cert_path):
         self.logIt("Exporting oxAuth OpenID Connect keys")
 
+        if Config.profile == static.SetupProfiles.DISA_STIG:
+            client_cmd = '{}:{}:{}'.format(
+                        Config.non_setup_properties['oxauth_client_noprivder_jar_fn'],
+                        os.path.join(Config.distAppFolder, 'bc-fips-1.0.2.1.jar'),
+                        os.path.join(Config.distAppFolder, 'bcpkix-fips-1.0.5.jar'),
+                        )
+        else:
+            client_cmd = Config.non_setup_properties['oxauth_client_jar_fn']
+
         cmd = " ".join([Config.cmd_java,
                         "-Dlog4j.defaultInitOverride=true",
-                        "-cp",
-                        Config.non_setup_properties['oxauth_client_jar_fn'], 
+                        "-cp", client_cmd,
                         Config.non_setup_properties['key_export_path'],
                         "-keystore",
                         jks_path,

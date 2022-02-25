@@ -476,10 +476,13 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             self.run([paths.cmd_chown, '-R', 'root:gluu', Config.gluuOptPythonFolder])
             self.run([paths.cmd_chown, Config.user_group, Config.jetty_base])
 
-            self.run([paths.cmd_chown, Config.user_group, '/opt/gluu/'])
-            self.run([paths.cmd_chown, 'root:{}'.format(Config.gluu_group), '/etc/gluu/'])
-            self.run([paths.cmd_chown, 'root:{}'.format(Config.gluu_group), '/var/gluu'])
-            self.run([paths.cmd_chmod, '770', '/var/gluu'])
+            self.run([paths.cmd_chown, '-R', Config.user_group, '/opt/gluu/'])
+            self.run([paths.cmd_chown, '-R', 'root:{}'.format(Config.gluu_group), '/etc/gluu'])
+            self.run([paths.cmd_chown, '-R', 'root:{}'.format(Config.gluu_group), '/var/gluu'])
+
+            self.run([paths.cmd_chmod, '-R', 'u+rwX,g+rwX,o-rwX', '/opt/gluu'])
+            self.run([paths.cmd_chmod, '-R', 'u+rwX,g+rwX,o-rwX', '/etc/gluu'])
+            self.run([paths.cmd_chmod, '-R', 'u+rwX,g+rwX,o-rwX', '/var/gluu'])
 
             if not Config.installed_instance:
                 cron_service = 'crond' if base.clone_type == 'rpm' else 'cron'
