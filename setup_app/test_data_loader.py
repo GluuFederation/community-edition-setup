@@ -33,9 +33,22 @@ class TestDataLoader(BaseInstaller, SetupUtils):
 
     def create_test_client_keystore(self):
         self.logIt("Creating client_keystore.jks")
-        client_keystore_fn = os.path.join(Config.outputFolder, 'test/oxauth/client/client_keystore.jks')
+        store_ext = 'pkcs12' if Config.profile == static.SetupProfiles.DISA_STIG else 'jks'
+        client_keystore_fn = os.path.join(Config.outputFolder, 'test/oxauth/client/client_keystore.' + store_ext)
         keys_json_fn =  os.path.join(Config.outputFolder, 'test/oxauth/client/keys_client_keystore.json')
 
+        args = [Config.cmd_keytool, '-genkey', '-alias', 'dummy', '-keystore', 
+                    client_keystore_fn, '-storepass', 'secret', '-keypass', 
+                    'secret', '-dname', 
+                    "'{}'".format(Config.default_openid_jks_dn_name)
+                    ]
+
+        if Config.profile == static.SetupProfiles.DISA_STIG:
+             args += ['-storetype', 'PKCS12', '-providername', 'BC', '-providerpath',
+                      '/opt/bc/bcprov-jdk15on-1.67.jar',
+                      '-providerclass', 'org.bouncycastle.jce.provider.BouncyCastleProvider']
+
+        self.run(' '.join(args), shell=True)
 
         args = [Config.cmd_java, '-Dlog4j.defaultInitOverride=true',
                 '-cp', Config.non_setup_properties['oxauth_client_jar_fn'], Config.non_setup_properties['key_gen_path'],
