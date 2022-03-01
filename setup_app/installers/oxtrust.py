@@ -46,8 +46,8 @@ class OxtrustInstaller(JettyInstaller):
 
         # TODO: oxtrust-api installation
         # oxTrust Api configuration
-        self.api_rs_client_jks_fn = os.path.join(Config.certFolder, 'api-rs.jks')
-        self.api_rp_client_jks_fn = os.path.join(Config.certFolder, 'api-rp.jks')
+        self.api_rs_client_jks_fn = os.path.join(Config.certFolder, self.get_keystore_fn('api-rs'))
+        self.api_rp_client_jks_fn = os.path.join(Config.certFolder, self.get_keystore_fn('api-rp'))
 
 
     def install(self):
@@ -67,13 +67,13 @@ class OxtrustInstaller(JettyInstaller):
         if not Config.get('api_rs_client_jks_pass'):
             Config.api_rs_client_jks_pass = 'secret'
             Config.api_rs_client_jks_pass_encoded = self.obscure(Config.api_rs_client_jks_pass)
-        self.api_rs_client_jwks = self.gen_openid_jwks_jks_keys(self.api_rs_client_jks_fn, Config.api_rs_client_jks_pass)
+        self.api_rs_client_jwks = self.gen_openid_data_store_keys(self.api_rs_client_jks_fn, Config.api_rs_client_jks_pass)
         Config.templateRenderingDict['api_rs_client_base64_jwks'] = self.generate_base64_string(self.api_rs_client_jwks, 1)
 
         if not Config.get('api_rp_client_jks_pass'):
             Config.api_rp_client_jks_pass = 'secret'
             Config.api_rp_client_jks_pass_encoded = self.obscure(Config.api_rp_client_jks_pass)
-        self.api_rp_client_jwks = self.gen_openid_jwks_jks_keys(self.api_rp_client_jks_fn, Config.api_rp_client_jks_pass)
+        self.api_rp_client_jwks = self.gen_openid_data_store_keys(self.api_rp_client_jks_fn, Config.api_rp_client_jks_pass)
         Config.templateRenderingDict['api_rp_client_base64_jwks'] = self.generate_base64_string(self.api_rp_client_jwks, 1)
 
 

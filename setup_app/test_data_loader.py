@@ -31,39 +31,41 @@ class TestDataLoader(BaseInstaller, SetupUtils):
 
         self.template_base = os.path.join(Config.templateFolder, 'test')
 
+        self.test_client_keystore_fn = os.path.join(Config.outputFolder, 'test/oxauth/client', self.get_keystore_fn('client_keystore'))
+        Config.templateRenderingDict['test_client_keystore_base_fn'] = os.path.basename(self.test_client_keystore_fn)
+
     def create_test_client_keystore(self):
-        self.logIt("Creating client_keystore.jks")
-        store_ext = 'pkcs12' if Config.profile == static.SetupProfiles.DISA_STIG else 'jks'
-        client_keystore_fn = os.path.join(Config.outputFolder, 'test/oxauth/client/client_keystore.' + store_ext)
+
+        self.logIt("Creating {}".format(Config.templateRenderingDict['test_client_keystore_base_fn']))
         keys_json_fn =  os.path.join(Config.outputFolder, 'test/oxauth/client/keys_client_keystore.json')
 
-        args = [Config.cmd_keytool, '-genkey', '-alias', 'dummy', '-keystore', 
-                    client_keystore_fn, '-storepass', 'secret', '-keypass', 
-                    'secret', '-dname', 
-                    "'{}'".format(Config.default_openid_jks_dn_name)
-                    ]
+        client_cmd = self.get_key_gen_client_cmd
 
-        if Config.profile == static.SetupProfiles.DISA_STIG:
-             args += ['-storetype', 'PKCS12', '-providername', 'BC', '-providerpath',
-                      '/opt/bc/bcprov-jdk15on-1.67.jar',
-                      '-providerclass', 'org.bouncycastle.jce.provider.BouncyCastleProvider']
+        args = [Config.cmd_keytool, '-genkey', '-alias', 'dummy', '-keystore', 
+                    self.test_client_keystore_fn, '-storepass', 'secret', '-keypass', 
+                    'secret', '-dname', 
+                    "'{}'".format(Config.default_openid_dstore_dn_name),
+                    ] + self.get_keytool_provider()
 
         self.run(' '.join(args), shell=True)
 
+        client_cmd = self.get_key_gen_client_cmd()
+
         args = [Config.cmd_java, '-Dlog4j.defaultInitOverride=true',
-                '-cp', Config.non_setup_properties['oxauth_client_jar_fn'], Config.non_setup_properties['key_gen_path'],
-                '-keystore', client_keystore_fn,
+                "-cp", client_cmd,
+                Config.non_setup_properties['key_gen_path'],
+                '-keystore', self.test_client_keystore_fn,
                 '-keypasswd', 'secret',
                 '-sig_keys', Config.default_key_algs,
                 '-enc_keys', Config.default_key_algs,
-                '-dnname', "'{}'".format(Config.default_openid_jks_dn_name),
+                '-dnname', "'{}'".format(Config.default_openid_dstore_dn_name),
                 '-expiration', '365','>', keys_json_fn]
 
         cmd = ' '.join(args)
         
         self.run(cmd, shell=True)
 
-        self.copyFile(client_keystore_fn, os.path.join(Config.outputFolder, 'test/oxauth/server'))
+        self.copyFile(self.test_client_keystore_fn, os.path.join(Config.outputFolder, 'test/oxauth/server'))
         self.copyFile(keys_json_fn, os.path.join(Config.outputFolder, 'test/oxauth/server'))
 
     def load_test_data(self):
@@ -166,7 +168,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         self.render_templates_folder(self.template_base)
 
         Config.pbar.progress(self.service_name, "Loading test ldif files", False)
-        if not self.passportInstaller.installed():
+        if not self.passportInstaller.installed() and Config.profile != static.SetupProfiles.DISA_STIG:
             self.passportInstaller.generate_configuration()
 
         ox_auth_test_ldif = os.path.join(Config.outputFolder, 'test/oxauth/data/oxauth-test-data.ldif')

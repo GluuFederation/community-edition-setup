@@ -657,3 +657,7 @@ class SetupUtils(Crypto64):
             rules.append(facl)
 
         self.apply_fapolicyd_rules(rules)
+
+
+    def get_keystore_fn(self, keystore_name):
+        return keystore_name + '.' + Config.default_store_type

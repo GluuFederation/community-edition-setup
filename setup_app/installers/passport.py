@@ -37,13 +37,13 @@ class PassportInstaller(NodeInstaller):
         self.ldif_passport = os.path.join(Config.outputFolder, 'passport/passport.ldif')
         self.ldif_passport_clients = os.path.join(Config.outputFolder, 'passport/passport_clients.ldif')
 
-        self.passport_rs_client_jks_fn = os.path.join(Config.certFolder, 'passport-rs.jks')
-        self.passport_rp_client_jks_fn = os.path.join(Config.certFolder, 'passport-rp.jks')
+        self.passport_rs_client_jks_fn = os.path.join(Config.certFolder, self.get_keystore_fn('passport-rs'))
+        self.passport_rp_client_jks_fn = os.path.join(Config.certFolder, self.get_keystore_fn('passport-rp'))
         self.passport_rp_client_cert_fn = os.path.join(Config.certFolder, 'passport-rp.pem')
         self.passportSpTLSCACert = os.path.join(Config.certFolder, 'passport-sp.pem')
         self.passportSpTLSCert = os.path.join(Config.certFolder, 'passport-sp.crt')
         self.passportSpTLSKey = os.path.join(Config.certFolder, 'passport-sp.key')
-        self.passportSpJksFn = os.path.join(Config.certFolder, 'passport-sp.jks')
+        self.passportSpJksFn = os.path.join(Config.certFolder, self.get_keystore_fn('passport-sp'))
 
 
     def install(self):
@@ -134,10 +134,10 @@ class PassportInstaller(NodeInstaller):
         # create certificates
         self.gen_cert('passport-sp', Config.passportSpKeyPass, 'ldap', Config.ldap_hostname)
 
-        Config.passport_rs_client_jwks = self.gen_openid_jwks_jks_keys(self.passport_rs_client_jks_fn, Config.passport_rs_client_jks_pass)
+        Config.passport_rs_client_jwks = self.gen_openid_data_store_keys(self.passport_rs_client_jks_fn, Config.passport_rs_client_jks_pass)
         Config.templateRenderingDict['passport_rs_client_base64_jwks'] = self.generate_base64_string(Config.passport_rs_client_jwks, 1)
 
-        Config.passport_rp_client_jwks = self.gen_openid_jwks_jks_keys(self.passport_rp_client_jks_fn, Config.passport_rp_client_jks_pass)
+        Config.passport_rp_client_jwks = self.gen_openid_data_store_keys(self.passport_rp_client_jks_fn, Config.passport_rp_client_jks_pass)
         Config.templateRenderingDict['passport_rp_client_base64_jwks'] = self.generate_base64_string(Config.passport_rp_client_jwks, 1)
 
         self.logIt("Preparing Passport OpenID RP certificate...")

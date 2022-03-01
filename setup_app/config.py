@@ -79,8 +79,16 @@ class Config:
         self.use_existing_java = base.argsp.j
         self.system_dir = '/etc/systemd/system'
         self.user_group = '{}:{}'.format(self.jetty_user, self.gluu_group)
+        self.default_store_type = 'jks'
 
+        if self.profile == SetupProfiles.DISA_STIG:
+            self.distFolder = '/var/gluu/dist'
+
+        self.distAppFolder = os.path.join(self.distFolder, 'app')
+        self.distGluuFolder = os.path.join(self.distFolder, 'gluu')
+        self.distTmpFolder = os.path.join(self.distFolder, 'tmp')
         self.ldapBinFolder = os.path.join(self.ldapBaseFolder, 'bin')
+
         if base.snap:
             self.ldapBaseFolder = os.path.join(base.snap_common, 'opendj')
             self.jetty_user = 'root'
@@ -92,9 +100,12 @@ class Config:
             self.jre_home = Path(self.cmd_java).resolve().parent.parent.as_posix()
             self.cmd_keytool = shutil.which('keytool')
             self.cmd_jar = shutil.which('jar')
-            self.distFolder = '/var/gluu/dist'
             os.environ['GLUU_SERVICES'] = 'installHttpd installOxd installCasa installScimServer installFido2'
+            self.default_store_type = 'bcfks'
             self.opendj_truststore_format = 'jks'
+            self.bc_fips_jar = os.path.join(self.distAppFolder, 'bc-fips-1.0.2.1.jar')
+            self.bcpkix_fips_jar = os.path.join(self.distAppFolder, 'bcpkix-fips-1.0.5.jar')
+
         else:
             self.profile = SetupProfiles.CE
             self.cmd_java = os.path.join(self.jre_home, 'bin/java')
@@ -126,10 +137,6 @@ class Config:
 
         self.properties_password = None
         self.noPrompt = False
-
-        self.distAppFolder = os.path.join(self.distFolder, 'app')
-        self.distGluuFolder = os.path.join(self.distFolder, 'gluu')
-        self.distTmpFolder = os.path.join(self.distFolder, 'tmp')
 
         self.downloadWars = None
         self.templateRenderingDict = {
@@ -300,7 +307,7 @@ class Config:
         self.ldap_setup_properties = os.path.join(self.templateFolder, 'opendj-setup.properties')
 
         # OpenID key generation default setting
-        self.default_openid_jks_dn_name = 'CN=oxAuth CA Certificates'
+        self.default_openid_dstore_dn_name = 'CN=oxAuth CA Certificates'
         self.default_key_algs = 'RS256 RS384 RS512 ES256 ES384 ES512'
         self.default_key_expiration = 365
 

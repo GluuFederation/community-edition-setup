@@ -141,12 +141,12 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         self.run([paths.cmd_chown, '-R', 'radius:gluu', self.radius_dir])
         self.run([paths.cmd_chown, '-R', 'root:gluu', self.conf_dir])
         self.run([paths.cmd_chown, 'root:gluu', os.path.join(Config.gluuOptPythonFolder, 'libs/gluu_common.py')])
-        self.run([paths.cmd_chown, 'radius:gluu', os.path.join(Config.certFolder, 'gluu-radius.jks')])
+        self.run([paths.cmd_chown, 'radius:gluu', os.path.join(Config.certFolder, self.get_keystore_fn('gluu-radius'))])
         self.run([paths.cmd_chown, 'radius:gluu', os.path.join(Config.certFolder, 'gluu-radius.private-key.pem')])
 
         self.run([paths.cmd_chmod, '755', self.radius_dir])
         self.run([paths.cmd_chmod, '755', self.conf_dir])
-        self.run([paths.cmd_chmod, '660', os.path.join(Config.certFolder, 'gluu-radius.jks')])
+        self.run([paths.cmd_chmod, '660', os.path.join(Config.certFolder, self.get_keystore_fn('gluu-radius'))])
         self.run([paths.cmd_chmod, '660', os.path.join(Config.certFolder, 'gluu-radius.private-key.pem')])
 
         
@@ -173,9 +173,9 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
             Config.radius_jwt_pass = self.getPW()
 
         radius_jwt_pass = self.obscure(Config.radius_jwt_pass)
-        radius_jks_fn = os.path.join(Config.certFolder, 'gluu-radius.jks')
+        radius_jks_fn = os.path.join(Config.certFolder, self.get_keystore_fn('gluu-radius'))
 
-        raidus_client_jwks = self.gen_openid_jwks_jks_keys(radius_jks_fn, Config.radius_jwt_pass)
+        raidus_client_jwks = self.gen_openid_data_store_keys(radius_jks_fn, Config.radius_jwt_pass)
         raidus_client_jwks = ''.join(raidus_client_jwks).replace('\'','').replace(',,',',').replace('{,','{')
         raidus_client_jwks = json.loads(raidus_client_jwks)
         Config.templateRenderingDict['radius_jwt_pass'] = radius_jwt_pass

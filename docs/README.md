@@ -281,7 +281,7 @@ class SampleInstaller(JettyInstaller):
         if not Config.get('ap_client_jks_pass'):
             Config.app_client_jks_pass = self.getPw()
             Config.app_client_jks_pass_encoded = self.obscure(Config.app_client_jks_pass)
-        self.app_client_jwks = self.gen_openid_jwks_jks_keys(self.app_client_jks_fn, Config.app_client_jks_pass)
+        self.app_client_jwks = self.gen_openid_data_store_keys(self.app_client_jks_fn, Config.app_client_jks_pass)
         Config.templateRenderingDict['app_client_base64_jwks'] = self.generate_base64_string(self.app_client_jwks, 1)
 
     def render_import_templates(self):

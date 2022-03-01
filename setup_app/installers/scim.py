@@ -31,9 +31,10 @@ class ScimInstaller(JettyInstaller):
         self.ldif_clients = os.path.join(self.output_folder, 'clients.ldif')
         self.scope_ldif_fn = os.path.join(self.output_folder, 'scopes.ldif')
 
-        self.scim_rs_client_jks_fn = os.path.join(Config.certFolder, 'scim-rs.jks')
-        self.scim_rp_client_jks_fn = os.path.join(Config.outputFolder, 'scim-rp.jks')
+        self.scim_rs_client_data_store_fn = os.path.join(Config.certFolder, self.get_keystore_fn('scim-rs'))
+        self.scim_rp_client_data_store_fn = os.path.join(Config.outputFolder, self.get_keystore_fn('scim-rp'))
 
+        Config.templateRenderingDict['scim_rp_client_data_store_base_fn'] = os.path.basename(self.scim_rs_client_data_store_fn)
 
     def install(self):
         self.logIt("Copying scim.war into jetty webapps folder...")
@@ -77,17 +78,17 @@ class ScimInstaller(JettyInstaller):
         Config.enable_scim_access_policy = 'true' if Config.installPassport else 'false'
 
         #backup current jks files if exists
-        for jks_fn in (self.scim_rs_client_jks_fn, self.scim_rp_client_jks_fn):
+        for jks_fn in (self.scim_rs_client_data_store_fn, self.scim_rp_client_data_store_fn):
             if os.path.exists(jks_fn):
                 self.backupFile(jks_fn, move=True)
 
-        Config.scim_rs_client_jwks = self.gen_openid_jwks_jks_keys(self.scim_rs_client_jks_fn, Config.scim_rs_client_jks_pass)
+        Config.scim_rs_client_jwks = self.gen_openid_data_store_keys(self.scim_rs_client_data_store_fn, Config.scim_rs_client_jks_pass)
         Config.templateRenderingDict['scim_rs_client_base64_jwks'] = self.generate_base64_string(Config.scim_rs_client_jwks, 1)
 
-        Config.scim_rp_client_jwks = self.gen_openid_jwks_jks_keys(self.scim_rp_client_jks_fn, Config.scim_rp_client_jks_pass)
+        Config.scim_rp_client_jwks = self.gen_openid_data_store_keys(self.scim_rp_client_data_store_fn, Config.scim_rp_client_jks_pass)
         Config.templateRenderingDict['scim_rp_client_base64_jwks'] = self.generate_base64_string(Config.scim_rp_client_jwks, 1)
 
-        self.copyFile(self.scim_rp_client_jks_fn, Config.certFolder)
+        self.copyFile(self.scim_rp_client_data_store_fn, Config.certFolder)
 
     def create_folders(self):
         for d in (self.output_folder,):

@@ -30,7 +30,7 @@ class OxauthInstaller(JettyInstaller):
         self.oxauth_static_conf_json = os.path.join(self.templates_folder, 'oxauth-static-conf.json')
         self.oxauth_error_json = os.path.join(self.templates_folder, 'oxauth-errors.json')
         self.oxauth_openid_jwks_fn = os.path.join(self.output_folder, 'oxauth-keys.json')
-        self.oxauth_openid_jks_fn = os.path.join(Config.certFolder, 'oxauth-keys.jks')
+        self.oxauth_openid_jks_fn = os.path.join(Config.certFolder, self.get_keystore_fn('oxauth-keys'))
 
         Config.oxauth_legacyIdTokenClaims = 'false'
         Config.oxauth_openidScopeBackwardCompatibility = 'false'
@@ -55,7 +55,7 @@ class OxauthInstaller(JettyInstaller):
         self.logIt("Generating oxauth openid keys", pbar=self.service_name)
         sig_keys = 'RS256 RS384 RS512 ES256 ES384 ES512 PS256 PS384 PS512'
         enc_keys = 'RSA1_5 RSA-OAEP'
-        jwks = self.gen_openid_jwks_jks_keys(self.oxauth_openid_jks_fn, Config.oxauth_openid_jks_pass, key_expiration=2, key_algs=sig_keys, enc_keys=enc_keys)
+        jwks = self.gen_openid_data_store_keys(self.oxauth_openid_jks_fn, Config.oxauth_openid_jks_pass, key_expiration=2, key_algs=sig_keys, enc_keys=enc_keys)
         self.write_openid_keys(self.oxauth_openid_jwks_fn, jwks)
 
     def render_import_templates(self):

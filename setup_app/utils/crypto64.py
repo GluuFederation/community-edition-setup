@@ -195,18 +195,18 @@ class Crypto64:
                   '-deststorepass',
                   keystorePW,
                   '-deststoretype',
-                  'JKS',
+                  Config.default_store_type,
                   '-keyalg',
                   'RSA',
                   '-noprompt'
                   ])
 
 
-    def gen_openid_jwks_jks_keys(self, jks_path, jks_pwd, jks_create=True, key_expiration=None, dn_name=None, key_algs=None, enc_keys=None):
+    def gen_openid_data_store_keys(self, data_store_path, data_store_pwd, data_store_create=True, key_expiration=None, dn_name=None, key_algs=None, enc_keys=None):
         self.logIt("Generating oxAuth OpenID Connect keys")
 
         if dn_name == None:
-            dn_name = Config.default_openid_jks_dn_name
+            dn_name = Config.default_openid_dstore_dn_name
 
         if key_algs == None:
             key_algs = Config.default_key_algs
@@ -217,24 +217,16 @@ class Crypto64:
         if not enc_keys:
             enc_keys = key_algs
 
-
-        if Config.profile == static.SetupProfiles.DISA_STIG:
-            client_cmd = '{}:{}:{}'.format(
-                        Config.non_setup_properties['oxauth_client_noprivder_jar_fn'],
-                        os.path.join(Config.distAppFolder, 'bc-fips-1.0.2.1.jar'),
-                        os.path.join(Config.distAppFolder, 'bcpkix-fips-1.0.5.jar'),
-                        )
-        else:
-            client_cmd = Config.non_setup_properties['oxauth_client_jar_fn']
+        client_cmd = self.get_key_gen_client_cmd()
 
         cmd = " ".join([Config.cmd_java,
                         "-Dlog4j.defaultInitOverride=true",
                         "-cp", client_cmd,
                         Config.non_setup_properties['key_gen_path'],
                         "-keystore",
-                        jks_path,
+                        data_store_path,
                         "-keypasswd",
-                        jks_pwd,
+                        data_store_pwd,
                         "-sig_keys",
                         "%s" % key_algs,
                         "-enc_keys",
@@ -249,26 +241,39 @@ class Crypto64:
         if output:
             return output.splitlines()
 
-    def export_openid_key(self, jks_path, jks_pwd, cert_alias, cert_path):
-        self.logIt("Exporting oxAuth OpenID Connect keys")
-
+    def get_key_gen_client_cmd(self):
         if Config.profile == static.SetupProfiles.DISA_STIG:
             client_cmd = '{}:{}:{}'.format(
                         Config.non_setup_properties['oxauth_client_noprivder_jar_fn'],
-                        os.path.join(Config.distAppFolder, 'bc-fips-1.0.2.1.jar'),
-                        os.path.join(Config.distAppFolder, 'bcpkix-fips-1.0.5.jar'),
+                        Config.bc_fips_jar,
+                        Config.bcpkix_fips_jar
                         )
         else:
             client_cmd = Config.non_setup_properties['oxauth_client_jar_fn']
 
+        return client_cmd
+
+    def get_keytool_provider(self):
+        provider_list = ['-storetype', Config.default_store_type]
+        if Config.profile == static.SetupProfiles.DISA_STIG:
+            provider_list += [
+                                '-providername', 'BCFIPS',
+                                '-providerpath', '{}:{}'.format(Config.bc_fips_jar, Config.bcpkix_fips_jar),
+                                '-providerclass', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider'
+                             ]
+        return provider_list
+
+    def export_openid_key(self, data_store_path, data_store_pwd, cert_alias, cert_path):
+        self.logIt("Exporting oxAuth OpenID Connect keys")
+        client_cmd = self.get_key_gen_client_cmd()
         cmd = " ".join([Config.cmd_java,
                         "-Dlog4j.defaultInitOverride=true",
                         "-cp", client_cmd,
                         Config.non_setup_properties['key_export_path'],
                         "-keystore",
-                        jks_path,
+                        data_store_path,
                         "-keypasswd",
-                        jks_pwd,
+                        data_store_pwd,
                         "-alias",
                         cert_alias,
                         "-exportfile",
