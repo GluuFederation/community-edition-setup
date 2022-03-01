@@ -35,7 +35,7 @@ class SamlInstaller(JettyInstaller):
         self.ldif_oxidp = os.path.join(self.output_folder, 'oxidp.ldif')
         self.oxidp_config_json = os.path.join(self.output_folder, 'oxidp-config.json')
 
-        Config.templateRenderingDict['shib_data_store_fn'] = os.path.join(Config.certFolder, self.get_keystore_fn('shibIDP'))
+        self.shib_data_store_fn = os.path.join(Config.certFolder, self.get_keystore_fn('shibIDP'))
 
         self.shibboleth_version = 'v3'
 
@@ -66,6 +66,7 @@ class SamlInstaller(JettyInstaller):
         self.idp_signing_crt_file = os.path.join(Config.certFolder, 'idp-signing.crt')
 
         Config.templateRenderingDict['sealer_data_store_fn'] = self.get_keystore_fn('sealer')
+        Config.templateRenderingDict['shib_data_store_fn'] = self.shib_data_store_fn
 
 
     def install(self):
@@ -84,7 +85,7 @@ class SamlInstaller(JettyInstaller):
             self.gen_cert('idp-signing', Config.shibJksPass, 'jetty')
 
             self.gen_keystore('shibIDP',
-                              Config.templateRenderingDict['shib_data_store_fn'],
+                              self.shib_data_store_fn,
                               Config.shibJksPass,
                               self.shib_key_file,
                               self.shib_crt_file
