@@ -174,7 +174,7 @@ class DBUtils:
         self.cbm = CBM(Config.get('cb_query_node', Config.couchbase_hostname), Config.get('couchebaseClusterAdmin'), Config.get('cb_password'))
 
     def get_oxAuthConfDynamic(self):
-        if base.argsp.no_data:
+        if not Config.loadData:
             return '', {}
 
         if self.moddb == BackendTypes.LDAP:
@@ -203,7 +203,7 @@ class DBUtils:
         return dn, oxAuthConfDynamic
 
     def get_oxTrustConfApplication(self):
-        if base.argsp.no_data:
+        if not Config.loadData:
             return '', {}
 
         if self.moddb == BackendTypes.LDAP:
@@ -232,7 +232,7 @@ class DBUtils:
 
 
     def set_oxAuthConfDynamic(self, entries):
-        if base.argsp.no_data:
+        if not Config.loadData:
             return
 
         if self.moddb == BackendTypes.LDAP:
@@ -265,7 +265,7 @@ class DBUtils:
                 self.cbm.exec_query(n1ql)
 
     def set_oxTrustConfApplication(self, entries):
-        if base.argsp.no_data:
+        if not Config.loadData:
             return
 
         dn, oxTrustConfApplication = self.get_oxTrustConfApplication()
@@ -296,7 +296,7 @@ class DBUtils:
             self.cbm.exec_query(n1ql)
 
     def enable_script(self, inum):
-        if base.argsp.no_data:
+        if not Config.loadData:
             return
 
         if self.moddb == BackendTypes.LDAP:
@@ -343,7 +343,7 @@ class DBUtils:
             self.cbm.exec_query(n1ql)
 
     def set_configuration(self, component, value, dn='ou=configuration,o=gluu'):
-        if base.argsp.no_data:
+        if not Config.loadData:
             return
 
         if self.moddb == BackendTypes.LDAP:
@@ -447,7 +447,7 @@ class DBUtils:
             return retVal
 
     def search(self, search_base, search_filter='(objectClass=*)', search_scope=ldap3.LEVEL, fetchmany=False):
-        if base.argsp.no_data:
+        if not Config.loadData:
             return {}
 
         base.logIt("Searching database for dn {} with filter {}".format(search_base, search_filter))
@@ -606,7 +606,7 @@ class DBUtils:
         return ','.join(value2)
 
     def add_client2script(self, script_inum, client_id):
-        if base.argsp.no_data:
+        if not Config.loadData:
             return
 
         dn = 'inum={},ou=scripts,o=gluu'.format(script_inum)
@@ -852,7 +852,7 @@ class DBUtils:
         return msha.digest().hex()
 
     def import_ldif(self, ldif_files, bucket=None, force=None):
-        if base.argsp.no_data:
+        if not Config.loadData:
             return
 
         base.logIt("Importing ldif file(s): {} ".format(', '.join(ldif_files)))
