@@ -253,6 +253,9 @@ class Crypto64:
 
         return client_cmd
 
+    def get_key_gen_client_provider_cmd(self):
+        return Config.non_setup_properties['oxauth_client_jar_fn']
+
     def get_keytool_provider(self):
         provider_list = ['-storetype', Config.default_store_type]
         if Config.profile == static.SetupProfiles.DISA_STIG:

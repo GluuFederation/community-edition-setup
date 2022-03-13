@@ -31,7 +31,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
 
         self.template_base = os.path.join(Config.templateFolder, 'test')
 
-        self.test_client_keystore_fn = os.path.join(Config.outputFolder, 'test/oxauth/client', self.get_keystore_fn('client_keystore'))
+        self.test_client_keystore_fn = os.path.join(Config.outputFolder, 'test/oxauth/client', self.get_client_test_keystore_fn('client_keystore'))
         Config.templateRenderingDict['test_client_keystore_base_fn'] = os.path.basename(self.test_client_keystore_fn)
 
     def create_test_client_keystore(self):
@@ -39,22 +39,13 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         self.logIt("Creating {}".format(Config.templateRenderingDict['test_client_keystore_base_fn']))
         keys_json_fn =  os.path.join(Config.outputFolder, 'test/oxauth/client/keys_client_keystore.json')
 
-        client_cmd = self.get_key_gen_client_cmd
-
-        args = [Config.cmd_keytool, '-genkey', '-alias', 'dummy', '-keystore', 
-                    self.test_client_keystore_fn, '-storepass', 'secret', '-keypass', 
-                    'secret', '-dname', 
-                    "'{}'".format(Config.default_openid_dstore_dn_name),
-                    ] + self.get_keytool_provider()
-
-        self.run(' '.join(args), shell=True)
-
-        client_cmd = self.get_key_gen_client_cmd()
+        client_cmd = self.get_key_gen_client_provider_cmd()
 
         args = [Config.cmd_java, '-Dlog4j.defaultInitOverride=true',
                 "-cp", client_cmd,
                 Config.non_setup_properties['key_gen_path'],
                 '-keystore', self.test_client_keystore_fn,
+                '-keystore_type', Config.default_client_test_store_type,
                 '-keypasswd', 'secret',
                 '-sig_keys', Config.default_key_algs,
                 '-enc_keys', Config.default_key_algs,
@@ -62,7 +53,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                 '-expiration', '365','>', keys_json_fn]
 
         cmd = ' '.join(args)
-        
+
         self.run(cmd, shell=True)
 
         self.copyFile(self.test_client_keystore_fn, os.path.join(Config.outputFolder, 'test/oxauth/server'))

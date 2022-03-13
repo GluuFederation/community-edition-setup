@@ -80,6 +80,7 @@ class Config:
         self.system_dir = '/etc/systemd/system'
         self.user_group = '{}:{}'.format(self.jetty_user, self.gluu_group)
         self.default_store_type = 'jks'
+        self.default_client_test_store_type = 'pkcs12'
 
         if self.profile == SetupProfiles.DISA_STIG:
             self.distFolder = '/var/gluu/dist'
