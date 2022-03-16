@@ -165,7 +165,7 @@ app_versions = {
     "OX_VERSION": "4.3.1", 
     "PASSPORT_VERSION": "4.3.1", 
     "JYTHON_VERSION": "2.7.3",
-    "OPENDJ_VERSION": "4.4.12",
+    "OPENDJ_VERSION": "4.4.13",
     "SETUP_BRANCH": argsp.setup_branch,
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7"

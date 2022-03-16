@@ -33,9 +33,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         self.ldapDsCreateRcCommand = os.path.join(Config.ldapBinFolder, 'create-rc-script')
 
         self.opendj_setup_properties = os.path.join(Config.templateFolder, 'opendj-setup.properties')
-        self.opendj_pck11_setup_key_fn = '/root/.keystore.pin'
-        self.opendj_admin_truststore_fn = os.path.join(Config.ldapBaseFolder, 'config', 'admin-truststore')
-        self.opendj_key_store_password_fn = os.path.join(Config.ldapBaseFolder, 'config', 'keystore.pin')
+        self.opendj_trusstore_setup_key_fn = os.path.join(Config.outputFolder, 'opendj.keystore.pin')
 
 
     def install(self):
@@ -116,9 +114,9 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         #if base.snap and not os.path.exists(Config.ldapBaseFolder):
         #    self.run([paths.cmd_mkdir, Config.ldapBaseFolder])
 
-        # Copy opendj-setup.properties so user ldap can find it in /opt/opendj
-
-        Config.templateRenderingDict['opendj_pck11_setup_key_fn'] = self.opendj_pck11_setup_key_fn
+        
+        
+        Config.templateRenderingDict['opendj_trusstore_setup_key_fn'] = self.opendj_trusstore_setup_key_fn
         self.renderTemplateInOut(self.opendj_setup_properties, Config.templateFolder, Config.outputFolder)
 
         setupPropsFN = os.path.join(Config.ldapBaseFolder, 'opendj-setup.properties')
@@ -127,16 +125,63 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         self.run([paths.cmd_chown, 'ldap:ldap', setupPropsFN])
 
         if Config.profile == SetupProfiles.DISA_STIG:
+            self.writeFile(self.opendj_trusstore_setup_key_fn, Config.opendj_truststore_pass)
 
-            self.writeFile(self.opendj_pck11_setup_key_fn, 'changeit')
+            provider_path = '{}:{}'.format(Config.bc_fips_jar, Config.bcpkix_fips_jar)
 
-            # create PKCS11 server cert
-            self.run([Config.cmd_keytool, '-genkey', '-alias', 'admin-cert', '-keyalg', 'rsa', '-dname', 'CN={},O=Administration Connector RSA Self-Signed Certificate'.format(Config.hostname), '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
-            self.run([Config.cmd_keytool, '-genkey', '-alias', 'server-cert', '-keyalg', 'rsa', '-dname', 'CN={},O=OpenDJ RSA Self-Signed Certificate'.format(Config.hostname), '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
+            # Generate BCFKS FIPS compatible keystore
+            self.run([Config.cmd_keytool, '-genkey',
+                        '-alias', 'server-cert',
+                        '-keyalg', 'rsa',
+                        '-keysize', '2048',
+                        '-sigalg', 'SHA256WITHRSA',
+                        '-validity', '3650',
+                        '-dname', 'CN={},O=OpenDJ RSA Self-Signed Certificate'.format(Config.hostname),
+                        '-storetype', Config.opendj_truststore_format.upper(),
+                        '-providername', 'BCFIPS',
+                        '-keystore', Config.opendj_trust_store_fn,
+                        '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
+                        '-providerpath', provider_path,
+                        '-keypass:file', self.opendj_trusstore_setup_key_fn,
+                        '-storepass:file', self.opendj_trusstore_setup_key_fn
+                        ])
+            self.run([Config.cmd_keytool, '-selfcert',
+                        '-alias', 'server-cert',
+                        '-validity', '3650',
+                        '-keystore', Config.opendj_trust_store_fn,
+                        '-storetype', Config.opendj_truststore_format.upper(),
+                        '-providername', 'BCFIPS',
+                        '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
+                        '-providerpath', provider_path,
+                        '-storepass:file', self.opendj_trusstore_setup_key_fn
+                        ])
 
-            self.run([Config.cmd_keytool, '-selfcert', '-alias', 'admin-cert', '-validity', '3650', '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
-            self.run([Config.cmd_keytool, '-selfcert', '-alias', 'server-cert', '-validity', '3650', '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
 
+            self.run([Config.cmd_keytool, '-genkey',
+                        '-alias', 'admin-cert',
+                        '-keyalg', 'rsa',
+                        '-keysize', '2048',
+                        '-sigalg', 'SHA256WITHRSA',
+                        '-validity', '3650',
+                        '-dname', 'CN=yure2.gluu.me,O=Administration Connector RSA Self-Signed Certificate',
+                        '-storetype', 'BCFKS',
+                        '-providername', 'BCFIPS',
+                        '-keystore', Config.opendj_trust_store_fn,
+                        '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
+                        '-providerpath',  provider_path,
+                        '-keypass:file', self.opendj_trusstore_setup_key_fn,
+                        '-storepass:file', self.opendj_trusstore_setup_key_fn
+                        ])
+            self.run([Config.cmd_keytool, '-selfcert',
+                        '-alias', 'admin-cert',
+                        '-validity', '3650',
+                        '-keystore', Config.opendj_trust_store_fn,
+                        '-storetype', 'BCFKS',
+                        '-providername', 'BCFIPS',
+                        '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
+                        '-providerpath', provider_path,
+                        '-storepass:file', self.opendj_trusstore_setup_key_fn
+                        ])
 
         ldapSetupCommand = os.path.join(os.path.dirname(Config.ldapBinFolder), 'setup')
 
@@ -145,7 +190,9 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                     '--cli',
                     '--propertiesFilePath',
                     setupPropsFN,
-                    '--acceptLicense']
+                    '--acceptLicense',
+                    '--doNotStart'
+                    ]
 
         if base.snap:
             self.run(setupCmd, shell=True)
@@ -154,6 +201,19 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                       cwd='/opt/opendj',
                       env={'OPENDJ_JAVA_HOME': Config.jre_home}
                       )
+
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            self.run([Config.cmd_keytool, '-importkeystore',
+                    '-destkeystore', 'NONE',
+                    '-deststoretype', 'PKCS11',
+                    '-deststorepass', 'changeit',
+                    '-srckeystore', '/opt/opendj/config/truststore',
+                    '-srcstoretype', 'JKS',
+                    '-srcstorepass:file', '/opt/opendj/config/keystore.pin',
+                    '-noprompt'
+                    ])
+
 
         self.fix_opendj_java_properties()
 
@@ -166,14 +226,6 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                     ]
 
             self.apply_fapolicyd_rules(opendj_fapolicyd_rules)
-
-
-        try:
-            self.logIt('Stopping opendj server')
-            cmd = os.path.join(Config.ldapBinFolder, 'stop-ds')
-            self.run(cmd, shell=True)
-        except:
-            self.logIt("Error stopping opendj", True)
 
 
         if Config.profile == SetupProfiles.DISA_STIG:
@@ -212,8 +264,6 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                             '--bindDN',
                             '"%s"' % Config.ldap_binddn,
                             '--bindPasswordFile', Config.ldapPassFn,
-                            '--trustStorePath', self.opendj_admin_truststore_fn,
-                            '--keyStorePassword', self.opendj_key_store_password_fn,
                             ]
         else:
             dsconfigCmd = [
