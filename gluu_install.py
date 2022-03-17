@@ -30,6 +30,8 @@ parser.add_argument('--no-setup', help="Do not launch setup", action='store_true
 parser.add_argument('--dist-server-base', help="Download server", default='https://jenkins.gluu.org/maven')
 parser.add_argument('-profile', help="Setup profile", choices=['CE', 'DISA-STIG'], default='CE')
 parser.add_argument('-setup-branch', help="Gluu setup github branch", default="version_4.3.1")
+parser.add_argument('-c', help="Don't download files that exists on disk", action='store_true')
+
 argsp = parser.parse_args()
 
 maven_base = argsp.dist_server_base.rstrip('/')
@@ -234,10 +236,18 @@ if argsp.uninstall:
 def download(url, target_fn):
     dst = os.path.join(app_dir, target_fn)
     pardir, fn = os.path.split(dst)
+
     if not os.path.exists(pardir):
         os.makedirs(pardir)
-    print("Downloading", url, "to", dst)
-    request.urlretrieve(url, dst)
+
+    with request.urlopen(url) as resp:
+        if argsp.c and os.path.exists(dst) and resp.length == os.stat(dst).st_size:
+            print("File", dst, "exists. Passing")
+            return
+
+        print("Downloading", url, "to", dst)
+        with open(dst, 'wb') as out_file :
+            shutil.copyfileobj(resp, out_file)
 
 
 def download_gcs():
