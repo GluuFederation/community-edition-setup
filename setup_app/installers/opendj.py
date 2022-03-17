@@ -235,6 +235,9 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
             config_fn = os.path.join(Config.ldapBaseFolder, 'config/config.ldif')
             self.logIt("Fixing {} for stig".format(config_fn))
 
+        self.run([paths.cmd_chown, 'root:gluu', Config.certFolder])
+        self.run([paths.cmd_chown, 'root:gluu', Config.opendj_trust_store_fn])
+
 
     def post_install_opendj(self):
         try:
