@@ -76,6 +76,8 @@ class OxtrustInstaller(JettyInstaller):
         self.api_rp_client_jwks = self.gen_openid_data_store_keys(self.api_rp_client_jks_fn, Config.api_rp_client_jks_pass)
         Config.templateRenderingDict['api_rp_client_base64_jwks'] = self.generate_base64_string(self.api_rp_client_jwks, 1)
 
+        self.run([paths.cmd_chown, 'root:gluu', self.api_rs_client_jks_fn])
+        self.run([paths.cmd_chown, 'root:gluu', self.api_rp_client_jks_fn])
 
     def generate_configuration(self):
 

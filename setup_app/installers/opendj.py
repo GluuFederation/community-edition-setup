@@ -163,7 +163,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                         '-keysize', '2048',
                         '-sigalg', 'SHA256WITHRSA',
                         '-validity', '3650',
-                        '-dname', 'CN=yure2.gluu.me,O=Administration Connector RSA Self-Signed Certificate',
+                        '-dname', 'CN={},O=Administration Connector RSA Self-Signed Certificate'.format(Config.hostname),
                         '-storetype', 'BCFKS',
                         '-providername', 'BCFIPS',
                         '-keystore', Config.opendj_trust_store_fn,
@@ -236,7 +236,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
             self.logIt("Fixing {} for stig".format(config_fn))
 
         self.run([paths.cmd_chown, 'root:gluu', Config.certFolder])
-        self.run([paths.cmd_chown, 'root:gluu', Config.opendj_trust_store_fn])
+        self.run([paths.cmd_chown, 'ldap:ldap', Config.opendj_trust_store_fn])
 
 
     def post_install_opendj(self):
