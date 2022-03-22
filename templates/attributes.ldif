@@ -711,6 +711,7 @@ inum: 6DA6
 objectClass: top
 objectClass: gluuAttribute
 oxAuthClaimName: phone_mobile_number
+oxMultivaluedAttribute: true
 urn: urn:mace:dir:attribute-def:mobile
 
 dn: inum=0C18,ou=attributes,o=gluu
