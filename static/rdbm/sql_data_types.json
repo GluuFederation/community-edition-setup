@@ -1113,11 +1113,11 @@
   },
   "oxAlias": {
     "mysql": {
-      "size": 128,
+      "size": 256,
       "type": "VARCHAR"
     },
     "spanner": {
-      "size": 128,
+      "size": 256,
       "type": "STRING"
     }
   },
