@@ -279,8 +279,8 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
 
         self.fix_opendj_java_properties()
 
-
         if Config.profile == SetupProfiles.DISA_STIG:
+            self.fix_opendj_config()
             opendj_fapolicyd_rules = [
                     'allow perm=any uid=ldap : dir={}'.format(Config.jre_home),
                     'allow perm=any uid=ldap : dir={}'.format(Config.ldapBaseFolder),
@@ -293,9 +293,6 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         if Config.profile == SetupProfiles.DISA_STIG:
             # Restore SELinux Context
             self.run(['restorecon', '-rv', os.path.join(Config.ldapBaseFolder, 'bin')])
-
-            config_fn = os.path.join(Config.ldapBaseFolder, 'config/config.ldif')
-            self.logIt("Fixing {} for stig".format(config_fn))
 
         self.run([paths.cmd_chown, 'root:gluu', Config.certFolder])
         self.run([paths.cmd_chown, 'root:gluu', Config.opendj_trust_store_fn])
@@ -536,6 +533,14 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         self.writeFile(opendj_java_properties_fn, '\n'.join(opendj_java_properties))
 
 
+
+    def fix_opendj_config(self):
+        if Config.opendj_truststore_format.upper() == 'PKCS11':
+            config_fn = os.path.join(Config.ldapBaseFolder, 'config/config.ldif')
+            src = os.path.join(Config.ldapBaseFolder, 'config/truststore')
+            dest = os.path.join(Config.ldapBaseFolder, 'config/admin-truststore')
+            if not os.path.exists(dest):
+                self.run([paths.cmd_ln, '-s', src, dest])
 
     def installed(self):
         if os.path.exists(self.openDjSchemaFolder):
