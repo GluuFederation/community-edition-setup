@@ -24,6 +24,7 @@ def arg_parser():
     parser.add_argument('-csx', help="Collect setup properties, save and exit", action='store_true')
     parser.add_argument('-j', help="Use Java existing on system", action='store_true')
     parser.add_argument('-profile', help="Setup profile", choices=['CE', 'DISA-STIG'], default='CE')
+    parser.add_argument('-opendj-keystore-type', help="OpenDj keystore type (Ony for DISA-STIG profile)", choices=['pkcs11', 'bcfks'], default='bcfks')
 
     scim_mode_group = parser.add_mutually_exclusive_group()
     scim_mode_group.add_argument('-stm', '--enable-scim-test-mode', help="Enable Scim Test Mode", action='store_true')

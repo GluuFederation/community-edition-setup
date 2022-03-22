@@ -347,7 +347,8 @@ class Crypto64:
     def remove_pcks11_keys(self, keys=['server-cert', 'admin-cert', 'dummy']):
         output = self.run([Config.cmd_keytool, '-list', '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
         for l in output.splitlines():
-            if 'PrivateKeyEntry' in l:
-                alias = l.split(',')[0]
+            ls = l.strip()
+            if ls.startswith(tuple(keys)):
+                alias = ls.split(',')[0]
                 if alias in keys:
                     self.run([Config.cmd_keytool, '-delete', '-alias', alias, '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])

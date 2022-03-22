@@ -32,8 +32,16 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         self.ldapDsconfigCommand = os.path.join(Config.ldapBinFolder, 'dsconfig')
         self.ldapDsCreateRcCommand = os.path.join(Config.ldapBinFolder, 'create-rc-script')
 
-        self.opendj_setup_properties = os.path.join(Config.templateFolder, 'opendj-setup.properties')
+        if Config.profile == SetupProfiles.DISA_STIG:
+            Config.ldap_setup_properties += '.' + Config.opendj_truststore_format.lower()
         self.opendj_trusstore_setup_key_fn = os.path.join(Config.outputFolder, 'opendj.keystore.pin')
+
+
+        self.opendj_pck11_setup_key_fn = '/root/.keystore.pin'
+        self.opendj_admin_truststore_fn = os.path.join(Config.ldapBaseFolder, 'config', 'admin-truststore')
+        self.opendj_key_store_password_fn = os.path.join(Config.ldapBaseFolder, 'config', 'keystore.pin')
+
+
 
 
     def install(self):
@@ -114,13 +122,16 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         #if base.snap and not os.path.exists(Config.ldapBaseFolder):
         #    self.run([paths.cmd_mkdir, Config.ldapBaseFolder])
 
-        
-        
-        Config.templateRenderingDict['opendj_trusstore_setup_key_fn'] = self.opendj_trusstore_setup_key_fn
-        self.renderTemplateInOut(self.opendj_setup_properties, Config.templateFolder, Config.outputFolder)
 
-        setupPropsFN = os.path.join(Config.ldapBaseFolder, 'opendj-setup.properties')
-        shutil.copy("%s/opendj-setup.properties" % Config.outputFolder, setupPropsFN)
+        Config.templateRenderingDict['opendj_pck11_setup_key_fn'] = self.opendj_pck11_setup_key_fn
+        Config.templateRenderingDict['opendj_trusstore_setup_key_fn'] = self.opendj_trusstore_setup_key_fn
+        self.renderTemplateInOut(Config.ldap_setup_properties, Config.templateFolder, Config.outputFolder)
+
+        setupPropsFN = os.path.join(Config.ldapBaseFolder, os.path.basename(Config.ldap_setup_properties))
+        shutil.copy(
+                os.path.join(Config.outputFolder, os.path.basename(Config.ldap_setup_properties)),
+                setupPropsFN
+                )
 
         self.run([paths.cmd_chown, 'ldap:ldap', setupPropsFN])
 
@@ -128,60 +139,111 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
             self.writeFile(self.opendj_trusstore_setup_key_fn, Config.opendj_truststore_pass)
 
             provider_path = '{}:{}'.format(Config.bc_fips_jar, Config.bcpkix_fips_jar)
+            keystore = Config.opendj_trust_store_fn if Config.opendj_truststore_format.upper() == 'BCFKS' else 'NONE'
 
-            # Generate BCFKS FIPS compatible keystore
-            self.run([Config.cmd_keytool, '-genkey',
-                        '-alias', 'server-cert',
-                        '-keyalg', 'rsa',
-                        '-keysize', '2048',
-                        '-sigalg', 'SHA256WITHRSA',
-                        '-validity', '3650',
-                        '-dname', 'CN={},O=OpenDJ RSA Self-Signed Certificate'.format(Config.hostname),
-                        '-storetype', Config.opendj_truststore_format.upper(),
-                        '-providername', 'BCFIPS',
-                        '-keystore', Config.opendj_trust_store_fn,
-                        '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
-                        '-providerpath', provider_path,
-                        '-keypass:file', self.opendj_trusstore_setup_key_fn,
-                        '-storepass:file', self.opendj_trusstore_setup_key_fn
-                        ])
-            self.run([Config.cmd_keytool, '-selfcert',
-                        '-alias', 'server-cert',
-                        '-validity', '3650',
-                        '-keystore', Config.opendj_trust_store_fn,
-                        '-storetype', Config.opendj_truststore_format.upper(),
-                        '-providername', 'BCFIPS',
-                        '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
-                        '-providerpath', provider_path,
-                        '-storepass:file', self.opendj_trusstore_setup_key_fn
-                        ])
+            # Generate keystore
+
+            cmd_server_cert_gen = [
+                Config.cmd_keytool, '-genkey',
+                '-alias', 'server-cert',
+                '-keyalg', 'rsa',
+                '-dname', 'CN={},O=OpenDJ RSA Self-Signed Certificate'.format(Config.hostname),
+                '-keystore', keystore,
+                '-storetype', Config.opendj_truststore_format.upper(),
+                '-validity', '3650',
+                ]
+
+            if Config.opendj_truststore_format.upper() == 'PKCS11':
+                cmd_server_cert_gen += [
+                    '-storepass', 'changeit',
+                       ]
+            else:
+                cmd_server_cert_gen += [
+                     '-providername', 'BCFIPS',
+                     '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
+                     '-providerpath',  provider_path,
+                     '-keypass:file', self.opendj_trusstore_setup_key_fn,
+                     '-storepass:file', self.opendj_trusstore_setup_key_fn,
+                     '-keysize', '2048',
+                     '-sigalg', 'SHA256WITHRSA',
+                        ]
+
+            self.run(cmd_server_cert_gen)
 
 
-            self.run([Config.cmd_keytool, '-genkey',
-                        '-alias', 'admin-cert',
-                        '-keyalg', 'rsa',
-                        '-keysize', '2048',
-                        '-sigalg', 'SHA256WITHRSA',
-                        '-validity', '3650',
-                        '-dname', 'CN={},O=Administration Connector RSA Self-Signed Certificate'.format(Config.hostname),
-                        '-storetype', 'BCFKS',
-                        '-providername', 'BCFIPS',
-                        '-keystore', Config.opendj_trust_store_fn,
-                        '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
-                        '-providerpath',  provider_path,
-                        '-keypass:file', self.opendj_trusstore_setup_key_fn,
-                        '-storepass:file', self.opendj_trusstore_setup_key_fn
-                        ])
-            self.run([Config.cmd_keytool, '-selfcert',
-                        '-alias', 'admin-cert',
-                        '-validity', '3650',
-                        '-keystore', Config.opendj_trust_store_fn,
-                        '-storetype', 'BCFKS',
-                        '-providername', 'BCFIPS',
-                        '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
-                        '-providerpath', provider_path,
-                        '-storepass:file', self.opendj_trusstore_setup_key_fn
-                        ])
+            cmd_server_selfcert_gen = [
+                Config.cmd_keytool, '-selfcert',
+                '-alias', 'server-cert',
+                '-keystore', keystore,
+                '-storetype', Config.opendj_truststore_format.upper(),
+                '-validity', '3650',
+                ]
+
+            if Config.opendj_truststore_format.upper() == 'PKCS11':
+                cmd_server_selfcert_gen += [
+                    '-storepass', 'changeit'
+                    ]
+
+            else:
+                cmd_server_selfcert_gen += [
+                    '-providername', 'BCFIPS',
+                    '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
+                    '-providerpath', provider_path,
+                    '-storepass:file', self.opendj_trusstore_setup_key_fn,
+                    ]
+
+            self.run(cmd_server_selfcert_gen)
+
+
+            cmd_admin_cert_gen = [
+                    Config.cmd_keytool, '-genkey', 
+                    '-alias', 'admin-cert', 
+                    '-keyalg', 'rsa', 
+                    '-dname', 'CN={},O=Administration Connector RSA Self-Signed Certificate'.format(Config.hostname), 
+                    '-keystore', keystore, 
+                    '-storetype', Config.opendj_truststore_format.upper(),
+                    '-validity', '3650',
+                    ]
+
+
+            if Config.opendj_truststore_format.upper() == 'PKCS11':
+                cmd_admin_cert_gen += [
+                    '-storepass', 'changeit',
+                       ]
+            else:
+                cmd_admin_cert_gen += [
+                     '-providername', 'BCFIPS',
+                     '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
+                     '-providerpath',  provider_path,
+                     '-keypass:file', self.opendj_trusstore_setup_key_fn,
+                     '-storepass:file', self.opendj_trusstore_setup_key_fn,
+                     '-keysize', '2048',
+                     '-sigalg', 'SHA256WITHRSA',
+                        ]
+            self.run(cmd_admin_cert_gen)
+
+            cmd_admin_selfcert_gen = [
+                    Config.cmd_keytool, '-selfcert',
+                    '-alias', 'admin-cert',
+                    '-keystore', keystore,
+                    '-storetype', Config.opendj_truststore_format.upper(),
+                    '-validity', '3650',
+                    ]
+
+            if Config.opendj_truststore_format.upper() == 'PKCS11':
+                cmd_admin_selfcert_gen += [
+                    '-storepass', 'changeit'
+                    ]
+
+            else:
+                cmd_admin_selfcert_gen += [
+                    '-providername', 'BCFIPS',
+                    '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
+                    '-providerpath', provider_path,
+                    '-storepass:file', self.opendj_trusstore_setup_key_fn,
+                    ]
+
+            self.run(cmd_admin_selfcert_gen)
 
         ldapSetupCommand = os.path.join(os.path.dirname(Config.ldapBinFolder), 'setup')
 
@@ -203,7 +265,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                       )
 
 
-        if Config.profile == SetupProfiles.DISA_STIG:
+        if Config.profile == SetupProfiles.DISA_STIG and Config.opendj_truststore_format.upper() == 'BCFKS':
             self.run([Config.cmd_keytool, '-importkeystore',
                     '-destkeystore', 'NONE',
                     '-deststoretype', 'PKCS11',
@@ -267,6 +329,11 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                             '--bindDN',
                             '"%s"' % Config.ldap_binddn,
                             '--bindPasswordFile', Config.ldapPassFn,
+                            ]
+            if Config.opendj_truststore_format.upper() == 'PKCS11':
+                dsconfigCmd += [
+                            '--trustStorePath', self.opendj_admin_truststore_fn,
+                            '--keyStorePassword', self.opendj_key_store_password_fn,
                             ]
         else:
             dsconfigCmd = [
@@ -351,7 +418,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                   '-file',
                   Config.opendj_cert_fn,
                   '-keystore',
-                  Config.opendj_trust_store_fn,
+                  "NONE" if Config.opendj_truststore_format.upper() == 'PKCS11' else Config.opendj_trust_store_fn,
                   '-storetype',
                   Config.opendj_truststore_format.upper(),
                   '-storepass',
@@ -467,15 +534,6 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
             opendj_java_properties.append(java_home_ln)
 
         self.writeFile(opendj_java_properties_fn, '\n'.join(opendj_java_properties))
-
-
-    def remove_pcks11_keys(self, keys=['server-cert', 'admin-cert', 'dummy']):
-        output = self.run([Config.cmd_keytool, '-list', '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
-        for l in output.splitlines():
-            if 'PrivateKeyEntry' in l:
-                alias = l.split(',')[0]
-                if alias in keys:
-                    self.run([Config.cmd_keytool, '-delete', '-alias', alias, '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
 
 
 
