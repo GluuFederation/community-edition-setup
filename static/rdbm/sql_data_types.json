@@ -194,6 +194,16 @@
       "type": "STRING"
     }
   },
+  "oxAuthenticationData": {
+    "mysql": {
+      "size": 512,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 512,
+      "type": "STRING"
+    }
+  },
   "oxCacheConfiguration": {
     "mysql": {
       "type": "TEXT"
@@ -1109,6 +1119,14 @@
     "spanner": {
       "size": 128,
       "type": "STRING"
+    }
+  },
+  "mobile": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
     }
   }
 }
