@@ -33,9 +33,13 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
         self.local_install()
         schema_files = []
+        self.gluu_attributes = []
 
         for schema_fn in ('gluu_schema.json', 'custom_schema.json'):
-            schema_files.append(os.path.join(Config.install_dir, 'schema', schema_fn))
+            schema_full_path = os.path.join(Config.install_dir, 'schema', schema_fn)
+            schema_files.append(schema_full_path)
+            schema_ = base.readJsonFile(schema_full_path)
+            self.gluu_attributes += schema_.get('attributeTypes', [])
 
         self.create_tables(schema_files)
         self.create_subtables()
