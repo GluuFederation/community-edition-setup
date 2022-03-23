@@ -1496,7 +1496,7 @@
             "names": [
                 "oxAuthConfDynamic"
             ], 
-            "multivalued": true,
+            "json": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
@@ -1508,7 +1508,7 @@
             "names": [
                 "oxAuthConfErrors"
             ], 
-            "multivalued": true,
+            "json": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
@@ -1520,6 +1520,7 @@
             "names": [
                 "oxAuthConfStatic"
             ], 
+            "json": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
@@ -1531,7 +1532,7 @@
             "names": [
                 "oxAuthConfWebKeys"
             ], 
-            "multivalued": true,
+            "json": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
@@ -1688,7 +1689,7 @@
             "names": [
                 "oxAuthJwks"
             ], 
-            "multivalued": true,
+            "json": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
@@ -1744,7 +1745,7 @@
             "names": [
                 "oxAuthPermissionGrantedMap"
             ], 
-            "multivalued": true,
+            "json": true, 
             "oid": "oxAttribute", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
             "substr": "caseIgnoreSubstringsMatch", 
@@ -2287,7 +2288,8 @@
             "names": [
                 "oxIDPAuthentication"
             ], 
-            "multivalued": true, 
+            "json": true,
+            "multivalued": true,
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
@@ -2486,7 +2488,7 @@
             "names": [
                 "oxLogViewerConfig"
             ], 
-           "multivalued": true,
+            "json": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
@@ -2937,7 +2939,7 @@
             "names": [
                 "oxTrustConfApplication"
             ], 
-            "multivalued": true,
+            "json": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
@@ -2949,7 +2951,7 @@
             "names": [
                 "oxTrustConfCacheRefresh"
             ], 
-            "multivalued": true,
+            "json": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
@@ -2961,7 +2963,7 @@
             "names": [
                 "oxConfApplication"
             ], 
-            "multivalued": true,
+            "json": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
@@ -3131,7 +3133,7 @@
             "names": [
                 "oxTrustStoreConf"
             ], 
-            "multivalued": true,
+            "json": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
@@ -3348,6 +3350,7 @@
             ],
             "oid": "oxAttribute",
             "multivalued": true,
+            "json": true,
             "substr": "caseIgnoreSubstringsMatch",
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
             "x_origin": "Gluu created attribute"
@@ -3731,6 +3734,7 @@
             "names": [
                 "oxModuleProperty"
             ], 
+            "json": true, 
             "multivalued": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
@@ -3743,6 +3747,7 @@
             "names": [
                 "oxConfigurationProperty"
             ], 
+            "json": true, 
             "multivalued": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
@@ -3897,7 +3902,7 @@
             "names": [
                 "oxTrustConfImportPerson"
             ], 
-            "multivalued": true,
+            "json": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
@@ -3964,6 +3969,7 @@
             "names": [
                 "gluuPassportConfiguration"
             ], 
+            "json": true, 
             "multivalued": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
@@ -4048,7 +4054,7 @@
             "names": [
                 "oxCacheConfiguration"
             ], 
-            "multivalued": true,
+            "json": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
@@ -4666,7 +4672,7 @@
             "names": [
                 "gluuConfDynamic"
             ], 
-            "multivalued": true,
+            "json": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
@@ -4678,7 +4684,7 @@
             "names": [
                 "gluuConfStatic"
             ], 
-            "multivalued": true,
+            "json": true, 
             "oid": "oxAttribute", 
             "substr": "caseIgnoreSubstringsMatch", 
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15", 
