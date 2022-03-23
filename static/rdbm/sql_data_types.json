@@ -262,28 +262,12 @@
       "type": "STRING(MAX)"
     }
   },
-  "oxIDPAuthentication": {
-    "mysql": {
-      "type": "JSON"
-    },
-    "spanner": {
-      "type": "ARRAY<STRING(MAX)>"
-    }
-  },
   "oxDocumentStoreConfiguration": {
     "mysql": {
       "type": "TEXT"
     },
     "spanner": {
       "type": "STRING(MAX)"
-    }
-  },
-  "oxAuthGrantType": {
-    "mysql": {
-      "type": "JSON"
-    },
-    "spanner": {
-      "type": "ARRAY<STRING(MAX)>"
     }
   },
   "oxId": {
@@ -324,14 +308,6 @@
     "spanner": {
       "size": 64,
       "type": "STRING"
-    }
-  },
-  "oxAuthResponseType": {
-    "mysql": {
-      "type": "JSON"
-    },
-    "spanner": {
-      "type": "ARRAY<STRING(MAX)>"
     }
   },
   "gluuSAML1URI": {
@@ -524,17 +500,6 @@
   "oxAuthPolicyURI": {
     "mysql": {
       "type": "TINYTEXT"
-    },
-    "pgsql": {
-      "type": "TEXT"
-    },
-    "spanner": {
-      "type": "STRING(MAX)"
-    }
-  },
-  "oxAuthRequestURI": {
-    "mysql": {
-      "type": "JSON"
     },
     "pgsql": {
       "type": "TEXT"
@@ -746,14 +711,6 @@
       "type": "STRING(MAX)"
     }
   },
-  "memberOf": {
-    "mysql": {
-      "type": "JSON"
-    },
-    "spanner": {
-      "type": "ARRAY<STRING(MAX)>"
-    }
-  },
   "tknCde": {
     "mysql": {
       "size": 80,
@@ -762,14 +719,6 @@
     "spanner": {
       "size": 80,
       "type": "STRING"
-    }
-  },
-  "oxUmaPermission": {
-    "mysql": {
-      "type": "JSON"
-    },
-    "spanner": {
-      "type": "ARRAY<STRING(MAX)>"
     }
   },
   "oxScriptError": {
@@ -821,14 +770,6 @@
     "spanner": {
       "size": 128,
       "type": "STRING"
-    }
-  },
-  "oxSmtpConfiguration": {
-    "mysql": {
-      "type": "JSON"
-    },
-    "spanner": {
-      "type": "ARRAY<STRING(MAX)>"
     }
   },
   "oxResource": {
