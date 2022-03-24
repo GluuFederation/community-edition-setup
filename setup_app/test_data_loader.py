@@ -286,19 +286,6 @@ class TestDataLoader(BaseInstaller, SetupUtils):
 
             self.copyFile(tmp_fn, openDjSchemaFolder)
             cwd = os.path.join(Config.ldapBaseFolder, 'bin')
-            dsconfigCmd = (
-                '{} --trustAll --no-prompt --hostname {} --port {} '
-                '--bindDN "{}" --bindPasswordFile /home/ldap/.pw set-connection-handler-prop '
-                '--handler-name "LDAPS Connection Handler" --set listen-address:0.0.0.0'
-                    ).format(
-                        os.path.join(Config.ldapBaseFolder, 'bin/dsconfig'), 
-                        Config.ldap_hostname, 
-                        Config.ldap_admin_port,
-                        Config.ldap_binddn
-                    )
-            
-            self.run(['/bin/su', 'ldap', '-c', dsconfigCmd], cwd=cwd)
-
 
             self.logIt("Making opndj listen all interfaces")
             ldap_operation_result = self.dbUtils.ldap_conn.modify(
