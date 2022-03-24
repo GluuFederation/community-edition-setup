@@ -285,7 +285,6 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                     ldif_writer.unparse(dn, entry)
 
             self.copyFile(tmp_fn, openDjSchemaFolder)
-            cwd = os.path.join(Config.ldapBaseFolder, 'bin')
 
             self.logIt("Making opndj listen all interfaces")
             ldap_operation_result = self.dbUtils.ldap_conn.modify(
