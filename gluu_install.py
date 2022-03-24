@@ -29,6 +29,7 @@ if '-a' in sys.argv:
 parser.add_argument('-n', help="No prompt", action='store_true')
 parser.add_argument('--no-setup', help="Do not launch setup", action='store_true')
 parser.add_argument('--dist-server-base', help="Download server", default='https://jenkins.gluu.org/maven')
+parser.add_argument('--setup-branch', help="Gluu CE setup github branch", default="master")
 
 
 argsp = parser.parse_args()
@@ -166,9 +167,10 @@ app_versions = {
     "PASSPORT_VERSION": "master", 
     "JYTHON_VERSION": "2.7.3",
     "OPENDJ_VERSION": "4.4.12",
-    "SETUP_BRANCH": "master",
+    "SETUP_BRANCH": argsp.setup_branch,
     "TWILIO_VERSION": "7.17.0",
-    "JSMPP_VERSION": "2.3.7"
+    "JSMPP_VERSION": "2.3.7",
+    "APPS_GIT_BRANCH": "master"
     }
 
 jetty_dist_string = 'jetty-distribution'
@@ -284,7 +286,7 @@ def package_oxd():
     oxd_tmp_root = '/tmp/{}'.format(os.urandom(5).hex())
     oxd_tmp_dir = os.path.join(oxd_tmp_root, 'oxd-server')
     download(maven_base + '/org/gluu/oxd-server/{0}{1}/oxd-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), oxd_zip_fn)
-    download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/{}/package/systemd/oxd-server.service'.format(app_versions['SETUP_BRANCH']), os.path.join(oxd_tmp_dir, 'oxd-server.service'))
+    download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/{}/package/systemd/oxd-server.service'.format(app_versions['APPS_GIT_BRANCH']), os.path.join(oxd_tmp_dir, 'oxd-server.service'))
     cmd = 'unzip -qqo {} -d {}'.format(oxd_zip_fn, oxd_tmp_dir)
     print("Excuting", cmd)
     os.system(cmd)
@@ -312,13 +314,13 @@ if not argsp.u:
     download(maven_base + '/org/gluu/casa/{0}{1}/casa-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'casa.war'))
     download('https://repo1.maven.org/maven2/com/twilio/sdk/twilio/{0}/twilio-{0}.jar'.format(app_versions['TWILIO_VERSION']), os.path.join(gluu_app_dir,'twilio-{0}.jar'.format(app_versions['TWILIO_VERSION'])))
     download('https://repo1.maven.org/maven2/org/jsmpp/jsmpp/{0}/jsmpp-{0}.jar'.format(app_versions['JSMPP_VERSION']), os.path.join(gluu_app_dir,'jsmpp-{0}.jar'.format(app_versions['JSMPP_VERSION'])))
-    download('https://github.com/GluuFederation/casa/raw/{}/extras/casa.pub'.format(app_versions['SETUP_BRANCH']), os.path.join(gluu_app_dir,'casa.pub'))
-    download('https://raw.githubusercontent.com/GluuFederation/casa/{}/plugins/account-linking/extras/login.xhtml'.format(app_versions['SETUP_BRANCH']), os.path.join(gluu_app_dir,'login.xhtml'))
-    download('https://raw.githubusercontent.com/GluuFederation/casa/{}/plugins/account-linking/extras/casa.py'.format(app_versions['SETUP_BRANCH']), os.path.join(gluu_app_dir,'casa.py'))
+    download('https://github.com/GluuFederation/casa/raw/{}/extras/casa.pub'.format(app_versions['APPS_GIT_BRANCH']), os.path.join(gluu_app_dir,'casa.pub'))
+    download('https://raw.githubusercontent.com/GluuFederation/casa/{}/plugins/account-linking/extras/login.xhtml'.format(app_versions['APPS_GIT_BRANCH']), os.path.join(gluu_app_dir,'login.xhtml'))
+    download('https://raw.githubusercontent.com/GluuFederation/casa/{}/plugins/account-linking/extras/casa.py'.format(app_versions['APPS_GIT_BRANCH']), os.path.join(gluu_app_dir,'casa.py'))
     download('https://raw.githubusercontent.com/GluuFederation/gluu-snap/master/facter/facter', os.path.join(gluu_app_dir,'facter'))
     download(maven_base + '/org/gluu/scim-server/{0}{1}/scim-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'scim.war'))
     download(maven_base + '/org/gluu/fido2-server/{0}{1}/fido2-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'fido2.war'))
-    download('https://raw.githubusercontent.com/GluuFederation/oxd/{}/debian/oxd-server'.format(app_versions['SETUP_BRANCH']), os.path.join(gluu_app_dir,'oxd-server-start.sh'))
+    download('https://raw.githubusercontent.com/GluuFederation/oxd/{}/debian/oxd-server'.format(app_versions['APPS_GIT_BRANCH']), os.path.join(gluu_app_dir,'oxd-server-start.sh'))
     download('https://github.com/GluuFederation/community-edition-setup/archive/{}.zip'.format(app_versions['SETUP_BRANCH']), os.path.join(gluu_app_dir,'community-edition-setup.zip'))
     download(maven_root + '/npm/passport/passport-{}.tgz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport.tgz'))
     download(maven_root + '/npm/passport/passport-{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION'])))
@@ -332,7 +334,7 @@ if not argsp.u:
 
     if not argsp.upgrade:
         for uf in services:
-            download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/{}/package/systemd/{}'.format(app_versions['SETUP_BRANCH'], uf), os.path.join('/etc/systemd/system', uf))
+            download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/{}/package/systemd/{}'.format(app_versions['APPS_GIT_BRANCH'], uf), os.path.join('/etc/systemd/system', uf))
     package_oxd()
 
 
