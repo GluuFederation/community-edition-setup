@@ -366,7 +366,8 @@ class TestDataLoader(BaseInstaller, SetupUtils):
             if isinstance(result['oxIDPAuthentication'], dict):
                 oxIDPAuthentication = result['oxIDPAuthentication']
             else:
-                oxIDPAuthentication = json.loads(result['oxIDPAuthentication'])
+                oxIDPAuthentication_js = result['oxIDPAuthentication'][0] if isinstance(result['oxIDPAuthentication'], list) else result['oxIDPAuthentication']
+                oxIDPAuthentication = json.loads(oxIDPAuthentication_js)
 
             oxIDPAuthentication['config']['servers'] = ['{0}:{1}'.format(Config.hostname, Config.ldaps_port)]
             oxIDPAuthentication_js = json.dumps(oxIDPAuthentication, indent=2)
