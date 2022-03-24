@@ -351,14 +351,14 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         result = self.dbUtils.search('ou=configuration,o=gluu', search_filter='(oxIDPAuthentication=*)', search_scope=ldap3.BASE)
         if result:
             if isinstance(result['oxIDPAuthentication'], dict):
-                oxIDPAuthentication = result['oxIDPAuthentication']
+                ox_idp_authentication = result['oxIDPAuthentication']
             else:
-                oxIDPAuthentication_js = result['oxIDPAuthentication'][0] if isinstance(result['oxIDPAuthentication'], list) else result['oxIDPAuthentication']
-                oxIDPAuthentication = json.loads(oxIDPAuthentication_js)
+                ox_idp_authentication_str = result['oxIDPAuthentication'][0] if isinstance(result['oxIDPAuthentication'], list) else result['oxIDPAuthentication']
+                ox_idp_authentication = json.loads(ox_idp_authentication_str)
 
-            oxIDPAuthentication['config']['servers'] = ['{0}:{1}'.format(Config.hostname, Config.ldaps_port)]
-            oxIDPAuthentication_js = json.dumps(oxIDPAuthentication, indent=2)
-            self.dbUtils.set_configuration('oxIDPAuthentication', oxIDPAuthentication_js)
+            ox_idp_authentication['config']['servers'] = ['{0}:{1}'.format(Config.hostname, Config.ldaps_port)]
+            ox_idp_authentication_str = json.dumps(ox_idp_authentication, indent=2)
+            self.dbUtils.set_configuration('oxIDPAuthentication', ox_idp_authentication_str)
 
         self.create_test_client_keystore()
 
