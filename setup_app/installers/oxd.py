@@ -1,5 +1,6 @@
 import os
 import glob
+import socket
 import ruamel.yaml
 
 from setup_app import paths
@@ -19,7 +20,8 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         self.install_type = InstallOption.OPTONAL
         self.install_var = 'installOxd'
         self.register_progess()
-
+        self.oxd_host = Config.hostname
+        self.oxd_bind_ip = Config.ip
         self.oxd_server_yml_fn = os.path.join(self.oxd_root, 'conf/oxd-server.yml')
 
     def install(self):
@@ -65,18 +67,27 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         yml_str = self.readFile(self.oxd_server_yml_fn)
         oxd_yaml = ruamel.yaml.load(yml_str, ruamel.yaml.RoundTripLoader)
 
-        if 'bind_ip_addresses' in oxd_yaml:
-            oxd_yaml['bind_ip_addresses'].append(Config.ip)
-        else:
+        if not 'bind_ip_addresses' in oxd_yaml:
             for i, k in enumerate(oxd_yaml):
                 if k == 'storage':
                     break
             else:
                 i = 1
-            addr_list = [Config.ip]
-            if base.snap:
-                addr_list.append('127.0.0.1')
-            oxd_yaml.insert(i, 'bind_ip_addresses',  addr_list)
+            oxd_yaml.insert(i, 'bind_ip_addresses', [])
+
+
+        if base.snap:
+            oxd_yaml['bind_ip_addresses'].append('127.0.0.1')
+
+        if Config.get('oxd_server_https'):
+            self.oxd_host, oxd_port = self.parse_url(Config.oxd_server_https)
+            try:
+                self.oxd_bind_ip = socket.gethostbyname(self.oxd_host)
+                oxd_yaml['bind_ip_addresses'].append(self.oxd_bind_ip)
+            except Exception as e:
+                self.logIt("Can't determine ip address for oxd host {}. Error: {}".format(self.oxd_host, e), True)
+        else:
+            oxd_yaml['bind_ip_addresses'].append(Config.ip)
 
         if Config.get('oxd_use_gluu_storage'):
 
@@ -107,6 +118,9 @@ class OxdInstaller(SetupUtils, BaseInstaller):
 
 
     def generate_keystore(self):
+        #we don't generate keystrore if oxd_bind_ip points localhost
+        if self.oxd_bind_ip == '127.0.0.1':
+            return
         self.logIt("Generating certificate", pbar=self.service_name)
         # generate oxd-server.keystore for the hostname
         self.run([
