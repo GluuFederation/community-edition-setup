@@ -773,14 +773,6 @@
       "type": "STRING"
     }
   },
-  "oxSmtpConfiguration": {
-    "mysql": {
-      "type": "JSON"
-    },
-    "spanner": {
-      "type": "ARRAY<STRING(MAX)>"
-    }
-  },
   "scimCustomSecond": {
     "mysql": {
       "type": "JSON"
