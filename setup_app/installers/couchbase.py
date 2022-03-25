@@ -60,23 +60,25 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
             self.checkIfGluuBucketReady()
             self.couchebaseCreateCluster()
 
-        self.couchbaseSSL()
+        if Config.loadData:
 
-        self.create_couchbase_buckets()
+            self.couchbaseSSL()
 
-        Config.pbar.progress(self.service_name, "Importing documents into Couchbase", incr=False)
+            self.create_couchbase_buckets()
 
-        couchbase_mappings = self.getMappingType('couchbase')
+            Config.pbar.progress(self.service_name, "Importing documents into Couchbase", incr=False)
 
-        if Config.mappingLocations['default'] == 'couchbase':
-            self.dbUtils.import_ldif(Config.couchbaseBucketDict['default']['ldif'], Config.couchbase_bucket_prefix)
-        else:
-            self.dbUtils.import_ldif([Config.ldif_base], force=BackendTypes.COUCHBASE)
+            couchbase_mappings = self.getMappingType('couchbase')
 
-        for group in couchbase_mappings:
-            bucket = '{}_{}'.format(Config.couchbase_bucket_prefix, group)
-            if Config.couchbaseBucketDict[group]['ldif']:
-                self.dbUtils.import_ldif(Config.couchbaseBucketDict[group]['ldif'], bucket)
+            if Config.mappingLocations['default'] == 'couchbase':
+                self.dbUtils.import_ldif(Config.couchbaseBucketDict['default']['ldif'], Config.couchbase_bucket_prefix)
+            else:
+                self.dbUtils.import_ldif([Config.ldif_base], force=BackendTypes.COUCHBASE)
+
+            for group in couchbase_mappings:
+                bucket = '{}_{}'.format(Config.couchbase_bucket_prefix, group)
+                if Config.couchbaseBucketDict[group]['ldif']:
+                    self.dbUtils.import_ldif(Config.couchbaseBucketDict[group]['ldif'], bucket)
 
         self.couchbaseProperties()
 

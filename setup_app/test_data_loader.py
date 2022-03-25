@@ -285,20 +285,6 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                     ldif_writer.unparse(dn, entry)
 
             self.copyFile(tmp_fn, openDjSchemaFolder)
-            cwd = os.path.join(Config.ldapBaseFolder, 'bin')
-            dsconfigCmd = (
-                '{} --trustAll --no-prompt --hostname {} --port {} '
-                '--bindDN "{}" --bindPasswordFile /home/ldap/.pw set-connection-handler-prop '
-                '--handler-name "LDAPS Connection Handler" --set listen-address:0.0.0.0'
-                    ).format(
-                        os.path.join(Config.ldapBaseFolder, 'bin/dsconfig'), 
-                        Config.ldap_hostname, 
-                        Config.ldap_admin_port,
-                        Config.ldap_binddn
-                    )
-            
-            self.run(['/bin/su', 'ldap', '-c', dsconfigCmd], cwd=cwd)
-
 
             self.logIt("Making opndj listen all interfaces")
             ldap_operation_result = self.dbUtils.ldap_conn.modify(
@@ -364,13 +350,14 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         result = self.dbUtils.search('ou=configuration,o=gluu', search_filter='(oxIDPAuthentication=*)', search_scope=ldap3.BASE)
         if result:
             if isinstance(result['oxIDPAuthentication'], dict):
-                oxIDPAuthentication = result['oxIDPAuthentication']
+                ox_idp_authentication = result['oxIDPAuthentication']
             else:
-                oxIDPAuthentication = json.loads(result['oxIDPAuthentication'])
+                ox_idp_authentication_str = result['oxIDPAuthentication'][0] if isinstance(result['oxIDPAuthentication'], list) else result['oxIDPAuthentication']
+                ox_idp_authentication = json.loads(ox_idp_authentication_str)
 
-            oxIDPAuthentication['config']['servers'] = ['{0}:{1}'.format(Config.hostname, Config.ldaps_port)]
-            oxIDPAuthentication_js = json.dumps(oxIDPAuthentication, indent=2)
-            self.dbUtils.set_configuration('oxIDPAuthentication', oxIDPAuthentication_js)
+            ox_idp_authentication['config']['servers'] = ['{0}:{1}'.format(Config.hostname, Config.ldaps_port)]
+            ox_idp_authentication_str = json.dumps(ox_idp_authentication, indent=2)
+            self.dbUtils.set_configuration('oxIDPAuthentication', ox_idp_authentication_str)
 
         self.create_test_client_keystore()
 

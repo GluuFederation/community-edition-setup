@@ -41,7 +41,7 @@ class AttribDataTypes:
         gluuAtrribs = gluuSchema['attributeTypes']
 
         for attrib in gluuAtrribs:
-            if attrib.get('json'):
+            if attrib.get('multivalued'):
                 atype = 'json'
             elif  attrib['syntax'] in syntaxType:
                 atype = syntaxType[attrib['syntax']]
