@@ -47,7 +47,7 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
             Config.couchbase_bucket_prefix = 'gluu'
 
         if Config.cb_install == InstallTypes.LOCAL:
-            Config.couchbase_hostname = 'localhost'
+            Config.couchbase_hostname = Config.hostname
 
         if not Config.get('cb_query_node'):
             Config.cb_query_node = Config.couchbase_hostname
