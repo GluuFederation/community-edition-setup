@@ -37,7 +37,7 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
             Config.couchebaseClusterAdmin = 'admin'
             
         if Config.cb_install == InstallTypes.LOCAL:
-            Config.isCouchbaseUserAdmin = False
+            Config.isCouchbaseUserAdmin = True
 
         if not Config.get('couchbaseTrustStorePass'):
             Config.couchbaseTrustStorePass = 'secret'
@@ -47,7 +47,7 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
             Config.couchbase_bucket_prefix = 'gluu'
 
         if Config.cb_install == InstallTypes.LOCAL:
-            Config.couchbase_hostname = Config.hostname
+            Config.couchbase_hostname = 'localhost'
 
         if not Config.get('cb_query_node'):
             Config.cb_query_node = Config.couchbase_hostname

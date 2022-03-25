@@ -172,6 +172,9 @@ def get_setup_options():
     if base.argsp.disable_local_ldap:
         setupOptions['ldap_install'] = InstallTypes.NONE
 
+    if base.argsp.local_couchbase:
+        setupOptions['cb_install'] = InstallTypes.LOCAL
+
     setupOptions['properties_password'] = base.argsp.properties_password
 
     if base.argsp.install_shib and base.argsp.remote_rdbm == 'spanner':
