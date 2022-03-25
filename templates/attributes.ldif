@@ -6,6 +6,7 @@ gluuAttributeOrigin: gluuPerson
 gluuAttributeType: string
 gluuAttributeViewType: user
 gluuAttributeViewType: admin
+gluuAttributeEditType: admin
 gluuSAML1URI: urn:mace:dir:attribute-def:inum
 gluuSAML2URI: urn:oid:1.3.6.1.4.1.48710.1.3.117
 gluuStatus: active
