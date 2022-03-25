@@ -374,10 +374,6 @@ def do_installation():
             propertiesUtils.save_properties()
             time.sleep(2)
 
-            if argsp.t:
-                base.logIt("Loading test data")
-                testDataLoader.load_test_data()
-
             gluuInstaller.post_install_tasks()
 
             for service in gluuProgress.services:
@@ -386,6 +382,10 @@ def do_installation():
                     time.sleep(2)
                     service['object'].stop()
                     service['object'].start()
+
+            if argsp.t:
+                base.logIt("Loading test data")
+                testDataLoader.load_test_data()
 
         gluuProgress.progress(static.COMPLETED)
 
