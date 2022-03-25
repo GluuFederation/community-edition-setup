@@ -731,15 +731,6 @@
       "type": "STRING(MAX)"
     }
   },
-  "oxAuthUmaScope": {
-    "mysql": {
-      "size": 768,
-      "type": "VARCHAR"
-    },
-    "spanner": {
-      "type": "STRING(MAX)"
-    }
-  },
   "oxSoftwareStatement": {
     "mysql": {
       "type": "TEXT"
@@ -839,17 +830,6 @@
     },
     "spanner": {
       "type": "ARRAY<STRING(MAX)>"
-    }
-  },
-  "oxResource": {
-    "mysql": {
-      "type": "TINYTEXT"
-    },
-  "pgsql": {
-      "type": "TEXT"
-    },
-    "spanner": {
-      "type": "STRING(MAX)"
     }
   },
   "scimCustomSecond": {
