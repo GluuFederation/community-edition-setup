@@ -14,6 +14,7 @@ class NodeInstaller(BaseInstaller, SetupUtils):
     templates_rendered = False
 
     def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'node'
         self.needdb = False # we don't need backend connection in this class
         self.install_var = 'installNode'

@@ -228,8 +228,7 @@ if Config.installed_instance:
 
 if argsp.t or argsp.x:
     testDataLoader = TestDataLoader()
-    testDataLoader.passportInstaller = passportInstaller
-    testDataLoader.scimInstaller = scimInstaller
+
 
 if argsp.x:
     print("Loading test data")

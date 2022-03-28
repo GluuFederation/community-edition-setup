@@ -12,6 +12,7 @@ from setup_app.installers.node import NodeInstaller
 class PassportInstaller(NodeInstaller):
 
     def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'passport'
         self.app_type = AppType.SERVICE
         self.install_type = InstallOption.OPTONAL

@@ -18,9 +18,6 @@ from setup_app.pylib.ldif4.ldif import LDIFWriter
 
 class TestDataLoader(BaseInstaller, SetupUtils):
 
-    passportInstaller = None
-    scimInstaller = None
-
     def __init__(self):
         self.service_name = 'test-data'
         self.pbar_text = "Loading" 
@@ -92,12 +89,11 @@ class TestDataLoader(BaseInstaller, SetupUtils):
             except:
                 pass
             self.dbUtils.ldap_conn.bind()
-        
-        if not self.scimInstaller.installed():
-    
+
+        if not base.current_app.ScimInstaller.installed():
             self.logIt("Scim was not installed. Installing")
             Config.installScimServer = True
-            self.scimInstaller.start_installation()
+            base.current_app.ScimInstaller.start_installation()
 
         self.encode_test_passwords()
 
@@ -183,8 +179,8 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         self.render_templates_folder(self.template_base)
 
         Config.pbar.progress(self.service_name, "Loading test ldif files", False)
-        if not self.passportInstaller.installed():
-            self.passportInstaller.generate_configuration()
+        if not base.current_app.PassportInstaller.installed():
+            base.current_app.PassportInstaller.generate_configuration()
 
         ox_auth_test_ldif = os.path.join(Config.outputFolder, 'test/oxauth/data/oxauth-test-data.ldif')
         ox_auth_test_user_ldif = os.path.join(Config.outputFolder, 'test/oxauth/data/oxauth-test-data-user.ldif')

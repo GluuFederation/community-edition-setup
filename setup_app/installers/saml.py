@@ -12,6 +12,7 @@ from setup_app.installers.jetty import JettyInstaller
 class SamlInstaller(JettyInstaller):
 
     def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'idp'
         self.app_type = AppType.SERVICE
         self.install_type = InstallOption.OPTONAL
