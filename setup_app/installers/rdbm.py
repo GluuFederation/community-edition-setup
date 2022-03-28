@@ -56,6 +56,14 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         if Config.rdbm_install_type == InstallTypes.LOCAL:
             base.argsp.n = True
             packageUtils.check_and_install_packages()
+
+            if Config.rdbm_type == 'mysql':
+                if base.os_type == 'suse':
+                    self.restart('mariadb')
+                    self.enable('mariadb')
+                elif base.clone_type == 'rpm':
+                    self.restart('mysqld')
+
             if Config.rdbm_type == 'mysql':
                 result, conn = self.dbUtils.mysqlconnection(log=False)
                 if not result:
