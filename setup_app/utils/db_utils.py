@@ -449,7 +449,7 @@ class DBUtils:
             else:
                 return row_dict
 
-            return retVal
+        return retVal
 
     def search(self, search_base, search_filter='(objectClass=*)', search_scope=ldap3.LEVEL, fetchmany=False):
         if not Config.loadData:
