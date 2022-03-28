@@ -33,7 +33,7 @@ def get_setup_options():
     }
 
 
-    if base.argsp.install_local_wrends:
+    if base.argsp.install_local_ldap:
         setupOptions['ldap_install'] = InstallTypes.LOCAL
 
     if base.argsp.local_couchbase:
