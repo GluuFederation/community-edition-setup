@@ -57,12 +57,12 @@ class BaseInstaller:
 
 
     def check_clients(self, client_var_id_list, resource=False):
-        field_name, ou = ('oxId', 'resources') if resource else ('inum', 'clients')
+        field_name, ou, object_class = ('oxId', 'resources', 'oxUmaResource') if resource else ('inum', 'clients', 'oxAuthClient')
 
         for client_var_name, client_id_prefix in client_var_id_list:
             self.logIt("Checking ID for client {}".format(client_var_name))
             if not Config.get(client_var_name):
-                result = self.dbUtils.search('ou={},o=gluu'.format(ou), '(&({}={}*)(objectClass=oxAuthClient))'.format(field_name, client_id_prefix))
+                result = self.dbUtils.search('ou={},o=gluu'.format(ou), '(&({}={}*)(objectClass={}))'.format(field_name, client_id_prefix, object_class))
                 if result:
                     setattr(Config, client_var_name, result[field_name])
                     self.logIt("{} was found in backend as {}".format(client_var_name, result[field_name]))

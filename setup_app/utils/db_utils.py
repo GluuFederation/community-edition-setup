@@ -757,7 +757,14 @@ class DBUtils:
         self.Base = sqlalchemy.ext.automap.automap_base(metadata=self.metadata)
         self.Base.prepare()
 
+        # fix JSON type for mariadb
+        for tbl in self.Base.classes:
+            for col in tbl.__table__.columns:
+                if isinstance(col.type, sqlalchemy.dialects.mysql.LONGTEXT) and col.comment.lower() == 'json':
+                    col.type = sqlalchemy.dialects.mysql.json.JSON()
+
         base.logIt("Reflected tables {}".format(list(self.metadata.tables.keys())))
+
 
     def get_sqlalchObj_for_dn(self, dn):
 
