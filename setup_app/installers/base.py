@@ -67,7 +67,7 @@ class BaseInstaller:
 
         for temp_p in Path(temp_dir).glob(glob_param):
             target_p = temp_p.with_suffix('')
-            base.logIt("Renaming {} to {} target_p".format(temp_p, target_p))
+            base.logIt("Renaming {} to {}".format(temp_p, target_p))
             temp_p.rename(target_p)
 
 

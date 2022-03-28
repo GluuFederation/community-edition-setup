@@ -104,7 +104,8 @@ class Config:
             self.cmd_jar = shutil.which('jar')
             os.environ['GLUU_SERVICES'] = 'installHttpd installOxd installCasa installScimServer installFido2'
             self.default_store_type = 'bcfks'
-            self.opendj_truststore_format = 'bcfks'
+            self.opendj_truststore_format = base.argsp.opendj_keystore_type
+            self.default_client_test_store_type = 'pkcs12'
             self.bc_fips_jar = os.path.join(self.distAppFolder, 'bc-fips-1.0.2.1.jar')
             self.bcpkix_fips_jar = os.path.join(self.distAppFolder, 'bcpkix-fips-1.0.5.jar')
 
@@ -250,7 +251,10 @@ class Config:
         self.extensionFolder = os.path.join(self.staticFolder, 'extension')
 
         self.opendj_cert_fn = os.path.join(self.certFolder, 'opendj.crt')
-        self.opendj_trust_store_fn = os.path.join(self.certFolder, 'opendj.' + self.opendj_truststore_format)
+        if self.opendj_truststore_format.lower() == 'pkcs11':
+            self.opendj_trust_store_fn = self.opendj_cert_fn
+        else:
+            self.opendj_trust_store_fn = os.path.join(self.certFolder, 'opendj.' + self.opendj_truststore_format)
 
         self.oxd_package = base.determine_package(os.path.join(Config.distGluuFolder, 'oxd-server*.tgz'))
 
