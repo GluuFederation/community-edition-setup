@@ -33,6 +33,11 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                 txt += 'countryCode'.ljust(30) + Config.countryCode.rjust(35) + "\n"
                 txt += 'Applications max ram'.ljust(30) + str(Config.application_max_ram).rjust(35) + "\n"
 
+                ldap_install = InstallTypes.LOCAL
+
+                if Config.ldap_install == InstallTypes.LOCAL and Config.get('opendj_ram'):
+                    txt += 'OpenDJ max ram (MB)'.ljust(30) + str(Config.opendj_ram).rjust(35) + "\n"
+
                 txt += 'Install oxAuth'.ljust(30) + repr(Config.installOxAuth).rjust(35) + "\n"
                 txt += 'Install oxTrust'.ljust(30) + repr(Config.installOxTrust).rjust(35) + "\n"
 

@@ -189,7 +189,6 @@ class SetupUtils(Crypto64):
         try:
             inFilePathLines = self.readFile(inFilePath).splitlines()
             try:
-
                 inFilePathLines.insert(index, text)
                 inFileText = ''.join(inFilePathLines)
                 self.writeFile(inFilePath, inFileText)
