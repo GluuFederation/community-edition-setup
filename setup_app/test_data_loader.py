@@ -364,6 +364,14 @@ class TestDataLoader(BaseInstaller, SetupUtils):
 
         self.restart('oxauth')
 
+
+        if Config.installScimServer:
+            self.restart('scim')
+
+        if Config.installFido2:
+            self.restart('fido2')
+
+
         # Prepare for tests run
         #install_command, update_command, query_command, check_text = self.get_install_commands()
         #self.run_command(install_command.format('git'))
