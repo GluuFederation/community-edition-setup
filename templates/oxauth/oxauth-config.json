@@ -48,6 +48,7 @@
         "urn:ietf:params:oauth:grant-type:uma-ticket",
         "urn:ietf:params:oauth:grant-type:device_code"
     ],
+    "allowIdTokenWithoutImplicitGrantType": true,
     "subjectTypesSupported":[
         "public",
         "pairwise"
@@ -63,7 +64,10 @@
         "RS512",
         "ES256",
         "ES384",
-        "ES512"
+        "ES512",
+        "PS256",
+        "PS384",
+        "PS512"
     ],
     "userInfoEncryptionAlgValuesSupported":[
         "RSA1_5",
@@ -87,7 +91,10 @@
         "RS512",
         "ES256",
         "ES384",
-        "ES512"
+        "ES512",
+        "PS256",
+        "PS384",
+        "PS512"
     ],
     "idTokenEncryptionAlgValuesSupported":[
         "RSA1_5",
@@ -111,7 +118,10 @@
         "RS512",
         "ES256",
         "ES384",
-        "ES512"
+        "ES512",
+        "PS256",
+        "PS384",
+        "PS512"
     ],
     "jwksAlgorithmsSupported":[
         "RS256",
@@ -155,7 +165,10 @@
         "RS512",
         "ES256",
         "ES384",
-        "ES512"
+        "ES512",
+        "PS256",
+        "PS384",
+        "PS512"
     ],
     "dynamicRegistrationCustomAttributes":[
         "oxAuthTrustedClient"
@@ -240,6 +253,7 @@
     "invalidateSessionCookiesAfterAuthorizationFlow":false,
     "clientAuthenticationFiltersEnabled":false,
     "clientRegDefaultToCodeFlowWithRefresh": true,
+    "grantTypesAndResponseTypesAutofixEnabled": false,
     "authenticationFilters":[
         {
             "filter":"(&(mail=*{0}*)(inum={1}))",

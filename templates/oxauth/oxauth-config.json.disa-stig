@@ -48,6 +48,7 @@
         "urn:ietf:params:oauth:grant-type:uma-ticket",
         "urn:ietf:params:oauth:grant-type:device_code"
     ],
+    "allowIdTokenWithoutImplicitGrantType": true,
     "subjectTypesSupported":[
         "public",
         "pairwise"
@@ -55,11 +56,19 @@
     "statWebServiceIntervalLimitInSeconds":60,
     "defaultSubjectType": "pairwise",
     "userInfoSigningAlgValuesSupported":[
+        "HS256",
+        "HS384",
+        "HS512",
+        "RS256",
+        "RS384",
+        "RS512",
         "ES256",
         "ES384",
         "ES512"
     ],
     "userInfoEncryptionAlgValuesSupported":[
+        "RSA1_5",
+        "RSA-OAEP",
         "A128KW",
         "A256KW"
     ],
@@ -70,11 +79,20 @@
         "A256GCM"
     ],
     "idTokenSigningAlgValuesSupported":[
+        "none",
+        "HS256",
+        "HS384",
+        "HS512",
+        "RS256",
+        "RS384",
+        "RS512",
         "ES256",
         "ES384",
         "ES512"
     ],
     "idTokenEncryptionAlgValuesSupported":[
+        "RSA1_5",
+        "RSA-OAEP",
         "A128KW",
         "A256KW"
     ],
@@ -85,6 +103,13 @@
         "A256GCM"
     ],
     "requestObjectSigningAlgValuesSupported":[
+        "none",
+        "HS256",
+        "HS384",
+        "HS512",
+        "RS256",
+        "RS384",
+        "RS512",
         "ES256",
         "ES384",
         "ES512"
@@ -103,6 +128,8 @@
         "RSA-OAEP"
     ],
     "requestObjectEncryptionAlgValuesSupported":[
+        "RSA1_5",
+        "RSA-OAEP",
         "A128KW",
         "A256KW"
     ],

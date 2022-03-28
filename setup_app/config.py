@@ -105,7 +105,6 @@ class Config:
             os.environ['GLUU_SERVICES'] = 'installHttpd installOxd installCasa installScimServer installFido2'
             self.default_store_type = 'bcfks'
             self.opendj_truststore_format = 'bcfks'
-            self.default_client_test_store_type = 'bcfks'
             self.bc_fips_jar = os.path.join(self.distAppFolder, 'bc-fips-1.0.2.1.jar')
             self.bcpkix_fips_jar = os.path.join(self.distAppFolder, 'bcpkix-fips-1.0.5.jar')
 
@@ -311,7 +310,10 @@ class Config:
 
         # OpenID key generation default setting
         self.default_openid_dstore_dn_name = 'CN=oxAuth CA Certificates'
-        self.default_key_algs = 'RS256 RS384 RS512 ES256 ES384 ES512'
+
+        self.default_sig_key_algs = 'RS256 RS384 RS512 ES256 ES384 ES512 PS256 PS384 PS512'
+        self.default_enc_key_algs = 'RSA1_5 RSA-OAEP'
+
         self.default_key_expiration = 365
 
         self.post_messages = []

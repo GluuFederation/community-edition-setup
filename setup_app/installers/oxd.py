@@ -80,6 +80,8 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             # Restore SELinux Context
             self.run(['restorecon', '-rv', os.path.join(self.oxd_root, 'bin')])
 
+            self.run([paths.cmd_chown, '{}:{}'.format(oxd_user, Config.gluu_group), os.path.join(Config.osDefault, self.service_name)])
+
         self.enable()
 
     def modify_config_yml(self):

@@ -124,6 +124,10 @@ class Crypto64:
         self.run([paths.cmd_chown, '%s:%s' % (user, user), key])
         self.run([paths.cmd_chmod, '700', key])
 
+        self.run([Config.cmd_keytool, "-delete", "-trustcacerts", "-alias", "%s_%s" % (Config.hostname, suffix), \
+                  "-keystore", truststore_fn, \
+                  "-storepass", "changeit", "-noprompt"])
+
         self.run([Config.cmd_keytool, "-import", "-trustcacerts", "-alias", "%s_%s" % (Config.hostname, suffix), \
                   "-file", public_certificate, "-keystore", truststore_fn, \
                   "-storepass", "changeit", "-noprompt"])
@@ -209,13 +213,13 @@ class Crypto64:
             dn_name = Config.default_openid_dstore_dn_name
 
         if key_algs == None:
-            key_algs = Config.default_key_algs
+            key_algs = Config.default_sig_key_algs
 
         if key_expiration == None:
             key_expiration = Config.default_key_expiration
 
         if not enc_keys:
-            enc_keys = key_algs
+            enc_keys = Config.default_enc_key_algs
 
         client_cmd = self.get_key_gen_client_cmd()
 

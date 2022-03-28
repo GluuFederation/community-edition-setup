@@ -39,15 +39,16 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         self.logIt("Creating {}".format(Config.templateRenderingDict['test_client_keystore_base_fn']))
         keys_json_fn =  os.path.join(Config.outputFolder, 'test/oxauth/client/keys_client_keystore.json')
 
-        client_cmd = self.get_key_gen_client_cmd()
+        client_cmd = self.get_key_gen_client_provider_cmd()
 
         args = [Config.cmd_java, '-Dlog4j.defaultInitOverride=true',
                 "-cp", client_cmd,
                 Config.non_setup_properties['key_gen_path'],
                 '-keystore', self.test_client_keystore_fn,
+                '-keystore_type', Config.default_client_test_store_type,
                 '-keypasswd', 'secret',
-                '-sig_keys', Config.default_key_algs,
-                '-enc_keys', Config.default_key_algs,
+                '-sig_keys', Config.default_sig_key_algs,
+                '-enc_keys', Config.default_enc_key_algs,
                 '-dnname', "'{}'".format(Config.default_openid_dstore_dn_name),
                 '-expiration', '365','>', keys_json_fn]
 
@@ -178,11 +179,11 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         self.run([paths.cmd_rm, '-rf', 'oxauth_test_client_keys.zip'])
         self.run([paths.cmd_chown, '-R', 'root:'+apache_user, '/var/www/html/oxauth-client'])
 
-
         oxAuthConfDynamic_changes = {
                                     'dynamicRegistrationCustomObjectClass':  'oxAuthClientCustomAttributes',
                                     'dynamicRegistrationCustomAttributes': [ "oxAuthTrustedClient", "myCustomAttr1", "myCustomAttr2", "oxIncludeClaimsInIdToken" ],
                                     'dynamicRegistrationExpirationTime': 86400,
+                                    'grantTypesAndResponseTypesAutofixEnabled': True,
                                     'dynamicGrantTypeDefault': [ "authorization_code", "implicit", "password", "client_credentials", "refresh_token", "urn:ietf:params:oauth:grant-type:uma-ticket", "urn:openid:params:grant-type:ciba", "urn:ietf:params:oauth:grant-type:device_code" ],
                                     'legacyIdTokenClaims': True,
                                     'authenticationFiltersEnabled': True,
@@ -193,7 +194,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                                     'dynamicRegistrationPasswordGrantTypeEnabled' : True,
                                     'cibaEnabled': True,
                                     'backchannelTokenDeliveryModesSupported': ["poll", "ping", "push"],
-                                    'backchannelAuthenticationRequestSigningAlgValuesSupported': [ "RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512" ],
+                                    'backchannelAuthenticationRequestSigningAlgValuesSupported': [ "HS256", "HS384", "HS512", "RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512" ],
                                     'backchannelClientId': '123-123-123',
                                     'backchannelUserCodeParameterSupported': True,
                                     'backchannelRequestsProcessorJobIntervalSec': 5,
