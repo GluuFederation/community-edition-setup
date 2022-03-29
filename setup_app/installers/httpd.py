@@ -41,7 +41,7 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
         else:
             self.https_gluu_fn = '/etc/apache2/sites-available/https_gluu.conf'
 
-    def configure(self):
+    def start_installation(self):
         self.logIt(self.pbar_text, pbar=self.service_name)
         self.stop()
 
