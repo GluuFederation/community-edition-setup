@@ -64,38 +64,13 @@ class CasaInstaller(JettyInstaller):
 
             #Adding twilio jar path to oxauth.xml
             oxauth_xml_fn = os.path.join(self.jetty_base,  'oxauth/webapps/oxauth.xml')
-            if os.path.exists(oxauth_xml_fn):
-                
-                class CommentedTreeBuilder(ElementTree.TreeBuilder):
-                    def comment(self, data):
-                        self.start(ElementTree.Comment, {})
-                        self.data(data)
-                        self.end(ElementTree.Comment)
+            
+            extra_classpath_list = [
+                        './custom/libs/{}'.format(os.path.basename(twillo_package)),
+                        './custom/libs/{}'.format(os.path.basename(jsmpp_package)),
+                        ]
 
-                parser = ElementTree.XMLParser(target=CommentedTreeBuilder())
-                tree = ElementTree.parse(oxauth_xml_fn, parser)
-                root = tree.getroot()
-
-                xml_headers = '<?xml version="1.0"  encoding="ISO-8859-1"?>\n<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">\n\n'
-
-                for element in root:
-                    if element.tag == 'Set' and element.attrib.get('name') == 'extraClasspath':
-                        break
-                else:
-                    element = ElementTree.SubElement(root, 'Set', name='extraClasspath')
-                    element.text = ''
-
-                extraClasspath_list = element.text.split(',')
-
-                for ecp in extraClasspath_list[:]:
-                    if (not ecp) or re.search('twilio-(.*)\.jar', ecp) or re.search('jsmpp-(.*)\.jar', ecp):
-                        extraClasspath_list.remove(ecp)
-
-                extraClasspath_list.append('./custom/libs/{}'.format(os.path.basename(twillo_package)))
-                extraClasspath_list.append('./custom/libs/{}'.format(os.path.basename(jsmpp_package)))
-                element.text = ','.join(extraClasspath_list)
-
-                self.writeFile(oxauth_xml_fn, xml_headers+ElementTree.tostring(root).decode('utf-8'))
+            self.add_extra_class(','.join(extra_classpath_list), oxauth_xml_fn)
 
             self.import_oxd_certificate()
 
