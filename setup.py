@@ -218,7 +218,7 @@ if Config.installed_instance:
                     for attribute in Config.non_setup_properties['service_enable_dict'][service]:
                         setattr(Config, attribute, 'true')
 
-            if 'installCasa' in Config.addPostSetupService 'installOxd' not in Config.addPostSetupService and not oxdInstaller.installed():
+            if 'installCasa' in Config.addPostSetupService and 'installOxd' not in Config.addPostSetupService and not oxdInstaller.installed():
                 Config.addPostSetupService.append('installOxd')
 
 
