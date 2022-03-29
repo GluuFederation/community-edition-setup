@@ -73,7 +73,7 @@ from setup_app.installers.rdbm import RDBMInstaller
 if base.snap:
     try:
         open('/proc/mounts').close()
-    except:
+    except Exception:
         print("Please execute the following command\n  sudo snap connect gluu-server:mount-observe :mount-observe\nbefore running setup. Exiting ...")
         sys.exit()
 
@@ -94,7 +94,7 @@ tty_columns = terminal_size.columns
 # check if we are running in terminal
 try:
     os.get_terminal_size()
-except:
+except Exception:
     argsp.no_progress = True
 
 
@@ -104,7 +104,7 @@ GSA = None
 if (not argsp.c) and sys.stdout.isatty() and (int(tty_rows) > 24) and (int(tty_columns) > 79):
     try:
         import npyscreen
-    except:
+    except Exception:
         print("Can't start TUI, continuing command line")
     else:
         from setup_app.utils.tui import GSA
@@ -136,21 +136,22 @@ if not GSA and not os.path.exists(Config.gluu_properties_fn):
     print()
 
 setup_loaded = {}
+prop_found_str = '{} Properties found!'
 if setupOptions['setup_properties']:
-    base.logIt('%s Properties found!\n' % setupOptions['setup_properties'])
+    base.logIt(prop_found_str.format(setupOptions['setup_properties']))
     setup_loaded = propertiesUtils.load_properties(setupOptions['setup_properties'])
 elif os.path.isfile(Config.setup_properties_fn):
-    base.logIt('%s Properties found!\n' % Config.setup_properties_fn)
+    base.logIt(prop_found_str.format(Config.setup_properties_fn))
     setup_loaded = propertiesUtils.load_properties(Config.setup_properties_fn)
 elif os.path.isfile(Config.setup_properties_fn+'.enc'):
-    base.logIt('%s Properties found!\n' % Config.setup_properties_fn+'.enc')
+    base.logIt(prop_found_str.format(Config.setup_properties_fn+'.enc'))
     setup_loaded = propertiesUtils.load_properties(Config.setup_properties_fn+'.enc')
 
 if argsp.import_ldif:
     if os.path.isdir(argsp.import_ldif):
         base.logIt("Found setup LDIF import directory {}".format(argsp.import_ldif))
     else:
-        base.logIt("The custom LDIF import directory {} does not exist. Exiting...".format(argsp.import_ldif, True, True))
+        base.logIt("The custom LDIF import directory {} does not exist. Exiting...".format(argsp.import_ldif), True, True)
 
 
 collectProperties = CollectProperties()
@@ -218,7 +219,7 @@ if Config.installed_instance:
                     for attribute in Config.non_setup_properties['service_enable_dict'][service]:
                         setattr(Config, attribute, 'true')
 
-            if 'installCasa' in Config.addPostSetupService 'installOxd' not in Config.addPostSetupService and not oxdInstaller.installed():
+            if 'installCasa' in Config.addPostSetupService and 'installOxd' not in Config.addPostSetupService and not oxdInstaller.installed():
                 Config.addPostSetupService.append('installOxd')
 
 
@@ -279,6 +280,78 @@ if argsp.shell:
     code.interact(local=locals())
     sys.exit()
 
+
+def prepare_for_installation():
+
+    gluuInstaller.copy_scripts()
+    gluuInstaller.encode_passwords()
+
+    oxtrustInstaller.generate_api_configuration()
+
+    Config.ldapCertFn = Config.opendj_cert_fn
+    Config.ldapTrustStoreFn = Config.opendj_p12_fn
+    Config.encoded_ldapTrustStorePass = Config.encoded_opendj_p12_pass
+    Config.oxTrustConfigGeneration = 'true' if Config.installSaml else 'false'
+
+    gluuInstaller.prepare_base64_extension_scripts()
+    gluuInstaller.render_templates()
+    gluuInstaller.render_configuration_template()
+
+    if not base.snap:
+        gluuInstaller.update_hostname()
+        gluuInstaller.set_ulimits()
+
+    gluuInstaller.copy_output()
+    gluuInstaller.setup_init_scripts()
+
+    # Installing gluu components
+
+    if Config.ldap_install:
+        openDjInstaller.start_installation()
+
+    if Config.cb_install:
+        couchbaseInstaller.start_installation()
+
+    if Config.rdbm_install:
+        rdbmInstaller.start_installation()
+
+
+def install_services():
+
+    for instance in (httpdinstaller, oxauthInstaller, oxtrustInstaller,
+                    fidoInstaller, scimInstaller, samlInstaller,
+                    oxdInstaller, casaInstaller, passportInstaller):
+
+        if (Config.installed_instance and instance.install_var in Config.addPostSetupService) or (not Config.installed_instance and getattr(Config, instance.install_var)):
+            instance.start_installation()
+
+    if not Config.installed_instance:
+        # this will install only base
+        radiusInstaller.start_installation()
+
+    if (Config.installed_instance and 'installGluuRadius' in Config.addPostSetupService) or (not Config.installed_instance and Config.installGluuRadius):
+        radiusInstaller.install_gluu_radius()
+
+def post_install():
+    gluuProgress.progress(PostSetup.service_name, "Saving properties")
+    propertiesUtils.save_properties()
+    time.sleep(2)
+
+    gluuInstaller.post_install_tasks()
+
+    for service in gluuProgress.services:
+        if service['app_type'] == static.AppType.SERVICE:
+            gluuProgress.progress(PostSetup.service_name, "Starting {}".format(service['name'].title()))
+            time.sleep(2)
+            service['object'].stop()
+            service['object'].start()
+
+    if argsp.t:
+        base.logIt("Loading test data")
+        testDataLoader.load_test_data()
+
+
+
 def do_installation():
 
     if not GSA:
@@ -301,90 +374,12 @@ def do_installation():
                 nodeInstaller.start_installation()
 
             if not base.argsp.dummy:
-                gluuInstaller.copy_scripts()
-                gluuInstaller.encode_passwords()
+                prepare_for_installation()
 
-                oxtrustInstaller.generate_api_configuration()
-
-                Config.ldapCertFn = Config.opendj_cert_fn
-                Config.ldapTrustStoreFn = Config.opendj_p12_fn
-                Config.encoded_ldapTrustStorePass = Config.encoded_opendj_p12_pass
-                Config.oxTrustConfigGeneration = 'true' if Config.installSaml else 'false'
-
-                gluuInstaller.prepare_base64_extension_scripts()
-                gluuInstaller.render_templates()
-                gluuInstaller.render_configuration_template()
-
-                if not base.snap:
-                    gluuInstaller.update_hostname()
-                    gluuInstaller.set_ulimits()
-
-                gluuInstaller.copy_output()
-                gluuInstaller.setup_init_scripts()
-
-                # Installing gluu components
-
-                if Config.ldap_install:
-                    openDjInstaller.start_installation()
-
-                if Config.cb_install:
-                    couchbaseInstaller.start_installation()
-
-                if Config.rdbm_install:
-                    rdbmInstaller.start_installation()
-
-        if (Config.installed_instance and 'installHttpd' in Config.addPostSetupService) or (not Config.installed_instance and Config.installHttpd):
-            httpdinstaller.configure()
-
-        if (Config.installed_instance and 'installOxAuth' in Config.addPostSetupService) or (not Config.installed_instance and Config.installOxAuth):
-            oxauthInstaller.start_installation()
-
-        if (Config.installed_instance and 'installOxTrust' in Config.addPostSetupService) or (not Config.installed_instance and Config.installOxTrust):
-            oxtrustInstaller.start_installation()
-
-        if (Config.installed_instance and 'installFido2' in Config.addPostSetupService) or (not Config.installed_instance and Config.installFido2):
-            fidoInstaller.start_installation()
-
-        if (Config.installed_instance and 'installScimServer' in Config.addPostSetupService) or (not Config.installed_instance and Config.installScimServer):
-            scimInstaller.start_installation()
-
-        if (Config.installed_instance and 'installSaml' in Config.addPostSetupService) or (not Config.installed_instance and Config.installSaml):
-            samlInstaller.start_installation()
-
-        if (Config.installed_instance and 'installOxd' in Config.addPostSetupService) or (not Config.installed_instance and Config.installOxd):
-            oxdInstaller.start_installation()
-
-        if (Config.installed_instance and 'installCasa' in Config.addPostSetupService) or (not Config.installed_instance and Config.installCasa):
-            casaInstaller.start_installation()
-
-        if (Config.installed_instance and 'installPassport' in Config.addPostSetupService) or (not Config.installed_instance and Config.installPassport):
-            passportInstaller.start_installation()
-
-        if not Config.installed_instance:
-            # this will install only base
-            radiusInstaller.start_installation()
-
-        if (Config.installed_instance and 'installGluuRadius' in Config.addPostSetupService) or (not Config.installed_instance and Config.installGluuRadius):
-            radiusInstaller.install_gluu_radius()
-
+        install_services()
 
         if not base.argsp.dummy:
-            gluuProgress.progress(PostSetup.service_name, "Saving properties")
-            propertiesUtils.save_properties()
-            time.sleep(2)
-
-            gluuInstaller.post_install_tasks()
-
-            for service in gluuProgress.services:
-                if service['app_type'] == static.AppType.SERVICE:
-                    gluuProgress.progress(PostSetup.service_name, "Starting {}".format(service['name'].title()))
-                    time.sleep(2)
-                    service['object'].stop()
-                    service['object'].start()
-
-            if argsp.t:
-                base.logIt("Loading test data")
-                testDataLoader.load_test_data()
+            post_install()
 
         gluuProgress.progress(static.COMPLETED)
 
@@ -393,7 +388,7 @@ def do_installation():
             for m in Config.post_messages:
                 print(m)
 
-    except:
+    except Exception:
         if GSA:
             gluuProgress.progress(static.ERROR  , str(traceback.format_exc()))
 
