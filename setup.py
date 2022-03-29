@@ -73,7 +73,7 @@ from setup_app.installers.rdbm import RDBMInstaller
 if base.snap:
     try:
         open('/proc/mounts').close()
-    except:
+    except Exception:
         print("Please execute the following command\n  sudo snap connect gluu-server:mount-observe :mount-observe\nbefore running setup. Exiting ...")
         sys.exit()
 
@@ -94,7 +94,7 @@ tty_columns = terminal_size.columns
 # check if we are running in terminal
 try:
     os.get_terminal_size()
-except:
+except Exception:
     argsp.no_progress = True
 
 
@@ -136,21 +136,22 @@ if not GSA and not os.path.exists(Config.gluu_properties_fn):
     print()
 
 setup_loaded = {}
+prop_found_str = '{} Properties found!'
 if setupOptions['setup_properties']:
-    base.logIt('%s Properties found!\n' % setupOptions['setup_properties'])
+    base.logIt(prop_found_str.format(setupOptions['setup_properties']))
     setup_loaded = propertiesUtils.load_properties(setupOptions['setup_properties'])
 elif os.path.isfile(Config.setup_properties_fn):
-    base.logIt('%s Properties found!\n' % Config.setup_properties_fn)
+    base.logIt(prop_found_str.format(Config.setup_properties_fn))
     setup_loaded = propertiesUtils.load_properties(Config.setup_properties_fn)
 elif os.path.isfile(Config.setup_properties_fn+'.enc'):
-    base.logIt('%s Properties found!\n' % Config.setup_properties_fn+'.enc')
+    base.logIt(prop_found_str.format(Config.setup_properties_fn+'.enc'))
     setup_loaded = propertiesUtils.load_properties(Config.setup_properties_fn+'.enc')
 
 if argsp.import_ldif:
     if os.path.isdir(argsp.import_ldif):
         base.logIt("Found setup LDIF import directory {}".format(argsp.import_ldif))
     else:
-        base.logIt("The custom LDIF import directory {} does not exist. Exiting...".format(argsp.import_ldif, True, True))
+        base.logIt("The custom LDIF import directory {} does not exist. Exiting...".format(argsp.import_ldif), True, True)
 
 
 collectProperties = CollectProperties()
@@ -393,7 +394,7 @@ def do_installation():
             for m in Config.post_messages:
                 print(m)
 
-    except:
+    except Exception:
         if GSA:
             gluuProgress.progress(static.ERROR  , str(traceback.format_exc()))
 
