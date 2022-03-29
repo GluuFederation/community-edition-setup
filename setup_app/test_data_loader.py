@@ -268,7 +268,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                 if 'gluuCustomPerson' in objcl.tokens['NAME']:
                     may_list = list(objcl.tokens['MAY'])
                     for a in ('scimCustomFirst','scimCustomSecond', 'scimCustomThird'):
-                        if not a in may_list:
+                        if a not in may_list:
                             may_list.append(a)
 
                     objcl.tokens['MAY'] = tuple(may_list)
@@ -327,7 +327,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                     self.logIt("Ldap modify operation failed {}".format(str(self.dbUtils.ldap_conn.result)), True)
 
         elif self.dbUtils.moddb in (static.BackendTypes.SPANNER, static.BackendTypes.MYSQL, static.BackendTypes.PGSQL):
-            # TODO: create additional indexes for rdbm
+            # Create additional indexes for rdbm
             pass
 
         else:
@@ -377,9 +377,9 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         #self.run_command(install_command.format('git'))
         #self.run([self.cmd_mkdir, '-p', 'oxAuth/Client/profiles/ce_test'])
         #self.run([self.cmd_mkdir, '-p', 'oxAuth/Server/profiles/ce_test'])
-        # Todo: Download and unzip file test_data.zip from CE server.
-        # Todo: Copy files from unziped folder test/oxauth/client/* into oxAuth/Client/profiles/ce_test
-        # Todo: Copy files from unziped folder test/oxauth/server/* into oxAuth/Server/profiles/ce_test
+        # Download and unzip file test_data.zip from CE server.
+        # Copy files from unziped folder test/oxauth/client/* into oxAuth/Client/profiles/ce_test
+        # Copy files from unziped folder test/oxauth/server/* into oxAuth/Server/profiles/ce_test
         #self.run([self.cmd_keytool, '-import', '-alias', 'seed22.gluu.org_httpd', '-keystore', 'cacerts', '-file', '%s/httpd.crt' % self.certFolder, '-storepass', 'changeit', '-noprompt'])
         #self.run([self.cmd_keytool, '-import', '-alias', 'seed22.gluu.org_opendj', '-keystore', 'cacerts', '-file', '%s/opendj.crt' % self.certFolder, '-storepass', 'changeit', '-noprompt'])
  

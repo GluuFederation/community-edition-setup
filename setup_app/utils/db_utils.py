@@ -145,7 +145,7 @@ class DBUtils:
         self.sub_tables = base.readJsonFile(os.path.join(Config.static_rdbm_dir, 'sub_tables.json'))
 
         for attr in attribDataTypes.listAttributes:
-            if not attr in self.sql_data_types:
+            if attr not in self.sql_data_types:
                 self.sql_data_types[attr] = { 'mysql': {'type': 'JSON'}, 'spanner': {'type': 'ARRAY<STRING(MAX)>'} }
 
 
@@ -429,7 +429,7 @@ class DBUtils:
         return self.session.query(sqlalchemy_table).filter(sqlalchemy_table).filter(sqlalchemy_table.columns.dn == dn).first()
 
     def spanner_to_dict(self, data):
-        if not data or not'rows' in data:
+        if not data or 'rows' not in data:
             return {}
 
         n = len(data['rows'])
@@ -626,7 +626,7 @@ class DBUtils:
                     except:
                         continue
                     if isinstance(oxConfigurationProperty, dict) and oxConfigurationProperty.get('value1') == 'allowed_clients':
-                        if not client_id in oxConfigurationProperty['value2']:
+                        if client_id not in oxConfigurationProperty['value2']:
                             oxConfigurationProperty['value2'] = self.add2strlist(client_id, oxConfigurationProperty['value2'])
                             oxConfigurationProperty_js = json.dumps(oxConfigurationProperty)
                             ldap_operation_result = self.ldap_conn.modify(
@@ -651,7 +651,7 @@ class DBUtils:
                 for i, oxconfigprop in enumerate(oxConfigurationProperty['v'][:]):
                     if isinstance(oxconfigprop, str):
                         oxconfigprop = json.loads(oxconfigprop)
-                    if oxconfigprop.get('value1') == 'allowed_clients' and not client_id in oxconfigprop['value2']:
+                    if oxconfigprop.get('value1') == 'allowed_clients' and client_id not in oxconfigprop['value2']:
                         oxconfigprop['value2'] = self.add2strlist(client_id, oxconfigprop['value2'])
                         oxConfigurationProperty['v'][i] = json.dumps(oxconfigprop)
                         break
@@ -692,7 +692,7 @@ class DBUtils:
             oxConfigurationProperties = js['results'][0]['oxConfigurationProperty']
             for i, oxconfigprop_str in enumerate(oxConfigurationProperties):
                 oxconfigprop = json.loads(oxconfigprop_str)
-                if oxconfigprop.get('value1') == 'allowed_clients' and not client_id in oxconfigprop['value2']:
+                if oxconfigprop.get('value1') == 'allowed_clients' and client_id not in oxconfigprop['value2']:
                     oxconfigprop['value2'] = self.add2strlist(client_id, oxconfigprop['value2'])
                     oxConfigurationProperties[i] = json.dumps(oxconfigprop)
                     break
@@ -900,8 +900,6 @@ class DBUtils:
                     if self.Base is None:
                         self.rdm_automapper()
 
-                    # TODO: inserting data to sub tables to be implemented for mysql and pgsql
-
                     if 'add' in  entry and 'changetype' in entry:
                         attribute = entry['add'][0]
                         new_val = entry[attribute]
@@ -964,7 +962,7 @@ class DBUtils:
                         sqlalchCls = self.Base.classes[table_name]
 
                         for col in sqlalchCls.__table__.columns:
-                            if isinstance(col.type, self.json_dialects_instance) and not col.name in vals:
+                            if isinstance(col.type, self.json_dialects_instance) and col.name not in vals:
                                 vals[col.name] = {'v': []}
 
                         sqlalchObj = sqlalchCls()
@@ -1015,7 +1013,7 @@ class DBUtils:
 
                         if self.in_subtable(table, replace_attr):
                             sub_table = '{}_{}'.format(table, replace_attr)
-                            # TODO: how to replace ?
+                            # How to replace ?
                             #for subval in typed_val:
                             #    self.spanner.update_data(table=sub_table, columns=['doc_id', replace_attr], values=[[doc_id, subval]])
                         else:
@@ -1179,14 +1177,14 @@ class DBUtils:
                     Config.isCouchbaseUserAdmin = True
                     return True, None
 
-                if not role['bucket_name'] in bucket_roles:
+                if role['bucket_name'] not in bucket_roles:
                     bucket_roles[role['bucket_name']] = []
 
                 bucket_roles[role['bucket_name']].append(role['role'])
 
         for b_ in bc[:]:
             for r_ in self.cb_bucket_roles:
-                if not r_ in bucket_roles[b_]:
+                if r_ not in bucket_roles[b_]:
                     break
             else:
                 bc.remove(b_)

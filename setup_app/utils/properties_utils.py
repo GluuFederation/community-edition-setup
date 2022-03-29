@@ -195,7 +195,7 @@ class PropertiesUtils(SetupUtils):
 
         properties_list = list(p.keys())
 
-        if not 'oxtrust_admin_password' in p:
+        if 'oxtrust_admin_password' not in p:
             p['oxtrust_admin_password'] = p['ldapPass']
 
         if not (Config.cb_install or Config.rdbm_install or Config.ldap_install):
@@ -213,7 +213,7 @@ class PropertiesUtils(SetupUtils):
                     mappingLocations = json.loads(p[prop])
                     setattr(Config, prop, mappingLocations)
                     for l in mappingLocations:
-                        if not mappingLocations[l] in map_db:
+                        if mappingLocations[l] not in map_db:
                             map_db.append(mappingLocations[l])
 
                 if p[prop] == 'True':
@@ -226,7 +226,7 @@ class PropertiesUtils(SetupUtils):
         if prop_file.endswith('-DEC~'):
             self.run(['rm', '-f', prop_file])
 
-        if not 'oxtrust_admin_password' in properties_list:
+        if 'oxtrust_admin_password' not in properties_list:
             Config.oxtrust_admin_password = p['ldapPass']
 
         if p.get('ldap_hostname') != 'localhost':
@@ -239,7 +239,7 @@ class PropertiesUtils(SetupUtils):
             else:
                 Config.ldap_install = InstallTypes.NONE
 
-        if map_db and not 'ldap' in map_db:
+        if map_db and 'ldap' not in map_db:
             Config.ldap_install = InstallTypes.NONE
 
         if 'couchbase' in map_db:
@@ -254,12 +254,12 @@ class PropertiesUtils(SetupUtils):
 
         if Config.cb_install == InstallTypes.LOCAL:
             available_backends = self.getBackendTypes()
-            if not 'couchbase' in available_backends:
+            if 'couchbase' not in available_backends:
                 print("Couchbase package is not available exiting.")
                 sys.exit(1)
 
 
-        if (not 'cb_password' in properties_list) and Config.cb_install:
+        if ('cb_password' not in properties_list) and Config.cb_install:
             Config.cb_password = p.get('ldapPass')
 
         if Config.cb_install == InstallTypes.REMOTE:
@@ -515,8 +515,8 @@ class PropertiesUtils(SetupUtils):
                         oxd_crt_fn = '/tmp/oxd_{}.crt'.format(str(uuid.uuid4()))
                         self.writeFile(oxd_crt_fn, oxd_cert)
                         ssl_subjects = self.get_ssl_subject(oxd_crt_fn)
-                        
-                        if not ssl_subjects['CN'] == oxd_hostname:
+
+                        if ssl_subjects['CN'] != oxd_hostname:
                             print (('Hostname of oxd ssl certificate is {0}{1}{2} '
                                     'which does not match {0}{3}{2}, \ncasa won\'t start '
                                     'properly').format(
@@ -680,7 +680,7 @@ class PropertiesUtils(SetupUtils):
             choice = None
             if not n:
                 choice = 1
-            elif not n in nlist:
+            elif n not in nlist:
                 print("Please enter one of {}".format(', '.join(nlist)))
             else:
                 choice = n

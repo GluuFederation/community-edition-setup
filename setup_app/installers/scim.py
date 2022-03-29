@@ -48,7 +48,7 @@ class ScimInstaller(JettyInstaller):
 
     def generate_configuration(self):
 
-        if not Config.get('scim_protection_mode') in ('TEST', 'UMA', 'OAUTH'):
+        if Config.get('scim_protection_mode') not in ('TEST', 'UMA', 'OAUTH'):
             if base.argsp.enable_scim_test_mode:
                 Config.scim_protection_mode = 'TEST'
             elif base.argsp.enable_scim_uma_mode:

@@ -44,7 +44,6 @@ class OxtrustInstaller(JettyInstaller):
         self.pairwiseCalculationKey = None
         self.pairwiseCalculationSalt = None
 
-        # TODO: oxtrust-api installation
         # oxTrust Api configuration
         self.api_rs_client_jks_fn = os.path.join(Config.certFolder, 'api-rs.jks')
         self.api_rp_client_jks_fn = os.path.join(Config.certFolder, 'api-rp.jks')
@@ -62,7 +61,6 @@ class OxtrustInstaller(JettyInstaller):
 
     def generate_api_configuration(self):
 
-        # TODO: Question: Should we do if oxtrust_api installtion?
         if not Config.get('api_rs_client_jks_pass'):
             Config.api_rs_client_jks_pass = 'secret'
             Config.api_rs_client_jks_pass_encoded = self.obscure(Config.api_rs_client_jks_pass)
@@ -117,7 +115,6 @@ class OxtrustInstaller(JettyInstaller):
         Config.templateRenderingDict['oxtrust_cache_refresh_base64'] = self.generate_base64_ldap_file(self.oxtrust_cache_refresh_json)
         Config.templateRenderingDict['oxtrust_import_person_base64'] = self.generate_base64_ldap_file(self.oxtrust_import_person_json)
 
-        # TODO: Question: Should we do import lidf_oxtrust_api and ldif_oxtrust_api_clients in oxtrust_api installtion?
         ldif_files = [
                 self.ldif_config,
                 self.lidf_oxtrust_api,
@@ -128,8 +125,7 @@ class OxtrustInstaller(JettyInstaller):
 
         for tmp in ldif_files:
             self.renderTemplateInOut(tmp, self.templates_folder, self.output_folder)
-        
-        # TODO: Question: Should we leave general scripts to oxtrustinstaller and move others to their own installers?
+
         self.prepare_base64_extension_scripts()
         self.renderTemplateInOut(self.ldif_scripts, Config.templateFolder, Config.outputFolder)
         ldif_files.append(self.ldif_scripts)

@@ -394,7 +394,7 @@ class SetupUtils(Crypto64):
         return text % dictionary
 
 
-    def renderTemplateInOut(self, filePath, templateFolder, outputFolder, me='', backup=False):
+    def renderTemplateInOut(self, filePath, templateFolder, outputFolder, backup=False):
         fn = os.path.basename(filePath)
         in_fp = os.path.join(templateFolder, fn) 
         self.logIt("Rendering template %s" % in_fp)
@@ -474,7 +474,7 @@ class SetupUtils(Crypto64):
         for l in open(systemd_conf_fn):
             tl = l.strip('#')
             if tl.startswith('DefaultTimeoutStartSec'):
-                systemd_conf.append('DefaultTimeoutStartSec=300s\n')
+                systemd_conf.append('DefaultTimeoutStartSec={}s\n'.format(t))
             else:
                 systemd_conf.append(l)
 

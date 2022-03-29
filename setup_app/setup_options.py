@@ -122,7 +122,7 @@ def get_setup_options():
             setupOptions['rdbm_install'] = True
             setupOptions['rdbm_install_type'] = InstallTypes.REMOTE
             setupOptions['rdbm_type'] = base.argsp.remote_rdbm
-            if not base.argsp.remote_rdbm == 'spanner':
+            if base.argsp.remote_rdbm != 'spanner':
                 setupOptions['rdbm_host'] = base.argsp.rdbm_host
 
         if getattr(base.argsp, 'local_rdbm', None):

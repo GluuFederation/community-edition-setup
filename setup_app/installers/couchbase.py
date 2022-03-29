@@ -184,7 +184,7 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
             attribs = ind[0]
             wherec = ind[1]
             for a in attribs:
-                if not '(' in a:
+                if '(' not in a:
                     attrquoted.append('`{}`'.format(a))
                 else:
                     attrquoted.append(a)
@@ -339,7 +339,7 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
             b_ = r.json()
             existing_buckets = [ bucket['name'] for bucket in b_ ]
 
-        if not Config.couchbase_bucket_prefix in existing_buckets:
+        if Config.couchbase_bucket_prefix not in existing_buckets:
 
             if Config.mappingLocations['default'] != 'couchbase':
                 self.couchebaseCreateBucket(Config.couchbase_bucket_prefix, bucketRamsize=100)
@@ -352,7 +352,7 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
 
         for group in couchbase_mappings:
             bucket = '{}_{}'.format(Config.couchbase_bucket_prefix, group)
-            if not bucket in existing_buckets:
+            if bucket not in existing_buckets:
                 bucketRamsize = int((Config.couchbaseBucketDict[group]['memory_allocation']/min_cb_ram)*couchbaseClusterRamsize)
                 self.couchebaseCreateBucket(bucket, bucketRamsize=bucketRamsize)
             else:

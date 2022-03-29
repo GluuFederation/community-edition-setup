@@ -154,7 +154,7 @@ class BaseInstaller:
                 url = item[1]
                 src_name = os.path.basename(src)
 
-                if downloads and not src_name in downloads:
+                if downloads and src_name not in downloads:
                     continue
 
                 if force or self.check_download_needed(src):
