@@ -436,15 +436,6 @@
       "type": "STRING(MAX)"
     }
   },
-  "oxAuthUmaScope": {
-    "mysql": {
-      "size": 768,
-      "type": "VARCHAR"
-    },
-    "spanner": {
-      "type": "STRING(MAX)"
-    }
-  },
   "oxSoftwareStatement": {
     "mysql": {
       "type": "TEXT"
