@@ -445,6 +445,11 @@ class DBBackendForm(GluuSetupForm):
 
 
         if self.parentApp.backend_type_str == 'Local OpenDj':
+            used_ports = self.parentApp.jettyInstaller.opendj_used_ports()
+            if used_ports:
+                npyscreen.notify_confirm(msg.used_ports.format(','.join(used_ports)), title="Warning")
+                return
+
             Config.ldap_install = static.InstallTypes.LOCAL
             Config.cb_install = static.InstallTypes.NONE
             Config.rdbm_install = False

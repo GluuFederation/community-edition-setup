@@ -117,6 +117,12 @@ class PropertiesUtils(SetupUtils):
             if Config.rdbm_install:
                 Config.mappingLocations = { group: 'rdbm' for group in Config.couchbaseBucketDict }
 
+        if Config.ldap_install == InstallTypes.LOCAL and not Config.installed_instance:
+            used_ports = self.opendj_used_ports()
+            if used_ports:
+                print(msg.used_ports.format(','.join(used_ports)))
+                sys.exit(1)
+
         self.set_persistence_type()
 
         if not Config.opendj_p12_pass:
@@ -688,6 +694,12 @@ class PropertiesUtils(SetupUtils):
             print("{}{}{}".format(colors.WARNING, msg.mysql_spanner_beta, colors.ENDC))
 
         if backend_type_str == 'Local OpenDj':
+
+            used_ports = self.opendj_used_ports()
+            if used_ports:
+                print(msg.used_ports.format(','.join(used_ports)))
+                sys.exit(1)
+
             Config.ldap_install = InstallTypes.LOCAL
             ldapPass = Config.ldapPass if Config.ldapPass else Config.oxtrust_admin_password
 
