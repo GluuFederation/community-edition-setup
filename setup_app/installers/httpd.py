@@ -12,6 +12,7 @@ from setup_app.installers.base import BaseInstaller
 class HttpdInstaller(BaseInstaller, SetupUtils):
 
     def __init__(self):
+
         self.service_name = base.httpd_name
         self.pbar_text = "Configuring " + base.httpd_name
         self.app_type = AppType.SERVICE
@@ -83,7 +84,7 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
 
             for em in os.listdir(mods_enabled_dir):
                 em_n, em_e = os.path.splitext(em)
-                if not em_n in mods_enabled:
+                if em_n not in mods_enabled:
                     os.unlink(os.path.join(mods_enabled_dir, em))
 
             for m in mods_enabled:
@@ -102,7 +103,7 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
             for mod_load_fn in glob.glob('/etc/apache2/mods-enabled/*'):
                 mod_load_base_name = os.path.basename(mod_load_fn)
                 f_name, f_ext = os.path.splitext(mod_load_base_name)
-                if not f_name in mods_enabled:
+                if f_name not in mods_enabled:
                     self.run([cmd_a2dismod, mod_load_fn])
             for amod in mods_enabled:
                 if os.path.exists('/etc/apache2/mods-available/{}.load'.format(amod)):
@@ -112,10 +113,10 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
             result = self.run([cmd_a2enmod, '-l'])
             current_modules = result.strip().split()
             for amod in current_modules:
-                if not amod in mods_enabled:
+                if amod not in mods_enabled:
                     self.run([cmd_a2dismod, amod])
             for amod in mods_enabled:
-                if not amod in current_modules:
+                if amod not in current_modules:
                     self.run([cmd_a2enmod, amod])
             cmd_a2enflag = shutil.which('a2enflag')
             self.run([cmd_a2enflag, 'SSL'])
@@ -148,7 +149,7 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
                         if not lsl[0].startswith('LoadModule'):
                             continue
                         module =  lsl[-1][4:-3]
-                        if not module in mods_enabled:
+                        if module not in mods_enabled:
                             mod_load_content[i] = l.replace('LoadModule', '#LoadModule')
                             modified = True
 

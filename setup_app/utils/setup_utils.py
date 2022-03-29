@@ -189,7 +189,6 @@ class SetupUtils(Crypto64):
         try:
             inFilePathLines = self.readFile(inFilePath).splitlines()
             try:
-
                 inFilePathLines.insert(index, text)
                 inFileText = ''.join(inFilePathLines)
                 self.writeFile(inFilePath, inFileText)
@@ -395,15 +394,15 @@ class SetupUtils(Crypto64):
         return text % dictionary
 
 
-    def renderTemplateInOut(self, filePath, templateFolder, outputFolder, me='', backup=False):
-        fn = os.path.basename(filePath)
-        in_fp = os.path.join(templateFolder, fn) 
+    def renderTemplateInOut(self, file_path, template_folder, output_folder, backup=False):
+        fn = os.path.basename(file_path)
+        in_fp = os.path.join(template_folder, fn) 
         self.logIt("Rendering template %s" % in_fp)
         template_text = self.readFile(in_fp)
 
         # Create output folder if needed
-        if not os.path.exists(outputFolder):
-            os.makedirs(outputFolder)
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
 
         format_dict = self.merge_dicts(Config.__dict__, Config.templateRenderingDict)
         for k in format_dict:
@@ -411,7 +410,7 @@ class SetupUtils(Crypto64):
                 format_dict[k] = str(format_dict[k]).lower()
 
         rendered_text = self.fomatWithDict(template_text, format_dict)
-        out_fp = os.path.join(outputFolder, fn)
+        out_fp = os.path.join(output_folder, fn)
         self.writeFile(out_fp, rendered_text, backup=backup)
 
     def renderTemplate(self, filePath):
@@ -475,7 +474,7 @@ class SetupUtils(Crypto64):
         for l in open(systemd_conf_fn):
             tl = l.strip('#')
             if tl.startswith('DefaultTimeoutStartSec'):
-                systemd_conf.append('DefaultTimeoutStartSec=300s\n')
+                systemd_conf.append('DefaultTimeoutStartSec={}s\n'.format(t))
             else:
                 systemd_conf.append(l)
 
@@ -584,3 +583,17 @@ class SetupUtils(Crypto64):
 
         yml_str = ruamel.yaml.dump(yacron_yaml, Dumper=ruamel.yaml.RoundTripDumper)
         self.writeFile(yacron_yaml_fn, yml_str)
+
+    def port_used(self, port):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex(('127.0.0.1', int(port)))
+        ret_val = result == 0
+        sock.close()
+        return ret_val
+
+    def opendj_used_ports(self):
+        ports = []
+        for port in (Config.ldaps_port, Config.ldap_admin_port):
+            if self.port_used(port):
+                ports.append(port)
+        return ports

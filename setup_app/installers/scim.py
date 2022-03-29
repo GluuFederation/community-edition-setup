@@ -12,6 +12,7 @@ from setup_app.pylib.ldif4.ldif import LDIFWriter
 class ScimInstaller(JettyInstaller):
 
     def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'scim'
         self.needdb = True
         self.app_type = AppType.SERVICE
@@ -47,7 +48,7 @@ class ScimInstaller(JettyInstaller):
 
     def generate_configuration(self):
 
-        if not Config.get('scim_protection_mode') in ('TEST', 'UMA', 'OAUTH'):
+        if Config.get('scim_protection_mode') not in ('TEST', 'UMA', 'OAUTH'):
             if base.argsp.enable_scim_test_mode:
                 Config.scim_protection_mode = 'TEST'
             elif base.argsp.enable_scim_uma_mode:

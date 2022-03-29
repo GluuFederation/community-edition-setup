@@ -13,6 +13,7 @@ from setup_app.installers.base import BaseInstaller
 class OxdInstaller(SetupUtils, BaseInstaller):
 
     def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'oxd-server'
         self.oxd_root = '/opt/oxd-server/'
         self.needdb = False # we don't need backend connection in this class
@@ -67,7 +68,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         yml_str = self.readFile(self.oxd_server_yml_fn)
         oxd_yaml = ruamel.yaml.load(yml_str, ruamel.yaml.RoundTripLoader)
 
-        if not 'bind_ip_addresses' in oxd_yaml:
+        if 'bind_ip_addresses' not in oxd_yaml:
             for i, k in enumerate(oxd_yaml):
                 if k == 'storage':
                     break

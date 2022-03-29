@@ -83,7 +83,7 @@ class GluuSetupApp(npyscreen.StandardApp):
             self.addForm('ServicesForm', ServicesForm, name=msg.ServicesForm_label)
 
         for obj in list(globals().items()):
-            if not obj[0] in ('MAIN', 'GluuSetupForm', 'ServicesForm') and obj[0].endswith('Form') and inspect.isclass(obj[1]):
+            if obj[0] not in ('MAIN', 'GluuSetupForm', 'ServicesForm') and obj[0].endswith('Form') and inspect.isclass(obj[1]):
                 self.addForm(obj[0], obj[1], name=getattr(msg, obj[0]+'_label'))
 
 
@@ -373,7 +373,7 @@ class ServicesForm(GluuSetupForm):
 
         propertiesUtils.check_oxd_server_https()
 
-        if self.installOxd.value and not 'installOxd' in self.services_before_this_form:
+        if self.installOxd.value and 'installOxd' not in self.services_before_this_form:
             result = npyscreen.notify_yes_no(msg.ask_use_gluu_storage_oxd, title=msg.ask_use_gluu_storage_oxd_title)
             if result:
                 Config.oxd_use_gluu_storage = True
@@ -445,6 +445,11 @@ class DBBackendForm(GluuSetupForm):
 
 
         if self.parentApp.backend_type_str == 'Local OpenDj':
+            used_ports = self.parentApp.jettyInstaller.opendj_used_ports()
+            if used_ports:
+                npyscreen.notify_confirm(msg.used_ports.format(','.join(used_ports)), title="Warning")
+                return
+
             Config.ldap_install = static.InstallTypes.LOCAL
             Config.cb_install = static.InstallTypes.NONE
             Config.rdbm_install = False

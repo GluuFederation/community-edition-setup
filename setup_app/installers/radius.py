@@ -14,6 +14,7 @@ from setup_app.utils.ldif_utils import schema2json
 class RadiusInstaller(BaseInstaller, SetupUtils):
 
     def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'gluu-radius'
         self.pbar_text = "Installing Radius Base"
         self.app_type = AppType.SERVICE

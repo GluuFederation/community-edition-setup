@@ -26,7 +26,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         self.install_type = InstallOption.OPTONAL
         self.install_var = 'rdbm_install'
         self.register_progess()
-
+        self.qchar = '`' if Config.rdbm_type in ('mysql', 'spanner') else '"'
         self.output_dir = os.path.join(Config.outputFolder, Config.rdbm_type)
 
     def install(self):
@@ -47,6 +47,14 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         self.create_indexes()
         self.rdbmProperties()
 
+
+    def get_col_def(self, attrname, sql_tbl_name):
+        data_type = self.get_sql_col_type(attrname, sql_tbl_name)
+        col_def = '{0}{1}{0} {2}'.format(self.qchar, attrname, data_type)
+        if Config.rdbm_type == 'mysql' and data_type == 'JSON':
+            col_def += ' comment "json"'
+        return col_def
+
     def local_install(self):
         if not Config.rdbm_password:
             Config.rdbm_password = self.getPW()
@@ -56,6 +64,14 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         if Config.rdbm_install_type == InstallTypes.LOCAL:
             base.argsp.n = True
             packageUtils.check_and_install_packages()
+
+            if Config.rdbm_type == 'mysql':
+                if base.os_type == 'suse':
+                    self.restart('mariadb')
+                    self.enable('mariadb')
+                elif base.clone_type == 'rpm':
+                    self.restart('mysqld')
+
             if Config.rdbm_type == 'mysql':
                 result, conn = self.dbUtils.mysqlconnection(log=False)
                 if not result:
@@ -110,12 +126,11 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
     def create_tables(self, schema_files):
         self.logIt("Creating tables for {}".format(schema_files))
-        qchar = '`' if Config.rdbm_type in ('mysql', 'spanner') else '"'
         tables = []
         all_schema = {}
         all_attribs = {}
         column_add = 'COLUMN ' if Config.rdbm_type == 'spanner' else ''
-        alter_table_sql_cmd = 'ALTER TABLE %s{}%s ADD %s{};' % (qchar, qchar, column_add)
+        alter_table_sql_cmd = 'ALTER TABLE %s{}%s ADD %s{};' % (self.qchar, self.qchar, column_add)
 
         for schema_fn in schema_files:
             schema = base.readJsonFile(schema_fn)
@@ -158,9 +173,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                     continue
 
                 cols_.append(attrname)
-                data_type = self.get_sql_col_type(attrname, sql_tbl_name)
-
-                col_def = '{0}{1}{0} {2}'.format(qchar, attrname, data_type)
+                col_def = self.get_col_def(attrname, sql_tbl_name) 
                 sql_tbl_cols.append(col_def)
 
             if not self.dbUtils.table_exists(sql_tbl_name):
@@ -177,8 +190,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         for attrname in all_attribs:
             attr = all_attribs[attrname]
             if attr.get('sql', {}).get('add_table'):
-                data_type = self.get_sql_col_type(attrname, sql_tbl_name)
-                col_def = '{0}{1}{0} {2}'.format(qchar, attrname, data_type)
+                col_def = self.get_col_def(attrname, sql_tbl_name)
                 sql_cmd = alter_table_sql_cmd.format(attr['sql']['add_table'], col_def)
 
                 if Config.rdbm_type == 'spanner':
@@ -226,7 +238,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                     data_type = attr['type']
 
                     if data_type == 'ARRAY':
-                        #TODO: How to index for ARRAY types in spanner?
+                        # How to index for ARRAY types in spanner?
                         pass
 
                     elif attr_name in tbl_fields:
@@ -329,7 +341,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
             ldif_files.remove(Config.ldif_site)
 
         Config.pbar.progress(self.service_name, "Importing base ldif files to {}".format(Config.rdbm_type), False)
-        if not Config.ldif_base in ldif_files:
+        if Config.ldif_base not in ldif_files:
             if Config.rdbm_type == 'mysql':
                 force = BackendTypes.MYSQL
             elif Config.rdbm_type == 'pgsql':

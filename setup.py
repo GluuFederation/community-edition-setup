@@ -218,7 +218,7 @@ if Config.installed_instance:
                     for attribute in Config.non_setup_properties['service_enable_dict'][service]:
                         setattr(Config, attribute, 'true')
 
-            if 'installCasa' in Config.addPostSetupService and not 'installOxd' in Config.addPostSetupService and not oxdInstaller.installed():
+            if 'installCasa' in Config.addPostSetupService 'installOxd' not in Config.addPostSetupService and not oxdInstaller.installed():
                 Config.addPostSetupService.append('installOxd')
 
 
@@ -228,8 +228,7 @@ if Config.installed_instance:
 
 if argsp.t or argsp.x:
     testDataLoader = TestDataLoader()
-    testDataLoader.passportInstaller = passportInstaller
-    testDataLoader.scimInstaller = scimInstaller
+
 
 if argsp.x:
     print("Loading test data")
@@ -374,10 +373,6 @@ def do_installation():
             propertiesUtils.save_properties()
             time.sleep(2)
 
-            if argsp.t:
-                base.logIt("Loading test data")
-                testDataLoader.load_test_data()
-
             gluuInstaller.post_install_tasks()
 
             for service in gluuProgress.services:
@@ -386,6 +381,10 @@ def do_installation():
                     time.sleep(2)
                     service['object'].stop()
                     service['object'].start()
+
+            if argsp.t:
+                base.logIt("Loading test data")
+                testDataLoader.load_test_data()
 
         gluuProgress.progress(static.COMPLETED)
 

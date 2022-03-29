@@ -19,6 +19,7 @@ class JettyInstaller(BaseInstaller, SetupUtils):
     jetty_app_configuration = base.readJsonFile(os.path.join(paths.DATA_DIR, 'jetty_app_configuration.json'), ordered=True)
 
     def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'jetty'
         self.needdb = False # we don't need backend connection in this class
         self.install_var = 'installJetty'
@@ -120,6 +121,9 @@ class JettyInstaller(BaseInstaller, SetupUtils):
 
         return jettyArchive, jetty_dist
 
+    @property
+    def web_app_xml_fn(self):
+        return os.path.join(self.jetty_base, self.service_name, 'webapps', self.service_name+'.xml')
 
     def installJettyService(self, serviceConfiguration, supportCustomizations=False, supportOnlyPageCustomizations=False):
         serviceName = serviceConfiguration['name']
@@ -130,7 +134,7 @@ class JettyInstaller(BaseInstaller, SetupUtils):
         jettyModules = serviceConfiguration['jetty']['modules']
         jettyModulesList = [m.strip() for m in jettyModules.split(',')]
         if self.jetty_dist_string == 'jetty-home':
-            if not 'cdi-decorate' in jettyModulesList:
+            if 'cdi-decorate' not in jettyModulesList:
                 jettyModulesList.append('cdi-decorate')
             jettyModules = ','.join(jettyModulesList)
 
@@ -350,3 +354,31 @@ class JettyInstaller(BaseInstaller, SetupUtils):
             os.remove(war_file)
             shutil.move(tmp_war_fn+'.zip', war_file)
 
+
+    def add_extra_class(self, class_path, xml_fn=None):
+        if not xml_fn:
+            xml_fn = self.web_app_xml_fn
+        tree = ET.parse(xml_fn)
+        root = tree.getroot()
+        path_list = []
+
+        for app_set in root.findall("Set"):
+            if app_set.get('name') == 'extraClasspath':
+                path_list = [cp.strip() for cp in app_set.text.split(',')]
+                break
+        else:
+            app_set = ET.Element("Set")
+            app_set.set('name', 'extraClasspath')
+            
+            root.append(app_set)
+
+        for cp in class_path.split(','):
+            if os.path.basename(cp) not in ','.join(path_list):
+                path_list.append(cp.strip())
+
+        app_set.text = ','.join(path_list)
+        
+        with open(xml_fn, 'wb') as f:
+            f.write(b'<?xml version="1.0"  encoding="ISO-8859-1"?>\n')
+            f.write(b'<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">\n')
+            f.write(ET.tostring(root, method='xml'))

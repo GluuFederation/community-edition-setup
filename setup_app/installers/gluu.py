@@ -33,6 +33,9 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                 txt += 'countryCode'.ljust(30) + Config.countryCode.rjust(35) + "\n"
                 txt += 'Applications max ram'.ljust(30) + str(Config.application_max_ram).rjust(35) + "\n"
 
+                if Config.ldap_install == InstallTypes.LOCAL and Config.get('opendj_ram'):
+                    txt += 'OpenDJ max ram (MB)'.ljust(30) + str(Config.opendj_ram).rjust(35) + "\n"
+
                 txt += 'Install oxAuth'.ljust(30) + repr(Config.installOxAuth).rjust(35) + "\n"
                 txt += 'Install oxTrust'.ljust(30) + repr(Config.installOxTrust).rjust(35) + "\n"
 
@@ -76,7 +79,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             s = ""
             if not base.argsp.dummy:
                 for key in list(Config.__dict__):
-                    if not key in ('__dict__',):
+                    if key not in ('__dict__',):
                         val = getattr(Config, key)
                         if not inspect.ismethod(val):
                             s = s + "%s\n%s\n%s\n\n" % (key, "-" * len(key), val)
@@ -115,7 +118,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                 p, e = os.path.splitext(f)
                 Config.non_setup_properties['key_export_path'] = p.replace(os.path.sep, '.')
 
-        if (not 'key_gen_path' in Config.non_setup_properties) or (not 'key_export_path' in Config.non_setup_properties):
+        if ('key_gen_path' not in Config.non_setup_properties) or ('key_export_path' not in Config.non_setup_properties):
             self.logIt("Can't determine key generator and/or key exporter path form {}".format(Config.non_setup_properties['oxauth_client_jar_fn']), True, True)
         else:
             self.logIt("Key generator path was determined as {}".format(Config.non_setup_properties['key_export_path']))
@@ -160,10 +163,11 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             # Read source file
             currentSystemProfile = self.readFile(Config.sysemProfile)
 
-            # Write merged file
-            self.backupFile(Config.sysemProfile)
-            resultSystemProfile = "\n".join((currentSystemProfile, renderedSystemProfile))
-            self.writeFile(Config.sysemProfile, resultSystemProfile)
+            if 'Added by Gluu' not in currentSystemProfile:
+                # Write merged file
+                self.backupFile(Config.sysemProfile)
+                resultSystemProfile = "\n".join((currentSystemProfile, renderedSystemProfile))
+                self.writeFile(Config.sysemProfile, resultSystemProfile)
 
             # Fix new file permissions
             self.run([paths.cmd_chmod, '644', Config.sysemProfile])
@@ -332,7 +336,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             hostname_file_content = self.readFile(Config.etc_hosts)
             with open(Config.etc_hosts,'w') as w:
                 for l in hostname_file_content.splitlines():
-                    if not Config.hostname in l.split():
+                    if Config.hostname not in l.split():
                         w.write(l+'\n')
 
                 w.write('{}\t{}\n'.format(Config.ip, Config.hostname))

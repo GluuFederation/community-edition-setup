@@ -9,6 +9,7 @@ oxId: openid
 inum: F0C4
 defaultScope: true
 description: Authenticate using OpenID Connect.
+displayName: authenticate_openid_connect
 oxAttributes: {"spontaneousClientId":"","spontaneousClientScopes":[],"showInConfigurationEndpoint":true}
 oxScopeType: openid
 
@@ -19,6 +20,7 @@ oxId: profile
 inum: 43F1
 defaultScope: false
 description: View your basic profile info.
+displayName: view_profile
 oxAuthClaim: inum=2B29,ou=attributes,o=gluu
 oxAuthClaim: inum=0C85,ou=attributes,o=gluu
 oxAuthClaim: inum=B4B0,ou=attributes,o=gluu
@@ -44,6 +46,7 @@ oxId: email
 inum: 764C
 defaultScope: false
 description: View your email address.
+displayName: view_email_address
 oxAuthClaim: inum=8F88,ou=attributes,o=gluu
 oxAuthClaim: inum=CAE3,ou=attributes,o=gluu
 oxAttributes: {"spontaneousClientId":"","spontaneousClientScopes":[],"showInConfigurationEndpoint":true}
@@ -55,6 +58,7 @@ objectClass: oxAuthCustomScope
 oxId: address
 inum: C17A
 description: View your address.
+displayName: view_address
 defaultScope: false
 oxAuthClaim: inum=27DB,ou=attributes,o=gluu
 oxAuthClaim: inum=2A3D,ou=attributes,o=gluu
@@ -74,6 +78,7 @@ objectClass: oxAuthCustomScope
 oxId: phone
 inum: D491
 description: View your phone number.
+displayName: view_phone_number
 defaultScope: false
 oxAuthClaim: inum=B17A,ou=attributes,o=gluu
 oxAuthClaim: inum=0C18,ou=attributes,o=gluu
@@ -85,6 +90,7 @@ objectClass: oxAuthCustomScope
 objectClass: top
 defaultScope: false
 description: View the client info.
+displayName: view_client
 oxId: clientinfo
 inum: 341A
 oxAuthClaim: inum=2B29,ou=attributes,o=gluu
@@ -98,6 +104,7 @@ objectClass: oxAuthCustomScope
 oxId: user_name
 inum: 10B2
 description: View your local username in the Gluu Server.
+displayName: view_username
 defaultScope: false
 oxAuthClaim: inum=42E0,ou=attributes,o=gluu
 oxAttributes: {"spontaneousClientId":"","spontaneousClientScopes":[],"showInConfigurationEndpoint":true}
@@ -142,6 +149,7 @@ objectClass: oxAuthCustomScope
 oxId: mobile_phone
 inum: 8A01
 description: View your mobile phone number.
+displayName: view_mobile_phone_number
 defaultScope: false
 oxAuthClaim: inum=6DA6,ou=attributes,o=gluu
 oxAttributes: {"spontaneousClientId":"","spontaneousClientScopes":[],"showInConfigurationEndpoint":true}
@@ -152,6 +160,7 @@ objectClass: oxAuthCustomScope
 objectClass: top
 defaultScope: true
 description: View your user permission and roles.
+displayName: view_user_permissions_roles
 oxId: permission
 inum: C4F5
 oxScopeType: dynamic
@@ -164,6 +173,7 @@ objectClass: oxAuthCustomScope
 oxId: offline_access
 inum: C4F6
 description: This scope value requests that an OAuth 2.0 Refresh Token be issued.
+displayName: refresh_token
 defaultScope: true
 oxAttributes: {"spontaneousClientId":"","spontaneousClientScopes":[],"showInConfigurationEndpoint":true}
 oxScopeType: openid
@@ -174,6 +184,7 @@ objectClass: oxAuthCustomScope
 oxId: jans_stat
 inum: C4F7
 description: This scope is required for calling Statistic Endpoint
+displayName: call_static_endpoint
 defaultScope: false
 oxAttributes: {"spontaneousClientId":"","spontaneousClientScopes":[],"showInConfigurationEndpoint":false}
 oxScopeType: openid

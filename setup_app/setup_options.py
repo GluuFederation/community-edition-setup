@@ -33,7 +33,7 @@ def get_setup_options():
     }
 
 
-    if base.argsp.install_local_wrends:
+    if base.argsp.install_local_ldap:
         setupOptions['ldap_install'] = InstallTypes.LOCAL
 
     if base.argsp.local_couchbase:
@@ -122,7 +122,7 @@ def get_setup_options():
             setupOptions['rdbm_install'] = True
             setupOptions['rdbm_install_type'] = InstallTypes.REMOTE
             setupOptions['rdbm_type'] = base.argsp.remote_rdbm
-            if not base.argsp.remote_rdbm == 'spanner':
+            if base.argsp.remote_rdbm != 'spanner':
                 setupOptions['rdbm_host'] = base.argsp.rdbm_host
 
         if getattr(base.argsp, 'local_rdbm', None):
@@ -171,6 +171,9 @@ def get_setup_options():
 
     if base.argsp.disable_local_ldap:
         setupOptions['ldap_install'] = InstallTypes.NONE
+
+    if base.argsp.local_couchbase:
+        setupOptions['cb_install'] = InstallTypes.LOCAL
 
     setupOptions['properties_password'] = base.argsp.properties_password
 

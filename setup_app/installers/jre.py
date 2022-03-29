@@ -14,6 +14,7 @@ from setup_app.installers.base import BaseInstaller
 class JreInstaller(BaseInstaller, SetupUtils):
 
     def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'jre'
         self.needdb = False # we don't need backend connection in this class
         self.install_var = 'installJre'

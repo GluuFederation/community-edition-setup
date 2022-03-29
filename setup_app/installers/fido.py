@@ -3,6 +3,7 @@ import glob
 import shutil
 
 from setup_app import paths
+from setup_app.utils import base
 from setup_app.static import AppType, InstallOption
 from setup_app.config import Config
 from setup_app.installers.jetty import JettyInstaller
@@ -10,6 +11,7 @@ from setup_app.installers.jetty import JettyInstaller
 class FidoInstaller(JettyInstaller):
 
     def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'fido2'
         self.needdb = True
         self.app_type = AppType.SERVICE
@@ -62,12 +64,12 @@ class FidoInstaller(JettyInstaller):
         # Fido2 authenticator certs
         target_dir = os.path.join(self.fido2ConfigFolder, 'authenticator_cert')
         for f in ('yubico-u2f-ca-cert.crt', 'HyperFIDO_CA_Cert_V1.pem', 'HyperFIDO_CA_Cert_V2.pem'):
-            src = os.path.join(Config.install_dir, 'static/auth/fido2/authenticator_cert/', f)
+            src = os.path.join(Config.install_dir, 'static/fido2/authenticator_cert/', f)
             self.copyFile(src, target_dir)
 
         # Fido2 MDS TOC cert
         self.copyFile(
-            os.path.join(Config.install_dir, 'static/auth/fido2/mds_toc_cert/metadata-root-ca.cer'),
+            os.path.join(Config.install_dir, 'static/fido2/mds_toc_cert/metadata-root-ca.cer'),
             os.path.join(self.fido2ConfigFolder, 'mds/cert')
             )
 

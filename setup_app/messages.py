@@ -157,3 +157,5 @@ class msg:
     installation_error = "The following error occurred while installing Gluu Server:"
     exit_post_setup = "No service was selected to install. Exit now?"
     mysql_spanner_beta = "Note MySQL and Spanner supports are in beta phase."
+
+    used_ports = "Port(s) {} should be free to continue. Please check."

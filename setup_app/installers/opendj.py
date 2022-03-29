@@ -17,6 +17,7 @@ from setup_app.installers.base import BaseInstaller
 class OpenDjInstaller(BaseInstaller, SetupUtils):
 
     def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'opendj'
         self.pbar_text = "Installing OpenDJ"
         self.needdb = False # we don't need backend connection in this class
@@ -73,7 +74,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                 ldif_files +=  Config.couchbaseBucketDict[group]['ldif']
 
             Config.pbar.progress(self.service_name, "Importing base ldif files to OpenDJ", False)
-            if not Config.ldif_base in ldif_files:
+            if Config.ldif_base not in ldif_files:
                 self.dbUtils.import_ldif([Config.ldif_base], force=BackendTypes.LDAP)
 
             self.dbUtils.import_ldif(ldif_files)

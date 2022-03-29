@@ -18,9 +18,6 @@ from setup_app.pylib.ldif4.ldif import LDIFWriter
 
 class TestDataLoader(BaseInstaller, SetupUtils):
 
-    passportInstaller = None
-    scimInstaller = None
-
     def __init__(self):
         self.service_name = 'test-data'
         self.pbar_text = "Loading" 
@@ -92,12 +89,11 @@ class TestDataLoader(BaseInstaller, SetupUtils):
             except:
                 pass
             self.dbUtils.ldap_conn.bind()
-        
-        if not self.scimInstaller.installed():
-    
+
+        if not base.current_app.ScimInstaller.installed():
             self.logIt("Scim was not installed. Installing")
             Config.installScimServer = True
-            self.scimInstaller.start_installation()
+            base.current_app.ScimInstaller.start_installation()
 
         self.encode_test_passwords()
 
@@ -183,8 +179,8 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         self.render_templates_folder(self.template_base)
 
         Config.pbar.progress(self.service_name, "Loading test ldif files", False)
-        if not self.passportInstaller.installed():
-            self.passportInstaller.generate_configuration()
+        if not base.current_app.PassportInstaller.installed():
+            base.current_app.PassportInstaller.generate_configuration()
 
         ox_auth_test_ldif = os.path.join(Config.outputFolder, 'test/oxauth/data/oxauth-test-data.ldif')
         ox_auth_test_user_ldif = os.path.join(Config.outputFolder, 'test/oxauth/data/oxauth-test-data-user.ldif')
@@ -272,7 +268,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                 if 'gluuCustomPerson' in objcl.tokens['NAME']:
                     may_list = list(objcl.tokens['MAY'])
                     for a in ('scimCustomFirst','scimCustomSecond', 'scimCustomThird'):
-                        if not a in may_list:
+                        if a not in may_list:
                             may_list.append(a)
 
                     objcl.tokens['MAY'] = tuple(may_list)
@@ -331,7 +327,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                     self.logIt("Ldap modify operation failed {}".format(str(self.dbUtils.ldap_conn.result)), True)
 
         elif self.dbUtils.moddb in (static.BackendTypes.SPANNER, static.BackendTypes.MYSQL, static.BackendTypes.PGSQL):
-            # TODO: create additional indexes for rdbm
+            # Create additional indexes for rdbm
             pass
 
         else:
@@ -368,14 +364,22 @@ class TestDataLoader(BaseInstaller, SetupUtils):
 
         self.restart('oxauth')
 
+
+        if Config.installScimServer:
+            self.restart('scim')
+
+        if Config.installFido2:
+            self.restart('fido2')
+
+
         # Prepare for tests run
         #install_command, update_command, query_command, check_text = self.get_install_commands()
         #self.run_command(install_command.format('git'))
         #self.run([self.cmd_mkdir, '-p', 'oxAuth/Client/profiles/ce_test'])
         #self.run([self.cmd_mkdir, '-p', 'oxAuth/Server/profiles/ce_test'])
-        # Todo: Download and unzip file test_data.zip from CE server.
-        # Todo: Copy files from unziped folder test/oxauth/client/* into oxAuth/Client/profiles/ce_test
-        # Todo: Copy files from unziped folder test/oxauth/server/* into oxAuth/Server/profiles/ce_test
+        # Download and unzip file test_data.zip from CE server.
+        # Copy files from unziped folder test/oxauth/client/* into oxAuth/Client/profiles/ce_test
+        # Copy files from unziped folder test/oxauth/server/* into oxAuth/Server/profiles/ce_test
         #self.run([self.cmd_keytool, '-import', '-alias', 'seed22.gluu.org_httpd', '-keystore', 'cacerts', '-file', '%s/httpd.crt' % self.certFolder, '-storepass', 'changeit', '-noprompt'])
         #self.run([self.cmd_keytool, '-import', '-alias', 'seed22.gluu.org_opendj', '-keystore', 'cacerts', '-file', '%s/opendj.crt' % self.certFolder, '-storepass', 'changeit', '-noprompt'])
  
