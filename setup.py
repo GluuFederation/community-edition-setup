@@ -39,6 +39,12 @@ packageUtils.check_and_install_packages()
 
 from setup_app.messages import msg
 from setup_app.config import Config
+
+# set profile
+if argsp.profile == 'DISA-STIG' or os.path.exists(os.path.join(paths.INSTALL_DIR, 'disa-stig')):
+    Config.profile = static.SetupProfiles.DISA_STIG
+
+
 from setup_app.utils.progress import gluuProgress
 
 
@@ -129,10 +135,11 @@ gluuInstaller.initialize()
 if not GSA and not os.path.exists(Config.gluu_properties_fn):
     print()
     print("Installing Gluu Server...\n\nFor more info see:\n  {}  \n  {}\n".format(paths.LOG_FILE, paths.LOG_ERROR_FILE))
-    print("Detected OS     :  {} {} {}".format('snap' if base.snap else '', base.os_type, base.os_version))
+    print("Detected OS     :  {}".format('snap ' if base.snap else '' + base.os_type + ' ' + base.os_version))
     print("Gluu Version    :  {}".format(Config.oxVersion))
     print("Detected init   :  {}".format(base.os_initdaemon))
     print("Detected Apache :  {}".format(base.determineApacheVersion()))
+    print("Profile         :  {}".format(Config.profile.upper()))
     print()
 
 setup_loaded = {}
@@ -287,10 +294,6 @@ def prepare_for_installation():
     gluuInstaller.encode_passwords()
 
     oxtrustInstaller.generate_api_configuration()
-
-    Config.ldapCertFn = Config.opendj_cert_fn
-    Config.ldapTrustStoreFn = Config.opendj_p12_fn
-    Config.encoded_ldapTrustStorePass = Config.encoded_opendj_p12_pass
     Config.oxTrustConfigGeneration = 'true' if Config.installSaml else 'false'
 
     gluuInstaller.prepare_base64_extension_scripts()
@@ -325,7 +328,7 @@ def install_services():
         if (Config.installed_instance and instance.install_var in Config.addPostSetupService) or (not Config.installed_instance and getattr(Config, instance.install_var)):
             instance.start_installation()
 
-    if not Config.installed_instance:
+    if not Config.installed_instance and Config.profile != static.SetupProfiles.DISA_STIG:
         # this will install only base
         radiusInstaller.start_installation()
 
@@ -338,6 +341,10 @@ def post_install():
     time.sleep(2)
 
     gluuInstaller.post_install_tasks()
+
+    if Config.profile == static.SetupProfiles.DISA_STIG:
+        gluuInstaller.stop('fapolicyd')
+        gluuInstaller.start('fapolicyd')
 
     for service in gluuProgress.services:
         if service['app_type'] == static.AppType.SERVICE:
@@ -371,7 +378,8 @@ def do_installation():
                 jreInstaller.start_installation()
                 jettyInstaller.start_installation()
                 jythonInstaller.start_installation()
-                nodeInstaller.start_installation()
+                if argsp.profile != 'DISA-STIG':
+                    nodeInstaller.start_installation()
 
             if not base.argsp.dummy:
                 prepare_for_installation()

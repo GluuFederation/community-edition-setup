@@ -7,10 +7,10 @@ import time
 from xml.etree import ElementTree
 
 from setup_app import paths
+from setup_app.static import AppType, InstallOption, SetupProfiles
 from setup_app.utils import base
-from setup_app.static import AppType, InstallOption
 from setup_app.config import Config
-from setup_app.utils.properties_utils import PropertiesUtils
+from setup_app.utils.properties_utils import propertiesUtils
 from setup_app.installers.jetty import JettyInstaller
 
 
@@ -58,7 +58,12 @@ class CasaInstaller(JettyInstaller):
         jsmpp_package = base.determine_package(os.path.join(Config.distGluuFolder, 'jsmpp-*.jar'))
         self.copyFile(jsmpp_package, jettyServiceOxAuthCustomLibsPath)
 
-        self.run([paths.cmd_chown, '-R', 'jetty:jetty', jettyServiceOxAuthCustomLibsPath])
+        if Config.profile == SetupProfiles.DISA_STIG:
+            lib_user_group = '{}:{}'.format(base.current_app.OxauthInstaller.service_name.lower(), Config.gluu_group)
+        else:
+            lib_user_group = '{}:{}'.format(Config.jetty_user, Config.gluu_group)
+
+        self.run([paths.cmd_chown, '-R', lib_user_group, jettyServiceOxAuthCustomLibsPath])
 
         if not base.argsp.dummy:
 
@@ -72,7 +77,8 @@ class CasaInstaller(JettyInstaller):
 
             self.add_extra_class(','.join(extra_classpath_list), oxauth_xml_fn)
 
-            self.import_oxd_certificate()
+            if Config.profile != SetupProfiles.DISA_STIG:
+                self.import_oxd_certificate()
 
         self.enable('casa')
 
@@ -82,6 +88,8 @@ class CasaInstaller(JettyInstaller):
             self.run(['cp', script_fn, self.pylib_folder])
 
     def render_import_templates(self, import_script=True):
+
+        Config.templateRenderingDict['oxd_protocol'] = 'http' if Config.profile == SetupProfiles.DISA_STIG else 'https'
         scripts_template = os.path.join(self.templates_folder, os.path.basename(self.ldif_scripts))
         extensions = base.find_script_names(scripts_template)
         self.prepare_base64_extension_scripts(extensions=extensions)
@@ -105,7 +113,6 @@ class CasaInstaller(JettyInstaller):
         self.start('oxd-server')
 
         # check oxd status for 25 seconds:
-        propertiesUtils = PropertiesUtils()
         for i in range(5):
             self.logIt("Checking oxd-server status. Try {}".format(i+1))
             if propertiesUtils.check_oxd_server(Config.oxd_server_https, log_error=False):

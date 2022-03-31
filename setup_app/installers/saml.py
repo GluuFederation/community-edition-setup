@@ -4,7 +4,7 @@ import shutil
 
 from setup_app import paths
 from setup_app.static import PersistenceType
-from setup_app.static import AppType, InstallOption
+from setup_app.static import AppType, InstallOption, SetupProfiles
 from setup_app.config import Config
 from setup_app.utils import base
 from setup_app.installers.jetty import JettyInstaller
@@ -35,7 +35,8 @@ class SamlInstaller(JettyInstaller):
         self.ldif_oxidp = os.path.join(self.output_folder, 'oxidp.ldif')
         self.oxidp_config_json = os.path.join(self.output_folder, 'oxidp-config.json')
 
-        self.shibJksFn = os.path.join(Config.certFolder, 'shibIDP.jks')
+        self.shib_data_store_fn = os.path.join(Config.certFolder, self.get_keystore_fn('shibIDP'))
+
         self.shibboleth_version = 'v3'
 
         self.data_source_properties = os.path.join(self.output_folder, 'datasource.properties')
@@ -64,6 +65,10 @@ class SamlInstaller(JettyInstaller):
         self.idp_encryption_crt_file = os.path.join(Config.certFolder, 'idp-encryption.crt')
         self.idp_signing_crt_file = os.path.join(Config.certFolder, 'idp-signing.crt')
 
+        Config.templateRenderingDict['sealer_data_store_fn'] = self.get_keystore_fn('sealer')
+        Config.templateRenderingDict['shib_data_store_fn'] = self.shib_data_store_fn
+
+
     def install(self):
         self.logIt("Install SAML Shibboleth IDP v3...")
 
@@ -80,7 +85,7 @@ class SamlInstaller(JettyInstaller):
             self.gen_cert('idp-signing', Config.shibJksPass, 'jetty')
 
             self.gen_keystore('shibIDP',
-                              self.shibJksFn,
+                              self.shib_data_store_fn,
                               Config.shibJksPass,
                               self.shib_key_file,
                               self.shib_crt_file
@@ -122,7 +127,7 @@ class SamlInstaller(JettyInstaller):
             # there is one throuble with Shibboleth IDP 3.x - it doesn't load keystore from /etc/certs. It accepts %{idp.home}/credentials/sealer.jks  %{idp.home}/credentials/sealer.kver path format only.
             cmd = [Config.cmd_java,'-classpath', '"{}"'.format(os.path.join(self.idp3Folder,'webapp/WEB-INF/lib/*')),
                 'net.shibboleth.utilities.java.support.security.BasicKeystoreKeyStrategyTool',
-                '--storefile', os.path.join(self.idp3Folder,'credentials/sealer.jks'),
+                '--storefile', os.path.join(self.idp3Folder,'credentials',  Config.templateRenderingDict['sealer_data_store_fn']),
                 '--versionfile',  os.path.join(self.idp3Folder, 'credentials/sealer.kver'),
                 '--alias secret',
                 '--storepass', Config.shibJksPass]
@@ -135,7 +140,8 @@ class SamlInstaller(JettyInstaller):
             self.saml_couchbase_settings()
 
         self.saml_persist_configurations()
-        self.run([paths.cmd_chown, '-R', 'jetty:jetty', self.idp3Folder])
+        user_group = 'identity:gluu' if Config.profile == SetupProfiles.DISA_STIG else 'jetty:gluu'
+        self.run([paths.cmd_chown, '-R', user_group, self.idp3Folder])
         self.enable()
 
     def unpack_idp3(self):

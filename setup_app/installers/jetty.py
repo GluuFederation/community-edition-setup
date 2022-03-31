@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 
 from setup_app import paths
 from setup_app.utils import base
-from setup_app.static import AppType, InstallOption, InstallTypes
+from setup_app.static import AppType, InstallOption, InstallTypes, SetupProfiles
 from setup_app.config import Config
 from setup_app.utils.setup_utils import SetupUtils
 from setup_app.installers.base import BaseInstaller
@@ -59,15 +59,18 @@ class JettyInstaller(BaseInstaller, SetupUtils):
 
     def install(self):
 
-        self.createUser('jetty', self.jetty_user_home)
-        self.addUserToGroup('gluu', 'jetty')
+        self.createUser(Config.jetty_user, self.jetty_user_home)
+        self.addUserToGroup(Config.gluu_user, Config.jetty_user)
         self.run([paths.cmd_mkdir, '-p', self.jetty_user_home_lib])
 
         jettyArchive, jetty_dist = self.get_jetty_info()
 
         jettyTemp = os.path.join(jetty_dist, 'temp')
         self.run([paths.cmd_mkdir, '-p', jettyTemp])
-        self.run([paths.cmd_chown, '-R', 'jetty:jetty', jettyTemp])
+        self.run([paths.cmd_chown, '-R', Config.user_group, jettyTemp])
+        self.run([paths.cmd_chown, '-R', Config.user_group, jetty_dist])
+        self.run([paths.cmd_chmod, '775', jettyTemp])
+
 
         try:
             self.logIt("Extracting %s into /opt/jetty" % jettyArchive)
@@ -82,20 +85,27 @@ class JettyInstaller(BaseInstaller, SetupUtils):
 
         self.applyChangesInFiles(self.app_custom_changes['jetty'])
 
-        self.run([paths.cmd_chown, '-R', 'jetty:jetty', jettyDestinationPath])
-        self.run([paths.cmd_chown, '-h', 'jetty:jetty', self.jetty_home])
+        self.run([paths.cmd_chown, '-R', Config.user_group, jetty_dist])
+        self.run([paths.cmd_chown, '-R', Config.user_group, jettyDestinationPath])
+        self.run([paths.cmd_chown, '-h', Config.user_group, self.jetty_home])
+
+        self.run([paths.cmd_chmod, '-R', "u+rwX,g+rwX,o-rwX", jetty_dist])
+        self.run([paths.cmd_chmod, '-R', "u+rwX,g+rwX,o-rwX", jettyDestinationPath])
+
+        self.logIt("jetty_dist = %s" % jetty_dist)
+        self.logIt("jettyDestinationPath = %s" % jettyDestinationPath)
 
         self.run([paths.cmd_mkdir, '-p', self.jetty_base])
-        self.run([paths.cmd_chown, '-R', 'jetty:jetty', self.jetty_base])
+        self.run([paths.cmd_chown, '-R', Config.user_group, self.jetty_base])
 
         jettyRunFolder = '/var/run/jetty'
         self.run([paths.cmd_mkdir, '-p', jettyRunFolder])
         self.run([paths.cmd_chmod, '-R', '775', jettyRunFolder])
-        self.run([paths.cmd_chgrp, '-R', 'jetty', jettyRunFolder])
+        self.run([paths.cmd_chgrp, '-R', Config.gluu_group, jettyRunFolder])
 
         self.run(['rm', '-rf', '/opt/jetty/bin/jetty.sh'])
         self.copyFile("%s/system/initd/jetty.sh" % Config.staticFolder, "%s/bin/jetty.sh" % self.jetty_home)
-        self.run([paths.cmd_chown, '-R', 'jetty:jetty', "%s/bin/jetty.sh" % self.jetty_home])
+        self.run([paths.cmd_chown, '-R', Config.user_group, "%s/bin/jetty.sh" % self.jetty_home])
         self.run([paths.cmd_chmod, '-R', '755', "%s/bin/jetty.sh" % self.jetty_home])
 
     def get_jetty_info(self):
@@ -144,8 +154,13 @@ class JettyInstaller(BaseInstaller, SetupUtils):
             # we need this, because this method may be called externally
             jettyArchive, jetty_dist = self.get_jetty_info()
 
-        self.logIt("Preparing %s service base folders" % serviceName)
-        self.run([paths.cmd_mkdir, '-p', jettyServiceBase])
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            Config.templateRenderingDict['service_user'] = 'identity' if serviceName == 'idp' else serviceName
+        else:
+            Config.templateRenderingDict['service_user'] = Config.jetty_user
+
+        self.create_service_user(Config.templateRenderingDict['service_user'])
 
         # Create ./ext/lib folder for custom libraries only if installed Jetty "ext" module
         if "ext" in jettyModulesList:
@@ -178,7 +193,7 @@ class JettyInstaller(BaseInstaller, SetupUtils):
 
         jettyServiceConfiguration = '%s/jetty/%s' % (Config.outputFolder, serviceName)
         self.copyFile(jettyServiceConfiguration, Config.osDefault)
-        self.run([paths.cmd_chown, 'root:root', os.path.join(Config.osDefault, serviceName)])
+        self.run([paths.cmd_chown, '{}:{}'.format(Config.templateRenderingDict['service_user'], Config.gluu_group), os.path.join(Config.osDefault, serviceName)])
 
         # Render web eources file
         try:
@@ -222,7 +237,23 @@ class JettyInstaller(BaseInstaller, SetupUtils):
             if not os.path.exists(run_dir):
                 self.run([paths.cmd_mkdir, '-p', run_dir])
 
-        self.run([paths.cmd_chown, '-R', 'jetty:jetty', jettyServiceBase])
+        self.run([paths.cmd_chown, '{}:{}'.format(Config.templateRenderingDict['service_user'], Config.gluu_group), os.path.join(Config.osDefault, serviceName)])
+
+        self.render_unit_file(serviceName)
+
+        jettyServiceWebapps = os.path.join(jettyServiceBase, 'webapps')
+        target_war_fn = os.path.join(jettyServiceWebapps, os.path.basename(self.source_files[0][0]))
+        self.copyFile(self.source_files[0][0], jettyServiceWebapps)
+        self.war_for_jetty10(target_war_fn)
+
+        self.run([paths.cmd_chown, '-R', '{}:{}'.format(Config.templateRenderingDict['service_user'], Config.gluu_group), jettyServiceBase])
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            additional_rules = []
+            if serviceName == base.current_app.OxtrustInstaller.service_name:
+                additional_rules.append('allow perm=any uid=%(uid)s : dir={}'.format(base.current_app.SamlInstaller.idp3Folder))
+            self.fapolicyd_access(Config.templateRenderingDict['service_user'], jettyServiceBase, additional_rules)
+
 
     def set_jetty_param(self, jettyServiceName, jetty_param, jetty_val, inifile='start.ini'):
 

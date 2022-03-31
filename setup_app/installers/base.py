@@ -2,14 +2,17 @@ import os
 import uuid
 import inspect
 
+from pathlib import Path
 from distutils.version import LooseVersion
 
 from setup_app import paths
+from setup_app import static
 from setup_app.utils import base
 from setup_app.config import Config
 from setup_app.utils.db_utils import dbUtils
 from setup_app.utils.progress import gluuProgress
 from setup_app.utils.printVersion import get_war_info
+
 
 class BaseInstaller:
     needdb = True
@@ -32,6 +35,14 @@ class BaseInstaller:
         if not base.snap:
             self.create_user()
 
+        if not hasattr(self, 'service_user'):
+            if Config.profile == static.SetupProfiles.DISA_STIG:
+                self.service_user = self.service_name.lower()
+            else:
+                self.service_user = Config.jetty_user
+
+        self.profile_templates()
+
         self.create_folders()
 
         self.install()
@@ -44,6 +55,26 @@ class BaseInstaller:
 
             self.render_import_templates()
             self.update_backend()
+
+        if Config.profile == static.SetupProfiles.DISA_STIG and self.service_name != 'jetty' and hasattr(self, 'jetty_home'):
+            self.run([paths.cmd_chown, '-R', '{}:{}'.format(self.service_user, Config.gluu_group), os.path.join(self.jetty_base, self.service_user)])
+
+
+    def profile_templates(self, temp_dir=None, recursive=False):
+        if not temp_dir:
+            if not hasattr(self, 'templates_folder'):
+                return
+            temp_dir = self.templates_folder
+
+        glob_param = '*.' + Config.profile
+        if recursive:
+            glob_param = '**/' + glob_param
+
+        for temp_p in Path(temp_dir).glob(glob_param):
+            target_p = temp_p.with_suffix('')
+            base.logIt("Renaming {} to {}".format(temp_p, target_p))
+            temp_p.rename(target_p)
+
 
     def update_rendering_dict(self):
         mydict = {}

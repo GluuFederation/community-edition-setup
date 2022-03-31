@@ -12,7 +12,7 @@ class msg:
     DBRDBMForm_label = "RDBM Options"
     DBSpannerForm_label = "Spanner Options"
 
-    version_label = 'Gluu CE'
+    version_label = 'Gluu {}'
     decription = "Use setup.py to configure your Gluu Server and to add initial data required for oxAuth and oxTrust to start. If setup.properties is found in this folder, these properties will automatically be used instead of the interactive setup."
 
     os_type_label = "Detected OS"

@@ -79,10 +79,10 @@ class ScimInstaller(JettyInstaller):
             if os.path.exists(jks_fn):
                 self.backupFile(jks_fn, move=True)
 
-        Config.scim_rs_client_jwks = self.gen_openid_jwks_jks_keys(self.scim_rs_client_jks_fn, Config.scim_rs_client_jks_pass)
+        Config.scim_rs_client_jwks = self.gen_openid_data_store_keys(self.scim_rs_client_jks_fn, Config.scim_rs_client_jks_pass)
         Config.templateRenderingDict['scim_rs_client_base64_jwks'] = self.generate_base64_string(Config.scim_rs_client_jwks, 1)
 
-        Config.scim_rp_client_jwks = self.gen_openid_jwks_jks_keys(self.scim_rp_client_jks_fn, Config.scim_rp_client_jks_pass)
+        Config.scim_rp_client_jwks = self.gen_openid_data_store_keys(self.scim_rp_client_jks_fn, Config.scim_rp_client_jks_pass)
         Config.templateRenderingDict['scim_rp_client_base64_jwks'] = self.generate_base64_string(Config.scim_rp_client_jwks, 1)
 
         self.copyFile(self.scim_rp_client_jks_fn, Config.certFolder)

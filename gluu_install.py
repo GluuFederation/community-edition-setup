@@ -13,6 +13,7 @@ import locale
 import re
 import shlex
 import subprocess
+from pathlib import Path
 from urllib import request
 from urllib.parse import urljoin
 
@@ -29,8 +30,9 @@ if '-a' in sys.argv:
 parser.add_argument('-n', help="No prompt", action='store_true')
 parser.add_argument('--no-setup', help="Do not launch setup", action='store_true')
 parser.add_argument('--dist-server-base', help="Download server", default='https://jenkins.gluu.org/maven')
+parser.add_argument('-profile', help="Setup profile", choices=['CE', 'DISA-STIG'], default='CE')
 parser.add_argument('--setup-branch', help="Gluu CE setup github branch", default="master")
-
+parser.add_argument('-c', help="Don't download files that exists on disk", action='store_true')
 
 argsp = parser.parse_args()
 
@@ -39,10 +41,11 @@ maven_root = '/'.join(maven_base.split('/')[:-1]).rstrip('/')
 
 
 cur_dir = os.path.dirname(os.path.realpath(__file__))
-gluu_app_dir = '/opt/dist/gluu'
-app_dir = '/opt/dist/app'
+opt_dist_dir = '/var/gluu/dist' if argsp.profile == 'DISA-STIG' else '/opt/dist/'
+gluu_app_dir = os.path.join(opt_dist_dir, 'gluu')
+app_dir = os.path.join(opt_dist_dir, 'app')
 ces_dir = '/install/community-edition-setup'
-scripts_dir = '/opt/dist/scripts'
+scripts_dir = os.path.join(opt_dist_dir, 'scripts')
 certs_dir = '/etc/certs'
 
 os_type, os_version = '', ''
@@ -155,7 +158,7 @@ if missing_packages:
 if not os.path.exists(scripts_dir):
     os.makedirs(scripts_dir)
 
-
+oxauth_war_fn = os.path.join(gluu_app_dir, 'oxauth.war')
 jetty_home = '/opt/gluu/jetty'
 services = ['casa.service', 'identity.service', 'opendj.service', 'oxauth.service', 'passport.service', 'fido2.service', 'idp.service', 'oxd-server.service', 'scim.service']
 app_versions = {
@@ -166,11 +169,11 @@ app_versions = {
     "OX_VERSION": "4.4.0", 
     "PASSPORT_VERSION": "master", 
     "JYTHON_VERSION": "2.7.3",
-    "OPENDJ_VERSION": "4.4.12",
+    "OPENDJ_VERSION": "4.4.13",
     "SETUP_BRANCH": argsp.setup_branch,
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7",
-    "APPS_GIT_BRANCH": "master"
+    "APPS_GIT_BRANCH": "master",
     }
 
 jetty_dist_string = 'jetty-distribution'
@@ -238,8 +241,15 @@ def download(url, target_fn):
     pardir, fn = os.path.split(dst)
     if not os.path.exists(pardir):
         os.makedirs(pardir)
-    print("Downloading", url, "to", dst)
-    request.urlretrieve(url, dst)
+
+    with request.urlopen(url) as resp:
+        if argsp.c and os.path.exists(dst) and resp.length == os.stat(dst).st_size:
+            print("File", dst, "exists. Passing")
+            return
+
+        print("Downloading", url, "to", dst)
+        with open(dst, 'wb') as out_file :
+            shutil.copyfileobj(resp, out_file)
 
 
 def download_gcs():
@@ -286,7 +296,7 @@ def package_oxd():
     oxd_tmp_root = '/tmp/{}'.format(os.urandom(5).hex())
     oxd_tmp_dir = os.path.join(oxd_tmp_root, 'oxd-server')
     download(maven_base + '/org/gluu/oxd-server/{0}{1}/oxd-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), oxd_zip_fn)
-    download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/{}/package/systemd/oxd-server.service'.format(app_versions['APPS_GIT_BRANCH']), os.path.join(oxd_tmp_dir, 'oxd-server.service'))
+    download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/version_{}/package/systemd/oxd-server.service'.format(app_versions['OX_VERSION']), os.path.join(oxd_tmp_dir, 'oxd-server.service'))
     cmd = 'unzip -qqo {} -d {}'.format(oxd_zip_fn, oxd_tmp_dir)
     print("Excuting", cmd)
     os.system(cmd)
@@ -302,7 +312,23 @@ def package_oxd():
     shutil.rmtree(oxd_tmp_root)
 
 if not argsp.u:
-    download('https://corretto.aws/downloads/resources/{0}/amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION']), os.path.join(app_dir, 'amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION'])))
+    if argsp.profile != 'DISA-STIG':
+        download('https://corretto.aws/downloads/resources/{0}/amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION']), os.path.join(app_dir, 'amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION'])))
+        download('https://nodejs.org/dist/{0}/node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION']), os.path.join(app_dir, 'node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION'])))
+        download(maven_root + '/npm/passport/passport-{}.tgz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport.tgz'))
+        download(maven_root + '/npm/passport/passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION'])))
+        download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'super-gluu-radius-server.jar'))
+        download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'gluu-radius-libs.zip'))
+        download('https://www.apple.com/certificateauthority/Apple_WebAuthn_Root_CA.pem', os.path.join(app_dir, 'Apple_WebAuthn_Root_CA.pem'))
+        download(maven_base + '/org/gluu/oxauth-server/{0}{1}/oxauth-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), oxauth_war_fn)
+    else:
+        pass
+        download('https://maven.gluu.org/maven/org/gluu/oxauth-client-jar-without-provider-dependencies/4.4.0-SNAPSHOT/oxauth-client-jar-without-provider-dependencies-4.4.0-SNAPSHOT.jar', os.path.join(gluu_app_dir, 'oxauth-client-jar-without-provider-dependencies.jar'))
+        download('https://maven.gluu.org/maven/org/gluu/oxauth-server-fips/4.4.0-SNAPSHOT/oxauth-server-fips-4.4.0-SNAPSHOT.war', oxauth_war_fn)
+
+
+    download(maven_base + '/org/gluu/scim-server/{0}{1}/scim-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'scim.war'))
+    download(maven_base + '/org/gluu/fido2-server/{0}{1}/fido2-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'fido2.war'))
     download('https://repo1.maven.org/maven2/org/eclipse/jetty/{1}/{0}/{1}-{0}.tar.gz'.format(app_versions['JETTY_VERSION'], jetty_dist_string), os.path.join(app_dir,'{1}-{0}.tar.gz'.format(app_versions['JETTY_VERSION'], jetty_dist_string)))
     download(maven_base + '/org/gluufederation/jython-installer/{0}/jython-installer-{0}.jar'.format(app_versions['JYTHON_VERSION']), os.path.join(app_dir, 'jython-installer-{0}.jar'.format(app_versions['JYTHON_VERSION'])))
     download('https://nodejs.org/dist/{0}/node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION']), os.path.join(app_dir, 'node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION'])))
@@ -318,8 +344,7 @@ if not argsp.u:
     download('https://raw.githubusercontent.com/GluuFederation/casa/{}/plugins/account-linking/extras/login.xhtml'.format(app_versions['APPS_GIT_BRANCH']), os.path.join(gluu_app_dir,'login.xhtml'))
     download('https://raw.githubusercontent.com/GluuFederation/casa/{}/plugins/account-linking/extras/casa.py'.format(app_versions['APPS_GIT_BRANCH']), os.path.join(gluu_app_dir,'casa.py'))
     download('https://raw.githubusercontent.com/GluuFederation/gluu-snap/master/facter/facter', os.path.join(gluu_app_dir,'facter'))
-    download(maven_base + '/org/gluu/scim-server/{0}{1}/scim-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'scim.war'))
-    download(maven_base + '/org/gluu/fido2-server/{0}{1}/fido2-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'fido2.war'))
+
     download('https://raw.githubusercontent.com/GluuFederation/oxd/{}/debian/oxd-server'.format(app_versions['APPS_GIT_BRANCH']), os.path.join(gluu_app_dir,'oxd-server-start.sh'))
     download('https://github.com/GluuFederation/community-edition-setup/archive/{}.zip'.format(app_versions['SETUP_BRANCH']), os.path.join(gluu_app_dir,'community-edition-setup.zip'))
     download(maven_root + '/npm/passport/passport-{}.tgz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport.tgz'))
@@ -352,6 +377,22 @@ def extract_from_ces(src, target_fn):
         os.makedirs(p)
     with open(dst, 'wb') as w:
         w.write(content)
+
+
+def extract_file(zip_fn, source, target, ren=False):
+    zip_obj = zipfile.ZipFile(zip_fn, "r")
+    for member in zip_obj.infolist():
+        if not member.is_dir() and member.filename.endswith(source):
+            if ren:
+                target_p = Path(target)
+            else:
+                p = Path(member.filename)
+                target_p = Path(target).joinpath(p.name)
+                if not target_p.parent.exists():
+                    target_p.parent.mkdir(parents=True)
+            target_p.write_bytes(zip_obj.read(member))
+            break
+    zip_obj.close()
 
 extract_from_ces('templates/jetty.conf.tmpfiles.d', 'jetty.conf')
 shutil.copy(os.path.join(gluu_app_dir, 'facter'), '/usr/bin')
@@ -421,8 +462,11 @@ else:
     source_dir = os.path.join(target_dir, ces_par_dir)
     ces_zip.close()
 
-    cmd = 'cp -r -f {}* /install/community-edition-setup'.format(source_dir)
+    cmd = 'cp -r -f {}* {}'.format(source_dir, ces_dir)
     os.system(cmd)
+
+    if argsp.profile == 'DISA-STIG':
+        open(os.path.join(ces_dir, 'disa-stig'), 'w').close()
 
     shutil.rmtree(target_dir)
 
@@ -438,6 +482,10 @@ else:
             os.path.join(ces_dir, 'setup_app/pylib/sqlalchemy')
             )
     shutil.rmtree(tmp_dir)
+
+    if argsp.profile == 'DISA-STIG':
+        for jar_fn in ('bc-fips-1.0.2.1.jar', 'bcpkix-fips-1.0.5.jar'):
+            extract_file(oxauth_war_fn, jar_fn, app_dir)
 
     os.chmod('/install/community-edition-setup/setup.py', 33261)
 

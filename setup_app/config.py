@@ -2,11 +2,13 @@ import re
 import os
 import time
 import pprint
+import shutil
 import inspect
+from pathlib import Path
 from collections import OrderedDict
 
 from setup_app.paths import INSTALL_DIR
-from setup_app.static import InstallTypes
+from setup_app.static import InstallTypes, SetupProfiles
 from setup_app.utils.printVersion import get_war_info
 from setup_app.utils import base
 
@@ -31,6 +33,7 @@ class Config:
     jetty_base = os.path.join(gluuOptFolder, 'jetty')
     installed_instance = False
     maven_root = 'https://jenkins.gluu.org'
+    profile = SetupProfiles.CE
 
     @classmethod
     def get(self, attr, default=None):
@@ -71,11 +74,50 @@ class Config:
         self.install_dir = install_dir
         self.thread_queue = None
         self.jetty_user = 'jetty'
+        self.gluu_user = 'gluu'
+        self.gluu_group = 'gluu'
+        self.use_existing_java = base.argsp.j
+        self.system_dir = '/etc/systemd/system'
+        self.user_group = '{}:{}'.format(self.jetty_user, self.gluu_group)
+        self.default_store_type = 'pkcs12'
+        self.opendj_truststore_format = 'pkcs12'
+        self.default_client_test_store_type = 'pkcs12'
 
+        if self.profile == SetupProfiles.DISA_STIG:
+            self.distFolder = '/var/gluu/dist'
+
+        self.distAppFolder = os.path.join(self.distFolder, 'app')
+        self.distGluuFolder = os.path.join(self.distFolder, 'gluu')
+        self.distTmpFolder = os.path.join(self.distFolder, 'tmp')
         self.ldapBinFolder = os.path.join(self.ldapBaseFolder, 'bin')
+
         if base.snap:
             self.ldapBaseFolder = os.path.join(base.snap_common, 'opendj')
             self.jetty_user = 'root'
+
+        if self.profile == SetupProfiles.DISA_STIG:
+            self.use_existing_java = True
+            self.cmd_java = shutil.which('java')
+            java_path = Path(self.cmd_java)
+            self.jre_home = Path(self.cmd_java).resolve().parent.parent.as_posix()
+            self.cmd_keytool = shutil.which('keytool')
+            self.cmd_jar = shutil.which('jar')
+            os.environ['GLUU_SERVICES'] = 'installHttpd installOxd installCasa installScimServer installFido2'
+            self.default_store_type = 'bcfks'
+            self.opendj_truststore_format = base.argsp.opendj_keystore_type
+            self.default_client_test_store_type = 'pkcs12'
+            self.bc_fips_jar = os.path.join(self.distAppFolder, 'bc-fips-1.0.2.1.jar')
+            self.bcpkix_fips_jar = os.path.join(self.distAppFolder, 'bcpkix-fips-1.0.5.jar')
+
+        else:
+            self.profile = SetupProfiles.CE
+            self.cmd_java = os.path.join(self.jre_home, 'bin/java')
+            self.cmd_keytool = os.path.join(self.jre_home, 'bin/keytool')
+            self.cmd_jar = os.path.join(self.jre_home, 'bin/jar')
+
+
+        os.environ['OPENDJ_JAVA_HOME'] =  self.jre_home
+
 
         #create dummy progress bar that logs to file in case not defined
         progress_log_file = os.path.join(self.install_dir, 'logs', 'progress-bar.log')
@@ -98,10 +140,6 @@ class Config:
 
         self.properties_password = None
         self.noPrompt = False
-
-        self.distAppFolder = os.path.join(self.distFolder, 'app')
-        self.distGluuFolder = os.path.join(self.distFolder, 'gluu')
-        self.distTmpFolder = os.path.join(self.distFolder, 'tmp')
 
         self.downloadWars = None
         self.templateRenderingDict = {
@@ -159,7 +197,7 @@ class Config:
         self.installGluu = True
         self.installJre = True
         self.installJetty = True
-        self.installNode = True
+        self.installNode = self.profile == SetupProfiles.CE
         self.installJython = True
         self.installOxAuth = True
         self.installOxTrust = True
@@ -216,14 +254,16 @@ class Config:
 
         self.extensionFolder = os.path.join(self.staticFolder, 'extension')
 
-        self.encoded_ldapTrustStorePass = None
-
-        self.ldapCertFn = self.opendj_cert_fn = os.path.join(self.certFolder, 'opendj.crt')
-        self.ldapTrustStoreFn = self.opendj_p12_fn = os.path.join(self.certFolder, 'opendj.pkcs12')
+        self.opendj_cert_fn = os.path.join(self.certFolder, 'opendj.crt')
+        if self.opendj_truststore_format.lower() == 'pkcs11':
+            self.opendj_trust_store_fn = self.opendj_cert_fn
+        else:
+            self.opendj_trust_store_fn = os.path.join(self.certFolder, 'opendj.' + self.opendj_truststore_format)
 
         self.oxd_package = base.determine_package(os.path.join(Config.distGluuFolder, 'oxd-server*.tgz'))
 
-        self.opendj_p12_pass = None
+        self.opendj_truststore_pass = None
+
 
         self.ldap_binddn = 'cn=directory manager'
         self.ldap_hostname = 'localhost'
@@ -247,14 +287,14 @@ class Config:
         if base.snap:
             self.defaultTrustStoreFN = os.path.join(self.certFolder, 'java-cacerts')
         else:
-            self.defaultTrustStoreFN = os.path.join(self.jre_home, 'jre/lib/security/cacerts')
+            self.defaultTrustStoreFN = os.path.join(self.jre_home, 'lib/security/cacerts')
 
         self.defaultTrustStorePW = 'changeit'
 
 
         # Stuff that gets rendered; filename is necessary. Full path should
         # reflect final path if the file must be copied after its rendered.
-        
+
         self.gluu_python_readme = os.path.join(self.gluuOptPythonFolder, 'libs/python.txt')
         self.ox_ldap_properties = os.path.join(self.configFolder, 'gluu-ldap.properties')
         self.gluuCouchebaseProperties = os.path.join(self.configFolder, 'gluu-couchbase.properties')
@@ -277,8 +317,11 @@ class Config:
         self.ldap_setup_properties = os.path.join(self.templateFolder, 'opendj-setup.properties')
 
         # OpenID key generation default setting
-        self.default_openid_jks_dn_name = 'CN=oxAuth CA Certificates'
-        self.default_key_algs = 'RS256 RS384 RS512 ES256 ES384 ES512'
+        self.default_openid_dstore_dn_name = 'CN=oxAuth CA Certificates'
+
+        self.default_sig_key_algs = 'RS256 RS384 RS512 ES256 ES384 ES512 PS256 PS384 PS512'
+        self.default_enc_key_algs = 'RSA1_5 RSA-OAEP'
+
         self.default_key_expiration = 365
 
         self.post_messages = []
@@ -294,7 +337,6 @@ class Config:
         self.ce_templates = {
                              self.gluu_python_readme: True,
                              self.ox_ldap_properties: True,
-                             self.ldap_setup_properties: False,
                              self.etc_hostname: False,
                              self.ldif_base: False,
                              self.ldif_attributes: False,
@@ -385,6 +427,7 @@ class Config:
         self.mappingLocations = { group: 'ldap' for group in self.couchbaseBucketDict }  #default locations are OpenDJ
         self.non_setup_properties = {
             'oxauth_client_jar_fn': os.path.join(self.distGluuFolder, 'oxauth-client-jar-with-dependencies.jar'),
+            'oxauth_client_noprivder_jar_fn': os.path.join(self.distGluuFolder, 'oxauth-client-jar-without-provider-dependencies.jar'),
             'service_enable_dict': {
                         'installPassport': ('gluuPassportEnabled', 'enable_scim_access_policy'),
                         'installGluuRadius': ('gluuRadiusEnabled', 'oxauth_legacyIdTokenClaims', 'oxauth_openidScopeBackwardCompatibility', 'enableRadiusScripts'),

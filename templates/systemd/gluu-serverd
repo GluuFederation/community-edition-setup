@@ -1,0 +1,152 @@
+#!/bin/bash
+
+list_installed_services() {
+	unordered_list=""
+	if [ -d /opt/opendj ]; then
+		db_service="opendj"
+	elif [ -d /opt/couchbase-server ]; then
+		db_service="couchbase-server"
+	else
+		db_service=""
+	fi
+
+	ordered_list="$db_service"
+
+	for service in `ls -1 /opt/gluu/jetty`
+	do
+		unordered_list="${unordered_list} $service"
+	done
+
+    if [ -d "/opt/gluu/node" ]
+    then
+        for service in `ls -1 /opt/gluu/node`
+        do
+            unordered_list="${unordered_list} $service"
+        done
+    fi
+
+	if [ -d /opt/gluu/radius ]; then
+		unordered_list="${unordered_list} gluu-radius"
+	fi
+
+	web_service=`httpd_or_apache`
+	unordered_list="${unordered_list} $web_service"
+
+	### Create ordered list of services from created list
+	ordered_list="$db_service"
+	if [ -d /opt/gluu/jetty/oxauth ]; then
+		ordered_list="$ordered_list oxauth"
+	fi
+
+	if [ -d /opt/oxd-server ]; then
+		ordered_list="${ordered_list} oxd-server"
+	fi
+
+	remaining_list=`echo "$unordered_list"|sed 's/^ //'|tr ' ' '\n'|egrep -vw "oxauth|oxd-server"|tr '\n' ' '`
+
+	echo "$ordered_list $remaining_list"
+}
+
+httpd_or_apache() {
+	if [ -f /usr/lib/systemd/system/httpd.service ]; then
+		echo "httpd"
+	else
+		echo "apache2"
+	fi
+}
+
+start_single_service() {
+	service_name=$1
+      	if [ -f /etc/systemd/system/${service_name}.service ] || [ "$service_name" = "httpd" ] || [ "$service_name" = "apache2" ]; then
+		PROCESS_RUNNING=`ps -eaf|grep -i $service_name|grep -v grep`
+		if [ "x$PROCESS_RUNNING" = "x" ]; then
+      			printf "Starting $service_name\n"
+      			systemctl start $service_name
+		else
+      			printf "$service_name Already running...\n"
+		fi
+	fi
+}
+
+stop_single_service() {
+	service_name=$1
+      	if [ -f /etc/systemd/system/${service_name}.service ] || [ "$service_name" = "httpd" ] || [ "$service_name" = "apache2" ]; then
+		PROCESS_RUNNING=`ps -eaf|grep -i $service_name|grep -v grep`
+		if [ "x$PROCESS_RUNNING" != "x" ]; then
+      			printf "Stopping $service_name\n"
+      			systemctl stop $service_name
+		else
+      			printf "$service_name Already stopped...\n"
+		fi
+	fi
+}
+
+status_single_service() {
+	service_name=$1
+      	if [ -f /etc/systemd/system/${service_name}.service ] || [ "$service_name" = "httpd" ] || [ "$service_name" = "apache2" ]; then
+      		systemctl status $service_name
+	fi
+}
+
+start() {
+	for service in `list_installed_services`
+	do
+		start_single_service $service
+	done
+}
+
+
+stop() {
+	for service in `list_installed_services|tac -s " "`
+	do
+		stop_single_service $service
+	done
+}
+
+status() {
+	for service in `list_installed_services|tac -s " "`
+	do
+		status_single_service $service
+	done
+}
+
+show_version() {
+	/opt/gluu/bin/show_version.py
+}
+
+display_help() {
+	clear
+	echo "Usage: "
+	echo "gluu-serverd start|stop|restart|status|version|list"
+	echo "start: Start gluu-server all services."
+	echo "stop: Stop gluu-server all services."
+	echo "restart: Restart gluu-server all services."
+	echo "status: Status of all services."
+	echo "version: Show versions of all gluu-server specific services."
+	echo "list: List all gluu-server specific installed services."
+}
+
+case "$1" in
+    start)
+        start
+    ;;
+    stop)
+        stop
+    ;;
+    restart)
+        stop
+        start
+    ;;
+    status)
+        status
+    ;;
+    version)
+        show_version
+    ;;
+    list)
+        list_installed_services
+    ;;
+    *)
+        display_help
+    ;;
+esac

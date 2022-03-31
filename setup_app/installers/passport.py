@@ -135,10 +135,10 @@ class PassportInstaller(NodeInstaller):
         # create certificates
         self.gen_cert('passport-sp', Config.passportSpKeyPass, 'ldap', Config.ldap_hostname)
 
-        Config.passport_rs_client_jwks = self.gen_openid_jwks_jks_keys(self.passport_rs_client_jks_fn, Config.passport_rs_client_jks_pass)
+        Config.passport_rs_client_jwks = self.gen_openid_data_store_keys(self.passport_rs_client_jks_fn, Config.passport_rs_client_jks_pass)
         Config.templateRenderingDict['passport_rs_client_base64_jwks'] = self.generate_base64_string(Config.passport_rs_client_jwks, 1)
 
-        Config.passport_rp_client_jwks = self.gen_openid_jwks_jks_keys(self.passport_rp_client_jks_fn, Config.passport_rp_client_jks_pass)
+        Config.passport_rp_client_jwks = self.gen_openid_data_store_keys(self.passport_rp_client_jks_fn, Config.passport_rp_client_jks_pass)
         Config.templateRenderingDict['passport_rp_client_base64_jwks'] = self.generate_base64_string(Config.passport_rp_client_jwks, 1)
 
         self.logIt("Preparing Passport OpenID RP certificate...")

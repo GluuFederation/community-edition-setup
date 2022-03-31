@@ -5,6 +5,8 @@ import logging
 
 sys.path.insert(0, '/opt/dist/app/gcs')
 sys.path.insert(0, '/opt/dist/app/gcs/google')
+sys.path.insert(0, '/var/gluu/dist/app/gcs')
+sys.path.insert(0, '/var/gluu/dist/app/gcs/google')
 
 from google.cloud import spanner
 from google.cloud.spanner_v1 import session

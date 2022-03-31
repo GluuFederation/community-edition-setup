@@ -67,11 +67,15 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             txt += 'Install Apache 2 web server'.ljust(30) + repr(Config.installHttpd).rjust(35) + (' *' if 'installHttpd' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Fido2 Server'.ljust(30) + repr(Config.installFido2).rjust(35) + (' *' if 'installFido2' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Scim Server'.ljust(30) + repr(Config.installScimServer).rjust(35) + (' *' if 'installScimServer' in Config.addPostSetupService else '') + "\n"
-            txt += 'Install Shibboleth SAML IDP'.ljust(30) + repr(Config.installSaml).rjust(35) + (' *' if 'installSaml' in Config.addPostSetupService else '') + "\n"
-            txt += 'Install Passport '.ljust(30) + repr(Config.installPassport).rjust(35) + (' *' if 'installPassport' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Casa '.ljust(30) + repr(Config.installCasa).rjust(35) + (' *' if 'installCasa' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Oxd '.ljust(30) + repr(Config.installOxd).rjust(35) + (' *' if 'installOxd' in Config.addPostSetupService else '') + "\n"
-            txt += 'Install Gluu Radius '.ljust(30) + repr(Config.installGluuRadius).rjust(35) + (' *' if 'installGluuRadius' in Config.addPostSetupService else '') + "\n"
+
+            if Config.profile != static.SetupProfiles.DISA_STIG:
+                txt += 'Install Shibboleth SAML IDP'.ljust(30) + repr(Config.installSaml).rjust(35) + (' *' if 'installSaml' in Config.addPostSetupService else '') + "\n"
+                txt += 'Install Passport '.ljust(30) + repr(Config.installPassport).rjust(35) + (' *' if 'installPassport' in Config.addPostSetupService else '') + "\n"
+                txt += 'Install Fido2 Server'.ljust(30) + repr(Config.installFido2).rjust(35) + (' *' if 'installFido2' in Config.addPostSetupService else '') + "\n"
+                txt += 'Install Gluu Radius '.ljust(30) + repr(Config.installGluuRadius).rjust(35) + (' *' if 'installGluuRadius' in Config.addPostSetupService else '') + "\n"
+
             txt += 'Load Test Data '.ljust(30) + repr( base.argsp.t).rjust(35) + "\n"
             return txt
 
@@ -104,6 +108,11 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             base.download(oxauth_client_jar_url, Config.non_setup_properties['oxauth_client_jar_fn'])
 
         self.determine_key_gen_path()
+
+        if not Config.installed_instance and Config.profile == static.SetupProfiles.DISA_STIG:
+            self.remove_pcks11_keys()
+
+        self.profile_templates(Config.templateFolder)
 
     def determine_key_gen_path(self):
 
@@ -466,12 +475,42 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             for f in os.listdir(Config.certFolder):
                 if not f.startswith('passport-'):
                     fpath = os.path.join(Config.certFolder, f)
-                    self.run([paths.cmd_chown, 'root:gluu', fpath])
+                    self.run([paths.cmd_chown, 'root:{}'.format(Config.gluu_group), fpath])
                     self.run([paths.cmd_chmod, '660', fpath])
                     self.run([paths.cmd_chmod, 'u+X', fpath])
             self.run([paths.cmd_chown, '-R', 'root:gluu', Config.gluuOptPythonFolder])
 
+            if Config.profile != static.SetupProfiles.DISA_STIG:
+                self.run([paths.cmd_chown, Config.user_group, Config.jetty_base])
+                self.run([paths.cmd_chown, '-R', Config.user_group, '/opt/gluu/'])
+
+            self.run([paths.cmd_chown, '-R', 'root:{}'.format(Config.gluu_group), '/etc/gluu'])
+            self.run([paths.cmd_chown, '-R', 'root:{}'.format(Config.gluu_group), '/var/gluu'])
+
+            self.run([paths.cmd_chmod, '-R', 'u+rwX,g+rwX,o-rwX', '/opt/gluu'])
+            self.run([paths.cmd_chmod, '-R', 'u+rwX,g+rwX,o-rwX', '/etc/gluu'])
+            self.run([paths.cmd_chmod, '-R', 'u+rwX,g+rwX,o-rwX', '/var/gluu'])
+
             if not Config.installed_instance:
                 cron_service = 'crond' if base.clone_type == 'rpm' else 'cron'
                 self.restart(cron_service)
+
+
+        if Config.profile == static.SetupProfiles.DISA_STIG:
+
+            self.run([paths.cmd_chown, '{}:{}'.format(Config.jetty_user, Config.gluu_group), '/opt/gluu/'])
+
+            jettyAbsoluteDir = Path('/opt/jetty').resolve()
+
+            # selinux proxypass
+            setsebool_cmd = shutil.which('setsebool')
+            self.run([setsebool_cmd, 'httpd_can_network_connect', '1'])
+            # make it permanent
+            self.run([setsebool_cmd, 'httpd_can_network_connect', '1', '-P'])
+            
+            self.run([paths.cmd_chmod, 'g+rwX', '-R', Config.jetty_base])
+            self.run([paths.cmd_chmod, 'g+rwX', '-R', jettyAbsoluteDir.as_posix()])
+            self.run([paths.cmd_chown, '-R', Config.user_group, jettyAbsoluteDir.parent.as_posix()])
+            self.run([paths.cmd_chmod, 'g+rwX', '-R', Config.gluuBaseFolder])
+            self.run([paths.cmd_chmod, 'g+rwX', '-R', os.path.join(Config.distFolder,'scripts')])
 

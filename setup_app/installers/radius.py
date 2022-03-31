@@ -176,7 +176,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         radius_jwt_pass = self.obscure(Config.radius_jwt_pass)
         radius_jks_fn = os.path.join(Config.certFolder, 'gluu-radius.jks')
 
-        raidus_client_jwks = self.gen_openid_jwks_jks_keys(radius_jks_fn, Config.radius_jwt_pass)
+        raidus_client_jwks = self.gen_openid_data_store_keys(radius_jks_fn, Config.radius_jwt_pass)
         raidus_client_jwks = ''.join(raidus_client_jwks).replace('\'','').replace(',,',',').replace('{,','{')
         raidus_client_jwks = json.loads(raidus_client_jwks)
         Config.templateRenderingDict['radius_jwt_pass'] = radius_jwt_pass

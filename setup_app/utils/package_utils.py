@@ -5,7 +5,7 @@ from setup_app import paths
 from setup_app.config import Config
 from setup_app.utils import base
 from setup_app.utils.setup_utils import SetupUtils
-from setup_app.static import InstallTypes
+from setup_app.static import InstallTypes, SetupProfiles
 
 class PackageUtils(SetupUtils):
 
@@ -42,6 +42,9 @@ class PackageUtils(SetupUtils):
             package_list[os_type_version]['mondatory'] += ' postgresql python3-psycopg2'
             if base.clone_type == 'deb':
                 package_list[os_type_version]['mondatory'] += ' postgresql-contrib'
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            package_list[os_type_version]['mondatory'] += ' java-11-openjdk-headless java-11-openjdk-devel'
 
         for install_type in install_list:
             for package in package_list[os_type_version][install_type].split():
