@@ -658,7 +658,7 @@ class PropertiesUtils(SetupUtils):
     def get_backend_list(self):
 
         backend_list = [
-                BackendStrings.LOCAL_MYSQL,
+                BackendStrings.LOCAL_OPENDJ,
                 BackendStrings.REMOTE_OPENDJ
                 ]
 

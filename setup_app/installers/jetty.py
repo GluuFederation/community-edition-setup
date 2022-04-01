@@ -242,7 +242,7 @@ class JettyInstaller(BaseInstaller, SetupUtils):
         if Config.profile == SetupProfiles.DISA_STIG:
             additional_rules = []
             if serviceName == base.current_app.OxtrustInstaller.service_name:
-                additional_rules.append(fapolicyd_rule_tmp.format(base.current_app.SamlInstaller.idp3Folder))
+                additional_rules.append(fapolicyd_rule_tmp.format(Config.templateRenderingDict['service_user'], base.current_app.SamlInstaller.idp3Folder))
             self.fapolicyd_access(Config.templateRenderingDict['service_user'], jettyServiceBase, additional_rules)
 
 
