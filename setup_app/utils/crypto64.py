@@ -47,7 +47,7 @@ class Crypto64:
         csr = '%s/%s.csr' % (Config.certFolder, suffix)
         public_certificate = '%s/%s.crt' % (Config.certFolder, suffix)
         if not truststore_fn:
-            truststore_fn = Config.defaultTrustStoreFN
+            truststore_fn = Config.default_trust_store_fn
 
 
         if Config.profile == static.SetupProfiles.DISA_STIG:
@@ -166,7 +166,7 @@ class Crypto64:
     def generate_base64_ldap_file(self, fn):
         return self.generate_base64_file(fn, 1)
 
-    def gen_keystore(self, suffix, keystoreFN, keystorePW, inKey, inCert, store_type=None):
+    def gen_keystore(self, suffix, keystore_fn, keystore_pw, in_key, in_cert, store_type=None):
 
         self.logIt("Creating keystore %s" % suffix)
 
@@ -179,15 +179,15 @@ class Crypto64:
                   'pkcs12',
                   '-export',
                   '-inkey',
-                  inKey,
+                  in_key,
                   '-in',
-                  inCert,
+                  in_cert,
                   '-out',
                   pkcs_fn,
                   '-name',
                   Config.hostname,
                   '-passout',
-                  'pass:%s' % keystorePW
+                  'pass:%s' % keystore_pw
                   ])
         # Import p12 to keystore
         self.run([Config.cmd_keytool,
@@ -195,13 +195,13 @@ class Crypto64:
                   '-srckeystore',
                   '%s/%s.pkcs12' % (Config.certFolder, suffix),
                   '-srcstorepass',
-                  keystorePW,
+                  keystore_pw,
                   '-srcstoretype',
                   'PKCS12',
                   '-destkeystore',
-                  keystoreFN,
+                  keystore_fn,
                   '-deststorepass',
-                  keystorePW,
+                  keystore_pw,
                   '-deststoretype',
                   store_type,
                   '-keyalg',
@@ -210,7 +210,7 @@ class Crypto64:
                   ])
 
 
-    def gen_openid_data_store_keys(self, data_store_path, data_store_pwd, data_store_create=True, key_expiration=None, dn_name=None, key_algs=None, enc_keys=None):
+    def gen_openid_data_store_keys(self, data_store_path, data_store_pwd, key_expiration=None, dn_name=None, key_algs=None, enc_keys=None):
         self.logIt("Generating oxAuth OpenID Connect keys")
 
         if dn_name == None:

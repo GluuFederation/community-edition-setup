@@ -133,9 +133,9 @@ class CasaInstaller(JettyInstaller):
             self.writeFile(oxd_cert_tmp_fn, oxd_cert)
 
             self.run([Config.cmd_keytool, '-import', '-trustcacerts', '-keystore', 
-                            Config.defaultTrustStoreFN, '-storepass', 'changeit', 
+                            Config.default_trust_store_fn, '-storepass', 'changeit', 
                             '-noprompt', '-alias', oxd_alias, '-file', oxd_cert_tmp_fn])
-            
+
             os.remove(oxd_cert_tmp_fn)
 
         except:

@@ -14,7 +14,7 @@ import ldap3
 from setup_app import paths
 from setup_app.utils import base
 from setup_app.utils.cbm import CBM
-from setup_app.static import InstallTypes, SetupProfiles, colors
+from setup_app.static import InstallTypes, SetupProfiles, BackendStrings, colors
 from setup_app.messages import msg
 
 from setup_app.config import Config
@@ -657,18 +657,21 @@ class PropertiesUtils(SetupUtils):
 
     def get_backend_list(self):
 
-        backend_list = ['Local OpenDj', 'Remote OpenDj']
+        backend_list = [
+                BackendStrings.LOCAL_MYSQL,
+                BackendStrings.REMOTE_OPENDJ
+                ]
 
         if Config.profile != SetupProfiles.DISA_STIG:
             backend_list += [
-                         'Remote Couchbase',
-                         'Local MySQL',
-                         'Remote MySQL',
-                         'Cloud Spanner',
-                         'Spanner Emulator',
+                         BackendStrings.REMOTE_COUCHBASE,
+                         BackendStrings.LOCAL_MYSQL,
+                         BackendStrings.REMOTE_MYSQL,
+                         BackendStrings.CLOUD_SPANNER,
+                         BackendStrings.SAPNNER_EMULATOR,
                         ]
             if 'couchbase' in self.getBackendTypes():
-                backend_list.insert(2, 'Local Couchbase')
+                backend_list.insert(2, BackendStrings.LOCAL_COUCHBASE)
 
         return backend_list
 
@@ -701,7 +704,7 @@ class PropertiesUtils(SetupUtils):
         if 'mysql' in backend_type_str.lower() or 'spanner' in backend_type_str.lower():
             print("{}{}{}".format(colors.WARNING, msg.mysql_spanner_beta, colors.ENDC))
 
-        if backend_type_str == 'Local OpenDj':
+        if backend_type_str == BackendStrings.LOCAL_OPENDJ:
 
             used_ports = self.opendj_used_ports()
             if used_ports:
@@ -722,7 +725,7 @@ class PropertiesUtils(SetupUtils):
             Config.ldapPass = ldapPass
 
 
-        elif backend_type_str == 'Remote OpenDj':
+        elif backend_type_str == BackendStrings.REMOTE_OPENDJ:
             Config.ldap_install = InstallTypes.REMOTE
             while True:
                 ldapHost = self.getPrompt("    LDAP hostname")
@@ -736,7 +739,7 @@ class PropertiesUtils(SetupUtils):
             Config.ldapPass = ldapPass
             Config.ldap_hostname = ldapHost
 
-        elif backend_type_str == 'Local Couchbase':
+        elif backend_type_str == BackendStrings.LOCAL_COUCHBASE:
             Config.ldap_install = InstallTypes.NONE
             Config.cb_install = InstallTypes.LOCAL
             Config.isCouchbaseUserAdmin = True
@@ -752,7 +755,7 @@ class PropertiesUtils(SetupUtils):
             Config.cb_password = cbPass
             Config.mappingLocations = { group: 'couchbase' for group in Config.couchbaseBucketDict }
 
-        elif backend_type_str == 'Remote Couchbase':
+        elif backend_type_str == BackendStrings.REMOTE_COUCHBASE:
             Config.ldap_install = InstallTypes.NONE
             Config.cb_install = InstallTypes.REMOTE
 
@@ -766,7 +769,7 @@ class PropertiesUtils(SetupUtils):
 
             Config.mappingLocations = { group: 'couchbase' for group in Config.couchbaseBucketDict }
 
-        elif backend_type_str == 'Local MySQL':
+        elif backend_type_str == BackendStrings.LOCAL_MYSQL:
             Config.ldap_install = InstallTypes.NONE
             Config.rdbm_install = True
             Config.rdbm_install_type = InstallTypes.LOCAL
@@ -777,7 +780,7 @@ class PropertiesUtils(SetupUtils):
             Config.rdbm_port = 3306
             Config.rdbm_db = 'gluudb'
 
-        elif backend_type_str == 'Remote MySQL':
+        elif backend_type_str == BackendStrings.REMOTE_MYSQL:
             Config.ldap_install = InstallTypes.NONE
             Config.rdbm_install = True
             Config.rdbm_install_type = InstallTypes.REMOTE
@@ -797,7 +800,7 @@ class PropertiesUtils(SetupUtils):
                 except Exception as e:
                     print("  {}Can't connect to MySQL: {}{}".format(colors.DANGER, e, colors.ENDC))
 
-        elif backend_type_str == 'Cloud Spanner':
+        elif backend_type_str == BackendStrings.CLOUD_SPANNER:
             Config.ldap_install = InstallTypes.NONE
             Config.rdbm_type = 'spanner'
             Config.rdbm_install = True
@@ -921,7 +924,7 @@ class PropertiesUtils(SetupUtils):
                     Config.java_type = 'jre'
                 else:
                     Config.java_type = 'jdk'
-                    Config.defaultTrustStoreFN = os.path.join(self.jre_home, 'jre/lib/security/cacerts')
+                    Config.default_trust_store_fn = os.path.join(self.jre_home, 'jre/lib/security/cacerts')
 
             promptForOxAuth = self.getPrompt("Install oxAuth OAuth2 Authorization Server?", 
                                             self.getDefaultOption(Config.installOxAuth)

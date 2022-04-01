@@ -136,9 +136,7 @@ class BaseInstaller:
         self.stop(service)
         self.start(service)
 
-    def reload_daemon(self, service=None):
-        if not service:
-            service = self.service_name
+    def reload_daemon(self):
         if (base.clone_type == 'rpm' and base.os_initdaemon == 'systemd') or base.deb_sysd_clone:
             self.run([base.service_path, 'daemon-reload'])
 

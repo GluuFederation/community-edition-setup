@@ -17,7 +17,7 @@ class NodeInstaller(BaseInstaller, SetupUtils):
         setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'node'
         self.needdb = False # we don't need backend connection in this class
-        self.install_var = 'installNode'
+        self.install_var = 'install_node_app'
         self.app_type = AppType.APPLICATION
         self.install_type = InstallOption.MONDATORY
         self.register_progess()

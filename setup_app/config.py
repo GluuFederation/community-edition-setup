@@ -78,6 +78,7 @@ class Config:
         self.gluu_group = 'gluu'
         self.root_user = 'root'
         self.node_user = 'node'
+        self.ldap_user = 'ldap'
         self.use_existing_java = base.argsp.j
         self.system_dir = '/etc/systemd/system'
         self.user_group = '{}:{}'.format(self.jetty_user, self.gluu_group)
@@ -194,7 +195,7 @@ class Config:
         self.installGluu = True
         self.installJre = True
         self.installJetty = True
-        self.installNode = self.profile == SetupProfiles.CE
+        self.install_node_app = self.profile == SetupProfiles.CE
         self.installJython = True
         self.installOxAuth = True
         self.installOxTrust = True
@@ -281,7 +282,7 @@ class Config:
         self.redhat_services = ['httpd', 'rsyslog']
         self.debian_services = ['apache2', 'rsyslog']
 
-        self.defaultTrustStoreFN = os.path.join(self.jre_home, 'lib/security/cacerts')
+        self.default_trust_store_fn = os.path.join(self.jre_home, 'lib/security/cacerts')
 
         self.defaultTrustStorePW = 'changeit'
 

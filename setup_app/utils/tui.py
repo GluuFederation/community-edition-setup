@@ -432,7 +432,7 @@ class DBBackendForm(GluuSetupForm):
         self.parentApp.backend_type_str = self.backend_types[self.backends.value[0]]
 
 
-        if self.parentApp.backend_type_str == 'Local OpenDj':
+        if self.parentApp.backend_type_str == static.BackendStrings.LOCAL_OPENDJ:
             used_ports = self.parentApp.jettyInstaller.opendj_used_ports()
             if used_ports:
                 npyscreen.notify_confirm(msg.used_ports.format(','.join(used_ports)), title="Warning")
@@ -442,24 +442,24 @@ class DBBackendForm(GluuSetupForm):
             Config.cb_install = static.InstallTypes.NONE
             Config.rdbm_install = False
             self.parentApp.switchForm('DBLDAPForm')
-        elif self.parentApp.backend_type_str == 'Remote OpenDj':
+        elif self.parentApp.backend_type_str == static.BackendStrings.REMOTE_OPENDJ:
             Config.ldap_install = static.InstallTypes.REMOTE
             Config.cb_install = static.InstallTypes.NONE
             Config.rdbm_install = False
             self.parentApp.switchForm('DBLDAPForm')
 
-        elif self.parentApp.backend_type_str == 'Local Couchbase':
+        elif self.parentApp.backend_type_str == static.BackendStrings.LOCAL_COUCHBASE:
             Config.ldap_install = static.InstallTypes.NONE
             Config.rdbm_install = False
             Config.cb_install = static.InstallTypes.LOCAL
             self.parentApp.switchForm('DBCBForm')
-        elif self.parentApp.backend_type_str == 'Remote Couchbase':
+        elif self.parentApp.backend_type_str == static.BackendStrings.REMOTE_COUCHBASE:
             Config.ldap_install = static.InstallTypes.NONE
             Config.rdbm_install = False
             Config.cb_install = static.InstallTypes.REMOTE
             self.parentApp.switchForm('DBCBForm')
 
-        elif self.parentApp.backend_type_str == 'Local MySQL':
+        elif self.parentApp.backend_type_str == static.BackendStrings.LOCAL_MYSQL:
             Config.ldap_install = static.InstallTypes.NONE
             Config.rdbm_install_type = static.InstallTypes.LOCAL
             Config.rdbm_install = True
@@ -469,7 +469,7 @@ class DBBackendForm(GluuSetupForm):
             if not Config.rdbm_user:
                 Config.rdbm_user = 'gluu'
             self.parentApp.switchForm('DBRDBMForm')
-        elif self.parentApp.backend_type_str == 'Remote MySQL':
+        elif self.parentApp.backend_type_str == static.BackendStrings.REMOTE_MYSQL:
             Config.ldap_install = static.InstallTypes.NONE
             Config.rdbm_install_type = static.InstallTypes.REMOTE
             Config.rdbm_install = True
@@ -477,7 +477,7 @@ class DBBackendForm(GluuSetupForm):
             Config.rdbm_password = ''
             self.parentApp.switchForm('DBRDBMForm')
 
-        elif self.parentApp.backend_type_str in ('Cloud Spanner', 'Spanner Emulator'):
+        elif self.parentApp.backend_type_str in (static.BackendStrings.CLOUD_SPANNER, static.BackendStrings.SAPNNER_EMULATOR):
             if Config.installSaml:
                 npyscreen.notify_confirm(msg.spanner_idp_warning + ' ' + msg.idp_unselect, title="Warning")
                 return

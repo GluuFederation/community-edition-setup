@@ -278,9 +278,8 @@ class TestDataLoader(BaseInstaller, SetupUtils):
 
             self.copyFile(tmp_fn, openDjSchemaFolder)
 
-            self.run([paths.cmd_chown, 'ldap:ldap',  os.path.join(openDjSchemaFolder, '102-oxauth_test.ldif')])
-            self.run([paths.cmd_chown, 'ldap:ldap',  os.path.join(openDjSchemaFolder, '103-scim_test.ldif')])
-            self.run([paths.cmd_chown, 'ldap:ldap',  os.path.join(openDjSchemaFolder, '77-customAttributes.ldif')])
+            for test_schema in ('102-oxauth_test.ldif', '103-scim_test.ldif', '77-customAttributes.ldif'):
+                self.run([paths.cmd_chown, '{0}:{0}'.format(Config.ldap_user), os.path.join(openDjSchemaFolder, test_schema)])
 
             self.logIt("Making opndj listen all interfaces")
             ldap_operation_result = self.dbUtils.ldap_conn.modify(

@@ -4,7 +4,7 @@ import socket
 import ruamel.yaml
 
 from setup_app import paths
-from setup_app.static import AppType, InstallOption
+from setup_app.static import AppType, InstallOption, fapolicyd_rule_tmp
 from setup_app.utils import base
 from setup_app.config import Config
 from setup_app.utils.setup_utils import SetupUtils, SetupProfiles
@@ -25,7 +25,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         self.oxd_server_yml_fn = os.path.join(self.oxd_root, 'conf/oxd-server.yml')
 
     def install(self):
-        self.logIt("Installing {}".format(self.service_name), pbar=self.service_name)
+        self.logIt("Installing {}".format(self.service_name.title()), pbar=self.service_name)
         self.run(['tar', '-zxf', Config.oxd_package, '--no-same-owner', '--strip-components=1', '-C', self.oxd_root])
 
         oxd_user = 'oxd-server' if Config.profile == SetupProfiles.DISA_STIG else Config.jetty_user
@@ -68,9 +68,9 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         if Config.profile == SetupProfiles.DISA_STIG:
             log_dir = '/var/log/oxd-server/'
             oxd_fapolicyd_rules = [
-                    'allow perm=any uid={} : dir={}'.format(oxd_user, Config.jre_home),
-                    'allow perm=any uid={} : dir={}'.format(oxd_user, log_dir),
-                    'allow perm=any uid={} : dir={}'.format(oxd_user, self.oxd_root),
+                    fapolicyd_rule_tmp.format(oxd_user, Config.jre_home),
+                    fapolicyd_rule_tmp.format(oxd_user, log_dir),
+                    fapolicyd_rule_tmp.format(oxd_user, self.oxd_root),
                     '# give access to oxd-server',
                     ]
 

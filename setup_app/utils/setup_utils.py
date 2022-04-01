@@ -565,15 +565,15 @@ class SetupUtils(Crypto64):
                 self.logIt("Writing rendered template {}".format(fullOutputFile))
                 fullOutputFile.write_text(rendered_text)
 
-    def render_unit_file(self, serviceName):
-        self.renderTemplateInOut(serviceName+'.service', os.path.join(Config.templateFolder, 'systemd'), Config.system_dir)
+    def render_unit_file(self, service_name):
+        self.renderTemplateInOut(service_name+'.service', os.path.join(Config.templateFolder, 'systemd'), Config.system_dir)
 
     def create_service_user(self, service_user):
         # create user for this service if not exists
         service_home_dir = os.path.join('/home', service_user)
         try:
             pwd.getpwnam(service_user)
-        except:
+        except Exception:
             self.createUser(service_user, service_home_dir)
             self.addUserToGroup(Config.gluu_group, service_user)
 
@@ -607,7 +607,7 @@ class SetupUtils(Crypto64):
 
         write_facl = False
         for rule in rules:
-            if not rule in fapolicyd_rules:
+            if rule not in fapolicyd_rules:
                 fapolicyd_rules.insert(fapolicyd_startn + 1, rule)
                 write_facl = True
 
@@ -651,3 +651,11 @@ class SetupUtils(Crypto64):
 
     def get_client_test_keystore_fn(self, keystore_name):
         return keystore_name + '.' + Config.default_client_test_store_type
+
+    def chown(self, fn, user, group=None, recursive=False):
+        cmd = [paths.cmd_chown]
+        if recursive:
+            cmd.append('-R')
+        usr_grp = '{}:{}'.format(user, group) if group else user
+        cmd += [usr_grp, fn]
+        self.run(cmd)

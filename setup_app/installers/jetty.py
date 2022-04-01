@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 
 from setup_app import paths
 from setup_app.utils import base
-from setup_app.static import AppType, InstallOption, InstallTypes, SetupProfiles
+from setup_app.static import AppType, InstallOption, InstallTypes, SetupProfiles, fapolicyd_rule_tmp
 from setup_app.config import Config
 from setup_app.utils.setup_utils import SetupUtils
 from setup_app.installers.base import BaseInstaller
@@ -242,13 +242,13 @@ class JettyInstaller(BaseInstaller, SetupUtils):
         if Config.profile == SetupProfiles.DISA_STIG:
             additional_rules = []
             if serviceName == base.current_app.OxtrustInstaller.service_name:
-                additional_rules.append('allow perm=any uid=%(uid)s : dir={}'.format(base.current_app.SamlInstaller.idp3Folder))
+                additional_rules.append(fapolicyd_rule_tmp.format(base.current_app.SamlInstaller.idp3Folder))
             self.fapolicyd_access(Config.templateRenderingDict['service_user'], jettyServiceBase, additional_rules)
 
 
     def set_jetty_param(self, jettyServiceName, jetty_param, jetty_val, inifile='start.ini'):
 
-        self.logIt("Seeting jetty parameter {0}={1} for service {2}".format(jetty_param, jetty_val, jettyServiceName))
+        self.logIt("Setting jetty parameter {0}={1} for service {2}".format(jetty_param, jetty_val, jettyServiceName))
 
         path_list = [self.jetty_base, jettyServiceName, inifile]
         if inifile != 'start.ini':
