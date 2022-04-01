@@ -166,9 +166,13 @@ class Crypto64:
     def generate_base64_ldap_file(self, fn):
         return self.generate_base64_file(fn, 1)
 
-    def gen_keystore(self, suffix, keystoreFN, keystorePW, inKey, inCert):
+    def gen_keystore(self, suffix, keystoreFN, keystorePW, inKey, inCert, store_type=None):
 
         self.logIt("Creating keystore %s" % suffix)
+
+        if not store_type:
+            store_type = Config.default_store_type
+
         # Convert key to pkcs12
         pkcs_fn = '%s/%s.pkcs12' % (Config.certFolder, suffix)
         self.run([paths.cmd_openssl,
@@ -199,7 +203,7 @@ class Crypto64:
                   '-deststorepass',
                   keystorePW,
                   '-deststoretype',
-                  Config.default_store_type,
+                  store_type,
                   '-keyalg',
                   'RSA',
                   '-noprompt'

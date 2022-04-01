@@ -35,7 +35,7 @@ class SamlInstaller(JettyInstaller):
         self.ldif_oxidp = os.path.join(self.output_folder, 'oxidp.ldif')
         self.oxidp_config_json = os.path.join(self.output_folder, 'oxidp-config.json')
 
-        self.shib_data_store_fn = os.path.join(Config.certFolder, self.get_keystore_fn('shibIDP'))
+        self.shib_data_store_fn = os.path.join(Config.certFolder, 'shibIDP.jks')
 
         self.shibboleth_version = 'v3'
 
@@ -65,7 +65,7 @@ class SamlInstaller(JettyInstaller):
         self.idp_encryption_crt_file = os.path.join(Config.certFolder, 'idp-encryption.crt')
         self.idp_signing_crt_file = os.path.join(Config.certFolder, 'idp-signing.crt')
 
-        Config.templateRenderingDict['sealer_data_store_fn'] = self.get_keystore_fn('sealer')
+        Config.templateRenderingDict['sealer_data_store_fn'] = 'sealer.jks'
         Config.templateRenderingDict['shib_data_store_fn'] = self.shib_data_store_fn
 
 
@@ -88,7 +88,8 @@ class SamlInstaller(JettyInstaller):
                               self.shib_data_store_fn,
                               Config.shibJksPass,
                               self.shib_key_file,
-                              self.shib_crt_file
+                              self.shib_crt_file,
+                              store_type='JKS'
                               )
 
 
@@ -127,7 +128,7 @@ class SamlInstaller(JettyInstaller):
             # there is one throuble with Shibboleth IDP 3.x - it doesn't load keystore from /etc/certs. It accepts %{idp.home}/credentials/sealer.jks  %{idp.home}/credentials/sealer.kver path format only.
             cmd = [Config.cmd_java,'-classpath', '"{}"'.format(os.path.join(self.idp3Folder,'webapp/WEB-INF/lib/*')),
                 'net.shibboleth.utilities.java.support.security.BasicKeystoreKeyStrategyTool',
-                '--storefile', os.path.join(self.idp3Folder,'credentials',  Config.templateRenderingDict['sealer_data_store_fn']),
+                '--storefile', os.path.join(self.idp3Folder,'credentials', Config.templateRenderingDict['sealer_data_store_fn']),
                 '--versionfile',  os.path.join(self.idp3Folder, 'credentials/sealer.kver'),
                 '--alias secret',
                 '--storepass', Config.shibJksPass]
