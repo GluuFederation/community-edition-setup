@@ -350,6 +350,14 @@ def post_install():
         testDataLoader.load_test_data()
 
 
+def app_installations():
+
+    jreInstaller.start_installation()
+    jettyInstaller.start_installation()
+    jythonInstaller.start_installation()
+    if argsp.profile != 'DISA-STIG':
+        nodeInstaller.start_installation()
+
 
 def do_installation():
 
@@ -365,13 +373,7 @@ def do_installation():
             if not base.argsp.dummy:
                 gluuInstaller.make_salt()
                 oxauthInstaller.make_salt()
-                jreInstaller.start_installation()
-                jettyInstaller.start_installation()
-                jythonInstaller.start_installation()
-                if argsp.profile != 'DISA-STIG':
-                    nodeInstaller.start_installation()
-
-            if not base.argsp.dummy:
+                app_installations()
                 prepare_for_installation()
 
         install_services()
