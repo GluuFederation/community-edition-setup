@@ -55,15 +55,17 @@ class NodeInstaller(BaseInstaller, SetupUtils):
         # Create temp folder
         self.run([paths.cmd_mkdir, '-p', "%s/temp" % Config.node_home])
 
+        node_user_group = '{}:{}'.format(Config.node_user, Config.gluu_group)
+
         # Copy init.d script
         self.copyFile(self.node_initd_script, Config.gluuOptSystemFolder)
         self.run([paths.cmd_chmod, '-R', "755", "%s/node" % Config.gluuOptSystemFolder])
 
-        self.run([paths.cmd_chown, '-R', 'node:gluu', nodeDestinationPath])
-        self.run([paths.cmd_chown, '-h', 'node:gluu', Config.node_home])
+        self.run([paths.cmd_chown, '-R', node_user_group, nodeDestinationPath])
+        self.run([paths.cmd_chown, '-h', node_user_group, Config.node_home])
 
         self.run([paths.cmd_mkdir, '-p', self.node_base])
-        self.run([paths.cmd_chown, '-R', 'node:gluu', self.node_base])
+        self.run([paths.cmd_chown, '-R', node_user_group, self.node_base])
 
 
     def render_templates(self):
@@ -89,7 +91,7 @@ class NodeInstaller(BaseInstaller, SetupUtils):
 
         try:
             self.renderTemplateInOut(serviceName, os.path.join(Config.templateFolder, 'node'), os.path.join(Config.outputFolder, 'node'))
-        except:
+        except Exception:
             self.logIt("Error rendering service '%s' defaults" % serviceName, True)
             self.logIt(traceback.format_exc(), True)
 

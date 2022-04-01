@@ -76,6 +76,8 @@ class Config:
         self.jetty_user = 'jetty'
         self.gluu_user = 'gluu'
         self.gluu_group = 'gluu'
+        self.root_user = 'root'
+        self.node_user = 'node'
         self.use_existing_java = base.argsp.j
         self.system_dir = '/etc/systemd/system'
         self.user_group = '{}:{}'.format(self.jetty_user, self.gluu_group)
@@ -98,7 +100,6 @@ class Config:
         if self.profile == SetupProfiles.DISA_STIG:
             self.use_existing_java = True
             self.cmd_java = shutil.which('java')
-            java_path = Path(self.cmd_java)
             self.jre_home = Path(self.cmd_java).resolve().parent.parent.as_posix()
             self.cmd_keytool = shutil.which('keytool')
             self.cmd_jar = shutil.which('jar')

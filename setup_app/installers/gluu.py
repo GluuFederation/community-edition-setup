@@ -152,7 +152,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                 self.run([paths.cmd_mkdir, '-p', folder])
 
         if not base.snap:
-            self.run([paths.cmd_chown, '-R', 'root:gluu', Config.certFolder])
+            self.run([paths.cmd_chown, '-R', '{}:{}'.format(Config.root_user, Config.gluu_user), Config.certFolder])
             self.run([paths.cmd_chmod, '551', Config.certFolder])
             
             self.run([paths.cmd_chmod, 'ga+w', "/tmp"]) # Allow write to /tmp
@@ -304,7 +304,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         else:
             target_fn = '/etc/cron.daily/super_gluu_lisence_renewer'
             self.run(['cp', '-f', super_gluu_lisence_renewer_fn, target_fn])
-            self.run([paths.cmd_chown, 'root:root', target_fn])
+            self.run([paths.cmd_chown, '{}:{}'.format('{}:{}'.format(Config.root_user, Config.root_user), target_fn])
             self.run([paths.cmd_chmod, '+x', target_fn])
 
             print_version_scr_fn = os.path.join(Config.install_dir, 'setup_app/utils/printVersion.py')
@@ -420,6 +420,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
     def post_install_tasks(self):
         # set systemd timeout
         self.set_systemd_timeout()
+        user_group_tmp = '{}:{}'
 
         if base.argsp.import_ldif:
             self.dbUtils.bind(force=True)
@@ -475,21 +476,20 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             for f in os.listdir(Config.certFolder):
                 if not f.startswith('passport-'):
                     fpath = os.path.join(Config.certFolder, f)
-                    self.run([paths.cmd_chown, 'root:{}'.format(Config.gluu_group), fpath])
+                    self.run([paths.cmd_chown, user_group_tmp.format(Config.root_user, Config.gluu_group), fpath])
                     self.run([paths.cmd_chmod, '660', fpath])
                     self.run([paths.cmd_chmod, 'u+X', fpath])
-            self.run([paths.cmd_chown, '-R', 'root:gluu', Config.gluuOptPythonFolder])
+            self.run([paths.cmd_chown, '-R', user_group_tmp.format(Config.root_user, Config.gluu_user), Config.gluuOptPythonFolder])
 
             if Config.profile != static.SetupProfiles.DISA_STIG:
                 self.run([paths.cmd_chown, Config.user_group, Config.jetty_base])
                 self.run([paths.cmd_chown, '-R', Config.user_group, '/opt/gluu/'])
 
-            self.run([paths.cmd_chown, '-R', 'root:{}'.format(Config.gluu_group), '/etc/gluu'])
-            self.run([paths.cmd_chown, '-R', 'root:{}'.format(Config.gluu_group), '/var/gluu'])
+            self.run([paths.cmd_chown, '-R', user_group_tmp.format(Config.root_user, Config.gluu_group), '/etc/gluu'])
+            self.run([paths.cmd_chown, '-R', user_group_tmp.format(Config.root_user, Config.gluu_group), '/var/gluu'])
 
-            self.run([paths.cmd_chmod, '-R', 'u+rwX,g+rwX,o-rwX', '/opt/gluu'])
-            self.run([paths.cmd_chmod, '-R', 'u+rwX,g+rwX,o-rwX', '/etc/gluu'])
-            self.run([paths.cmd_chmod, '-R', 'u+rwX,g+rwX,o-rwX', '/var/gluu'])
+            for sys_path in ('/opt/gluu', '/etc/gluu', '/var/gluu'):
+                self.run([paths.cmd_chmod, '-R', 'u+rwX,g+rwX,o-rwX', sys_path])
 
             if not Config.installed_instance:
                 cron_service = 'crond' if base.clone_type == 'rpm' else 'cron'
@@ -498,19 +498,20 @@ class GluuInstaller(BaseInstaller, SetupUtils):
 
         if Config.profile == static.SetupProfiles.DISA_STIG:
 
-            self.run([paths.cmd_chown, '{}:{}'.format(Config.jetty_user, Config.gluu_group), '/opt/gluu/'])
+            self.run([paths.cmd_chown, user_group_tmp.format(Config.jetty_user, Config.gluu_group), '/opt/gluu/'])
 
-            jettyAbsoluteDir = Path('/opt/jetty').resolve()
+            jetty_absolute_dir = Path('/opt/jetty').resolve()
 
             # selinux proxypass
             setsebool_cmd = shutil.which('setsebool')
             self.run([setsebool_cmd, 'httpd_can_network_connect', '1'])
             # make it permanent
             self.run([setsebool_cmd, 'httpd_can_network_connect', '1', '-P'])
-            
-            self.run([paths.cmd_chmod, 'g+rwX', '-R', Config.jetty_base])
-            self.run([paths.cmd_chmod, 'g+rwX', '-R', jettyAbsoluteDir.as_posix()])
-            self.run([paths.cmd_chown, '-R', Config.user_group, jettyAbsoluteDir.parent.as_posix()])
-            self.run([paths.cmd_chmod, 'g+rwX', '-R', Config.gluuBaseFolder])
-            self.run([paths.cmd_chmod, 'g+rwX', '-R', os.path.join(Config.distFolder,'scripts')])
 
+            for sys_path in (Config.jetty_base,
+                                jetty_absolute_dir.as_posix(),
+                                Config.gluuBaseFolder,
+                                os.path.join(Config.distFolder,'scripts')):
+                self.run([paths.cmd_chmod, 'g+rwX', '-R', sys_path])
+
+            self.run([paths.cmd_chown, '-R', Config.user_group, jetty_absolute_dir.parent.as_posix()])

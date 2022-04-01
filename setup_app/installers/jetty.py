@@ -241,9 +241,9 @@ class JettyInstaller(BaseInstaller, SetupUtils):
 
         self.render_unit_file(serviceName)
 
-        jettyServiceWebapps = os.path.join(jettyServiceBase, 'webapps')
-        target_war_fn = os.path.join(jettyServiceWebapps, os.path.basename(self.source_files[0][0]))
-        self.copyFile(self.source_files[0][0], jettyServiceWebapps)
+        jetty_service_webapps = os.path.join(jettyServiceBase, 'webapps')
+        target_war_fn = os.path.join(jetty_service_webapps, os.path.basename(self.source_files[0][0]))
+        self.copyFile(self.source_files[0][0], jetty_service_webapps)
         self.war_for_jetty10(target_war_fn)
 
         self.run([paths.cmd_chown, '-R', '{}:{}'.format(Config.templateRenderingDict['service_user'], Config.gluu_group), jettyServiceBase])

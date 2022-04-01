@@ -99,13 +99,13 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
 
     def extractOpenDJ(self):
 
-        openDJArchive = max(glob.glob(os.path.join(Config.distFolder, 'app/opendj-*4*.zip')))
+        opendj_archive = max(glob.glob(os.path.join(Config.distFolder, 'app/opendj-*4*.zip')))
 
         try:
-            self.logIt("Unzipping %s in /opt/" % openDJArchive)
-            self.run([paths.cmd_unzip, '-n', '-q', '%s' % (openDJArchive), '-d', '/opt/' ])
+            self.logIt("Unzipping %s in /opt/" % opendj_archive)
+            self.run([paths.cmd_unzip, '-n', '-q', '%s' % (opendj_archive), '-d', '/opt/' ])
         except:
-            self.logIt("Error encountered while doing unzip %s -d /opt/" % (openDJArchive))
+            self.logIt("Error encountered while doing unzip %s -d /opt/" % (opendj_archive))
 
         realLdapBaseFolder = os.path.realpath(Config.ldapBaseFolder)
         self.run([paths.cmd_chown, '-R', 'ldap:ldap', realLdapBaseFolder])
@@ -121,10 +121,6 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
     def install_opendj(self):
         self.logIt("Running OpenDJ Setup")
 
-        #if base.snap and not os.path.exists(Config.ldapBaseFolder):
-        #    self.run([paths.cmd_mkdir, Config.ldapBaseFolder])
-
-
         Config.templateRenderingDict['opendj_pck11_setup_key_fn'] = self.opendj_pck11_setup_key_fn
         Config.templateRenderingDict['opendj_trusstore_setup_key_fn'] = self.opendj_trusstore_setup_key_fn
         self.renderTemplateInOut(Config.ldap_setup_properties, Config.templateFolder, Config.outputFolder)
@@ -136,6 +132,32 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                 )
 
         self.run([paths.cmd_chown, 'ldap:ldap', setupPropsFN])
+
+        self.generate_opendj_certs()
+
+        self.fix_opendj_java_properties()
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            self.fix_opendj_config()
+            opendj_fapolicyd_rules = [
+                    'allow perm=any uid=ldap : dir={}'.format(Config.jre_home),
+                    'allow perm=any uid=ldap : dir={}'.format(Config.ldapBaseFolder),
+                    '# give access to opendj server',
+                    ]
+
+            self.apply_fapolicyd_rules(opendj_fapolicyd_rules)
+
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            # Restore SELinux Context
+            self.run(['restorecon', '-rv', os.path.join(Config.ldapBaseFolder, 'bin')])
+
+        self.run([paths.cmd_chown, 'root:gluu', Config.certFolder])
+        self.run([paths.cmd_chown, 'root:gluu', Config.opendj_trust_store_fn])
+        self.run([paths.cmd_chmod, '660', Config.opendj_trust_store_fn])
+
+
+    def generate_opendj_certs(self):
 
         if Config.profile == SetupProfiles.DISA_STIG:
             self.writeFile(self.opendj_trusstore_setup_key_fn, Config.opendj_truststore_pass)
@@ -258,14 +280,10 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                     '--doNotStart'
                     ]
 
-        if base.snap:
-            self.run(setupCmd, shell=True)
-        else:
-            self.run(setupCmd,
-                      cwd='/opt/opendj',
-                      env={'OPENDJ_JAVA_HOME': Config.jre_home}
-                      )
-
+        self.run(setupCmd,
+                  cwd='/opt/opendj',
+                  env={'OPENDJ_JAVA_HOME': Config.jre_home}
+                  )
 
         if Config.profile == SetupProfiles.DISA_STIG and Config.opendj_truststore_format.upper() == 'BCFKS':
             self.run([Config.cmd_keytool, '-importkeystore',
@@ -277,28 +295,6 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                     '-srcstorepass:file', '/opt/opendj/config/keystore.pin',
                     '-noprompt'
                     ])
-
-
-        self.fix_opendj_java_properties()
-
-        if Config.profile == SetupProfiles.DISA_STIG:
-            self.fix_opendj_config()
-            opendj_fapolicyd_rules = [
-                    'allow perm=any uid=ldap : dir={}'.format(Config.jre_home),
-                    'allow perm=any uid=ldap : dir={}'.format(Config.ldapBaseFolder),
-                    '# give access to opendj server',
-                    ]
-
-            self.apply_fapolicyd_rules(opendj_fapolicyd_rules)
-
-
-        if Config.profile == SetupProfiles.DISA_STIG:
-            # Restore SELinux Context
-            self.run(['restorecon', '-rv', os.path.join(Config.ldapBaseFolder, 'bin')])
-
-        self.run([paths.cmd_chown, 'root:gluu', Config.certFolder])
-        self.run([paths.cmd_chown, 'root:gluu', Config.opendj_trust_store_fn])
-        self.run([paths.cmd_chmod, '660', Config.opendj_trust_store_fn])
 
     def post_install_opendj(self):
         try:
