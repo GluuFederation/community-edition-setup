@@ -20,8 +20,7 @@ class JreInstaller(BaseInstaller, SetupUtils):
         self.install_var = 'installJre'
         self.app_type = AppType.APPLICATION
         self.install_type = InstallOption.MONDATORY
-        if not base.snap:
-            self.register_progess()
+        self.register_progess()
 
         self.open_jdk_archive_link = 'https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.4%2B11/OpenJDK11U-jdk_x64_linux_hotspot_11.0.4_11.tar.gz'
 

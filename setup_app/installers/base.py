@@ -32,8 +32,7 @@ class BaseInstaller:
 
         self.check_for_download()
 
-        if not base.snap:
-            self.create_user()
+        self.create_user()
 
         if not hasattr(self, 'service_user'):
             if Config.profile == static.SetupProfiles.DISA_STIG:
@@ -106,23 +105,14 @@ class BaseInstaller:
         if not service:
             service = self.service_name
 
-        if base.snap:
-            service = os.environ['SNAP_NAME'] + '.' + service
-
-        else:
-            self.set_systemd_ulimits(service)
+        self.set_systemd_ulimits(service)
 
         try:
-            if base.snap:
-                cmd_list = [base.snapctl, operation, service]
-                if operation == 'start':
-                    cmd_list.insert(-1, '--enable')
-                self.run(cmd_list, None, None, True)
-            elif (base.clone_type == 'rpm' and base.os_initdaemon == 'systemd') or base.deb_sysd_clone:
+            if (base.clone_type == 'rpm' and base.os_initdaemon == 'systemd') or base.deb_sysd_clone:
                 self.run([base.service_path, operation, service], None, None, True)
             else:
                 self.run([base.service_path, service, operation], None, None, True)
-        except:
+        except Exception:
             self.logIt("Error running operation {} for service {}".format(operation, service), True)
 
 
@@ -134,8 +124,7 @@ class BaseInstaller:
 
 
     def enable(self, service=None):
-        if not base.snap:
-            self.run_service_command('enable', service)
+        self.run_service_command('enable', service)
 
     def stop(self, service=None):
         self.run_service_command('stop', service)
@@ -148,13 +137,11 @@ class BaseInstaller:
         self.start(service)
 
     def reload_daemon(self, service=None):
-        if not base.snap:
-            if not service:
-                service = self.service_name
-            if (base.clone_type == 'rpm' and base.os_initdaemon == 'systemd') or base.deb_sysd_clone:
-                self.run([base.service_path, 'daemon-reload'])
-            elif base.os_name == 'ubuntu16':
-                self.run([paths.cmd_update_rc, service, 'defaults'])
+        if not service:
+            service = self.service_name
+        if (base.clone_type == 'rpm' and base.os_initdaemon == 'systemd') or base.deb_sysd_clone:
+            self.run([base.service_path, 'daemon-reload'])
+
 
     def generate_configuration(self):
         pass
@@ -189,7 +176,7 @@ class BaseInstaller:
                     continue
 
                 if force or self.check_download_needed(src):
-                    src = os.path.join('/tmp' if base.snap else Config.distGluuFolder, src_name)
+                    src = os.path.join(Config.distGluuFolder, src_name)
                     self.source_files[i] = (src, url)
                     self.download_file(url, src)
 

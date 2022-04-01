@@ -93,10 +93,6 @@ class Config:
         self.distTmpFolder = os.path.join(self.distFolder, 'tmp')
         self.ldapBinFolder = os.path.join(self.ldapBaseFolder, 'bin')
 
-        if base.snap:
-            self.ldapBaseFolder = os.path.join(base.snap_common, 'opendj')
-            self.jetty_user = 'root'
-
         if self.profile == SetupProfiles.DISA_STIG:
             self.use_existing_java = True
             self.cmd_java = shutil.which('java')
@@ -285,10 +281,7 @@ class Config:
         self.redhat_services = ['httpd', 'rsyslog']
         self.debian_services = ['apache2', 'rsyslog']
 
-        if base.snap:
-            self.defaultTrustStoreFN = os.path.join(self.certFolder, 'java-cacerts')
-        else:
-            self.defaultTrustStoreFN = os.path.join(self.jre_home, 'lib/security/cacerts')
+        self.defaultTrustStoreFN = os.path.join(self.jre_home, 'lib/security/cacerts')
 
         self.defaultTrustStorePW = 'changeit'
 

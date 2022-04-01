@@ -39,7 +39,6 @@ random_marketing_strings = [
     'Interested in Open Source software business models? Listen to Open Source Underdogs: https://opensourceunderdogs.com',
     'Need to learn more about OpenID and SAML? Read "Securing the Perimeter" by Gluu CEO Mike Schwartz: https://gluu.co/book',
     'The Gluu Server is one of the most advanced OpenID Providers. Compare at https://openid.net/certification',
-    'Installing the Gluu Server is a SNAP. Search for Gluu on https://snapcraft.io',
     'Gluu Solo is coming soon. This is a hosted CE offering with 99.95% availability.',
     'Need FIPS 140-2? Consider the new Gluu Server RHEL 8.4 FIPS distribution that leverages central crypto policies',
     'Open Banking security is available with our new Gluu Server profile. See https://gluu.org/openbanking/',
@@ -152,7 +151,7 @@ class MAIN(GluuSetupForm):
 
         self.description_label = self.add(npyscreen.MultiLineEdit, value='\n'.join(desc_wrap), max_height=6, rely=2, editable=False)
         self.description_label.autowrap = True
-        os_string = "{} {} {}".format('snap' if base.snap else '', base.os_type, base.os_version).strip()
+        os_string = "{} {}".format(base.os_type, base.os_version).strip()
         self.os_type = self.add(npyscreen.TitleFixedText, name=msg.os_type_label, begin_entry_at=18, value=os_string, editable=False)
         self.init_type = self.add(npyscreen.TitleFixedText, name=msg.init_type_label, begin_entry_at=18, value=base.os_initdaemon, editable=False)
         self.httpd_type = self.add(npyscreen.TitleFixedText, name=msg.httpd_type_label, begin_entry_at=18, value=base.httpd_name, field_width=40, editable=False)

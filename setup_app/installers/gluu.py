@@ -135,8 +135,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
     def configureSystem(self):
         self.logIt("Configuring system", 'gluu')
         self.customiseSystem()
-        if not base.snap:
-            self.createGroup('gluu')
+        self.createGroup('gluu')
         self.makeFolders()
 
         if Config.persistence_type == 'hybrid':
@@ -151,35 +150,33 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             if not os.path.exists(folder):
                 self.run([paths.cmd_mkdir, '-p', folder])
 
-        if not base.snap:
-            self.run([paths.cmd_chown, '-R', '{}:{}'.format(Config.root_user, Config.gluu_user), Config.certFolder])
-            self.run([paths.cmd_chmod, '551', Config.certFolder])
-            
-            self.run([paths.cmd_chmod, 'ga+w', "/tmp"]) # Allow write to /tmp
+
+        self.run([paths.cmd_chown, '-R', '{}:{}'.format(Config.root_user, Config.gluu_user), Config.certFolder])
+        self.run([paths.cmd_chmod, '551', Config.certFolder])
+        self.run([paths.cmd_chmod, 'ga+w', "/tmp"]) # Allow write to /tmp
 
     def customiseSystem(self):
 
-        if not base.snap:
-            if Config.os_initdaemon == 'init':
-                system_profile_update = Config.system_profile_update_init
-            else:
-                system_profile_update = Config.system_profile_update_systemd
+        if Config.os_initdaemon == 'init':
+            system_profile_update = Config.system_profile_update_init
+        else:
+            system_profile_update = Config.system_profile_update_systemd
 
-            # Render customized part
-            self.renderTemplate(system_profile_update)
-            renderedSystemProfile = self.readFile(system_profile_update)
+        # Render customized part
+        self.renderTemplate(system_profile_update)
+        renderedSystemProfile = self.readFile(system_profile_update)
 
-            # Read source file
-            currentSystemProfile = self.readFile(Config.sysemProfile)
+        # Read source file
+        currentSystemProfile = self.readFile(Config.sysemProfile)
 
-            if 'Added by Gluu' not in currentSystemProfile:
-                # Write merged file
-                self.backupFile(Config.sysemProfile)
-                resultSystemProfile = "\n".join((currentSystemProfile, renderedSystemProfile))
-                self.writeFile(Config.sysemProfile, resultSystemProfile)
+        if 'Added by Gluu' not in currentSystemProfile:
+            # Write merged file
+            self.backupFile(Config.sysemProfile)
+            resultSystemProfile = "\n".join((currentSystemProfile, renderedSystemProfile))
+            self.writeFile(Config.sysemProfile, resultSystemProfile)
 
-            # Fix new file permissions
-            self.run([paths.cmd_chmod, '644', Config.sysemProfile])
+        # Fix new file permissions
+        self.run([paths.cmd_chmod, '644', Config.sysemProfile])
 
     def make_salt(self):
 
@@ -278,7 +275,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         if base.clone_type == 'rpm':
             for service in Config.redhat_services:
                 self.run(["/sbin/chkconfig", service, "on"])
-        elif not base.snap:
+        else:
             for service in Config.debian_services:
                 self.run([paths.cmd_update_rc , service, 'defaults'])
                 self.run([paths.cmd_update_rc, service, 'enable'])
@@ -297,31 +294,18 @@ class GluuInstaller(BaseInstaller, SetupUtils):
 
         super_gluu_lisence_renewer_fn = os.path.join(Config.staticFolder, 'scripts', 'super_gluu_license_renewer.py')
 
-        if base.snap:
-            target_fn = os.path.join(Config.gluuOptBinFolder, 'super_gluu_lisence_renewer.py')
-            self.run(['cp', '-f', super_gluu_lisence_renewer_fn, target_fn])
 
-        else:
-            target_fn = '/etc/cron.daily/super_gluu_lisence_renewer'
-            self.run(['cp', '-f', super_gluu_lisence_renewer_fn, target_fn])
-            self.run([paths.cmd_chown, '{}:{}'.format('{}:{}'.format(Config.root_user, Config.root_user), target_fn])
-            self.run([paths.cmd_chmod, '+x', target_fn])
+        target_fn = '/etc/cron.daily/super_gluu_lisence_renewer'
+        self.run(['cp', '-f', super_gluu_lisence_renewer_fn, target_fn])
+        self.run([paths.cmd_chown, '{0}:{0}'.format(Config.root_user), target_fn])
+        self.run([paths.cmd_chmod, '+x', target_fn])
 
-            print_version_scr_fn = os.path.join(Config.install_dir, 'setup_app/utils/printVersion.py')
-            self.run(['cp', '-f', print_version_scr_fn , Config.gluuOptBinFolder])
-            self.run([paths.cmd_ln, '-s', 'printVersion.py' , 'show_version.py'], cwd=Config.gluuOptBinFolder)
+        print_version_scr_fn = os.path.join(Config.install_dir, 'setup_app/utils/printVersion.py')
+        self.run(['cp', '-f', print_version_scr_fn , Config.gluuOptBinFolder])
+        self.run([paths.cmd_ln, '-s', 'printVersion.py' , 'show_version.py'], cwd=Config.gluuOptBinFolder)
 
         for scr in Path(Config.gluuOptBinFolder).glob('*'):
             scr_path = scr.as_posix()
-            if base.snap and scr_path.endswith('.py'):
-                scr_content = self.readFile(scr_path).splitlines()
-                first_line = '#!' + paths.cmd_py3
-                if scr_content[0].startswith('#!'):
-                    scr_content[0] = first_line
-                else:
-                    scr_content.insert(0, first_line)
-                self.writeFile(scr_path, '\n'.join(scr_content), backup=False)
-
             self.run([paths.cmd_chmod, '700', scr_path])
 
     def update_hostname(self):
@@ -428,72 +412,27 @@ class GluuInstaller(BaseInstaller, SetupUtils):
 
         self.deleteLdapPw()
 
-        if base.snap:
-            #write post-install.py script
-            self.logIt("Writing snap-post-setup.py", pbar='post-setup')
-            post_setup_script = self.readFile(os.path.join(Config.templateFolder, 'snap-post-setup.py'))
+        for f in os.listdir(Config.certFolder):
+            if not f.startswith('passport-'):
+                fpath = os.path.join(Config.certFolder, f)
+                self.run([paths.cmd_chown, user_group_tmp.format(Config.root_user, Config.gluu_group), fpath])
+                self.run([paths.cmd_chmod, '660', fpath])
+                self.run([paths.cmd_chmod, 'u+X', fpath])
+        self.run([paths.cmd_chown, '-R', user_group_tmp.format(Config.root_user, Config.gluu_user), Config.gluuOptPythonFolder])
 
-            for key, val in (('{{SNAP_NAME}}', os.environ['SNAP_NAME']),
-                             ('{{SNAP_PY3}}', paths.cmd_py3),
-                             ('{{SNAP}}', base.snap),
-                             ('{{SNAP_COMMON}}', base.snap_common)
-                             ):
-            
-                post_setup_script = post_setup_script.replace(key, val)
+        if Config.profile != static.SetupProfiles.DISA_STIG:
+            self.run([paths.cmd_chown, Config.user_group, Config.jetty_base])
+            self.run([paths.cmd_chown, '-R', Config.user_group, '/opt/gluu/'])
 
-            post_setup_script_fn = os.path.join(Config.install_dir, 'snap-post-setup.py')
-            with open(post_setup_script_fn, 'w') as w:
-                w.write(post_setup_script)
-            self.run([paths.cmd_chmod, '+x', post_setup_script_fn])
+        self.run([paths.cmd_chown, '-R', user_group_tmp.format(Config.root_user, Config.gluu_group), '/etc/gluu'])
+        self.run([paths.cmd_chown, '-R', user_group_tmp.format(Config.root_user, Config.gluu_group), '/var/gluu'])
 
-            if not Config.installed_instance:
-                Config.post_messages.insert(0, "Please execute:\nsudo " + post_setup_script_fn)
+        for sys_path in ('/opt/gluu', '/etc/gluu', '/var/gluu'):
+            self.run([paths.cmd_chmod, '-R', 'u+rwX,g+rwX,o-rwX', sys_path])
 
-            self.logIt("Setting permissions", pbar='post-setup')
-
-            for crt_fn in Path(os.path.join(base.snap_common, 'etc/certs')).glob('*'):
-                self.run([paths.cmd_chmod, '0600', crt_fn.as_posix()])
-
-            for spath in ('gluu', 'etc/gluu/conf', 'opendj/db'):
-                for gpath in Path(os.path.join(base.snap_common, spath)).rglob('*'):
-                    if ('node_modules' in gpath.as_posix()) or ('gluu/bin' in gpath.as_posix()) or ('jetty/temp' in gpath.as_posix()):
-                        continue
-                    chm_mode = '0755' if os.path.isdir(gpath.as_posix()) else '0600'
-                    self.run([paths.cmd_chmod, chm_mode, gpath.as_posix()])
-
-            self.add_yacron_job(
-                    command = os.path.join(Config.gluuOptBinFolder, 'super_gluu_lisence_renewer.py'), 
-                    schedule = '0 2 * * *', # everyday at 2 am
-                    name='super-gluu-license-renewer', 
-                    args={'captureStderr': True}
-                    )
-
-            self.restart('yacron')
-
-            self.writeFile(os.path.join(base.snap_common, 'etc/hosts.gluu'), Config.ip + '\t' + Config.hostname)
-
-        else:
-            for f in os.listdir(Config.certFolder):
-                if not f.startswith('passport-'):
-                    fpath = os.path.join(Config.certFolder, f)
-                    self.run([paths.cmd_chown, user_group_tmp.format(Config.root_user, Config.gluu_group), fpath])
-                    self.run([paths.cmd_chmod, '660', fpath])
-                    self.run([paths.cmd_chmod, 'u+X', fpath])
-            self.run([paths.cmd_chown, '-R', user_group_tmp.format(Config.root_user, Config.gluu_user), Config.gluuOptPythonFolder])
-
-            if Config.profile != static.SetupProfiles.DISA_STIG:
-                self.run([paths.cmd_chown, Config.user_group, Config.jetty_base])
-                self.run([paths.cmd_chown, '-R', Config.user_group, '/opt/gluu/'])
-
-            self.run([paths.cmd_chown, '-R', user_group_tmp.format(Config.root_user, Config.gluu_group), '/etc/gluu'])
-            self.run([paths.cmd_chown, '-R', user_group_tmp.format(Config.root_user, Config.gluu_group), '/var/gluu'])
-
-            for sys_path in ('/opt/gluu', '/etc/gluu', '/var/gluu'):
-                self.run([paths.cmd_chmod, '-R', 'u+rwX,g+rwX,o-rwX', sys_path])
-
-            if not Config.installed_instance:
-                cron_service = 'crond' if base.clone_type == 'rpm' else 'cron'
-                self.restart(cron_service)
+        if not Config.installed_instance:
+            cron_service = 'crond' if base.clone_type == 'rpm' else 'cron'
+            self.restart(cron_service)
 
 
         if Config.profile == static.SetupProfiles.DISA_STIG:

@@ -482,8 +482,6 @@ class SetupUtils(Crypto64):
 
 
     def fix_init_scripts(self, serviceName, initscript_fn):
-        if base.snap:
-            return
 
         changeTo = None
 
@@ -579,29 +577,6 @@ class SetupUtils(Crypto64):
             self.createUser(service_user, service_home_dir)
             self.addUserToGroup(Config.gluu_group, service_user)
 
-
-    def add_yacron_job(self, command, schedule, name=None, args={}):
-        if not name:
-            name = command
-
-        yacron_yaml_fn = os.path.join(base.snap_common, 'etc/cron-jobs.yaml')
-
-        yml_str = self.readFile(yacron_yaml_fn)
-        yacron_yaml = ruamel.yaml.load(yml_str, ruamel.yaml.RoundTripLoader)
-
-        if not yacron_yaml:
-            yacron_yaml = {'jobs': []}
-
-        if 'jobs' not in yacron_yaml:
-            yacron_yaml['jobs'] = []
-
-        job = { 'command': command, 'schedule': schedule, 'name': name }
-        job.update(args)
-        
-        yacron_yaml['jobs'].append(job)
-
-        yml_str = ruamel.yaml.dump(yacron_yaml, Dumper=ruamel.yaml.RoundTripDumper)
-        self.writeFile(yacron_yaml_fn, yml_str)
 
     def port_used(self, port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -49,8 +49,6 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
 
         self.writeFile('/var/www/html/index.html', 'OK')
 
-        if base.snap:
-            icons_conf_fn = '/etc/apache2/mods-available/alias.conf'
         if base.os_type == 'suse':
             icons_conf_fn = '/etc/apache2/default-server.conf'
         elif base.clone_type == 'deb':
@@ -78,28 +76,7 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
         cmd_a2enmod = shutil.which('a2enmod')
         cmd_a2dismod = shutil.which('a2dismod')
 
-        if base.snap:
-            mods_enabled_dir = os.path.join(base.snap_common, 'etc/apache2/mods-enabled')
-            mods_available_dir = os.path.join(base.snap_common, 'etc/apache2/mods-available')
-
-            for em in os.listdir(mods_enabled_dir):
-                em_n, em_e = os.path.splitext(em)
-                if em_n not in mods_enabled:
-                    os.unlink(os.path.join(mods_enabled_dir, em))
-
-            for m in mods_enabled:
-                load_fn = os.path.join(mods_available_dir, m + '.load')
-                conf_fn = os.path.join(mods_available_dir, m + '.conf')
-                if os.path.exists(load_fn):
-                    target_fn = os.path.join(mods_enabled_dir, m + '.load')
-                    if not os.path.exists(target_fn):
-                        os.symlink(load_fn, target_fn)
-                if os.path.exists(conf_fn):
-                    target_fn = os.path.join(mods_enabled_dir, m + '.conf')
-                    if not os.path.exists(target_fn):
-                        os.symlink(conf_fn, target_fn)
-
-        elif base.clone_type == 'deb':
+        if base.clone_type == 'deb':
             for mod_load_fn in glob.glob('/etc/apache2/mods-enabled/*'):
                 mod_load_base_name = os.path.basename(mod_load_fn)
                 f_name, f_ext = os.path.splitext(mod_load_base_name)

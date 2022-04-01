@@ -921,10 +921,7 @@ class PropertiesUtils(SetupUtils):
                     Config.java_type = 'jre'
                 else:
                     Config.java_type = 'jdk'
-                    if base.snap:
-                        Config.defaultTrustStoreFN = os.path.join(self.certFolder, 'java-cacerts')
-                    else:
-                        Config.defaultTrustStoreFN = os.path.join(self.jre_home, 'jre/lib/security/cacerts')
+                    Config.defaultTrustStoreFN = os.path.join(self.jre_home, 'jre/lib/security/cacerts')
 
             promptForOxAuth = self.getPrompt("Install oxAuth OAuth2 Authorization Server?", 
                                             self.getDefaultOption(Config.installOxAuth)

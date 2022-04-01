@@ -49,9 +49,8 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
     def install(self):
         self.logIt("Running OpenDJ Setup")
 
-        if not base.snap:
-            Config.pbar.progress(self.service_name, "Extracting OpenDJ", False)
-            self.extractOpenDJ()
+        Config.pbar.progress(self.service_name, "Extracting OpenDJ", False)
+        self.extractOpenDJ()
 
         self.createLdapPw()
 
@@ -125,15 +124,32 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         Config.templateRenderingDict['opendj_trusstore_setup_key_fn'] = self.opendj_trusstore_setup_key_fn
         self.renderTemplateInOut(Config.ldap_setup_properties, Config.templateFolder, Config.outputFolder)
 
-        setupPropsFN = os.path.join(Config.ldapBaseFolder, os.path.basename(Config.ldap_setup_properties))
+        setup_props_fn = os.path.join(Config.ldapBaseFolder, os.path.basename(Config.ldap_setup_properties))
         shutil.copy(
                 os.path.join(Config.outputFolder, os.path.basename(Config.ldap_setup_properties)),
-                setupPropsFN
+                setup_props_fn
                 )
 
-        self.run([paths.cmd_chown, 'ldap:ldap', setupPropsFN])
+        self.run([paths.cmd_chown, 'ldap:ldap', setup_props_fn])
 
-        self.generate_opendj_certs()
+        if Config.profile == SetupProfiles.DISA_STIG:
+            self.generate_opendj_certs()
+
+        ldap_setup_command = os.path.join(os.path.dirname(Config.ldapBinFolder), 'setup')
+
+        setupCmd = [ldap_setup_command,
+                    '--no-prompt',
+                    '--cli',
+                    '--propertiesFilePath',
+                    setup_props_fn,
+                    '--acceptLicense',
+                    '--doNotStart'
+                    ]
+
+        self.run(setupCmd,
+                  cwd='/opt/opendj',
+                  env={'OPENDJ_JAVA_HOME': Config.jre_home}
+                  )
 
         self.fix_opendj_java_properties()
 
@@ -159,131 +175,118 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
 
     def generate_opendj_certs(self):
 
-        if Config.profile == SetupProfiles.DISA_STIG:
-            self.writeFile(self.opendj_trusstore_setup_key_fn, Config.opendj_truststore_pass)
 
-            provider_path = '{}:{}'.format(Config.bc_fips_jar, Config.bcpkix_fips_jar)
-            keystore = Config.opendj_trust_store_fn if Config.opendj_truststore_format.upper() == 'BCFKS' else 'NONE'
+        self.writeFile(self.opendj_trusstore_setup_key_fn, Config.opendj_truststore_pass)
 
-            # Generate keystore
+        provider_path = '{}:{}'.format(Config.bc_fips_jar, Config.bcpkix_fips_jar)
+        keystore = Config.opendj_trust_store_fn if Config.opendj_truststore_format.upper() == 'BCFKS' else 'NONE'
 
-            cmd_server_cert_gen = [
-                Config.cmd_keytool, '-genkey',
-                '-alias', 'server-cert',
-                '-keyalg', 'rsa',
-                '-dname', 'CN={},O=OpenDJ RSA Self-Signed Certificate'.format(Config.hostname),
-                '-keystore', keystore,
+        # Generate keystore
+
+        cmd_server_cert_gen = [
+            Config.cmd_keytool, '-genkey',
+            '-alias', 'server-cert',
+            '-keyalg', 'rsa',
+            '-dname', 'CN={},O=OpenDJ RSA Self-Signed Certificate'.format(Config.hostname),
+            '-keystore', keystore,
+            '-storetype', Config.opendj_truststore_format.upper(),
+            '-validity', '3650',
+            ]
+
+        if Config.opendj_truststore_format.upper() == 'PKCS11':
+            cmd_server_cert_gen += [
+                '-storepass', 'changeit',
+                   ]
+        else:
+            cmd_server_cert_gen += [
+                 '-providername', 'BCFIPS',
+                 '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
+                 '-providerpath',  provider_path,
+                 '-keypass:file', self.opendj_trusstore_setup_key_fn,
+                 '-storepass:file', self.opendj_trusstore_setup_key_fn,
+                 '-keysize', '2048',
+                 '-sigalg', 'SHA256WITHRSA',
+                    ]
+
+        self.run(cmd_server_cert_gen)
+
+
+        cmd_server_selfcert_gen = [
+            Config.cmd_keytool, '-selfcert',
+            '-alias', 'server-cert',
+            '-keystore', keystore,
+            '-storetype', Config.opendj_truststore_format.upper(),
+            '-validity', '3650',
+            ]
+
+        if Config.opendj_truststore_format.upper() == 'PKCS11':
+            cmd_server_selfcert_gen += [
+                '-storepass', 'changeit'
+                ]
+
+        else:
+            cmd_server_selfcert_gen += [
+                '-providername', 'BCFIPS',
+                '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
+                '-providerpath', provider_path,
+                '-storepass:file', self.opendj_trusstore_setup_key_fn,
+                ]
+
+        self.run(cmd_server_selfcert_gen)
+
+
+        cmd_admin_cert_gen = [
+                Config.cmd_keytool, '-genkey', 
+                '-alias', 'admin-cert', 
+                '-keyalg', 'rsa', 
+                '-dname', 'CN={},O=Administration Connector RSA Self-Signed Certificate'.format(Config.hostname), 
+                '-keystore', keystore, 
                 '-storetype', Config.opendj_truststore_format.upper(),
                 '-validity', '3650',
                 ]
 
-            if Config.opendj_truststore_format.upper() == 'PKCS11':
-                cmd_server_cert_gen += [
-                    '-storepass', 'changeit',
-                       ]
-            else:
-                cmd_server_cert_gen += [
-                     '-providername', 'BCFIPS',
-                     '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
-                     '-providerpath',  provider_path,
-                     '-keypass:file', self.opendj_trusstore_setup_key_fn,
-                     '-storepass:file', self.opendj_trusstore_setup_key_fn,
-                     '-keysize', '2048',
-                     '-sigalg', 'SHA256WITHRSA',
-                        ]
 
-            self.run(cmd_server_cert_gen)
+        if Config.opendj_truststore_format.upper() == 'PKCS11':
+            cmd_admin_cert_gen += [
+                '-storepass', 'changeit',
+                   ]
+        else:
+            cmd_admin_cert_gen += [
+                 '-providername', 'BCFIPS',
+                 '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
+                 '-providerpath',  provider_path,
+                 '-keypass:file', self.opendj_trusstore_setup_key_fn,
+                 '-storepass:file', self.opendj_trusstore_setup_key_fn,
+                 '-keysize', '2048',
+                 '-sigalg', 'SHA256WITHRSA',
+                    ]
+        self.run(cmd_admin_cert_gen)
 
-
-            cmd_server_selfcert_gen = [
+        cmd_admin_selfcert_gen = [
                 Config.cmd_keytool, '-selfcert',
-                '-alias', 'server-cert',
+                '-alias', 'admin-cert',
                 '-keystore', keystore,
                 '-storetype', Config.opendj_truststore_format.upper(),
                 '-validity', '3650',
                 ]
 
-            if Config.opendj_truststore_format.upper() == 'PKCS11':
-                cmd_server_selfcert_gen += [
-                    '-storepass', 'changeit'
-                    ]
+        if Config.opendj_truststore_format.upper() == 'PKCS11':
+            cmd_admin_selfcert_gen += [
+                '-storepass', 'changeit'
+                ]
 
-            else:
-                cmd_server_selfcert_gen += [
-                    '-providername', 'BCFIPS',
-                    '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
-                    '-providerpath', provider_path,
-                    '-storepass:file', self.opendj_trusstore_setup_key_fn,
-                    ]
+        else:
+            cmd_admin_selfcert_gen += [
+                '-providername', 'BCFIPS',
+                '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
+                '-providerpath', provider_path,
+                '-storepass:file', self.opendj_trusstore_setup_key_fn,
+                ]
 
-            self.run(cmd_server_selfcert_gen)
-
-
-            cmd_admin_cert_gen = [
-                    Config.cmd_keytool, '-genkey', 
-                    '-alias', 'admin-cert', 
-                    '-keyalg', 'rsa', 
-                    '-dname', 'CN={},O=Administration Connector RSA Self-Signed Certificate'.format(Config.hostname), 
-                    '-keystore', keystore, 
-                    '-storetype', Config.opendj_truststore_format.upper(),
-                    '-validity', '3650',
-                    ]
+        self.run(cmd_admin_selfcert_gen)
 
 
-            if Config.opendj_truststore_format.upper() == 'PKCS11':
-                cmd_admin_cert_gen += [
-                    '-storepass', 'changeit',
-                       ]
-            else:
-                cmd_admin_cert_gen += [
-                     '-providername', 'BCFIPS',
-                     '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
-                     '-providerpath',  provider_path,
-                     '-keypass:file', self.opendj_trusstore_setup_key_fn,
-                     '-storepass:file', self.opendj_trusstore_setup_key_fn,
-                     '-keysize', '2048',
-                     '-sigalg', 'SHA256WITHRSA',
-                        ]
-            self.run(cmd_admin_cert_gen)
-
-            cmd_admin_selfcert_gen = [
-                    Config.cmd_keytool, '-selfcert',
-                    '-alias', 'admin-cert',
-                    '-keystore', keystore,
-                    '-storetype', Config.opendj_truststore_format.upper(),
-                    '-validity', '3650',
-                    ]
-
-            if Config.opendj_truststore_format.upper() == 'PKCS11':
-                cmd_admin_selfcert_gen += [
-                    '-storepass', 'changeit'
-                    ]
-
-            else:
-                cmd_admin_selfcert_gen += [
-                    '-providername', 'BCFIPS',
-                    '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
-                    '-providerpath', provider_path,
-                    '-storepass:file', self.opendj_trusstore_setup_key_fn,
-                    ]
-
-            self.run(cmd_admin_selfcert_gen)
-
-        ldapSetupCommand = os.path.join(os.path.dirname(Config.ldapBinFolder), 'setup')
-
-        setupCmd = [ldapSetupCommand,
-                    '--no-prompt',
-                    '--cli',
-                    '--propertiesFilePath',
-                    setupPropsFN,
-                    '--acceptLicense',
-                    '--doNotStart'
-                    ]
-
-        self.run(setupCmd,
-                  cwd='/opt/opendj',
-                  env={'OPENDJ_JAVA_HOME': Config.jre_home}
-                  )
+    def post_setup_import():
 
         if Config.profile == SetupProfiles.DISA_STIG and Config.opendj_truststore_format.upper() == 'BCFKS':
             self.run([Config.cmd_keytool, '-importkeystore',
@@ -468,38 +471,37 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         self.start()
 
     def setup_opendj_service(self):
-        if not base.snap:
-            init_script_fn = '/etc/init.d/opendj'
-            if (base.clone_type == 'rpm' and base.os_initdaemon == 'systemd') or base.deb_sysd_clone:
-                remove_init_script = True
-                opendj_script_name = os.path.basename(self.opendj_service_centos7)
-                opendj_dest_folder = "/etc/systemd/system"
-                try:
-                    self.copyFile(self.opendj_service_centos7, opendj_dest_folder)
-                except:
-                    self.logIt("Error copying script file %s to %s" % (opendj_script_name, opendj_dest_folder))
-                if os.path.exists(init_script_fn):
-                    self.run(['rm', '-f', init_script_fn])
-            else:
-                self.run([self.ldapDsCreateRcCommand, "--outputFile", "/etc/init.d/opendj", "--userName",  "ldap"])
-                # Make the generated script LSB compliant
-                lsb_str=(
-                        '### BEGIN INIT INFO\n'
-                        '# Provides:          opendj\n'
-                        '# Required-Start:    $remote_fs $syslog\n'
-                        '# Required-Stop:     $remote_fs $syslog\n'
-                        '# Default-Start:     2 3 4 5\n'
-                        '# Default-Stop:      0 1 6\n'
-                        '# Short-Description: Start daemon at boot time\n'
-                        '# Description:       Enable service provided by daemon.\n'
-                        '### END INIT INFO\n'
-                        )
-                self.insertLinesInFile("/etc/init.d/opendj", 1, lsb_str)
+        init_script_fn = '/etc/init.d/opendj'
+        if (base.clone_type == 'rpm' and base.os_initdaemon == 'systemd') or base.deb_sysd_clone:
+            remove_init_script = True
+            opendj_script_name = os.path.basename(self.opendj_service_centos7)
+            opendj_dest_folder = "/etc/systemd/system"
+            try:
+                self.copyFile(self.opendj_service_centos7, opendj_dest_folder)
+            except:
+                self.logIt("Error copying script file %s to %s" % (opendj_script_name, opendj_dest_folder))
+            if os.path.exists(init_script_fn):
+                self.run(['rm', '-f', init_script_fn])
+        else:
+            self.run([self.ldapDsCreateRcCommand, "--outputFile", "/etc/init.d/opendj", "--userName",  "ldap"])
+            # Make the generated script LSB compliant
+            lsb_str=(
+                    '### BEGIN INIT INFO\n'
+                    '# Provides:          opendj\n'
+                    '# Required-Start:    $remote_fs $syslog\n'
+                    '# Required-Stop:     $remote_fs $syslog\n'
+                    '# Default-Start:     2 3 4 5\n'
+                    '# Default-Stop:      0 1 6\n'
+                    '# Short-Description: Start daemon at boot time\n'
+                    '# Description:       Enable service provided by daemon.\n'
+                    '### END INIT INFO\n'
+                    )
+            self.insertLinesInFile("/etc/init.d/opendj", 1, lsb_str)
 
-                if base.os_type in ['ubuntu', 'debian']:
-                    self.run([paths.cmd_update_rc, "-f", "opendj", "remove"])
+            if base.os_type in ['ubuntu', 'debian']:
+                self.run([paths.cmd_update_rc, "-f", "opendj", "remove"])
 
-                self.fix_init_scripts('opendj', init_script_fn)
+            self.fix_init_scripts('opendj', init_script_fn)
 
             self.reload_daemon()
 

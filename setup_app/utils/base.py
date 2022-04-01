@@ -38,9 +38,6 @@ par_dir = Path(__file__).parent.parent.parent.as_posix()
 
 current_app = SimpleNamespace()
 
-snap = os.environ.get('SNAP','')
-snap_common = snap_common_dir = os.environ.get('SNAP_COMMON','')
-
 re_split_host = re.compile(r'[^,\s,;]+')
 
 # Determine initdaemon
@@ -95,16 +92,13 @@ if os_type == 'suse':
     httpd_name = 'apache2'
 
 
-if snap:
-    snapctl = shutil.which('snapctl')
-
 # resources
 current_file_max = int(open("/proc/sys/fs/file-max").read().strip())
 current_mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
 current_mem_size = round(current_mem_bytes / (1024.**3), 1) #in GB
 current_number_of_cpu = multiprocessing.cpu_count()
 
-disk_st = os.statvfs(snap_common if snap else '/')
+disk_st = os.statvfs('/')
 current_free_disk_space = round(disk_st.f_bavail * disk_st.f_frsize / (1024 * 1024 *1024), 1)
 
 def check_resources():
@@ -221,9 +215,6 @@ def get_clean_args(args):
 
 # args = command + args, i.e. ['ls', '-ltr']
 def run(args, cwd=None, env=None, useWait=False, shell=False, get_stderr=False):
-    if snap and args[0] in [paths.cmd_chown]:
-        return ''
-
     output = ''
     log_arg = ' '.join(args) if type(args) is list else args
     logIt('Running: %s' % log_arg)

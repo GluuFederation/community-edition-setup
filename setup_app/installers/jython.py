@@ -17,8 +17,7 @@ class JythonInstaller(BaseInstaller, SetupUtils):
         self.install_var = 'installJython'
         self.app_type = AppType.APPLICATION
         self.install_type = InstallOption.MONDATORY
-        if not base.snap:
-            self.register_progess()
+        self.register_progess()
 
         self.needdb = False # we don't need backend connection in this class
 

@@ -76,13 +76,6 @@ from setup_app.installers.casa import CasaInstaller
 from setup_app.installers.rdbm import RDBMInstaller
 
 
-if base.snap:
-    try:
-        open('/proc/mounts').close()
-    except Exception:
-        print("Please execute the following command\n  sudo snap connect gluu-server:mount-observe :mount-observe\nbefore running setup. Exiting ...")
-        sys.exit()
-
 # initialize config object
 Config.init(paths.INSTALL_DIR)
 Config.determine_version()
@@ -135,7 +128,7 @@ gluuInstaller.initialize()
 if not GSA and not os.path.exists(Config.gluu_properties_fn):
     print()
     print("Installing Gluu Server...\n\nFor more info see:\n  {}  \n  {}\n".format(paths.LOG_FILE, paths.LOG_ERROR_FILE))
-    print("Detected OS     :  {}".format('snap ' if base.snap else '' + base.os_type + ' ' + base.os_version))
+    print("Detected OS     :  {}".format(base.os_type + ' ' + base.os_version))
     print("Gluu Version    :  {}".format(Config.oxVersion))
     print("Detected init   :  {}".format(base.os_initdaemon))
     print("Detected Apache :  {}".format(base.determineApacheVersion()))
@@ -300,9 +293,8 @@ def prepare_for_installation():
     gluuInstaller.render_templates()
     gluuInstaller.render_configuration_template()
 
-    if not base.snap:
-        gluuInstaller.update_hostname()
-        gluuInstaller.set_ulimits()
+    gluuInstaller.update_hostname()
+    gluuInstaller.set_ulimits()
 
     gluuInstaller.copy_output()
     gluuInstaller.setup_init_scripts()
@@ -373,8 +365,6 @@ def do_installation():
             if not base.argsp.dummy:
                 gluuInstaller.make_salt()
                 oxauthInstaller.make_salt()
-
-            if not base.snap:
                 jreInstaller.start_installation()
                 jettyInstaller.start_installation()
                 jythonInstaller.start_installation()

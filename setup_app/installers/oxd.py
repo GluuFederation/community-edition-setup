@@ -35,15 +35,12 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         if Config.profile == SetupProfiles.DISA_STIG:
             self.create_service_user(oxd_user)
 
-        if base.snap:
-            self.log_dir = os.path.join(base.snap_common, 'gluu/oxd-server/log/')
+        self.log_dir = '/var/log/oxd-server'
+        service_file = os.path.join(self.oxd_root, 'oxd-server.service')
+        if os.path.exists(service_file):
+            self.run(['cp', service_file, '/lib/systemd/system'])
         else:
-            self.log_dir = '/var/log/oxd-server'
-            service_file = os.path.join(self.oxd_root, 'oxd-server.service')
-            if os.path.exists(service_file):
-                self.run(['cp', service_file, '/lib/systemd/system'])
-            else:
-                self.run([Config.cmd_ln, service_file, '/etc/init.d/oxd-server'])
+            self.run([Config.cmd_ln, service_file, '/etc/init.d/oxd-server'])
 
         if not os.path.exists(self.log_dir):
             self.run([paths.cmd_mkdir, self.log_dir])
@@ -56,8 +53,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         if not os.path.exists(self.log_file):
             open(self.log_file, 'w').close()
 
-        if not base.snap:
-            self.run([paths.cmd_chown, '-R', '{0}:{0}'.format(oxd_user), self.log_dir])
+        self.run([paths.cmd_chown, '-R', '{0}:{0}'.format(oxd_user), self.log_dir])
 
         for fn in glob.glob(os.path.join(self.oxd_root,'bin/*')):
             self.run([paths.cmd_chmod, '+x', fn])
@@ -100,7 +96,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             else:
                 i = 1
             addr_list = [Config.ip]
-            if base.snap or Config.profile == SetupProfiles.DISA_STIG:
+            if Config.profile == SetupProfiles.DISA_STIG:
                 addr_list.append('127.0.0.1')
             oxd_yaml.insert(i, 'bind_ip_addresses',  addr_list)
 
@@ -132,13 +128,6 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             oxd_yaml['server']['adminConnectors'][0].pop('keyStorePassword')
             oxd_yaml['server']['adminConnectors'][0].pop('validateCerts')
 
-
-
-        if base.snap:
-            for appenders in oxd_yaml['logging']['appenders']:
-                if appenders['type'] == 'file':
-                    appenders['currentLogFilename'] = self.log_file
-                    appenders['archivedLogFilenamePattern'] = os.path.join(base.snap_common, 'gluu/oxd-server/log/oxd-server-%d{yyyy-MM-dd}-%i.log.gz')
 
         yml_str = ruamel.yaml.dump(oxd_yaml, Dumper=ruamel.yaml.RoundTripDumper)
         self.writeFile(self.oxd_server_yml_fn, yml_str)
@@ -193,8 +182,8 @@ class OxdInstaller(SetupUtils, BaseInstaller):
 
         self.logIt("Downloading {} and preparing package".format(os.path.basename(oxd_url)))
 
-        oxd_zip_fn = '/tmp/oxd-server.zip'
-        oxd_tgz_fn = '/tmp/oxd-server.tgz' if base.snap else os.path.join(Config.distGluuFolder, 'oxd-server.tgz')
+        oxd_zip_fn = os.path.join(Config.outputFolder, 'oxd-server.zip')
+        oxd_tgz_fn = os.path.join(Config.distGluuFolder, 'oxd-server.tgz')
         tmp_dir = os.path.join('/tmp', os.urandom(5).hex())
         oxd_tmp_dir = os.path.join(tmp_dir, 'oxd-server')
 
@@ -203,10 +192,9 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         self.run([paths.cmd_unzip, '-qqo', oxd_zip_fn, '-d', oxd_tmp_dir])
         self.run([paths.cmd_mkdir, os.path.join(oxd_tmp_dir, 'data')])
 
-        if not base.snap:
-            service_file = 'oxd-server.init.d' if base.deb_sysd_clone else 'oxd-server.service'
-            service_url = 'https://raw.githubusercontent.com/GluuFederation/community-edition-package/master/package/systemd/oxd-server.service'.format(Config.oxVersion, service_file)
-            self.download_file(service_url, os.path.join(oxd_tmp_dir, service_file))
+        service_file = 'oxd-server.init.d' if base.deb_sysd_clone else 'oxd-server.service'
+        service_url = 'https://raw.githubusercontent.com/GluuFederation/community-edition-package/master/package/systemd/oxd-server.service'.format(Config.oxVersion, service_file)
+        self.download_file(service_url, os.path.join(oxd_tmp_dir, service_file))
 
         oxd_server_sh_url = 'https://raw.githubusercontent.com/GluuFederation/oxd/master/debian/oxd-server'
         self.download_file(oxd_server_sh_url, os.path.join(oxd_tmp_dir, 'bin/oxd-server'))
