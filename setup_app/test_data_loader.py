@@ -30,32 +30,28 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         self.template_base = os.path.join(Config.templateFolder, 'test')
 
     def create_test_client_keystore(self):
-        self.logIt("Creating client_keystore.jks")
-        client_keystore_fn = os.path.join(Config.outputFolder, 'test/oxauth/client/client_keystore.jks')
+
+        self.logIt("Creating {}".format(Config.templateRenderingDict['test_client_keystore_base_fn']))
         keys_json_fn =  os.path.join(Config.outputFolder, 'test/oxauth/client/keys_client_keystore.json')
 
-        args = [Config.cmd_keytool, '-genkey', '-alias', 'dummy', '-keystore', 
-                    client_keystore_fn, '-storepass', 'secret', '-keypass', 
-                    'secret', '-dname', 
-                    "'{}'".format(Config.default_openid_jks_dn_name)
-                    ]
-
-        self.run(' '.join(args), shell=True)
+        client_cmd = self.get_key_gen_client_provider_cmd()
 
         args = [Config.cmd_java, '-Dlog4j.defaultInitOverride=true',
-                '-cp', Config.non_setup_properties['oxauth_client_jar_fn'], Config.non_setup_properties['key_gen_path'],
-                '-keystore', client_keystore_fn,
+                "-cp", client_cmd,
+                Config.non_setup_properties['key_gen_path'],
+                '-keystore', self.test_client_keystore_fn,
+                '-keystore_type', Config.default_client_test_store_type,
                 '-keypasswd', 'secret',
-                '-sig_keys', Config.default_key_algs,
-                '-enc_keys', Config.default_key_algs,
-                '-dnname', "'{}'".format(Config.default_openid_jks_dn_name),
+                '-sig_keys', Config.default_sig_key_algs,
+                '-enc_keys', Config.default_enc_key_algs,
+                '-dnname', "'{}'".format(Config.default_openid_dstore_dn_name),
                 '-expiration', '365','>', keys_json_fn]
 
         cmd = ' '.join(args)
-        
+
         self.run(cmd, shell=True)
 
-        self.copyFile(client_keystore_fn, os.path.join(Config.outputFolder, 'test/oxauth/server'))
+        self.copyFile(self.test_client_keystore_fn, os.path.join(Config.outputFolder, 'test/oxauth/server'))
         self.copyFile(keys_json_fn, os.path.join(Config.outputFolder, 'test/oxauth/server'))
 
     def encode_test_passwords(self):
@@ -179,8 +175,8 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         self.render_templates_folder(self.template_base)
 
         Config.pbar.progress(self.service_name, "Loading test ldif files", False)
-        if not base.current_app.PassportInstaller.installed():
-            base.current_app.PassportInstaller.generate_configuration()
+        if not self.passportInstaller.installed() and Config.profile != static.SetupProfiles.DISA_STIG:
+            self.passportInstaller.generate_configuration()
 
         ox_auth_test_ldif = os.path.join(Config.outputFolder, 'test/oxauth/data/oxauth-test-data.ldif')
         ox_auth_test_user_ldif = os.path.join(Config.outputFolder, 'test/oxauth/data/oxauth-test-data-user.ldif')
@@ -281,6 +277,9 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                     ldif_writer.unparse(dn, entry)
 
             self.copyFile(tmp_fn, openDjSchemaFolder)
+
+            for test_schema in ('102-oxauth_test.ldif', '103-scim_test.ldif', '77-customAttributes.ldif'):
+                self.run([paths.cmd_chown, '{0}:{0}'.format(Config.ldap_user), os.path.join(openDjSchemaFolder, test_schema)])
 
             self.logIt("Making opndj listen all interfaces")
             ldap_operation_result = self.dbUtils.ldap_conn.modify(

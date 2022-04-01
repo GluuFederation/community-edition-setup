@@ -39,6 +39,12 @@ packageUtils.check_and_install_packages()
 
 from setup_app.messages import msg
 from setup_app.config import Config
+
+# set profile
+if argsp.profile == 'DISA-STIG' or os.path.exists(os.path.join(paths.INSTALL_DIR, 'disa-stig')):
+    Config.profile = static.SetupProfiles.DISA_STIG
+
+
 from setup_app.utils.progress import gluuProgress
 
 
@@ -69,13 +75,6 @@ from setup_app.installers.oxd import OxdInstaller
 from setup_app.installers.casa import CasaInstaller
 from setup_app.installers.rdbm import RDBMInstaller
 
-
-if base.snap:
-    try:
-        open('/proc/mounts').close()
-    except Exception:
-        print("Please execute the following command\n  sudo snap connect gluu-server:mount-observe :mount-observe\nbefore running setup. Exiting ...")
-        sys.exit()
 
 # initialize config object
 Config.init(paths.INSTALL_DIR)
@@ -129,10 +128,11 @@ gluuInstaller.initialize()
 if not GSA and not os.path.exists(Config.gluu_properties_fn):
     print()
     print("Installing Gluu Server...\n\nFor more info see:\n  {}  \n  {}\n".format(paths.LOG_FILE, paths.LOG_ERROR_FILE))
-    print("Detected OS     :  {} {} {}".format('snap' if base.snap else '', base.os_type, base.os_version))
+    print("Detected OS     :  {}".format(base.os_type + ' ' + base.os_version))
     print("Gluu Version    :  {}".format(Config.oxVersion))
     print("Detected init   :  {}".format(base.os_initdaemon))
     print("Detected Apache :  {}".format(base.determineApacheVersion()))
+    print("Profile         :  {}".format(Config.profile.upper()))
     print()
 
 setup_loaded = {}
@@ -287,19 +287,14 @@ def prepare_for_installation():
     gluuInstaller.encode_passwords()
 
     oxtrustInstaller.generate_api_configuration()
-
-    Config.ldapCertFn = Config.opendj_cert_fn
-    Config.ldapTrustStoreFn = Config.opendj_p12_fn
-    Config.encoded_ldapTrustStorePass = Config.encoded_opendj_p12_pass
     Config.oxTrustConfigGeneration = 'true' if Config.installSaml else 'false'
 
     gluuInstaller.prepare_base64_extension_scripts()
     gluuInstaller.render_templates()
     gluuInstaller.render_configuration_template()
 
-    if not base.snap:
-        gluuInstaller.update_hostname()
-        gluuInstaller.set_ulimits()
+    gluuInstaller.update_hostname()
+    gluuInstaller.set_ulimits()
 
     gluuInstaller.copy_output()
     gluuInstaller.setup_init_scripts()
@@ -325,7 +320,7 @@ def install_services():
         if (Config.installed_instance and instance.install_var in Config.addPostSetupService) or (not Config.installed_instance and getattr(Config, instance.install_var)):
             instance.start_installation()
 
-    if not Config.installed_instance:
+    if not Config.installed_instance and Config.profile != static.SetupProfiles.DISA_STIG:
         # this will install only base
         radiusInstaller.start_installation()
 
@@ -339,6 +334,10 @@ def post_install():
 
     gluuInstaller.post_install_tasks()
 
+    if Config.profile == static.SetupProfiles.DISA_STIG:
+        gluuInstaller.stop('fapolicyd')
+        gluuInstaller.start('fapolicyd')
+
     for service in gluuProgress.services:
         if service['app_type'] == static.AppType.SERVICE:
             gluuProgress.progress(PostSetup.service_name, "Starting {}".format(service['name'].title()))
@@ -350,6 +349,14 @@ def post_install():
         base.logIt("Loading test data")
         testDataLoader.load_test_data()
 
+
+def app_installations():
+
+    jreInstaller.start_installation()
+    jettyInstaller.start_installation()
+    jythonInstaller.start_installation()
+    if argsp.profile != 'DISA-STIG':
+        nodeInstaller.start_installation()
 
 
 def do_installation():
@@ -366,14 +373,7 @@ def do_installation():
             if not base.argsp.dummy:
                 gluuInstaller.make_salt()
                 oxauthInstaller.make_salt()
-
-            if not base.snap:
-                jreInstaller.start_installation()
-                jettyInstaller.start_installation()
-                jythonInstaller.start_installation()
-                nodeInstaller.start_installation()
-
-            if not base.argsp.dummy:
+                app_installations()
                 prepare_for_installation()
 
         install_services()

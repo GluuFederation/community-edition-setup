@@ -1,5 +1,5 @@
 {
-    "keystorePath": "%(shibJksFn)s",
+    "keystorePath": "%(shib_data_store_fn)s",
     "keystorePassword": "%(shibJksPass)s",
     "shibbolethVersion": "%(shibboleth_version)s",
     "shibboleth3IdpRootDir": "%(idp3Folder)s",

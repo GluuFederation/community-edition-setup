@@ -21,7 +21,7 @@ from urllib.parse import urlparse
 from setup_app import paths
 from setup_app.config import Config
 from setup_app.utils import base
-from setup_app.static import InstallTypes
+from setup_app.static import InstallTypes, SetupProfiles
 from setup_app.utils.crypto64 import Crypto64
 
 class SetupUtils(Crypto64):
@@ -482,8 +482,6 @@ class SetupUtils(Crypto64):
 
 
     def fix_init_scripts(self, serviceName, initscript_fn):
-        if base.snap:
-            return
 
         changeTo = None
 
@@ -521,6 +519,12 @@ class SetupUtils(Crypto64):
             W.write(''.join(initscript))
 
         self.run([paths.cmd_chmod, '+x', service_init_script_fn])
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            self.run([paths.cmd_chown, '{}:{}'.format(Config.templateRenderingDict['service_user'], Config.gluu_group), service_init_script_fn])
+            self.run(['semanage', 'fcontext', '-a', '-t', 'usr_t', service_init_script_fn])
+            self.run(['restorecon', '-v', service_init_script_fn])
+
 
     def load_certificate_text(self, filePath):
         self.logIt("Load certificate %s" % filePath)
@@ -561,28 +565,18 @@ class SetupUtils(Crypto64):
                 self.logIt("Writing rendered template {}".format(fullOutputFile))
                 fullOutputFile.write_text(rendered_text)
 
-    def add_yacron_job(self, command, schedule, name=None, args={}):
-        if not name:
-            name = command
+    def render_unit_file(self, service_name):
+        self.renderTemplateInOut(service_name+'.service', os.path.join(Config.templateFolder, 'systemd'), Config.system_dir)
 
-        yacron_yaml_fn = os.path.join(base.snap_common, 'etc/cron-jobs.yaml')
+    def create_service_user(self, service_user):
+        # create user for this service if not exists
+        service_home_dir = os.path.join('/home', service_user)
+        try:
+            pwd.getpwnam(service_user)
+        except Exception:
+            self.createUser(service_user, service_home_dir)
+            self.addUserToGroup(Config.gluu_group, service_user)
 
-        yml_str = self.readFile(yacron_yaml_fn)
-        yacron_yaml = ruamel.yaml.load(yml_str, ruamel.yaml.RoundTripLoader)
-
-        if not yacron_yaml:
-            yacron_yaml = {'jobs': []}
-
-        if 'jobs' not in yacron_yaml:
-            yacron_yaml['jobs'] = []
-
-        job = { 'command': command, 'schedule': schedule, 'name': name }
-        job.update(args)
-        
-        yacron_yaml['jobs'].append(job)
-
-        yml_str = ruamel.yaml.dump(yacron_yaml, Dumper=ruamel.yaml.RoundTripDumper)
-        self.writeFile(yacron_yaml_fn, yml_str)
 
     def port_used(self, port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -597,3 +591,71 @@ class SetupUtils(Crypto64):
             if self.port_used(port):
                 ports.append(port)
         return ports
+
+    def apply_fapolicyd_rules(self, rules):
+        fapolicyd_rules_fn = '/etc/fapolicyd/fapolicyd.rules'
+
+        fapolicyd_rules = []
+        fapolicyd_startn = 0
+
+        with open(fapolicyd_rules_fn) as f:
+            for i, l in enumerate(f):
+                ls = l.strip()
+                if ls.startswith('%languages'):
+                    fapolicyd_startn = i
+                fapolicyd_rules.append(ls)
+
+        write_facl = False
+        for rule in rules:
+            if rule not in fapolicyd_rules:
+                fapolicyd_rules.insert(fapolicyd_startn + 1, rule)
+                write_facl = True
+
+        if write_facl:
+            fapolicyd_rules.insert(fapolicyd_startn + 1, '\n')
+            self.writeFile(fapolicyd_rules_fn, '\n'.join(fapolicyd_rules))
+            self.run_service_command('restart', 'fapolicyd')
+
+    def fapolicyd_access(self, uid, service_dir, additional_rules=[]):
+
+        self.jettyAbsoluteDir = Path('/opt/jetty').resolve().parent.as_posix()
+        self.jythonAbsoluteDir = Path('/opt/jython').resolve().as_posix()
+
+        facl_tmp = [
+                'allow perm=any uid=%(uid)s : dir=%(jre_home)s/',
+                'allow perm=any uid=%(uid)s : dir=%(gluuOptFolder)s/',
+                'allow perm=any uid=%(uid)s : dir=%(distFolder)s/',
+                'allow perm=any uid=%(uid)s : dir=%(jettyAbsoluteDir)s/',
+                'allow perm=any uid=%(uid)s : dir=%(jythonAbsoluteDir)s/',
+                'allow perm=any uid=%(uid)s : dir=%(service_dir)s/',
+                'allow perm=any uid=%(uid)s : dir=%(osDefault)s/',
+                'allow perm=any uid=%(uid)s : dir=%(gluuBaseFolder)s/',
+                'allow perm=any uid=%(uid)s : dir=%(gluuOptPythonFolder)s/',
+                'allow perm=any uid=%(uid)s : dir=%(gluuOptPythonFolder)s/libs/',
+                '# give access to gluu service %(uid)s',
+                ]
+
+        for a_rule in additional_rules:
+            facl_tmp.insert(0, a_rule)
+
+        rules = []
+        for acl in facl_tmp:
+            facl = acl % self.merge_dicts(Config.templateRenderingDict, Config.__dict__, self.__dict__, {'uid': uid, 'service_dir': service_dir})
+            rules.append(facl)
+
+        self.apply_fapolicyd_rules(rules)
+
+
+    def get_keystore_fn(self, keystore_name):
+        return keystore_name + '.' + Config.default_store_type
+
+    def get_client_test_keystore_fn(self, keystore_name):
+        return keystore_name + '.' + Config.default_client_test_store_type
+
+    def chown(self, fn, user, group=None, recursive=False):
+        cmd = [paths.cmd_chown]
+        if recursive:
+            cmd.append('-R')
+        usr_grp = '{}:{}'.format(user, group) if group else user
+        cmd += [usr_grp, fn]
+        self.run(cmd)

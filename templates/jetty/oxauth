@@ -4,7 +4,7 @@ JAVA_OPTIONS="-server -Xms%(oxauth_min_mem)sm -Xmx%(oxauth_max_mem)sm -XX:+Disab
 
 JETTY_HOME=%(jetty_home)s
 JETTY_BASE=%(jetty_base)s/oxauth
-JETTY_USER=jetty
+JETTY_USER=%(service_user)s
 JETTY_ARGS="jetty.http.host=localhost jetty.http.port=8081"
 TMPDIR=%(jetty_dist)s/temp
 

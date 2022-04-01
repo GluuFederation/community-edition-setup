@@ -128,12 +128,11 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         self.copyFile(os.path.join(self.source_dir, 'etc/gluu/conf/radius/gluu-radius-logging.xml'), self.conf_dir)
         self.copyFile(os.path.join(self.source_dir, 'scripts/gluu_common.py'), os.path.join(Config.gluuOptPythonFolder, 'libs'))
 
-        if not base.snap:
-            self.copyFile(os.path.join(self.source_dir, 'etc/init.d/gluu-radius'), '/etc/init.d')
-            self.run([paths.cmd_chmod, '+x', '/etc/init.d/gluu-radius'])
 
-            if base.os_name != 'ubuntu16':
-                self.copyFile(os.path.join(self.source_dir, 'systemd/gluu-radius.service'), '/etc/systemd/system')
+        self.copyFile(os.path.join(self.source_dir, 'etc/init.d/gluu-radius'), '/etc/init.d')
+        self.run([paths.cmd_chmod, '+x', '/etc/init.d/gluu-radius'])
+
+        self.copyFile(os.path.join(self.source_dir, 'systemd/gluu-radius.service'), '/etc/systemd/system')
 
         #create empty gluu-radius.private-key.pem
         gluu_radius_private_key_fn = os.path.join(Config.certFolder, 'gluu-radius.private-key.pem')
@@ -176,7 +175,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         radius_jwt_pass = self.obscure(Config.radius_jwt_pass)
         radius_jks_fn = os.path.join(Config.certFolder, 'gluu-radius.jks')
 
-        raidus_client_jwks = self.gen_openid_jwks_jks_keys(radius_jks_fn, Config.radius_jwt_pass)
+        raidus_client_jwks = self.gen_openid_data_store_keys(radius_jks_fn, Config.radius_jwt_pass)
         raidus_client_jwks = ''.join(raidus_client_jwks).replace('\'','').replace(',,',',').replace('{,','{')
         raidus_client_jwks = json.loads(raidus_client_jwks)
         Config.templateRenderingDict['radius_jwt_pass'] = radius_jwt_pass

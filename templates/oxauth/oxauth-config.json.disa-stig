@@ -48,6 +48,7 @@
         "urn:ietf:params:oauth:grant-type:uma-ticket",
         "urn:ietf:params:oauth:grant-type:device_code"
     ],
+    "allowIdTokenWithoutImplicitGrantType": true,
     "subjectTypesSupported":[
         "public",
         "pairwise"
@@ -147,12 +148,6 @@
         "self_signed_tls_client_auth"
     ],
     "tokenEndpointAuthSigningAlgValuesSupported":[
-        "HS256",
-        "HS384",
-        "HS512",
-        "RS256",
-        "RS384",
-        "RS512",
         "ES256",
         "ES384",
         "ES512"
@@ -240,7 +235,6 @@
     "invalidateSessionCookiesAfterAuthorizationFlow":false,
     "clientAuthenticationFiltersEnabled":false,
     "clientRegDefaultToCodeFlowWithRefresh": true,
-    "grantTypesAndResponseTypesAutofixEnabled": false,
     "authenticationFilters":[
         {
             "filter":"(&(mail=*{0}*)(inum={1}))",
@@ -265,6 +259,7 @@
     ],
     "sessionIdUnusedLifetime":86400,
     "sessionIdUnauthenticatedUnusedLifetime":120,
+    "sessionIdEnabled":true,
     "changeSessionIdOnAuthentication":true,
     "returnClientSecretOnRead": true,
     "sessionIdPersistOnPromptNone":true,

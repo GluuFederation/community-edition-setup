@@ -14,7 +14,7 @@ import ldap3
 from setup_app import paths
 from setup_app.utils import base
 from setup_app.utils.cbm import CBM
-from setup_app.static import InstallTypes, colors
+from setup_app.static import InstallTypes, SetupProfiles, BackendStrings, colors
 from setup_app.messages import msg
 
 from setup_app.config import Config
@@ -125,8 +125,8 @@ class PropertiesUtils(SetupUtils):
 
         self.set_persistence_type()
 
-        if not Config.opendj_p12_pass:
-            Config.opendj_p12_pass = self.getPW()
+        if not Config.opendj_truststore_pass:
+            Config.opendj_truststore_pass = self.getPW()
 
         if not Config.encode_salt:
             Config.encode_salt = self.getPW() + self.getPW()
@@ -144,7 +144,7 @@ class PropertiesUtils(SetupUtils):
                 Config.templateRenderingDict['oxd_port'] = 8443
         else:
             Config.templateRenderingDict['oxd_hostname'] = Config.hostname
-            Config.oxd_server_https = 'https://{}:8443'.format(Config.hostname)
+            Config.oxd_server_https = 'https://{}:8443'.format('localhost' if Config.profile == SetupProfiles.DISA_STIG else Config.hostname)
 
     def decrypt_properties(self, fn, passwd):
         out_file = fn[:-4] + '.' + uuid.uuid4().hex[:8] + '-DEC~'
@@ -655,19 +655,30 @@ class PropertiesUtils(SetupUtils):
             Config.addPostSetupService.append('installGluuRadius')
 
 
+    def get_backend_list(self):
+
+        backend_list = [
+                BackendStrings.LOCAL_OPENDJ,
+                BackendStrings.REMOTE_OPENDJ
+                ]
+
+        if Config.profile != SetupProfiles.DISA_STIG:
+            backend_list += [
+                         BackendStrings.REMOTE_COUCHBASE,
+                         BackendStrings.LOCAL_MYSQL,
+                         BackendStrings.REMOTE_MYSQL,
+                         BackendStrings.CLOUD_SPANNER,
+                         BackendStrings.SAPNNER_EMULATOR,
+                        ]
+            if 'couchbase' in self.getBackendTypes():
+                backend_list.insert(2, BackendStrings.LOCAL_COUCHBASE)
+
+        return backend_list
+
     def prompt_for_backend(self):
         print('Chose Backend Type:')
-        
-        backend_types = ['Local OpenDj',
-                         'Remote OpenDj',
-                         'Remote Couchbase',
-                         'Local MySQL',
-                         'Remote MySQL',
-                         'Cloud Spanner',
-                         ]
 
-        if 'couchbase' in self.getBackendTypes():
-            backend_types.insert(2, 'Local Couchbase')
+        backend_types = self.get_backend_list()
 
         nlist = []
         for i, btype in enumerate(backend_types):
@@ -693,7 +704,7 @@ class PropertiesUtils(SetupUtils):
         if 'mysql' in backend_type_str.lower() or 'spanner' in backend_type_str.lower():
             print("{}{}{}".format(colors.WARNING, msg.mysql_spanner_beta, colors.ENDC))
 
-        if backend_type_str == 'Local OpenDj':
+        if backend_type_str == BackendStrings.LOCAL_OPENDJ:
 
             used_ports = self.opendj_used_ports()
             if used_ports:
@@ -714,7 +725,7 @@ class PropertiesUtils(SetupUtils):
             Config.ldapPass = ldapPass
 
 
-        elif backend_type_str == 'Remote OpenDj':
+        elif backend_type_str == BackendStrings.REMOTE_OPENDJ:
             Config.ldap_install = InstallTypes.REMOTE
             while True:
                 ldapHost = self.getPrompt("    LDAP hostname")
@@ -728,7 +739,7 @@ class PropertiesUtils(SetupUtils):
             Config.ldapPass = ldapPass
             Config.ldap_hostname = ldapHost
 
-        elif backend_type_str == 'Local Couchbase':
+        elif backend_type_str == BackendStrings.LOCAL_COUCHBASE:
             Config.ldap_install = InstallTypes.NONE
             Config.cb_install = InstallTypes.LOCAL
             Config.isCouchbaseUserAdmin = True
@@ -744,7 +755,7 @@ class PropertiesUtils(SetupUtils):
             Config.cb_password = cbPass
             Config.mappingLocations = { group: 'couchbase' for group in Config.couchbaseBucketDict }
 
-        elif backend_type_str == 'Remote Couchbase':
+        elif backend_type_str == BackendStrings.REMOTE_COUCHBASE:
             Config.ldap_install = InstallTypes.NONE
             Config.cb_install = InstallTypes.REMOTE
 
@@ -758,7 +769,7 @@ class PropertiesUtils(SetupUtils):
 
             Config.mappingLocations = { group: 'couchbase' for group in Config.couchbaseBucketDict }
 
-        elif backend_type_str == 'Local MySQL':
+        elif backend_type_str == BackendStrings.LOCAL_MYSQL:
             Config.ldap_install = InstallTypes.NONE
             Config.rdbm_install = True
             Config.rdbm_install_type = InstallTypes.LOCAL
@@ -769,7 +780,7 @@ class PropertiesUtils(SetupUtils):
             Config.rdbm_port = 3306
             Config.rdbm_db = 'gluudb'
 
-        elif backend_type_str == 'Remote MySQL':
+        elif backend_type_str == BackendStrings.REMOTE_MYSQL:
             Config.ldap_install = InstallTypes.NONE
             Config.rdbm_install = True
             Config.rdbm_install_type = InstallTypes.REMOTE
@@ -789,7 +800,7 @@ class PropertiesUtils(SetupUtils):
                 except Exception as e:
                     print("  {}Can't connect to MySQL: {}{}".format(colors.DANGER, e, colors.ENDC))
 
-        elif backend_type_str == 'Cloud Spanner':
+        elif backend_type_str == BackendStrings.CLOUD_SPANNER:
             Config.ldap_install = InstallTypes.NONE
             Config.rdbm_type = 'spanner'
             Config.rdbm_install = True
@@ -858,7 +869,7 @@ class PropertiesUtils(SetupUtils):
                 else:
                     print("Hostname can't be \033[;1mlocalhost\033[0;0m")
 
-            Config.oxd_server_https = 'https://{}:8443'.format(Config.hostname)
+            Config.oxd_server_https = 'https://{}:8443'.format('localhost' if Config.profile == SetupProfiles.DISA_STIG else Config.hostname)
 
             # Get city and state|province code
             Config.city = self.getPrompt("Enter your city or locality", Config.city)
@@ -898,7 +909,7 @@ class PropertiesUtils(SetupUtils):
 
             self.prompt_for_backend()
 
-            if Config.allowPreReleasedFeatures:
+            if Config.profile != SetupProfiles.DISA_STIG and Config.allowPreReleasedFeatures:
                 while True:
                     java_type = self.getPrompt("Select Java type: 1.Jre-1.8   2.OpenJDK-11", '1')
                     if not java_type:
@@ -913,10 +924,7 @@ class PropertiesUtils(SetupUtils):
                     Config.java_type = 'jre'
                 else:
                     Config.java_type = 'jdk'
-                    if base.snap:
-                        Config.defaultTrustStoreFN = os.path.join(self.certFolder, 'java-cacerts')
-                    else:
-                        Config.defaultTrustStoreFN = os.path.join(self.jre_home, 'jre/lib/security/cacerts')
+                    Config.default_trust_store_fn = os.path.join(self.jre_home, 'jre/lib/security/cacerts')
 
             promptForOxAuth = self.getPrompt("Install oxAuth OAuth2 Authorization Server?", 
                                             self.getDefaultOption(Config.installOxAuth)
@@ -949,20 +957,23 @@ class PropertiesUtils(SetupUtils):
 
 
         self.promptForHTTPD()
+
+        if Config.profile != SetupProfiles.DISA_STIG and Config.rdbm_type != 'spanner':
+            self.promptForShibIDP()
+
         self.promptForScimServer()
         self.promptForFido2Server()
-        if Config.rdbm_type != 'spanner':
-            self.promptForShibIDP()
-        self.promptForPassport()
 
+        if Config.profile != SetupProfiles.DISA_STIG:
+            self.promptForPassport()
 
         if os.path.exists(os.path.join(Config.distGluuFolder, 'casa.war')):
             self.promptForCasaInstallation()
 
         if (not Config.installOxd) and Config.oxd_package:
             self.promptForOxd()
-            
-        self.promptForGluuRadius()
 
+        if Config.profile != SetupProfiles.DISA_STIG:
+            self.promptForGluuRadius()
 
 propertiesUtils = PropertiesUtils()

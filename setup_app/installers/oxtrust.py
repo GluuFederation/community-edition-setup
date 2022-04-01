@@ -4,7 +4,7 @@ import uuid
 
 from setup_app import paths
 from setup_app.utils import base
-from setup_app.static import AppType, InstallOption
+from setup_app.static import AppType, InstallOption, SetupProfiles
 from setup_app.config import Config
 from setup_app.installers.jetty import JettyInstaller
 
@@ -45,8 +45,8 @@ class OxtrustInstaller(JettyInstaller):
         self.pairwiseCalculationSalt = None
 
         # oxTrust Api configuration
-        self.api_rs_client_jks_fn = os.path.join(Config.certFolder, 'api-rs.jks')
-        self.api_rp_client_jks_fn = os.path.join(Config.certFolder, 'api-rp.jks')
+        self.api_rs_client_jks_fn = os.path.join(Config.certFolder, self.get_keystore_fn('api-rs'))
+        self.api_rp_client_jks_fn = os.path.join(Config.certFolder, self.get_keystore_fn('api-rp'))
 
 
     def install(self):
@@ -54,9 +54,11 @@ class OxtrustInstaller(JettyInstaller):
 
         self.installJettyService(self.jetty_app_configuration[self.service_name], True)
 
-        jettyServiceWebapps = os.path.join(self.jetty_base, self.service_name, 'webapps')
-        self.copyFile(self.source_files[0][0], jettyServiceWebapps)
-        self.war_for_jetty10(os.path.join(jettyServiceWebapps, os.path.basename(self.source_files[0][0])))
+        for folder in (self.oxPhotosFolder, self.oxTrustRemovedFolder, self.oxTrustCacheRefreshFolder):
+            self.run([paths.cmd_mkdir, '-m', '775', '-p', folder])
+            user_group = '{}:{}'.format(self.service_name, Config.gluu_group) if Config.profile == SetupProfiles.DISA_STIG else Config.user_group
+            self.run([paths.cmd_chown, '-R', user_group, folder])
+
         self.enable()
 
     def generate_api_configuration(self):
@@ -64,13 +66,13 @@ class OxtrustInstaller(JettyInstaller):
         if not Config.get('api_rs_client_jks_pass'):
             Config.api_rs_client_jks_pass = 'secret'
             Config.api_rs_client_jks_pass_encoded = self.obscure(Config.api_rs_client_jks_pass)
-        self.api_rs_client_jwks = self.gen_openid_jwks_jks_keys(self.api_rs_client_jks_fn, Config.api_rs_client_jks_pass)
+        self.api_rs_client_jwks = self.gen_openid_data_store_keys(self.api_rs_client_jks_fn, Config.api_rs_client_jks_pass)
         Config.templateRenderingDict['api_rs_client_base64_jwks'] = self.generate_base64_string(self.api_rs_client_jwks, 1)
 
         if not Config.get('api_rp_client_jks_pass'):
             Config.api_rp_client_jks_pass = 'secret'
             Config.api_rp_client_jks_pass_encoded = self.obscure(Config.api_rp_client_jks_pass)
-        self.api_rp_client_jwks = self.gen_openid_jwks_jks_keys(self.api_rp_client_jks_fn, Config.api_rp_client_jks_pass)
+        self.api_rp_client_jwks = self.gen_openid_data_store_keys(self.api_rp_client_jks_fn, Config.api_rp_client_jks_pass)
         Config.templateRenderingDict['api_rp_client_base64_jwks'] = self.generate_base64_string(self.api_rp_client_jwks, 1)
 
 

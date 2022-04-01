@@ -39,7 +39,6 @@ random_marketing_strings = [
     'Interested in Open Source software business models? Listen to Open Source Underdogs: https://opensourceunderdogs.com',
     'Need to learn more about OpenID and SAML? Read "Securing the Perimeter" by Gluu CEO Mike Schwartz: https://gluu.co/book',
     'The Gluu Server is one of the most advanced OpenID Providers. Compare at https://openid.net/certification',
-    'Installing the Gluu Server is a SNAP. Search for Gluu on https://snapcraft.io',
     'Gluu Solo is coming soon. This is a hosted CE offering with 99.95% availability.',
     'Need FIPS 140-2? Consider the new Gluu Server RHEL 8.4 FIPS distribution that leverages central crypto policies',
     'Open Banking security is available with our new Gluu Server profile. See https://gluu.org/openbanking/',
@@ -102,7 +101,7 @@ class GluuSetupForm(npyscreen.FormBaseNew):
 
         form_name = getClassName(self)
 
-        self.add(npyscreen.TitleFixedText, name=msg.version_label + ' ' + Config.oxVersion, rely=self.lines-5,  editable=False, labelColor='CONTROL')
+        self.add(npyscreen.TitleFixedText, name=msg.version_label.format(Config.profile.upper()) + ' ' + Config.oxVersion, rely=self.lines-5,  editable=False, labelColor='CONTROL')
         self.add(npyscreen.MultiLineEdit, value='=' * (self.columns - 4), max_height=1, rely=self.lines-4, editable=False)
 
         if form_name != 'InstallStepsForm':
@@ -152,7 +151,7 @@ class MAIN(GluuSetupForm):
 
         self.description_label = self.add(npyscreen.MultiLineEdit, value='\n'.join(desc_wrap), max_height=6, rely=2, editable=False)
         self.description_label.autowrap = True
-        os_string = "{} {} {}".format('snap' if base.snap else '', base.os_type, base.os_version).strip()
+        os_string = "{} {}".format(base.os_type, base.os_version).strip()
         self.os_type = self.add(npyscreen.TitleFixedText, name=msg.os_type_label, begin_entry_at=18, value=os_string, editable=False)
         self.init_type = self.add(npyscreen.TitleFixedText, name=msg.init_type_label, begin_entry_at=18, value=base.os_initdaemon, editable=False)
         self.httpd_type = self.add(npyscreen.TitleFixedText, name=msg.httpd_type_label, begin_entry_at=18, value=base.httpd_name, field_width=40, editable=False)
@@ -340,7 +339,7 @@ class ServicesForm(GluuSetupForm):
             Config.shibboleth_version = 'v3'
 
         if self.installOxd.value:
-            Config.oxd_server_https = 'https://{}:8443'.format(Config.hostname)
+            Config.oxd_server_https = 'https://{}:8443'.format('localhost' if Config.profile == static.SetupProfiles.DISA_STIG else Config.hostname)
 
         if self.installCasa.value:
             if not self.installOxd.value and not self.oxd_url.value:
@@ -421,18 +420,7 @@ class DBBackendForm(GluuSetupForm):
         self.backends.value_changed_callback = self.backend_changed
 
     def do_beforeEditing(self):
-        self.backend_types = ['Local OpenDj',
-                         'Remote OpenDj',
-                         'Remote Couchbase',
-                         'Local MySQL',
-                         'Remote MySQL',
-                         'Cloud Spanner',
-                         'Spanner Emulator',
-                         ]
-
-        if 'couchbase' in propertiesUtils.getBackendTypes():
-            self.backend_types.insert(2, 'Local Couchbase')
-
+        self.backend_types = propertiesUtils.get_backend_list()
         self.backends.values = self.backend_types
         self.backends.update()
 
@@ -444,7 +432,7 @@ class DBBackendForm(GluuSetupForm):
         self.parentApp.backend_type_str = self.backend_types[self.backends.value[0]]
 
 
-        if self.parentApp.backend_type_str == 'Local OpenDj':
+        if self.parentApp.backend_type_str == static.BackendStrings.LOCAL_OPENDJ:
             used_ports = self.parentApp.jettyInstaller.opendj_used_ports()
             if used_ports:
                 npyscreen.notify_confirm(msg.used_ports.format(','.join(used_ports)), title="Warning")
@@ -454,24 +442,24 @@ class DBBackendForm(GluuSetupForm):
             Config.cb_install = static.InstallTypes.NONE
             Config.rdbm_install = False
             self.parentApp.switchForm('DBLDAPForm')
-        elif self.parentApp.backend_type_str == 'Remote OpenDj':
+        elif self.parentApp.backend_type_str == static.BackendStrings.REMOTE_OPENDJ:
             Config.ldap_install = static.InstallTypes.REMOTE
             Config.cb_install = static.InstallTypes.NONE
             Config.rdbm_install = False
             self.parentApp.switchForm('DBLDAPForm')
 
-        elif self.parentApp.backend_type_str == 'Local Couchbase':
+        elif self.parentApp.backend_type_str == static.BackendStrings.LOCAL_COUCHBASE:
             Config.ldap_install = static.InstallTypes.NONE
             Config.rdbm_install = False
             Config.cb_install = static.InstallTypes.LOCAL
             self.parentApp.switchForm('DBCBForm')
-        elif self.parentApp.backend_type_str == 'Remote Couchbase':
+        elif self.parentApp.backend_type_str == static.BackendStrings.REMOTE_COUCHBASE:
             Config.ldap_install = static.InstallTypes.NONE
             Config.rdbm_install = False
             Config.cb_install = static.InstallTypes.REMOTE
             self.parentApp.switchForm('DBCBForm')
 
-        elif self.parentApp.backend_type_str == 'Local MySQL':
+        elif self.parentApp.backend_type_str == static.BackendStrings.LOCAL_MYSQL:
             Config.ldap_install = static.InstallTypes.NONE
             Config.rdbm_install_type = static.InstallTypes.LOCAL
             Config.rdbm_install = True
@@ -481,7 +469,7 @@ class DBBackendForm(GluuSetupForm):
             if not Config.rdbm_user:
                 Config.rdbm_user = 'gluu'
             self.parentApp.switchForm('DBRDBMForm')
-        elif self.parentApp.backend_type_str == 'Remote MySQL':
+        elif self.parentApp.backend_type_str == static.BackendStrings.REMOTE_MYSQL:
             Config.ldap_install = static.InstallTypes.NONE
             Config.rdbm_install_type = static.InstallTypes.REMOTE
             Config.rdbm_install = True
@@ -489,7 +477,7 @@ class DBBackendForm(GluuSetupForm):
             Config.rdbm_password = ''
             self.parentApp.switchForm('DBRDBMForm')
 
-        elif self.parentApp.backend_type_str in ('Cloud Spanner', 'Spanner Emulator'):
+        elif self.parentApp.backend_type_str in (static.BackendStrings.CLOUD_SPANNER, static.BackendStrings.SAPNNER_EMULATOR):
             if Config.installSaml:
                 npyscreen.notify_confirm(msg.spanner_idp_warning + ' ' + msg.idp_unselect, title="Warning")
                 return
