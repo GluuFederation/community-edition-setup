@@ -63,7 +63,15 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
             self.prepare_opendj_schema()
 
         # it is time to bind OpenDJ
-        self.dbUtils.bind()
+        for _ in range(3):
+            time.sleep(2):
+            try:
+                self.dbUtils.bind()
+                self.logIt("LDAP Connection was successful")
+                break
+            except ldap3.core.exceptions.LDAPSocketOpenError:
+                self.logIt("Failed to connect LDAP. Trying once more")
+            self.logIt("Three attempt to connection to LDAP failed. Exiting ...", True, True)
 
         if Config.ldap_install:
             Config.pbar.progress(self.service_name, "Creating OpenDJ backends", False)
