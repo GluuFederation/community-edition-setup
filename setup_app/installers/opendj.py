@@ -64,8 +64,8 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
             self.prepare_opendj_schema()
 
         # it is time to bind OpenDJ
-        for _ in range(3):
-            time.sleep(2)
+        for i in range(1,3):
+            time.sleep(i*2)
             try:
                 self.dbUtils.bind()
                 self.logIt("LDAP Connection was successful")
