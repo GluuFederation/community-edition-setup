@@ -348,9 +348,10 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         if result:
             if isinstance(result['oxIDPAuthentication'], dict):
                 ox_idp_authentication = result['oxIDPAuthentication']
+                
             else:
                 ox_idp_authentication_str = result['oxIDPAuthentication'][0] if isinstance(result['oxIDPAuthentication'], list) else result['oxIDPAuthentication']
-                ox_idp_authentication = json.loads(ox_idp_authentication_str)
+                ox_idp_authentication = json.loads(ox_idp_authentication_str) if isinstance(ox_idp_authentication_str, str) else ox_idp_authentication_str
 
             ox_idp_authentication['config']['servers'] = ['{0}:{1}'.format(Config.hostname, Config.ldaps_port)]
             ox_idp_authentication_str = json.dumps(ox_idp_authentication, indent=2)
