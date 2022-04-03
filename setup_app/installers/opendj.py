@@ -547,7 +547,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
     def installed(self):
         if os.path.exists(self.openDjSchemaFolder):
             ldap_install = InstallTypes.LOCAL
-        elif os.path.exists(Config.opendj_p12_fn):
+        elif os.path.exists(self.openDjSchemaFolder):
             ldap_install = InstallTypes.REMOTE
         else:
             ldap_install = 0
