@@ -5,6 +5,7 @@ import ssl
 import json
 import ldap3
 import sys
+import time
 
 from setup_app import paths
 from setup_app.static import AppType, InstallOption
@@ -64,7 +65,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
 
         # it is time to bind OpenDJ
         for _ in range(3):
-            time.sleep(2):
+            time.sleep(2)
             try:
                 self.dbUtils.bind()
                 self.logIt("LDAP Connection was successful")
