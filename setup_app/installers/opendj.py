@@ -72,6 +72,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                 break
             except ldap3.core.exceptions.LDAPSocketOpenError:
                 self.logIt("Failed to connect LDAP. Trying once more")
+        else:
             self.logIt("Three attempt to connection to LDAP failed. Exiting ...", True, True)
 
         if Config.ldap_install:
