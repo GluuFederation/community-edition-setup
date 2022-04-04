@@ -136,6 +136,10 @@ class PropertiesUtils(SetupUtils):
 
         self.check_oxd_server_https()
 
+        if Config.profile != SetupProfiles.CE:
+            Config.install_node_app = False
+
+
     def check_oxd_server_https(self):
 
         if Config.get('oxd_server_https'):
