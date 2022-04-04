@@ -327,6 +327,17 @@ def install_services():
     if (Config.installed_instance and 'installGluuRadius' in Config.addPostSetupService) or (not Config.installed_instance and Config.installGluuRadius):
         radiusInstaller.install_gluu_radius()
 
+def start_services():
+    for service in gluuProgress.services:
+        # we don't restart opendj
+        if service['object'].service_name == 'opendj':
+            continue
+        if service['app_type'] == static.AppType.SERVICE:
+            gluuProgress.progress(PostSetup.service_name, "Starting {}".format(service['name'].title()))
+            time.sleep(2)
+            service['object'].stop()
+            service['object'].start()
+
 def post_install():
     gluuProgress.progress(PostSetup.service_name, "Saving properties")
     propertiesUtils.save_properties()
@@ -338,17 +349,11 @@ def post_install():
         gluuInstaller.stop('fapolicyd')
         gluuInstaller.start('fapolicyd')
 
-    for service in gluuProgress.services:
-        if service['app_type'] == static.AppType.SERVICE:
-            gluuProgress.progress(PostSetup.service_name, "Starting {}".format(service['name'].title()))
-            time.sleep(2)
-            service['object'].stop()
-            service['object'].start()
-
     if argsp.t:
         base.logIt("Loading test data")
         testDataLoader.load_test_data()
 
+    start_services()
 
 def app_installations():
 
