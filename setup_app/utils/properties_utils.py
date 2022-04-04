@@ -136,6 +136,10 @@ class PropertiesUtils(SetupUtils):
 
         self.check_oxd_server_https()
 
+        if Config.profile != SetupProfiles.CE:
+            Config.install_node_app = False
+
+
     def check_oxd_server_https(self):
 
         if Config.get('oxd_server_https'):
@@ -800,20 +804,19 @@ class PropertiesUtils(SetupUtils):
                 except Exception as e:
                     print("  {}Can't connect to MySQL: {}{}".format(colors.DANGER, e, colors.ENDC))
 
-        elif backend_type_str == BackendStrings.CLOUD_SPANNER:
+        elif backend_type_str in (BackendStrings.CLOUD_SPANNER, BackendStrings.SAPNNER_EMULATOR):
             Config.ldap_install = InstallTypes.NONE
             Config.rdbm_type = 'spanner'
             Config.rdbm_install = True
             Config.rdbm_install_type = InstallTypes.REMOTE
 
-            emulator = self.getPrompt("Is it emulator?", "N|y")[0].lower()
-            if emulator == 'y':
+            if backend_type_str == BackendStrings.SAPNNER_EMULATOR:
                 Config.spanner_emulator_host = self.getPrompt("  Emulator host", Config.get('spanner_emulator_host'))
 
             Config.spanner_project = self.getPrompt("  Spanner project", Config.get('spanner_project'))
             Config.spanner_instance = self.getPrompt("  Spanner instance", Config.get('spanner_instance'))
             Config.spanner_database = self.getPrompt("  Spanner database", Config.get('spanner_database'))
-            if not Config.get('spanner_emulator_host'):
+            if backend_type_str == BackendStrings.CLOUD_SPANNER and not Config.get('spanner_emulator_host'):
                 while True:
                     cred_fn = self.getPrompt("  Google application creditentals file", Config.get('google_application_credentials'))
                     if os.path.exists(cred_fn):

@@ -355,7 +355,7 @@ def app_installations():
     jreInstaller.start_installation()
     jettyInstaller.start_installation()
     jythonInstaller.start_installation()
-    if argsp.profile != 'DISA-STIG':
+    if Config.profile == static.SetupProfiles.CE:
         nodeInstaller.start_installation()
 
 

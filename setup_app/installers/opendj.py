@@ -5,6 +5,7 @@ import ssl
 import json
 import ldap3
 import sys
+import time
 
 from setup_app import paths
 from setup_app.static import AppType, InstallOption
@@ -63,7 +64,16 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
             self.prepare_opendj_schema()
 
         # it is time to bind OpenDJ
-        self.dbUtils.bind()
+        for i in range(1,3):
+            time.sleep(i*2)
+            try:
+                self.dbUtils.bind()
+                self.logIt("LDAP Connection was successful")
+                break
+            except ldap3.core.exceptions.LDAPSocketOpenError:
+                self.logIt("Failed to connect LDAP. Trying once more")
+        else:
+            self.logIt("Three attempt to connection to LDAP failed. Exiting ...", True, True)
 
         if Config.ldap_install:
             Config.pbar.progress(self.service_name, "Creating OpenDJ backends", False)
@@ -547,7 +557,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
     def installed(self):
         if os.path.exists(self.openDjSchemaFolder):
             ldap_install = InstallTypes.LOCAL
-        elif os.path.exists(Config.opendj_p12_fn):
+        elif not os.path.exists(self.openDjSchemaFolder) and os.path.exists(Config.ox_ldap_properties):
             ldap_install = InstallTypes.REMOTE
         else:
             ldap_install = 0

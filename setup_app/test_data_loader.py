@@ -28,6 +28,9 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         self.register_progess()
 
         self.template_base = os.path.join(Config.templateFolder, 'test')
+        self.test_client_keystore_fn = os.path.join(Config.outputFolder, 'test/oxauth/client', self.get_client_test_keystore_fn('client_keystore'))
+        Config.templateRenderingDict['test_client_keystore_base_fn'] = os.path.basename(self.test_client_keystore_fn)
+
 
     def create_test_client_keystore(self):
 
@@ -40,7 +43,6 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                 "-cp", client_cmd,
                 Config.non_setup_properties['key_gen_path'],
                 '-keystore', self.test_client_keystore_fn,
-                '-keystore_type', Config.default_client_test_store_type,
                 '-keypasswd', 'secret',
                 '-sig_keys', Config.default_sig_key_algs,
                 '-enc_keys', Config.default_enc_key_algs,
@@ -175,8 +177,8 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         self.render_templates_folder(self.template_base)
 
         Config.pbar.progress(self.service_name, "Loading test ldif files", False)
-        if not self.passportInstaller.installed() and Config.profile != static.SetupProfiles.DISA_STIG:
-            self.passportInstaller.generate_configuration()
+        if not base.current_app.PassportInstaller.installed() and Config.profile != static.SetupProfiles.DISA_STIG:
+            base.current_app.PassportInstaller.generate_configuration()
 
         ox_auth_test_ldif = os.path.join(Config.outputFolder, 'test/oxauth/data/oxauth-test-data.ldif')
         ox_auth_test_user_ldif = os.path.join(Config.outputFolder, 'test/oxauth/data/oxauth-test-data-user.ldif')
@@ -346,9 +348,10 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         if result:
             if isinstance(result['oxIDPAuthentication'], dict):
                 ox_idp_authentication = result['oxIDPAuthentication']
+                
             else:
                 ox_idp_authentication_str = result['oxIDPAuthentication'][0] if isinstance(result['oxIDPAuthentication'], list) else result['oxIDPAuthentication']
-                ox_idp_authentication = json.loads(ox_idp_authentication_str)
+                ox_idp_authentication = json.loads(ox_idp_authentication_str) if isinstance(ox_idp_authentication_str, str) else ox_idp_authentication_str
 
             ox_idp_authentication['config']['servers'] = ['{0}:{1}'.format(Config.hostname, Config.ldaps_port)]
             ox_idp_authentication_str = json.dumps(ox_idp_authentication, indent=2)
