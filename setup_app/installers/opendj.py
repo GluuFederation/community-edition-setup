@@ -47,10 +47,11 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         self.opendj_admin_truststore_fn = os.path.join(Config.ldapBaseFolder, 'config', 'admin-truststore')
         self.opendj_key_store_password_fn = os.path.join(Config.ldapBaseFolder, 'config', 'keystore.pin')
 
-        self.fips_provider = 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider'
-        self.provider_path = '{}:{}'.format(Config.bc_fips_jar, Config.bcpkix_fips_jar)
-        self.admin_alias = 'admin-cert'
-        self.pass_param = '-storepass:file'
+        if Config.profile == SetupProfiles.DISA_STIG:
+            self.fips_provider = 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider'
+            self.provider_path = '{}:{}'.format(Config.bc_fips_jar, Config.bcpkix_fips_jar)
+            self.admin_alias = 'admin-cert'
+            self.pass_param = '-storepass:file'
 
     def install(self):
         self.logIt("Running OpenDJ Setup")
