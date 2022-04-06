@@ -330,7 +330,7 @@ def install_services():
 def start_services():
     for service in gluuProgress.services:
         # we don't restart opendj
-        if service['object'].service_name == 'opendj':
+        if service['object'].service_name in ('opendj', 'couchbase-server'):
             continue
         if service['app_type'] == static.AppType.SERVICE:
             gluuProgress.progress(PostSetup.service_name, "Starting {}".format(service['name'].title()))
