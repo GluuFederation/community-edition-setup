@@ -663,11 +663,11 @@ class PropertiesUtils(SetupUtils):
 
         backend_list = [
                 BackendStrings.LOCAL_OPENDJ,
-                BackendStrings.REMOTE_OPENDJ
                 ]
 
         if Config.profile != SetupProfiles.DISA_STIG:
             backend_list += [
+                         BackendStrings.REMOTE_OPENDJ,
                          BackendStrings.REMOTE_COUCHBASE,
                          BackendStrings.LOCAL_MYSQL,
                          BackendStrings.REMOTE_MYSQL,
