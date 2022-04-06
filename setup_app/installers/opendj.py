@@ -50,6 +50,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         self.fips_provider = 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider'
         self.provider_path = '{}:{}'.format(Config.bc_fips_jar, Config.bcpkix_fips_jar)
         self.admin_alias = 'admin-cert'
+        self.pass_param = '-storepass:file'
 
     def install(self):
         self.logIt("Running OpenDJ Setup")
@@ -194,7 +195,6 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         self.writeFile(self.opendj_trusstore_setup_key_fn, Config.opendj_truststore_pass)
 
         keystore = Config.opendj_trust_store_fn if Config.opendj_truststore_format.upper() == 'BCFKS' else 'NONE'
-        pass_param = '-storepass:file'
 
         # Generate keystore
 
@@ -218,7 +218,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                  '-provider', self.fips_provider,
                  '-providerpath',  self.provider_path,
                  '-keypass:file', self.opendj_trusstore_setup_key_fn,
-                 pass_param, self.opendj_trusstore_setup_key_fn,
+                 self.pass_param, self.opendj_trusstore_setup_key_fn,
                  '-keysize', '2048',
                  '-sigalg', 'SHA256WITHRSA',
                     ]
@@ -244,7 +244,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                 '-providername', 'BCFIPS',
                 '-provider', self.fips_provider,
                 '-providerpath', self.provider_path,
-                pass_param, self.opendj_trusstore_setup_key_fn,
+                self.pass_param, self.opendj_trusstore_setup_key_fn,
                 ]
 
         self.run(cmd_server_selfcert_gen)
@@ -271,7 +271,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                  '-provider', self.fips_provider,
                  '-providerpath',  self.provider_path,
                  '-keypass:file', self.opendj_trusstore_setup_key_fn,
-                 pass_param, self.opendj_trusstore_setup_key_fn,
+                 self.pass_param, self.opendj_trusstore_setup_key_fn,
                  '-keysize', '2048',
                  '-sigalg', 'SHA256WITHRSA',
                     ]
@@ -295,7 +295,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                 '-providername', 'BCFIPS',
                 '-provider', self.fips_provider,
                 '-providerpath', self.provider_path,
-                pass_param, self.opendj_trusstore_setup_key_fn,
+                self.pass_param, self.opendj_trusstore_setup_key_fn,
                 ]
 
         self.run(cmd_admin_selfcert_gen)
@@ -548,7 +548,6 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         self.writeFile(opendj_java_properties_fn, '\n'.join(opendj_java_properties))
 
 
-
     def fix_opendj_config(self):
         if Config.opendj_truststore_format.upper() == 'PKCS11':
             src = os.path.join(Config.ldapBaseFolder, 'config/truststore')
@@ -557,65 +556,68 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                 self.run([paths.cmd_ln, '-s', src, dest])
 
         if Config.profile == SetupProfiles.DISA_STIG and Config.opendj_truststore_format.upper() == 'BCFKS':
-            self.logIt("Patchin opendj config.ldif for BCFKS")
+            self.disa_stig_fixes()
 
-            opendj_admin_fn = os.path.join(Config.certFolder, 'opendj-admin.bcfks')
 
-            self.copyFile(Config.opendj_trust_store_fn, opendj_admin_fn)
-            self.run([paths.cmd_chmod, '660', opendj_admin_fn])
-            self.chown(opendj_admin_fn, Config.root_user, Config.ldap_user)
+    def disa_stig_fixes(self):
+        self.logIt("Patching opendj config.ldif for BCFKS")
 
-            self.run([Config.cmd_keytool, '-delete',
-                        '-alias', self.admin_alias,
-                        '-storetype', Config.opendj_truststore_format.upper(),
-                        '-providername', 'BCFIPS',
-                        '-provider', self.fips_provider,
-                        '-providerpath', self.provider_path,
-                        '-keystore', Config.opendj_trust_store_fn,
-                        '-storepass:file', self.opendj_key_store_password_fn
-                        ])
+        opendj_admin_fn = os.path.join(Config.certFolder, 'opendj-admin.bcfks')
 
-            self.run([Config.cmd_keytool, '-delete',
-                        '-alias', 'server-cert',
-                        '-storetype', Config.opendj_truststore_format.upper(),
-                        '-providername', 'BCFIPS',
-                        '-provider', self.fips_provider,
-                        '-providerpath', self.provider_path,
-                        '-keystore', opendj_admin_fn,
-                        '-storepass:file', self.opendj_key_store_password_fn
-                        ])
+        self.copyFile(Config.opendj_trust_store_fn, opendj_admin_fn)
+        self.run([paths.cmd_chmod, '660', opendj_admin_fn])
+        self.chown(opendj_admin_fn, Config.root_user, Config.ldap_user)
 
-            opendj_config_ldif_fn = os.path.join(Config.ldapBaseFolder, 'config/config.ldif')
+        self.run([Config.cmd_keytool, '-delete',
+                    '-alias', self.admin_alias,
+                    '-storetype', Config.opendj_truststore_format.upper(),
+                    '-providername', 'BCFIPS',
+                    '-provider', self.fips_provider,
+                    '-providerpath', self.provider_path,
+                    '-keystore', Config.opendj_trust_store_fn,
+                    self.pass_param, self.opendj_key_store_password_fn
+                    ])
 
-            parser = myLdifParser(opendj_config_ldif_fn)
-            parser.parse()
+        self.run([Config.cmd_keytool, '-delete',
+                    '-alias', 'server-cert',
+                    '-storetype', Config.opendj_truststore_format.upper(),
+                    '-providername', 'BCFIPS',
+                    '-provider', self.fips_provider,
+                    '-providerpath', self.provider_path,
+                    '-keystore', opendj_admin_fn,
+                    self.pass_param, self.opendj_key_store_password_fn
+                    ])
 
-            dsa_key = 'ds-cfg-key-store-file'
-            dsa_val = '/etc/certs/opendj.bcfks'
+        opendj_config_ldif_fn = os.path.join(Config.ldapBaseFolder, 'config/config.ldif')
 
-            tmp_path = Path(opendj_config_ldif_fn + '.tmp')
+        parser = myLdifParser(opendj_config_ldif_fn)
+        parser.parse()
 
-            opendj_config_out = tmp_path.open('wb')
-            ldif_writer = LDIFWriter(opendj_config_out, cols=10000)
+        dsa_key = 'ds-cfg-key-store-file'
+        dsa_val = '/etc/certs/opendj.bcfks'
 
-            for dn, entry in parser.entries:
-                if dn in ('cn=HTTP Connection Handler,cn=Connection Handlers,cn=config',
-                          'cn=LDAP Connection Handler,cn=Connection Handlers,cn=config',
-                          'cn=LDAPS Connection Handler,cn=Connection Handlers,cn=config'):
+        tmp_path = Path(opendj_config_ldif_fn + '.tmp')
 
-                    if 'ds-cfg-ssl-cert-nickname' in entry and self.admin_alias in entry['ds-cfg-ssl-cert-nickname']:
-                        entry['ds-cfg-ssl-cert-nickname'].remove(self.admin_alias)
+        opendj_config_out = tmp_path.open('wb')
+        ldif_writer = LDIFWriter(opendj_config_out, cols=10000)
 
-                if dn == 'cn=Administration,cn=Key Manager Providers,cn=config' and dsa_key in entry:
-                    if dsa_val in entry[dsa_key]:
-                        entry[dsa_key].remove(dsa_val)
-                    entry[dsa_key].append('/etc/certs/opendj-admin.bcfks')
+        for dn, entry in parser.entries:
+            if dn in ('cn=HTTP Connection Handler,cn=Connection Handlers,cn=config',
+                      'cn=LDAP Connection Handler,cn=Connection Handlers,cn=config',
+                      'cn=LDAPS Connection Handler,cn=Connection Handlers,cn=config'):
 
-                ldif_writer.unparse(dn, entry)
+                if 'ds-cfg-ssl-cert-nickname' in entry and self.admin_alias in entry['ds-cfg-ssl-cert-nickname']:
+                    entry['ds-cfg-ssl-cert-nickname'].remove(self.admin_alias)
 
-            opendj_config_out.close()
-            tmp_path.rename(opendj_config_ldif_fn)
+            if dn == 'cn=Administration,cn=Key Manager Providers,cn=config' and dsa_key in entry:
+                if dsa_val in entry[dsa_key]:
+                    entry[dsa_key].remove(dsa_val)
+                entry[dsa_key].append('/etc/certs/opendj-admin.bcfks')
 
+            ldif_writer.unparse(dn, entry)
+
+        opendj_config_out.close()
+        tmp_path.rename(opendj_config_ldif_fn)
 
 
     def installed(self):
