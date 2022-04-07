@@ -5,6 +5,7 @@ import inspect
 import base64
 import shutil
 import re
+import glob
 
 from pathlib import Path
 
@@ -422,7 +423,10 @@ class GluuInstaller(BaseInstaller, SetupUtils):
 
         if Config.profile != static.SetupProfiles.DISA_STIG:
             self.run([paths.cmd_chown, Config.user_group, Config.jetty_base])
-            self.run([paths.cmd_chown, '-R', Config.user_group, '/opt/gluu/'])
+            for p in glob.glob(Config.gluuOptFolder+'/*'):
+                if 'node' in p:
+                    continue
+                self.chown(p, Config.jetty_user, Config.gluu_user, recursive=True)
 
         self.run([paths.cmd_chown, '-R', user_group_tmp.format(Config.root_user, Config.gluu_group), '/etc/gluu'])
         self.run([paths.cmd_chown, '-R', user_group_tmp.format(Config.root_user, Config.gluu_group), '/var/gluu'])
