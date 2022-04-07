@@ -23,6 +23,8 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         self.register_progess()
 
         self.oxd_server_yml_fn = os.path.join(self.oxd_root, 'conf/oxd-server.yml')
+        self.oxd_server_keystore_fn = os.path.join(self.oxd_root, 'conf/oxd-server.{}'.format(Config.default_store_type))
+        self.oxd_jwks_keystore_fn = os.path.join(self.oxd_root, 'conf/oxd-jwks.{}'.format(Config.default_store_type))
 
     def install(self):
         self.logIt("Installing {}".format(self.service_name.title()), pbar=self.service_name)
@@ -60,8 +62,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
 
         if not base.argsp.dummy:
             self.modify_config_yml()
-            if Config.profile != SetupProfiles.DISA_STIG:
-                self.generate_keystore()
+            self.generate_keystore()
 
         self.run([paths.cmd_chown, '-R', '{0}:{0}'.format(oxd_user), self.oxd_root])
 
@@ -119,19 +120,129 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             oxd_yaml['storage_configuration']['salt'] = os.path.join(Config.configFolder, "salt")
 
         if Config.profile == SetupProfiles.DISA_STIG:
-            oxd_yaml['server']['applicationConnectors'][0]['type']='http'
-            oxd_yaml['server']['applicationConnectors'][0].pop('keyStorePath')
-            oxd_yaml['server']['applicationConnectors'][0].pop('keyStorePassword')
-            oxd_yaml['server']['applicationConnectors'][0].pop('validateCerts')
-            oxd_yaml['server']['adminConnectors'][0]['type']='http'
-            oxd_yaml['server']['adminConnectors'][0].pop('keyStorePath')
-            oxd_yaml['server']['adminConnectors'][0].pop('keyStorePassword')
-            oxd_yaml['server']['adminConnectors'][0].pop('validateCerts')
-
+            oxd_yaml['server']['applicationConnectors'][0]['type']='https'
+            oxd_yaml['server']['applicationConnectors'][0]['port']='8443'
+            oxd_yaml['server']['applicationConnectors'][0]['keyStorePath']=self.oxd_server_keystore_fn
+            oxd_yaml['server']['applicationConnectors'][0]['keyStorePassword']='example'
+            oxd_yaml['server']['applicationConnectors'][0]['keyStoreType']=Config.default_store_type
+            oxd_yaml['server']['applicationConnectors'][0]['keyStoreProvider']='BCFIPS'
+            oxd_yaml['server']['applicationConnectors'][0]['trustStoreType']=Config.default_store_type
+            oxd_yaml['server']['applicationConnectors'][0]['jceProvider']='org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider'
+            oxd_yaml['server']['applicationConnectors'][0]['validateCerts']='false'
+            
+            oxd_yaml['server']['adminConnectors'][0]['type']='https'
+            oxd_yaml['server']['adminConnectors'][0]['port']='8444'
+            oxd_yaml['server']['adminConnectors'][0]['keyStorePath']=self.oxd_server_keystore_fn
+            oxd_yaml['server']['adminConnectors'][0]['keyStorePassword']='example'
+            oxd_yaml['server']['adminConnectors'][0]['keyStoreType']=Config.default_store_type
+            oxd_yaml['server']['adminConnectors'][0]['keyStoreProvider']='BCFIPS'
+            oxd_yaml['server']['adminConnectors'][0]['trustStoreType']=Config.default_store_type
+            oxd_yaml['server']['adminConnectors'][0]['jceProvider']='org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider'
+            oxd_yaml['server']['adminConnectors'][0]['validateCerts']='false'
+            
+            oxd_yaml['crypt_provider_key_store_path']=self.oxd_jwks_keystore_fn
+            oxd_yaml['crypt_provider_key_store_password']='example'
 
         yml_str = ruamel.yaml.dump(oxd_yaml, Dumper=ruamel.yaml.RoundTripDumper)
         self.writeFile(self.oxd_server_yml_fn, yml_str)
 
+    def generate_keystore(self):
+        self.logIt("Generating certificate", pbar=self.service_name)
+        # generate oxd-server.keystore for the hostname
+
+        keystore_tmp = '/tmp/oxd.{}'.format(Config.default_store_type)
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            provider_path = '{}:{}'.format(Config.bc_fips_jar, Config.bcpkix_fips_jar)
+
+            cmd_cert_gen = [
+                Config.cmd_keytool, '-genkey',
+                '-alias', Config.hostname,
+                '-keyalg', 'rsa',
+                '-dname', 'CN={},O=OXD RSA Self-Signed Certificate'.format(Config.hostname),
+                '-keystore', keystore_tmp,
+                '-storetype', 'bcfks',
+                '-validity', '3650',
+                ]
+
+            cmd_cert_gen += [
+                '-providername', 'BCFIPS',
+                '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
+                '-providerpath',  provider_path,
+                '-keypass', 'example',
+                '-storepass', 'example',
+                '-keysize', '2048',
+                '-sigalg', 'SHA256WITHRSA',
+                    ]
+
+            self.run(cmd_cert_gen)
+            
+            cmd_cert_gen = [
+                Config.cmd_keytool, '-selfcert',
+                '-alias', Config.hostname,
+                '-keystore', keystore_tmp,
+                '-storetype', 'bcfks',
+                '-validity', '3650',
+                ]
+
+            cmd_cert_gen += [
+                '-providername', 'BCFIPS',
+                '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
+                '-providerpath', provider_path,
+                '-storepass', 'example',
+                ]
+
+            self.run(cmd_cert_gen)
+
+        else:
+            oxd_key_tmp = '/tmp/oxd.key'
+            oxd_crt_tmp = '/tmp/oxd.crt'
+            oxd_p12_tmp = '/tmp/oxd.p12'
+
+            self.run([
+                paths.cmd_openssl,
+                'req', '-x509', '-newkey', 'rsa:4096', '-nodes',
+                '-out', oxd_crt_tmp,
+                '-keyout', oxd_key_tmp,
+                '-days', '3650',
+                '-subj', '/C={}/ST={}/L={}/O={}/CN={}/emailAddress={}'.format(Config.countryCode, Config.state, Config.city, Config.orgName, Config.hostname, Config.admin_email),
+                ])
+
+            self.run([
+                paths.cmd_openssl,
+                'pkcs12', '-export',
+                '-in', oxd_crt_tmp,
+                '-inkey', oxd_key_tmp,
+                '-out', oxd_p12_tmp,
+                '-name', Config.hostname,
+                '-passout', 'pass:example'
+                ])
+
+            self.run([
+                Config.cmd_keytool,
+                '-importkeystore',
+                '-deststorepass', 'example',
+                '-destkeypass', 'example',
+                '-destkeystore', keystore_tmp,
+                '-srckeystore', oxd_p12_tmp,
+                '-srcstoretype', 'PKCS12',
+                '-srcstorepass', 'example',
+                '-alias', Config.hostname,
+                ])
+
+            for f in (oxd_key_tmp, oxd_crt_tmp, oxd_p12_tmp):
+                self.run([paths.cmd_rm, '-f', f])
+
+            oxd_key_tmp = '/tmp/oxd.key'
+            oxd_crt_tmp = '/tmp/oxd.crt'
+            oxd_p12_tmp = '/tmp/oxd.p12'
+
+        self.run([paths.cmd_rm, '-f', os.path.join(self.oxd_root,'conf/oxd-server.keystore')])
+
+        self.run(['cp', '-f', keystore_tmp, self.oxd_server_keystore_fn])
+        self.run([paths.cmd_chown, 'jetty:jetty', self.oxd_server_keystore_fn])
+
+        self.run([paths.cmd_rm, '-f', keystore_tmp])
 
     def generate_keystore(self):
         self.logIt("Generating certificate", pbar=self.service_name)
