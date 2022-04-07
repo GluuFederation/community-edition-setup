@@ -423,10 +423,11 @@ class GluuInstaller(BaseInstaller, SetupUtils):
 
         if Config.profile != static.SetupProfiles.DISA_STIG:
             self.run([paths.cmd_chown, Config.user_group, Config.jetty_base])
-            for p in glob.glob(Config.gluuOptFolder+'/*'):
+            for p in glob.glob(Config.gluuOptFolder + '/*'):
                 if 'node' in p:
                     continue
                 self.chown(p, Config.jetty_user, Config.gluu_user, recursive=True)
+            self.chown(Config.gluuOptFolder, Config.jetty_user, Config.gluu_user)
 
         self.run([paths.cmd_chown, '-R', user_group_tmp.format(Config.root_user, Config.gluu_group), '/etc/gluu'])
         self.run([paths.cmd_chown, '-R', user_group_tmp.format(Config.root_user, Config.gluu_group), '/var/gluu'])
