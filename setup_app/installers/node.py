@@ -71,18 +71,17 @@ class NodeInstaller(BaseInstaller, SetupUtils):
         self.templates_rendered = True
         # make variables of this class accesible from Config
         self.update_rendering_dict()
-        
+
         nodeTepmplatesFolder = os.path.join(Config.templateFolder, 'node')
         self.render_templates_folder(nodeTepmplatesFolder)
 
     def installNodeService(self, serviceName):
         self.logIt("Installing node service %s..." % serviceName)
 
-        if Config.profile == SetupProfiles.DISA_STIG:
-            Config.templateRenderingDict['service_user'] = serviceName
-            Config.service_user(serviceName)
+        if hasattr(self, 'service_user'):
+            Config.templateRenderingDict['service_user'] = self.service_user
         else:
-            Config.templateRenderingDict['service_user'] = 'node'
+            Config.templateRenderingDict['service_user'] = Config.node_user
 
         if not self.templates_rendered:
             self.render_templates()

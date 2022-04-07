@@ -5,6 +5,7 @@ import inspect
 import base64
 import shutil
 import re
+import glob
 
 from pathlib import Path
 
@@ -404,7 +405,6 @@ class GluuInstaller(BaseInstaller, SetupUtils):
     def post_install_tasks(self):
         # set systemd timeout
         self.set_systemd_timeout()
-        user_group_tmp = '{}:{}'
 
         if base.argsp.import_ldif:
             self.dbUtils.bind(force=True)
@@ -415,42 +415,48 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         for f in os.listdir(Config.certFolder):
             if not f.startswith('passport-'):
                 fpath = os.path.join(Config.certFolder, f)
-                self.run([paths.cmd_chown, user_group_tmp.format(Config.root_user, Config.gluu_group), fpath])
+                self.chown(fpath, Config.root_user, Config.gluu_group)
                 self.run([paths.cmd_chmod, '660', fpath])
                 self.run([paths.cmd_chmod, 'u+X', fpath])
-        self.run([paths.cmd_chown, '-R', user_group_tmp.format(Config.root_user, Config.gluu_user), Config.gluuOptPythonFolder])
+        self.chown(Config.gluuOptPythonFolder, Config.root_user, Config.gluu_user, recursive=True)
 
         if Config.profile != static.SetupProfiles.DISA_STIG:
             self.run([paths.cmd_chown, Config.user_group, Config.jetty_base])
-            self.run([paths.cmd_chown, '-R', Config.user_group, '/opt/gluu/'])
+            for p in glob.glob(Config.gluuOptFolder + '/*'):
+                if 'node' in p:
+                    continue
+                self.chown(p, Config.jetty_user, Config.gluu_user, recursive=True)
+            self.chown(Config.gluuOptFolder, Config.jetty_user, Config.gluu_user)
 
-        self.run([paths.cmd_chown, '-R', user_group_tmp.format(Config.root_user, Config.gluu_group), '/etc/gluu'])
-        self.run([paths.cmd_chown, '-R', user_group_tmp.format(Config.root_user, Config.gluu_group), '/var/gluu'])
+        self.chown(Config.gluuBaseFolder, Config.root_user, Config.gluu_group, recursive=True)
+        self.chown(Config.oxBaseDataFolder, Config.root_user, Config.gluu_group, recursive=True)
 
-        for sys_path in ('/opt/gluu', '/etc/gluu', '/var/gluu'):
+        for sys_path in (Config.gluuOptFolder, Config.gluuBaseFolder, Config.oxBaseDataFolder):
             self.run([paths.cmd_chmod, '-R', 'u+rwX,g+rwX,o-rwX', sys_path])
 
         if not Config.installed_instance:
             cron_service = 'crond' if base.clone_type == 'rpm' else 'cron'
             self.restart(cron_service)
 
-
         if Config.profile == static.SetupProfiles.DISA_STIG:
+            self.disa_stig_post_install_tasks()
 
-            self.run([paths.cmd_chown, user_group_tmp.format(Config.jetty_user, Config.gluu_group), '/opt/gluu/'])
+    def disa_stig_post_install_tasks(self):
 
-            jetty_absolute_dir = Path('/opt/jetty').resolve()
+        self.chown(Config.gluuOptFolder, Config.jetty_user, Config.gluu_group)
 
-            # selinux proxypass
-            setsebool_cmd = shutil.which('setsebool')
-            self.run([setsebool_cmd, 'httpd_can_network_connect', '1'])
-            # make it permanent
-            self.run([setsebool_cmd, 'httpd_can_network_connect', '1', '-P'])
+        jetty_absolute_dir = Path(Config.jetty_home).resolve()
 
-            for sys_path in (Config.jetty_base,
-                                jetty_absolute_dir.as_posix(),
-                                Config.gluuBaseFolder,
-                                os.path.join(Config.distFolder,'scripts')):
-                self.run([paths.cmd_chmod, 'g+rwX', '-R', sys_path])
+        # selinux proxypass
+        setsebool_cmd = shutil.which('setsebool')
+        self.run([setsebool_cmd, 'httpd_can_network_connect', '1'])
+        # make it permanent
+        self.run([setsebool_cmd, 'httpd_can_network_connect', '1', '-P'])
 
-            self.run([paths.cmd_chown, '-R', Config.user_group, jetty_absolute_dir.parent.as_posix()])
+        for sys_path in (Config.jetty_base,
+                            jetty_absolute_dir.as_posix(),
+                            Config.gluuBaseFolder,
+                            os.path.join(Config.distFolder,'scripts')):
+            self.run([paths.cmd_chmod, 'g+rwX', '-R', sys_path])
+
+        self.chown(jetty_absolute_dir.parent.as_posix(), Config.user_group, recursive=True)

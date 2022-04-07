@@ -14,6 +14,7 @@ class PassportInstaller(NodeInstaller):
     def __init__(self):
         setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'passport'
+        self.service_user = Config.node_user
         self.app_type = AppType.SERVICE
         self.install_type = InstallOption.OPTONAL
         self.install_var = 'installPassport'
@@ -61,7 +62,7 @@ class PassportInstaller(NodeInstaller):
         # Install passport system service script
         self.installNodeService('passport')
 
-        self.run([paths.cmd_chown, '-R', 'node:node', self.gluu_passport_base])
+        self.chown(self.gluu_passport_base, Config.node_user, Config.node_user, recursive=True)
 
         # enable service at startup
         self.enable()
@@ -156,7 +157,7 @@ class PassportInstaller(NodeInstaller):
         cert_files = glob.glob(os.path.join(Config.certFolder, 'passport*'))
         for fn in cert_files:
             self.run([paths.cmd_chmod, '440', fn])
-            self.run([paths.cmd_chown, 'root:gluu', fn])
+            self.chown(fn, Config.root_user, Config.gluu_user)
 
     def render_import_templates(self):
 
