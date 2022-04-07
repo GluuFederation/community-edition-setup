@@ -70,7 +70,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
             self.prepare_opendj_schema()
 
         # it is time to bind OpenDJ
-        for i in range(1,3):
+        for i in range(1, 5):
             time.sleep(i*2)
             try:
                 self.dbUtils.bind()
@@ -79,7 +79,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
             except ldap3.core.exceptions.LDAPSocketOpenError:
                 self.logIt("Failed to connect LDAP. Trying once more")
         else:
-            self.logIt("Three attempt to connection to LDAP failed. Exiting ...", True, True)
+            self.logIt("Four attempt to connection to LDAP failed. Exiting ...", True, True)
 
         if Config.ldap_install:
             Config.pbar.progress(self.service_name, "Creating OpenDJ backends", False)
@@ -363,6 +363,19 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                             '--bindPasswordFile',
                             Config.ldapPassFn
                             ]
+
+        self.logIt("Checking if LDAP admin interface is ready")
+        ldap_server = ldap3.Server(Config.ldap_hostname, port=int(Config.ldap_admin_port), use_ssl=True) 
+        ldap_conn = ldap3.Connection(ldap_server, user=Config.ldap_binddn, password=Config.ldapPass)
+        for i in range(1, 5):
+            time.sleep(i*2)
+            try:
+                ldap_conn.bind()
+                break
+            except ldap3.core.exceptions.LDAPSocketOpenError:
+                self.logIt("Failed to connect LDAP admin port. Trying once more")
+        else:
+            self.logIt("Four attempt to connection to LDAP admin port failed. Exiting ...", True, True)
 
         for changes in backends:
             cwd = os.path.join(Config.ldapBinFolder)
