@@ -29,9 +29,9 @@ if '-a' in sys.argv:
     parser.add_argument('--jetty-version', help="Jetty verison. For example 11.0.6")
 parser.add_argument('-n', help="No prompt", action='store_true')
 parser.add_argument('--no-setup', help="Do not launch setup", action='store_true')
-parser.add_argument('--dist-server-base', help="Download server", default='https://jenkins.gluu.org/maven')
+parser.add_argument('--dist-server-base', help="Download server", default='https://maven.gluu.org/maven')
 parser.add_argument('-profile', help="Setup profile", choices=['CE', 'DISA-STIG'], default='CE')
-parser.add_argument('--setup-branch', help="Gluu CE setup github branch", default="master")
+parser.add_argument('--setup-branch', help="Gluu CE setup github branch", default="version_4.4.0")
 parser.add_argument('-c', help="Don't download files that exists on disk", action='store_true')
 
 argsp = parser.parse_args()
@@ -164,16 +164,16 @@ services = ['casa.service', 'identity.service', 'opendj.service', 'oxauth.servic
 app_versions = {
     "JETTY_VERSION": "9.4.46.v20220331", 
     "AMAZON_CORRETTO_VERSION": "11.0.14.10.1", 
-    "OX_GITVERISON": "-SNAPSHOT", 
+    "OX_GITVERISON": ".Final", 
     "NODE_VERSION": "v14.19.1",
     "OX_VERSION": "4.4.0", 
-    "PASSPORT_VERSION": "master", 
+    "PASSPORT_VERSION": "4.4.0", 
     "JYTHON_VERSION": "2.7.3",
     "OPENDJ_VERSION": "4.4.13",
     "SETUP_BRANCH": argsp.setup_branch,
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7",
-    "APPS_GIT_BRANCH": "master",
+    "APPS_GIT_BRANCH": "version_4.4.0",
     }
 
 jetty_dist_string = 'jetty-distribution'
@@ -241,6 +241,8 @@ def download(url, target_fn):
     pardir, fn = os.path.split(dst)
     if not os.path.exists(pardir):
         os.makedirs(pardir)
+
+    print("Opening url", url)
 
     with request.urlopen(url) as resp:
         if argsp.c and os.path.exists(dst) and resp.length == os.stat(dst).st_size:
@@ -322,7 +324,7 @@ if not argsp.u:
         download('https://corretto.aws/downloads/resources/{0}/amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION']), os.path.join(app_dir, 'amazon-corretto-{0}-linux-x64.tar.gz'.format(app_versions['AMAZON_CORRETTO_VERSION'])))
         download('https://nodejs.org/dist/{0}/node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION']), os.path.join(app_dir, 'node-{0}-linux-x64.tar.xz'.format(app_versions['NODE_VERSION'])))
         download(maven_root + '/npm/passport/passport-{}.tgz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport.tgz'))
-        download(maven_root + '/npm/passport/passport-{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION'])))
+        download(maven_root + '/npm/passport/passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION']), os.path.join(gluu_app_dir,'passport-version_{}-node_modules.tar.gz'.format(app_versions['PASSPORT_VERSION'])))
         download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'super-gluu-radius-server.jar'))
         download(maven_base + '/org/gluu/super-gluu-radius-server/{0}{1}/super-gluu-radius-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'gluu-radius-libs.zip'))
         download('https://www.apple.com/certificateauthority/Apple_WebAuthn_Root_CA.pem', os.path.join(app_dir, 'Apple_WebAuthn_Root_CA.pem'))
@@ -334,10 +336,10 @@ if not argsp.u:
         download(maven_base + '/org/gluu/oxauth-server/{0}{1}/oxauth-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'oxauth.war'))
 
     else:
-        download('https://maven.gluu.org/maven/org/gluu/oxauth-client-jar-without-provider-dependencies/4.4.0-SNAPSHOT/oxauth-client-jar-without-provider-dependencies-4.4.0-SNAPSHOT.jar', os.path.join(gluu_app_dir, 'oxauth-client-jar-without-provider-dependencies.jar'))
-        download('https://maven.gluu.org/maven/org/gluu/oxauth-server-fips/4.4.0-SNAPSHOT/oxauth-server-fips-4.4.0-SNAPSHOT.war', oxauth_war_fn)
+        download('https://maven.gluu.org/maven/org/gluu/oxauth-client-jar-without-provider-dependencies/4.4.0.Final/oxauth-client-jar-without-provider-dependencies-4.4.0.Final.jar', os.path.join(gluu_app_dir, 'oxauth-client-jar-without-provider-dependencies.jar'))
+        download('https://maven.gluu.org/maven/org/gluu/oxauth-server-fips/4.4.0.Final/oxauth-server-fips-4.4.0.Final.war', oxauth_war_fn)
 
-    download(maven_base + '/org/gluu/oxauth-client/{0}{1}/oxauth-client-{0}{1}-jar-with-dependencies.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'oxauth-client-jar-with-dependencies.jar'))
+    download(maven_base + '/org/gluu/oxauth-client-jar-with-dependencies/{0}{1}/oxauth-client-jar-with-dependencies-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'oxauth-client-jar-with-dependencies.jar'))
     download(maven_base + '/org/gluu/scim-server/{0}{1}/scim-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'scim.war'))
     download(maven_base + '/org/gluu/fido2-server/{0}{1}/fido2-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'fido2.war'))
     download('https://repo1.maven.org/maven2/org/eclipse/jetty/{1}/{0}/{1}-{0}.tar.gz'.format(app_versions['JETTY_VERSION'], jetty_dist_string), os.path.join(app_dir,'{1}-{0}.tar.gz'.format(app_versions['JETTY_VERSION'], jetty_dist_string)))
