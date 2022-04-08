@@ -25,6 +25,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         self.oxd_server_yml_fn = os.path.join(self.oxd_root, 'conf/oxd-server.yml')
         self.oxd_server_keystore_fn = os.path.join(self.oxd_root, 'conf/oxd-server.{}'.format(Config.default_store_type))
         self.oxd_jwks_keystore_fn = os.path.join(self.oxd_root, 'conf/oxd-jwks.{}'.format(Config.default_store_type))
+        self.oxd_keystore_passw = 'example'
 
     def install(self):
         self.logIt("Installing {}".format(self.service_name.title()), pbar=self.service_name)
@@ -123,7 +124,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             oxd_yaml['server']['applicationConnectors'][0]['type']='https'
             oxd_yaml['server']['applicationConnectors'][0]['port']='8443'
             oxd_yaml['server']['applicationConnectors'][0]['keyStorePath']=self.oxd_server_keystore_fn
-            oxd_yaml['server']['applicationConnectors'][0]['keyStorePassword']='example'
+            oxd_yaml['server']['applicationConnectors'][0]['keyStorePassword']=self.oxd_keystore_passw
             oxd_yaml['server']['applicationConnectors'][0]['keyStoreType']=Config.default_store_type
             oxd_yaml['server']['applicationConnectors'][0]['keyStoreProvider']='BCFIPS'
             oxd_yaml['server']['applicationConnectors'][0]['trustStoreType']=Config.default_store_type
@@ -133,7 +134,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             oxd_yaml['server']['adminConnectors'][0]['type']='https'
             oxd_yaml['server']['adminConnectors'][0]['port']='8444'
             oxd_yaml['server']['adminConnectors'][0]['keyStorePath']=self.oxd_server_keystore_fn
-            oxd_yaml['server']['adminConnectors'][0]['keyStorePassword']='example'
+            oxd_yaml['server']['adminConnectors'][0]['keyStorePassword']=self.oxd_keystore_passw
             oxd_yaml['server']['adminConnectors'][0]['keyStoreType']=Config.default_store_type
             oxd_yaml['server']['adminConnectors'][0]['keyStoreProvider']='BCFIPS'
             oxd_yaml['server']['adminConnectors'][0]['trustStoreType']=Config.default_store_type
@@ -141,7 +142,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             oxd_yaml['server']['adminConnectors'][0]['validateCerts']='false'
             
             oxd_yaml['crypt_provider_key_store_path']=self.oxd_jwks_keystore_fn
-            oxd_yaml['crypt_provider_key_store_password']='example'
+            oxd_yaml['crypt_provider_key_store_password']=self.oxd_keystore_passw
 
         yml_str = ruamel.yaml.dump(oxd_yaml, Dumper=ruamel.yaml.RoundTripDumper)
         self.writeFile(self.oxd_server_yml_fn, yml_str)
@@ -169,8 +170,8 @@ class OxdInstaller(SetupUtils, BaseInstaller):
                 '-providername', 'BCFIPS',
                 '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
                 '-providerpath',  provider_path,
-                '-keypass', 'example',
-                '-storepass', 'example',
+                '-keypass', self.oxd_keystore_passw,
+                '-storepass', self.oxd_keystore_passw,
                 '-keysize', '2048',
                 '-sigalg', 'SHA256WITHRSA',
                     ]
@@ -189,7 +190,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
                 '-providername', 'BCFIPS',
                 '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
                 '-providerpath', provider_path,
-                '-storepass', 'example',
+                '-storepass', 'pass:{}'.format(self.oxd_keystore_passw),
                 ]
 
             self.run(cmd_cert_gen)
@@ -215,18 +216,18 @@ class OxdInstaller(SetupUtils, BaseInstaller):
                 '-inkey', oxd_key_tmp,
                 '-out', oxd_p12_tmp,
                 '-name', Config.hostname,
-                '-passout', 'pass:example'
+                '-passout', 'pass:{}'.format(self.oxd_keystore_passw)
                 ])
 
             self.run([
                 Config.cmd_keytool,
                 '-importkeystore',
-                '-deststorepass', 'example',
-                '-destkeypass', 'example',
+                '-deststorepass', self.oxd_keystore_passw,
+                '-destkeypass', self.oxd_keystore_passw,
                 '-destkeystore', keystore_tmp,
                 '-srckeystore', oxd_p12_tmp,
                 '-srcstoretype', 'PKCS12',
-                '-srcstorepass', 'example',
+                '-srcstorepass', self.oxd_keystore_passw,
                 '-alias', Config.hostname,
                 ])
 
@@ -263,7 +264,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             '-inkey', '/tmp/oxd.key',
             '-out', '/tmp/oxd.p12',
             '-name', Config.hostname,
-            '-passout', 'pass:example'
+            '-passout', 'pass:{}'.format(self.oxd_keystore_passw)
             ])
 
         self.run([
@@ -274,7 +275,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             '-destkeystore', '/tmp/oxd.keystore',
             '-srckeystore', '/tmp/oxd.p12',
             '-srcstoretype', 'PKCS12',
-            '-srcstorepass', 'example',
+            '-srcstorepass', 'pass:{}'.format(self.oxd_keystore_passw),
             '-alias', Config.hostname,
             ])
 
