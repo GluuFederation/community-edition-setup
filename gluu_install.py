@@ -165,7 +165,7 @@ app_versions = {
     "JETTY_VERSION": "9.4.46.v20220331", 
     "AMAZON_CORRETTO_VERSION": "11.0.14.10.1", 
     "OX_GITVERISON": ".Final", 
-    "NODE_VERSION": "v14.16.1",
+    "NODE_VERSION": "v14.19.1",
     "OX_VERSION": "4.4.0", 
     "PASSPORT_VERSION": "4.4.0", 
     "JYTHON_VERSION": "2.7.3",
