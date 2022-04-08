@@ -295,8 +295,14 @@ def package_oxd():
     oxd_zip_fn = os.path.join(gluu_app_dir, 'oxd-server.zip')
     oxd_tmp_root = '/tmp/{}'.format(os.urandom(5).hex())
     oxd_tmp_dir = os.path.join(oxd_tmp_root, 'oxd-server')
-    download(maven_base + '/org/gluu/oxd-server/{0}{1}/oxd-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), oxd_zip_fn)
+
+    if argsp.profile != 'DISA-STIG':
+        download(maven_base + '/org/gluu/oxd-server/{0}{1}/oxd-server-{0}{1}-distribution.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), oxd_zip_fn)
+    else:
+        download(maven_base + '/org/gluu/oxd-server/{0}{1}/oxd-server-{0}{1}-distribution-bc-fips.zip'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), oxd_zip_fn)
+
     download('https://raw.githubusercontent.com/GluuFederation/community-edition-package/version_{}/package/systemd/oxd-server.service'.format(app_versions['OX_VERSION']), os.path.join(oxd_tmp_dir, 'oxd-server.service'))
+
     cmd = 'unzip -qqo {} -d {}'.format(oxd_zip_fn, oxd_tmp_dir)
     print("Excuting", cmd)
     os.system(cmd)
