@@ -2,6 +2,7 @@ import os
 import glob
 import socket
 import ruamel.yaml
+import tempfile
 
 from setup_app import paths
 from setup_app.static import AppType, InstallOption, fapolicyd_rule_tmp
@@ -156,7 +157,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         self.logIt("Generating certificate", pbar=self.service_name)
         # generate oxd-server.keystore for the hostname
 
-        keystore_tmp = '/tmp/oxd.{}'.format(Config.default_store_type)
+        keystore_tmp = '{}/oxd.{}'.format(tempfile.gettempdir(), Config.default_store_type)
 
         if Config.profile == SetupProfiles.DISA_STIG:
             provider_path = '{}:{}'.format(Config.bc_fips_jar, Config.bcpkix_fips_jar)
@@ -201,9 +202,9 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             self.run(cmd_cert_gen)
 
         else:
-            oxd_key_tmp = '/tmp/oxd.key'
-            oxd_crt_tmp = '/tmp/oxd.crt'
-            oxd_p12_tmp = '/tmp/oxd.p12'
+            oxd_key_tmp = '{}/{}'.format(tempfile.gettempdir(),'oxd.key')
+            oxd_crt_tmp = '{}/{}'.format(tempfile.gettempdir(),'oxd.crt')
+            oxd_p12_tmp = '{}/{}'.format(tempfile.gettempdir(),'oxd.p12')
 
             self.run([
                 paths.cmd_openssl,
