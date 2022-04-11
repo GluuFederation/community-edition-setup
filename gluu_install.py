@@ -336,8 +336,8 @@ if not argsp.u:
         download(maven_base + '/org/gluu/oxauth-server/{0}{1}/oxauth-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'oxauth.war'))
         download(maven_base + '/org/gluu/scim-server/{0}{1}/scim-server-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'scim.war'))
     else:
-        download('https://maven.gluu.org/maven/org/gluu/oxauth-client-jar-without-provider-dependencies/4.4.0.Final/oxauth-client-jar-without-provider-dependencies-4.4.0.Final.jar', os.path.join(gluu_app_dir, 'oxauth-client-jar-without-provider-dependencies.jar'))
-        download('https://maven.gluu.org/maven/org/gluu/oxauth-server-fips/4.4.0.Final/oxauth-server-fips-4.4.0.Final.war', oxauth_war_fn)
+        download('https://maven.gluu.org/maven/org/gluu/oxauth-client-jar-without-provider-dependencies/{0}{1}/oxauth-client-jar-without-provider-dependencies-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir, 'oxauth-client-jar-without-provider-dependencies.jar'))
+        download('https://maven.gluu.org/maven/org/gluu/oxauth-server-fips/{0}{1}/oxauth-server-fips-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), oxauth_war_fn)
         download(maven_base + '/org/gluu/scim-server-fips/{0}{1}/scim-server-fips-{0}{1}.war'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'scim.war'))
 
     download(maven_base + '/org/gluu/oxauth-client-jar-with-dependencies/{0}{1}/oxauth-client-jar-with-dependencies-{0}{1}.jar'.format(app_versions['OX_VERSION'], app_versions['OX_GITVERISON']), os.path.join(gluu_app_dir,'oxauth-client-jar-with-dependencies.jar'))
