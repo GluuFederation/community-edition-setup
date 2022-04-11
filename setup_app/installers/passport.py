@@ -62,7 +62,7 @@ class PassportInstaller(NodeInstaller):
         # Install passport system service script
         self.installNodeService('passport')
 
-        self.chown(self.gluu_passport_base, Config.node_user, Config.node_user, recursive=True)
+        self.chown(self.gluu_passport_base, Config.node_user, Config.gluu_group, recursive=True)
 
         # enable service at startup
         self.enable()
