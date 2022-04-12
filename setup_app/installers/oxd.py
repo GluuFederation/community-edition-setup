@@ -127,9 +127,6 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             oxd_yaml['storage_configuration']['salt'] = os.path.join(Config.configFolder, "salt")
 
         if Config.profile == SetupProfiles.DISA_STIG:
-            for key in ('crypt_provider_key_store_path', 'crypt_provider_key_store_password', 'crypt_provider_dn_name'):
-                if key in oxd_yaml:
-                    oxd_yaml.pop(key)
 
             oxd_yaml['server']['applicationConnectors'][0]['type']='https'
             oxd_yaml['server']['applicationConnectors'][0]['port']='8443'
