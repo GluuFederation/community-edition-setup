@@ -485,7 +485,7 @@ else:
     shutil.rmtree(tmp_dir)
 
     if argsp.profile == 'DISA-STIG':
-        for jar_fn in ('bc-fips-1.0.2.1.jar', 'bcpkix-fips-1.0.5.jar'):
+        for jar_fn in ('bc-fips-1.0.2.3.jar', 'bcpkix-fips-1.0.6.jar'):
             extract_file(oxauth_war_fn, jar_fn, app_dir)
 
     os.chmod('/install/community-edition-setup/setup.py', 33261)
