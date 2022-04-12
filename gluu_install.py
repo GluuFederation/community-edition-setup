@@ -485,8 +485,16 @@ else:
     shutil.rmtree(tmp_dir)
 
     if argsp.profile == 'DISA-STIG':
-        for jar_fn in ('bc-fips-1.0.2.3.jar', 'bcpkix-fips-1.0.6.jar'):
-            extract_file(oxauth_war_fn, jar_fn, app_dir)
+        war_zip = zipfile.ZipFile(oxauth_war_fn, "r")
+        for fn in war_zip.namelist():
+            if re.search('bc-fips-(.*?).jar$', fn) or re.search('bcpkix-fips-(.*?).jar$', fn):
+                file_name = os.path.basename(fn)
+                target_fn = os.path.join(app_dir, file_name)
+                print("Extracting", fn, "to", target_fn)
+                file_content = war_zip.read(fn)
+                with open(target_fn, 'wb') as w:
+                    w.write(file_content)
+        war_zip.close()
 
     os.chmod('/install/community-edition-setup/setup.py', 33261)
 

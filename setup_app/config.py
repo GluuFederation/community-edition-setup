@@ -4,6 +4,8 @@ import time
 import pprint
 import shutil
 import inspect
+import glob
+
 from pathlib import Path
 from collections import OrderedDict
 
@@ -104,9 +106,8 @@ class Config:
             self.default_store_type = 'bcfks'
             self.opendj_truststore_format = base.argsp.opendj_keystore_type
             self.default_client_test_store_type = 'pkcs12'
-            self.bc_fips_jar = os.path.join(self.distAppFolder, 'bc-fips-1.0.2.1.jar')
-            self.bcpkix_fips_jar = os.path.join(self.distAppFolder, 'bcpkix-fips-1.0.5.jar')
-
+            self.bc_fips_jar = max(glob.glob(os.path.join(self.distAppFolder, 'bc-fips-*.jar')))
+            self.bcpkix_fips_jar = max(glob.glob(os.path.join(self.distAppFolder, 'bcpkix-fips-*.jar')))
         else:
             self.profile = SetupProfiles.CE
             self.cmd_java = os.path.join(self.jre_home, 'bin/java')
