@@ -43,9 +43,13 @@ class PackageUtils(SetupUtils):
             if base.clone_type == 'deb':
                 package_list[os_type_version]['mondatory'] += ' postgresql-contrib'
 
-        if Config.profile == SetupProfiles.DISA_STIG:
-            package_list[os_type_version]['mondatory'] += ' java-11-openjdk-headless java-11-openjdk-devel'
+        if base.argsp.profile == 'DISA-STIG' or os.path.exists(os.path.join(paths.INSTALL_DIR, 'disa-stig')):
 
+            package_list[os_type_version]['mondatory'] += ' java-11-openjdk-headless java-11-openjdk-devel'
+            for rpackage in ('python3-ldap3', 'python3-requests', 'python3-ruamel-yaml', 'python3-PyMySQL'):
+                package_list[os_type_version]['mondatory'] = package_list[os_type_version]['mondatory'].replace(rpackage, '')
+            
+            
         for install_type in install_list:
             for package in package_list[os_type_version][install_type].split():
                 if os_type_version in ('centos 7', 'red 7') and package.startswith('python3-'):

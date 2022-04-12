@@ -90,69 +90,71 @@ except:
 
 missing_packages = []
 
-try:
-    import ldap3
-except:
-    missing_packages.append('python3-ldap3')
+if not argsp.uninstall:
 
-try:
-    import six
-except:
-    missing_packages.append('python3-six')
+    try:
+        import ldap3
+    except:
+        missing_packages.append('python3-ldap3')
 
-try:
-    import ruamel.yaml
-except:
-    if os_type in ('red', 'centos'):
-        missing_packages.append('python3-ruamel-yaml')
-    else:
-        missing_packages.append('python3-ruamel.yaml')
+    try:
+        import six
+    except:
+        missing_packages.append('python3-six')
 
-try:
-    from distutils import dist
-except:
-    missing_packages.append('python3-distutils')
+    try:
+        import ruamel.yaml
+    except:
+        if os_type in ('red', 'centos'):
+            missing_packages.append('python3-ruamel-yaml')
+        else:
+            missing_packages.append('python3-ruamel.yaml')
 
-try:
-    import pymysql
-except:
-    if os_type in ('red', 'centos', 'suse'):
-        missing_packages.append('python3-PyMySQL')
-    else:
-        missing_packages.append('python3-pymysql')
+    try:
+        from distutils import dist
+    except:
+        missing_packages.append('python3-distutils')
+
+    try:
+        import pymysql
+    except:
+        if os_type in ('red', 'centos', 'suse'):
+            missing_packages.append('python3-PyMySQL')
+        else:
+            missing_packages.append('python3-pymysql')
 
 
-if not shutil.which('unzip'):
-    missing_packages.append('unzip')
+    if not shutil.which('unzip'):
+        missing_packages.append('unzip')
 
-if not shutil.which('tar'):
-    missing_packages.append('tar')
+    if not shutil.which('tar'):
+        missing_packages.append('tar')
 
-rpm_clone = shutil.which('rpm')
-deb_clone = shutil.which('deb')
+    rpm_clone = shutil.which('rpm')
+    deb_clone = shutil.which('deb')
 
-if missing_packages:
-    packages_str = ' '.join(missing_packages)
-    if not argsp.n:
-        result = input("Missing package(s): {0}. Install now? (Y|n): ".format(packages_str))
-        if result.strip() and result.strip().lower()[0] == 'n':
-            sys.exit("Can't continue without installing these packages. Exiting ...")
+    if missing_packages:
+        packages_str = ' '.join(missing_packages)
+        if not argsp.n:
+            result = input("Missing package(s): {0}. Install now? (Y|n): ".format(packages_str))
+            if result.strip() and result.strip().lower()[0] == 'n':
+                sys.exit("Can't continue without installing these packages. Exiting ...")
 
-    if os_type in ('red', 'centos'):
-        cmd = '{} install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{}.noarch.rpm'.format(package_installer, os_version)
+        if os_type in ('red', 'centos'):
+            cmd = '{} install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{}.noarch.rpm'.format(package_installer, os_version)
+            os.system(cmd)
+            cmd = '{} clean all'
+            os.system(cmd)
+        elif deb_clone:
+            subprocess.run(shlex.split('{} update'.format(package_installer)))
+
+        cmd = "{} install -y {}".format(package_installer, packages_str)
+
+        if os_type+os_version == 'centos7':
+            cmd = cmd.replace('python3-six', 'python36-six')
+            cmd = cmd.replace('python3-ruamel-yaml', 'python36-ruamel-yaml')
+
         os.system(cmd)
-        cmd = '{} clean all'
-        os.system(cmd)
-    elif deb_clone:
-        subprocess.run(shlex.split('{} update'.format(package_installer)))
-
-    cmd = "{} install -y {}".format(package_installer, packages_str)
-
-    if os_type+os_version == 'centos7':
-        cmd = cmd.replace('python3-six', 'python36-six')
-        cmd = cmd.replace('python3-ruamel-yaml', 'python36-ruamel-yaml')
-
-    os.system(cmd)
 
 
 if not os.path.exists(scripts_dir):
@@ -471,7 +473,8 @@ else:
 
     shutil.rmtree(target_dir)
 
-    download_gcs()
+    if argsp.profile != 'DISA-STIG':
+        download_gcs()
 
     sqlalchemy_zfn = os.path.join(app_dir, 'sqlalchemy.zip')
     sqlalchemy_zip = zipfile.ZipFile(sqlalchemy_zfn, "r")

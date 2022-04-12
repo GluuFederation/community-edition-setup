@@ -13,6 +13,8 @@ import shutil
 import traceback
 import code
 
+sys.path.append("/usr/lib/python3.6/gluu-packaged")
+
 from queue import Queue
 
 os.environ['LC_ALL'] = 'C'

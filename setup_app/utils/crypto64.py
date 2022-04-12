@@ -124,12 +124,17 @@ class Crypto64:
         self.run([paths.cmd_chown, '%s:%s' % (user, user), key])
         self.run([paths.cmd_chmod, '700', key])
 
-        self.run([Config.cmd_keytool, "-delete", "-trustcacerts", "-alias", "%s_%s" % (Config.hostname, suffix), \
-                  "-keystore", truststore_fn, \
-                  "-storepass", "changeit", "-noprompt"])
+        alias = "%s_%s" % (Config.hostname, suffix)
+        self.delete_key(alias, truststore_fn)
+        self.run([Config.cmd_keytool, "-import", "-trustcacerts",
+                    "-alias", alias,
+                    "-file", public_certificate, "-keystore", truststore_fn,
+                    "-storepass", "changeit", "-noprompt"])
 
-        self.run([Config.cmd_keytool, "-import", "-trustcacerts", "-alias", "%s_%s" % (Config.hostname, suffix), \
-                  "-file", public_certificate, "-keystore", truststore_fn, \
+
+    def delete_key(self, alias, truststore_fn):
+        self.run([Config.cmd_keytool, "-delete", "-trustcacerts", "-alias", alias,
+                  "-keystore", truststore_fn,
                   "-storepass", "changeit", "-noprompt"])
 
     def prepare_base64_extension_scripts(self, extensions=[]):

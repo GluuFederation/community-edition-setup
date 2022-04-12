@@ -127,6 +127,10 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             oxd_yaml['storage_configuration']['salt'] = os.path.join(Config.configFolder, "salt")
 
         if Config.profile == SetupProfiles.DISA_STIG:
+            for key in ('crypt_provider_key_store_path', 'crypt_provider_key_store_password', 'crypt_provider_dn_name'):
+                if key in oxd_yaml:
+                    oxd_yaml.pop(key)
+
             oxd_yaml['server']['applicationConnectors'][0]['type']='https'
             oxd_yaml['server']['applicationConnectors'][0]['port']='8443'
             oxd_yaml['server']['applicationConnectors'][0]['keyStorePath']=self.oxd_server_keystore_fn
@@ -136,7 +140,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             oxd_yaml['server']['applicationConnectors'][0]['trustStoreType']=Config.default_store_type
             oxd_yaml['server']['applicationConnectors'][0]['jceProvider']=self.jce_bcfips_provider_class
             oxd_yaml['server']['applicationConnectors'][0]['validateCerts']='false'
-            
+
             oxd_yaml['server']['adminConnectors'][0]['type']='https'
             oxd_yaml['server']['adminConnectors'][0]['port']='8444'
             oxd_yaml['server']['adminConnectors'][0]['keyStorePath']=self.oxd_server_keystore_fn

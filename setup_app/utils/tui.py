@@ -12,7 +12,6 @@ import string
 import inspect
 import threading
 import math
-import pymysql
 import json
 
 # for putty connections we need the following env
@@ -24,7 +23,12 @@ from setup_app import static
 from setup_app.utils import base
 from setup_app.utils.properties_utils import propertiesUtils
 from setup_app.utils.progress import gluuProgress
-from setup_app.utils.spanner import Spanner
+
+
+if Config.profile != static.SetupProfiles.DISA_STIG:
+    import pymysql
+    from setup_app.utils.spanner import Spanner
+
 
 import npyscreen
 
@@ -339,7 +343,7 @@ class ServicesForm(GluuSetupForm):
             Config.shibboleth_version = 'v3'
 
         if self.installOxd.value:
-            Config.oxd_server_https = 'https://{}:8443'.format('localhost' if Config.profile == static.SetupProfiles.DISA_STIG else Config.hostname)
+            Config.oxd_server_https = 'https://{}:8443'.format(Config.hostname)
 
         if self.installCasa.value:
             if not self.installOxd.value and not self.oxd_url.value:

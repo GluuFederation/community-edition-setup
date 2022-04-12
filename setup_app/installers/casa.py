@@ -77,8 +77,7 @@ class CasaInstaller(JettyInstaller):
 
             self.add_extra_class(','.join(extra_classpath_list), oxauth_xml_fn)
 
-            if Config.profile != SetupProfiles.DISA_STIG:
-                self.import_oxd_certificate()
+            self.import_oxd_certificate()
 
         self.enable('casa')
 
@@ -89,7 +88,7 @@ class CasaInstaller(JettyInstaller):
 
     def render_import_templates(self, import_script=True):
 
-        Config.templateRenderingDict['oxd_protocol'] = 'http' if Config.profile == SetupProfiles.DISA_STIG else 'https'
+        Config.templateRenderingDict['oxd_protocol'] = 'https'
         scripts_template = os.path.join(self.templates_folder, os.path.basename(self.ldif_scripts))
         extensions = base.find_script_names(scripts_template)
         self.prepare_base64_extension_scripts(extensions=extensions)
@@ -112,13 +111,13 @@ class CasaInstaller(JettyInstaller):
         self.stop('oxd-server')
         self.start('oxd-server')
 
-        # check oxd status for 25 seconds:
-        for i in range(5):
+        # oxd is not starting immediately, check oxd status for 60 seconds:
+        for i in range(12):
+            time.sleep(5)
             self.logIt("Checking oxd-server status. Try {}".format(i+1))
             if propertiesUtils.check_oxd_server(Config.oxd_server_https, log_error=False):
                 self.logIt("oxd-server seems good")
                 break
-            time.sleep(5)
         else:
             self.logIt("oxd server at  {} did not repond in 15 seconds".format(Config.oxd_server_https), True)
 
@@ -131,6 +130,10 @@ class CasaInstaller(JettyInstaller):
             oxd_alias = 'oxd_' + oxd_hostname.replace('.','_')
             oxd_cert_tmp_fn = '/tmp/{}.crt'.format(oxd_alias)
             self.writeFile(oxd_cert_tmp_fn, oxd_cert)
+
+
+            # let's delete if alias exists
+            self.delete_key(oxd_alias, Config.default_trust_store_fn)
 
             self.run([Config.cmd_keytool, '-import', '-trustcacerts', '-keystore', 
                             Config.default_trust_store_fn, '-storepass', 'changeit', 

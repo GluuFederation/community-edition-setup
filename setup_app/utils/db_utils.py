@@ -7,7 +7,7 @@ import logging
 import copy
 import hashlib
 import ldap3
-import pymysql
+
 from ldap3.utils import dn as dnutils
 from pathlib import PurePath
 
@@ -16,20 +16,23 @@ warnings.filterwarnings("ignore")
 
 from setup_app import static
 from setup_app.config import Config
-from setup_app.static import InstallTypes, BackendTypes, colors
+from setup_app.static import InstallTypes, BackendTypes, colors, SetupProfiles
 from setup_app.utils import base
-from setup_app.utils.cbm import CBM
 from setup_app.utils import ldif_utils
 from setup_app.utils.attributes import attribDataTypes
-from setup_app.utils.spanner import Spanner
-
-my_path = PurePath(os.path.dirname(os.path.realpath(__file__)))
-sys.path.append(my_path.parent.joinpath('pylib/sqlalchemy'))
 
 
-import sqlalchemy
-import sqlalchemy.orm
-import sqlalchemy.ext.automap
+if Config.profile != SetupProfiles.DISA_STIG:
+    import pymysql
+    from setup_app.utils.cbm import CBM
+    from setup_app.utils.spanner import Spanner
+
+    my_path = PurePath(os.path.dirname(os.path.realpath(__file__)))
+    sys.path.append(my_path.parent.joinpath('pylib/sqlalchemy'))
+
+    import sqlalchemy
+    import sqlalchemy.orm
+    import sqlalchemy.ext.automap
 
 
 class DBUtils:
@@ -89,7 +92,8 @@ class DBUtils:
                             print("{}FATAL: {}{}".format(colors.FAIL, result[1], colors.ENDC))
                         break
 
-        self.set_cbm()
+        if Config.profile != SetupProfiles.DISA_STIG:
+            self.set_cbm()
         self.default_bucket = Config.couchbase_bucket_prefix
 
     def sqlconnection(self, log=True):
