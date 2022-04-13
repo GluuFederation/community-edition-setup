@@ -301,6 +301,8 @@ def prepare_for_installation():
     gluuInstaller.copy_output()
     gluuInstaller.setup_init_scripts()
 
+    gluuInstaller.obtain_java_cacert_aliases()
+
     # Installing gluu components
 
     if Config.ldap_install:

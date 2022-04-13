@@ -437,7 +437,10 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
         # Convert OpenDJ certificate to PKCS12
         self.logIt("Importing OpenDJ certificate to truststore")
 
-        cmd_cert_import = [Config.cmd_keytool,
+
+        if Config.profile != SetupProfiles.DISA_STIG:
+
+            cmd_cert_import = [Config.cmd_keytool,
                   '-importcert',
                   '-noprompt',
                   '-alias',
@@ -445,21 +448,14 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
                   '-file',
                   Config.opendj_cert_fn,
                   '-keystore',
-                  "NONE" if Config.opendj_truststore_format.upper() == 'PKCS11' else Config.opendj_trust_store_fn,
+                  Config.opendj_trust_store_fn,
                   '-storetype',
                   Config.opendj_truststore_format.upper(),
                   '-storepass',
                   Config.opendj_truststore_pass
                 ]
 
-        if Config.opendj_truststore_format.upper() == 'BCFKS':
-            cmd_cert_import += [
-                 '-providername', 'BCFIPS',
-                 '-provider', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider',
-                 '-providerpath',  '{}:{}'.format(Config.bc_fips_jar, Config.bcpkix_fips_jar)
-                ]
-
-        self.run(cmd_cert_import)
+            self.run(cmd_cert_import)
 
         # Import OpenDJ certificate into java truststore
         self.logIt("Import OpenDJ certificate")

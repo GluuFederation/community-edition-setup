@@ -128,18 +128,17 @@ class Crypto64:
 
         alias = "%s_%s" % (Config.hostname, suffix)
         self.delete_key(alias, truststore_fn)
-        self.run([Config.cmd_keytool, "-import", "-trustcacerts",
-                    "-alias", alias,
-                    "-file", public_certificate, "-keystore", truststore_fn,
-                    "-storepass", "changeit", "-noprompt"])
+        self.import_cert_to_java_truststore(alias, public_certificate)
 
 
     def delete_key(self, alias, truststore_fn=None):
         if not truststore_fn:
             truststore_fn = Config.default_trust_store_fn
-        self.run([Config.cmd_keytool, "-delete", "-trustcacerts", "-alias", alias,
-                  "-keystore", truststore_fn,
-                  "-storepass", "changeit", "-noprompt"])
+
+        if truststore_fn == Config.default_trust_store_fn and alias in Config.non_setup_properties['java_truststore_aliases']:
+            self.run([Config.cmd_keytool, "-delete", "-trustcacerts", "-alias", alias,
+                    "-keystore", truststore_fn,
+                    "-storepass", "changeit", "-noprompt"])
 
     def export_cert_from_store(self, alias, truststore_fn, storepass, target_fn):
         self.logIt("Exporting certificate from {} to {} with alias {}".format(truststore_fn, target_fn, alias))
@@ -397,3 +396,15 @@ class Crypto64:
                 alias = ls.split(',')[0]
                 if alias in keys:
                     self.run([Config.cmd_keytool, '-delete', '-alias', alias, '-keystore', 'NONE', '-storetype', 'PKCS11', '-storepass', 'changeit'])
+
+
+    def obtain_java_cacert_aliases(self):
+        output = self.run([Config.cmd_keytool, '-list',
+                    '-keystore', Config.default_trust_store_fn,
+                    '-storepass', 'changeit', '-noprompt'])
+
+        for l in output.splitlines():
+            ls = l.strip().rstrip(',')
+            if ls.endswith('trustedCertEntry'):
+                sep = ls.split(',')
+                Config.non_setup_properties['java_truststore_aliases'].append(sep[0])
