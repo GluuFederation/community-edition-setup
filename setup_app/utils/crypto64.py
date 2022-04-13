@@ -11,6 +11,8 @@ from setup_app.pylib.pyDes import triple_des, ECB, PAD_PKCS5
 from setup_app import paths
 from setup_app import static
 from setup_app.config import Config
+from setup_app.utils import base
+
 
 class Crypto64:
 
@@ -132,10 +134,33 @@ class Crypto64:
                     "-storepass", "changeit", "-noprompt"])
 
 
-    def delete_key(self, alias, truststore_fn):
+    def delete_key(self, alias, truststore_fn=None):
+        if not truststore_fn:
+            truststore_fn = Config.default_trust_store_fn
         self.run([Config.cmd_keytool, "-delete", "-trustcacerts", "-alias", alias,
                   "-keystore", truststore_fn,
                   "-storepass", "changeit", "-noprompt"])
+
+    def export_cert_from_store(self, alias, truststore_fn, storepass, target_fn):
+        self.logIt("Exporting certificate from {} to {} with alias {}".format(truststore_fn, target_fn, alias))
+        cmd = [Config.cmd_keytool, "-exportcert", "-rfc",
+                    "-alias", alias,
+                    "-keystore", truststore_fn,
+                    "-storepass", storepass,
+                    "-file", target_fn]
+
+        cmd += self.get_keytool_provider(as_list=True)
+        self.run(cmd)
+
+
+    def import_cert_to_java_truststore(self, alias, cert_fn):
+
+        self.run([Config.cmd_keytool, '-import', '-trustcacerts',
+                    '-keystore', Config.default_trust_store_fn,
+                    '-storepass', 'changeit','-noprompt',
+                    '-alias', alias,
+                    '-file', cert_fn])
+
 
     def prepare_base64_extension_scripts(self, extensions=[]):
         self.logIt("Preparing scripts")
@@ -269,15 +294,22 @@ class Crypto64:
     def get_key_gen_client_provider_cmd(self):
         return Config.non_setup_properties['oxauth_client_jar_fn']
 
-    def get_keytool_provider(self):
-        provider_list = ['-storetype', Config.default_store_type]
+    def get_keytool_provider(self, as_list=False):
+        provider_dict  = OrderedDict([('-storetype', Config.default_store_type)])
+
         if Config.profile == static.SetupProfiles.DISA_STIG:
-            provider_list += [
-                                '-providername', 'BCFIPS',
-                                '-providerpath', '{}:{}'.format(Config.bc_fips_jar, Config.bcpkix_fips_jar),
-                                '-providerclass', 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider'
-                             ]
-        return provider_list
+            provider_dict['-providername'] = 'BCFIPS'
+            provider_dict['-providerpath'] = '{}:{}'.format(Config.bc_fips_jar, Config.bcpkix_fips_jar)
+            provider_dict['-providerclass'] = 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider'
+
+        if as_list:
+            ret_val = []
+            for item in provider_dict.items():
+                ret_val.append(item[0])
+                ret_val.append(item[1])
+            return ret_val
+
+        return provider_dict
 
     def export_openid_key(self, data_store_path, data_store_pwd, cert_alias, cert_path):
         self.logIt("Exporting oxAuth OpenID Connect keys")

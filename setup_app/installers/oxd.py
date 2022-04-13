@@ -26,10 +26,9 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         self.oxd_server_yml_fn = os.path.join(self.oxd_root, 'conf/oxd-server.yml')
         self.oxd_server_keystore_fn = os.path.join(self.oxd_root, 'conf/oxd-server.{}'.format(Config.default_store_type))
         self.oxd_jwks_keystore_fn = os.path.join(self.oxd_root, 'conf/oxd-jwks.{}'.format(Config.default_store_type))
-        
+
         self.oxd_keystore_passw = 'example'
-        self.jce_bcfips_provider_class = 'org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider'
-        self.jce_bcfips = 'BCFIPS'
+        self.fips_provider = self.get_keytool_provider()
         self.ks_type_bcfks = 'bcfks'
         self.ks_type_pkcs12 = 'pkcs12'
 
@@ -127,27 +126,28 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             oxd_yaml['storage_configuration']['salt'] = os.path.join(Config.configFolder, "salt")
 
         if Config.profile == SetupProfiles.DISA_STIG:
+            application_connectors = oxd_yaml['server']['applicationConnectors'][0]
+            application_connectors['type'] = 'https'
+            application_connectors['port'] = '8443'
+            application_connectors['keyStorePath'] = self.oxd_server_keystore_fn
+            application_connectors['keyStorePassword'] = self.oxd_keystore_passw
+            application_connectors['keyStoreType'] = Config.default_store_type
+            application_connectors['keyStoreProvider'] = self.fips_provider['-providername']
+            application_connectors['trustStoreType'] = Config.default_store_type
+            application_connectors['jceProvider'] = self.fips_provider['-providerclass']
+            application_connectors['validateCerts'] = 'false'
 
-            oxd_yaml['server']['applicationConnectors'][0]['type']='https'
-            oxd_yaml['server']['applicationConnectors'][0]['port']='8443'
-            oxd_yaml['server']['applicationConnectors'][0]['keyStorePath']=self.oxd_server_keystore_fn
-            oxd_yaml['server']['applicationConnectors'][0]['keyStorePassword']=self.oxd_keystore_passw
-            oxd_yaml['server']['applicationConnectors'][0]['keyStoreType']=Config.default_store_type
-            oxd_yaml['server']['applicationConnectors'][0]['keyStoreProvider']=self.jce_bcfips
-            oxd_yaml['server']['applicationConnectors'][0]['trustStoreType']=Config.default_store_type
-            oxd_yaml['server']['applicationConnectors'][0]['jceProvider']=self.jce_bcfips_provider_class
-            oxd_yaml['server']['applicationConnectors'][0]['validateCerts']='false'
+            admin_connectors = oxd_yaml['server']['adminConnectors'][0]
+            admin_connectors['type'] = 'https'
+            admin_connectors['port'] = '8444'
+            admin_connectors['keyStorePath'] = self.oxd_server_keystore_fn
+            admin_connectors['keyStorePassword'] = self.oxd_keystore_passw
+            admin_connectors['keyStoreType'] = Config.default_store_type
+            admin_connectors['keyStoreProvider'] = self.fips_provider['-providername']
+            admin_connectors['trustStoreType'] = Config.default_store_type
+            admin_connectors['jceProvider'] = self.fips_provider['-providerclass']
+            admin_connectors['validateCerts'] = 'false'
 
-            oxd_yaml['server']['adminConnectors'][0]['type']='https'
-            oxd_yaml['server']['adminConnectors'][0]['port']='8444'
-            oxd_yaml['server']['adminConnectors'][0]['keyStorePath']=self.oxd_server_keystore_fn
-            oxd_yaml['server']['adminConnectors'][0]['keyStorePassword']=self.oxd_keystore_passw
-            oxd_yaml['server']['adminConnectors'][0]['keyStoreType']=Config.default_store_type
-            oxd_yaml['server']['adminConnectors'][0]['keyStoreProvider']=self.jce_bcfips
-            oxd_yaml['server']['adminConnectors'][0]['trustStoreType']=Config.default_store_type
-            oxd_yaml['server']['adminConnectors'][0]['jceProvider']=self.jce_bcfips_provider_class
-            oxd_yaml['server']['adminConnectors'][0]['validateCerts']='false'
-            
             oxd_yaml['crypt_provider_key_store_path']=self.oxd_jwks_keystore_fn
             oxd_yaml['crypt_provider_key_store_password']=self.oxd_keystore_passw
 
@@ -161,7 +161,6 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         keystore_tmp = '{}/oxd.{}'.format(tempfile.gettempdir(), Config.default_store_type)
 
         if Config.profile == SetupProfiles.DISA_STIG:
-            provider_path = '{}:{}'.format(Config.bc_fips_jar, Config.bcpkix_fips_jar)
 
             cmd_cert_gen = [
                 Config.cmd_keytool, '-genkey',
@@ -174,9 +173,9 @@ class OxdInstaller(SetupUtils, BaseInstaller):
                 ]
 
             cmd_cert_gen += [
-                '-providername', self.jce_bcfips,
-                '-provider', self.jce_bcfips_provider_class,
-                '-providerpath',  provider_path,
+                '-providername', self.fips_provider['-providername'],
+                '-provider', self.fips_provider['-providerclass'],
+                '-providerpath',  self.fips_provider['-providerpath'],
                 '-keypass', self.oxd_keystore_passw,
                 '-storepass', self.oxd_keystore_passw,
                 '-keysize', '2048',
@@ -194,9 +193,9 @@ class OxdInstaller(SetupUtils, BaseInstaller):
                 ]
 
             cmd_cert_gen += [
-                '-providername', self.jce_bcfips,
-                '-provider', self.jce_bcfips_provider_class,
-                '-providerpath', provider_path,
+                '-providername', self.fips_provider['-providername'],
+                '-provider', self.fips_provider['-providerclass'],
+                '-providerpath', self.fips_provider['-providerpath'],
                 '-storepass', 'pass:{}'.format(self.oxd_keystore_passw),
                 ]
 
@@ -248,6 +247,9 @@ class OxdInstaller(SetupUtils, BaseInstaller):
 
         self.run([paths.cmd_rm, '-f', keystore_tmp])
 
+        self.import_oxd_certificate()
+
+
     def installed(self):
         return os.path.exists(self.oxd_server_yml_fn)
 
@@ -276,6 +278,18 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         self.run(['tar', '-zcf', oxd_tgz_fn, 'oxd-server'], cwd=tmp_dir)
         #self.run(['rm', '-r', '-f', tmp_dir])
         Config.oxd_package = oxd_tgz_fn
+
+
+    def import_oxd_certificate(self):
+
+        oxd_hostname, oxd_port = self.parse_url(Config.oxd_server_https)
+        oxd_alias = 'oxd_' + oxd_hostname.replace('.','_')
+        oxd_cert_fn = os.path.join(Config.outputFolder, '{}.pem'.format(oxd_alias))
+        # let's delete if alias exists
+        self.delete_key(oxd_alias)
+        self.export_cert_from_store(Config.hostname, self.oxd_server_keystore_fn, self.oxd_keystore_passw, oxd_cert_fn)
+        self.import_cert_to_java_truststore(oxd_alias, oxd_cert_fn)
+
 
     def create_folders(self):
         if not os.path.exists(self.oxd_root):
