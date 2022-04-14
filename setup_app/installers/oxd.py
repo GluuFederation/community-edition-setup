@@ -183,23 +183,6 @@ class OxdInstaller(SetupUtils, BaseInstaller):
                     ]
 
             self.run(cmd_cert_gen)
-            
-            cmd_cert_gen = [
-                Config.cmd_keytool, '-selfcert',
-                '-alias', Config.hostname,
-                '-keystore', keystore_tmp,
-                '-storetype', self.ks_type_bcfks,
-                '-validity', '3650',
-                ]
-
-            cmd_cert_gen += [
-                '-providername', self.fips_provider['-providername'],
-                '-provider', self.fips_provider['-providerclass'],
-                '-providerpath', self.fips_provider['-providerpath'],
-                '-storepass', 'pass:{}'.format(self.oxd_keystore_passw),
-                ]
-
-            self.run(cmd_cert_gen)
 
         else:
             oxd_key_tmp = '{}/{}'.format(tempfile.gettempdir(),'oxd.key')
