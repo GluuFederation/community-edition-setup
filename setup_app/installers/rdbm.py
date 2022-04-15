@@ -216,6 +216,13 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         return re.sub(r'[^0-9a-zA-Z\s]+','_', attrname)
 
 
+    def old_mysql_json_index(self, tbl_name, col_name):
+        mem_index_tmp = "ALTER TABLE {0}.{1} ADD COLUMN `{3}_mem_idx_{2}` CHAR(128) AS ({3}->'$.v[{2}]')"
+        raw_index_tmp = "ALTER TABLE {0}.{1} ADD INDEX `{3}_mem_idx_{2}` (`{3}_mem_idx_{2}`)"
+        for i in range(4):
+            self.dbUtils.exec_rdbm_query(mem_index_tmp.format(Config.rdbm_db, tbl_name, i, col_name))
+            self.dbUtils.exec_rdbm_query(raw_index_tmp.format(Config.rdbm_db, tbl_name, i, col_name))
+
     def create_indexes(self):
 
         indexes = []
@@ -283,23 +290,26 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                     if isinstance(attr.type, self.dbUtils.json_dialects_instance):
 
                         if attr.name in tbl_fields:
-                            for i, ind_str in enumerate(sql_indexes['__common__']['JSON']):
-                                tmp_str = Template(ind_str)
-                                if Config.rdbm_type == 'mysql':
-                                    sql_cmd = 'ALTER TABLE {0}.{1} ADD INDEX `{2}_json_{3}`(({4}));'.format(
-                                            Config.rdbm_db,
-                                            tblCls,
-                                            ind_name,
-                                            i+1,
-                                            tmp_str.safe_substitute({'field':attr.name})
-                                            )
-                                    self.dbUtils.exec_rdbm_query(sql_cmd)
-                                elif Config.rdbm_type == 'pgsql':
-                                    sql_cmd ='CREATE INDEX ON "{}" (({}));'.format(
-                                            tblCls,
-                                            tmp_str.safe_substitute({'field':attr.name})
-                                            )
-                                    self.dbUtils.exec_rdbm_query(sql_cmd)
+                            if self.dbUtils.mysql_version < '5.7.8':
+                                self.old_mysql_json_index(tblCls, attr.name)
+                            else:
+                                for i, ind_str in enumerate(sql_indexes['__common__']['JSON']):
+                                    tmp_str = Template(ind_str)
+                                    if Config.rdbm_type == 'mysql':
+                                        sql_cmd = 'ALTER TABLE {0}.{1} ADD INDEX `{2}_json_{3}`(({4}));'.format(
+                                                Config.rdbm_db,
+                                                tblCls,
+                                                ind_name,
+                                                i+1,
+                                                tmp_str.safe_substitute({'field':attr.name})
+                                                )
+                                        self.dbUtils.exec_rdbm_query(sql_cmd)
+                                    elif Config.rdbm_type == 'pgsql':
+                                        sql_cmd ='CREATE INDEX ON "{}" (({}));'.format(
+                                                tblCls,
+                                                tmp_str.safe_substitute({'field':attr.name})
+                                                )
+                                        self.dbUtils.exec_rdbm_query(sql_cmd)
 
 
                     elif attr.name in tbl_fields:

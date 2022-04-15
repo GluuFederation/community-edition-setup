@@ -121,12 +121,27 @@ class DBUtils:
             self.metadata = sqlalchemy.MetaData()
             self.session.connection()
             base.logIt("{} Connection was successful".format(Config.rdbm_type.upper()))
+            self.set_mysql_version()
             return True, self.session
 
         except Exception as e:
             if log:
                 base.logIt("Can't connect to {} server: {}".format(Config.rdbm_type.upper(), str(e), True))
             return False, e
+
+
+
+    def set_mysql_version(self):
+        try:
+            base.logIt("Determining MySQL version")
+            qresult = self.exec_rdbm_query('select version()', getresult=1)
+            re_search = re.search(r'\d+(=?\.(\d+(=?\.(\d+)*)*)*)*', qresult[0])
+            self.mysql_version = re_search.group(0)
+            base.logIt("MySQL version was found as {}".format(self.mysql_version))
+        except Exception as e:
+            base.logIt("Cant determine MySQL version due to {}. Set to unknown".format(e))
+            self.mysql_version = 'unknown'
+
 
     @property
     def json_dialects_instance(self):
@@ -224,7 +239,7 @@ class DBUtils:
                         )
             dn = self.ldap_conn.response[0]['dn']
             oxTrustConfApplication = json.loads(self.ldap_conn.response[0]['attributes']['oxTrustConfApplication'][0])
-        
+
         elif self.moddb in (BackendTypes.MYSQL, BackendTypes.PGSQL, BackendTypes.SPANNER):
             result = self.search(search_base='ou=oxtrust,ou=configuration,o=gluu', search_filter='(objectClass=oxTrustConfiguration)', search_scope=ldap3.BASE)
             dn = result['dn'] 
