@@ -660,7 +660,7 @@ class SetupUtils(Crypto64):
         cmd += [usr_grp, fn]
         self.run(cmd)
 
-    def get_version(s):
+    def get_version(self, s):
         ret_val = [0, 0 ,0]
         result = re.search(r'\d+(=?\.(\d+(=?\.(\d+)*)*)*)*', s)
         if result:
