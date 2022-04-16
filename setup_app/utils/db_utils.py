@@ -20,6 +20,7 @@ from setup_app.static import InstallTypes, BackendTypes, colors, SetupProfiles
 from setup_app.utils import base
 from setup_app.utils import ldif_utils
 from setup_app.utils.attributes import attribDataTypes
+from setup_app.utils.setup_utils import SetupUtils
 
 
 if Config.profile != SetupProfiles.DISA_STIG:
@@ -35,7 +36,7 @@ if Config.profile != SetupProfiles.DISA_STIG:
     import sqlalchemy.ext.automap
 
 
-class DBUtils:
+class DBUtils(SetupUtils):
 
     processedKeys = []
     Base = None
@@ -135,12 +136,11 @@ class DBUtils:
         try:
             base.logIt("Determining MySQL version")
             qresult = self.exec_rdbm_query('select version()', getresult=1)
-            re_search = re.search(r'\d+(=?\.(\d+(=?\.(\d+)*)*)*)*', qresult[0])
-            self.mysql_version = re_search.group(0)
+            self.mysql_version = self.get_version(qresult[0])
             base.logIt("MySQL version was found as {}".format(self.mysql_version))
         except Exception as e:
             base.logIt("Cant determine MySQL version due to {}. Set to unknown".format(e))
-            self.mysql_version = 'unknown'
+            self.mysql_version = (0, 0, 0)
 
 
     @property

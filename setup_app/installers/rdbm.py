@@ -290,7 +290,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                     if isinstance(attr.type, self.dbUtils.json_dialects_instance):
 
                         if attr.name in tbl_fields:
-                            if self.get_version(self.dbUtils.mysql_version) < (5, 7, 38):
+                            if self.dbUtils.mysql_version < (5, 7, 38):
                                 self.old_mysql_json_index(tblCls, attr.name)
                             else:
                                 for i, ind_str in enumerate(sql_indexes['__common__']['JSON']):
