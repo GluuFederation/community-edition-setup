@@ -30,7 +30,7 @@ class PackageUtils(SetupUtils):
         install_command, update_command, query_command, check_text = self.get_install_commands()
 
         install_list = {'mondatory': [], 'optional': []}
-
+        on_disa_stig = base.argsp.profile == 'DISA-STIG' or os.path.exists(os.path.join(paths.INSTALL_DIR, 'disa-stig'))
 
         package_list = base.get_os_package_list()
 
@@ -43,11 +43,13 @@ class PackageUtils(SetupUtils):
             if base.clone_type == 'deb':
                 package_list[os_type_version]['mondatory'] += ' postgresql-contrib'
 
-        if Config.profile == SetupProfiles.DISA_STIG:
+        if on_disa_stig:
             package_list[os_type_version]['mondatory'] += ' java-11-openjdk-headless java-11-openjdk-devel'
 
         for install_type in install_list:
             for package in package_list[os_type_version][install_type].split():
+                if on_disa_stig and 'python3' in package:
+                    continue
                 if os_type_version in ('centos 7', 'red 7') and package.startswith('python3-'):
                     package_query = package.replace('python3-', 'python36-')
                 else:

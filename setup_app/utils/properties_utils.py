@@ -8,7 +8,7 @@ import urllib
 import ssl
 import re
 import inspect
-import pymysql
+
 import ldap3
 
 from setup_app import paths
@@ -19,9 +19,13 @@ from setup_app.messages import msg
 
 from setup_app.config import Config
 from setup_app.utils.setup_utils import SetupUtils
-from setup_app.utils.spanner import Spanner
+
 from setup_app.utils.db_utils import dbUtils
 from setup_app.pylib.jproperties import Properties
+
+if Config.profile != SetupProfiles.DISA_STIG:
+    import pymysql
+    from setup_app.utils.spanner import Spanner
 
 class PropertiesUtils(SetupUtils):
 
@@ -144,11 +148,11 @@ class PropertiesUtils(SetupUtils):
 
         if Config.get('oxd_server_https'):
             Config.templateRenderingDict['oxd_hostname'], Config.templateRenderingDict['oxd_port'] = self.parse_url(Config.oxd_server_https)
-            if not Config.templateRenderingDict['oxd_port']: 
+            if not Config.templateRenderingDict['oxd_port']:
                 Config.templateRenderingDict['oxd_port'] = 8443
         else:
             Config.templateRenderingDict['oxd_hostname'] = Config.hostname
-            Config.oxd_server_https = 'https://{}:8443'.format('localhost' if Config.profile == SetupProfiles.DISA_STIG else Config.hostname)
+            Config.oxd_server_https = 'https://{}:8443'.format(Config.hostname)
 
     def decrypt_properties(self, fn, passwd):
         out_file = fn[:-4] + '.' + uuid.uuid4().hex[:8] + '-DEC~'
@@ -424,6 +428,7 @@ class PropertiesUtils(SetupUtils):
     def check_oxd_server(self, oxd_url, error_out=True, log_error=True):
 
         oxd_url = os.path.join(oxd_url, 'health-check')
+        self.logIt("Trying to connect {}".format(oxd_url))
         try:
             result = urllib.request.urlopen(
                         oxd_url,
@@ -435,6 +440,7 @@ class PropertiesUtils(SetupUtils):
                 if oxd_status['status'] == 'running':
                     return True
         except Exception as e:
+            self.logIt("Connection to {} failed: {}".format(oxd_url, e))
             if log_error:
                 if Config.thread_queue:
                     return str(e)
@@ -872,7 +878,7 @@ class PropertiesUtils(SetupUtils):
                 else:
                     print("Hostname can't be \033[;1mlocalhost\033[0;0m")
 
-            Config.oxd_server_https = 'https://{}:8443'.format('localhost' if Config.profile == SetupProfiles.DISA_STIG else Config.hostname)
+            Config.oxd_server_https = 'https://{}:8443'.format(Config.hostname)
 
             # Get city and state|province code
             Config.city = self.getPrompt("Enter your city or locality", Config.city)

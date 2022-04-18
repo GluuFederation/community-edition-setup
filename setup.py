@@ -13,6 +13,8 @@ import shutil
 import traceback
 import code
 
+sys.path.append("/usr/lib/python3.6/gluu-packaged")
+
 from queue import Queue
 
 os.environ['LC_ALL'] = 'C'
@@ -182,10 +184,10 @@ rdbmInstaller = RDBMInstaller()
 httpdinstaller = HttpdInstaller()
 oxauthInstaller = OxauthInstaller()
 oxtrustInstaller = OxtrustInstaller()
+oxdInstaller = OxdInstaller()
 fidoInstaller = FidoInstaller()
 scimInstaller = ScimInstaller()
 samlInstaller = SamlInstaller()
-oxdInstaller = OxdInstaller()
 casaInstaller = CasaInstaller()
 passportInstaller = PassportInstaller()
 radiusInstaller = RadiusInstaller()
@@ -298,6 +300,8 @@ def prepare_for_installation():
 
     gluuInstaller.copy_output()
     gluuInstaller.setup_init_scripts()
+
+    gluuInstaller.obtain_java_cacert_aliases()
 
     # Installing gluu components
 

@@ -77,9 +77,6 @@ class CasaInstaller(JettyInstaller):
 
             self.add_extra_class(','.join(extra_classpath_list), oxauth_xml_fn)
 
-            if Config.profile != SetupProfiles.DISA_STIG:
-                self.import_oxd_certificate()
-
         self.enable('casa')
 
     def copy_static(self):
@@ -89,7 +86,7 @@ class CasaInstaller(JettyInstaller):
 
     def render_import_templates(self, import_script=True):
 
-        Config.templateRenderingDict['oxd_protocol'] = 'http' if Config.profile == SetupProfiles.DISA_STIG else 'https'
+        Config.templateRenderingDict['oxd_protocol'] = 'https'
         scripts_template = os.path.join(self.templates_folder, os.path.basename(self.ldif_scripts))
         extensions = base.find_script_names(scripts_template)
         self.prepare_base64_extension_scripts(extensions=extensions)
@@ -101,45 +98,6 @@ class CasaInstaller(JettyInstaller):
         if import_script:
             self.dbUtils.import_ldif(ldif_files)
 
-
-    def import_oxd_certificate(self):
-
-        # import_oxd_certificate2javatruststore:
-        self.logIt("Importing oxd certificate")
-
-        # restart oxd-server
-
-        self.stop('oxd-server')
-        self.start('oxd-server')
-
-        # check oxd status for 25 seconds:
-        for i in range(5):
-            self.logIt("Checking oxd-server status. Try {}".format(i+1))
-            if propertiesUtils.check_oxd_server(Config.oxd_server_https, log_error=False):
-                self.logIt("oxd-server seems good")
-                break
-            time.sleep(5)
-        else:
-            self.logIt("oxd server at  {} did not repond in 15 seconds".format(Config.oxd_server_https), True)
-
-        try:
-
-            oxd_hostname, oxd_port = self.parse_url(Config.oxd_server_https)
-            if not oxd_port: oxd_port=8443
-
-            oxd_cert = ssl.get_server_certificate((oxd_hostname, oxd_port))
-            oxd_alias = 'oxd_' + oxd_hostname.replace('.','_')
-            oxd_cert_tmp_fn = '/tmp/{}.crt'.format(oxd_alias)
-            self.writeFile(oxd_cert_tmp_fn, oxd_cert)
-
-            self.run([Config.cmd_keytool, '-import', '-trustcacerts', '-keystore', 
-                            Config.default_trust_store_fn, '-storepass', 'changeit', 
-                            '-noprompt', '-alias', oxd_alias, '-file', oxd_cert_tmp_fn])
-
-            os.remove(oxd_cert_tmp_fn)
-
-        except:
-            self.logIt("Error importing oxd server certificate", True)
 
     def create_folders(self):
         for path_name in ('static', 'plugins'):

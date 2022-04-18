@@ -659,3 +659,18 @@ class SetupUtils(Crypto64):
         usr_grp = '{}:{}'.format(user, group) if group else user
         cmd += [usr_grp, fn]
         self.run(cmd)
+
+    def get_version(self, s):
+        ret_val = [0, 0 ,0]
+        result = re.search(r'([\d.]+)', s)
+        if result:
+            version_string = result.group(0)
+            try:
+                for i, n in enumerate(version_string.split('.')):
+                    ret_val[i] = int(n)
+                    if i > 1:
+                        break
+            except Exception:
+                pass
+
+        return tuple(ret_val)

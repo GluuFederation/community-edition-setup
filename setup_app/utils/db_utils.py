@@ -7,7 +7,7 @@ import logging
 import copy
 import hashlib
 import ldap3
-import pymysql
+
 from ldap3.utils import dn as dnutils
 from pathlib import PurePath
 
@@ -16,23 +16,27 @@ warnings.filterwarnings("ignore")
 
 from setup_app import static
 from setup_app.config import Config
-from setup_app.static import InstallTypes, BackendTypes, colors
+from setup_app.static import InstallTypes, BackendTypes, colors, SetupProfiles
 from setup_app.utils import base
-from setup_app.utils.cbm import CBM
 from setup_app.utils import ldif_utils
 from setup_app.utils.attributes import attribDataTypes
-from setup_app.utils.spanner import Spanner
-
-my_path = PurePath(os.path.dirname(os.path.realpath(__file__)))
-sys.path.append(my_path.parent.joinpath('pylib/sqlalchemy'))
+from setup_app.utils.setup_utils import SetupUtils
 
 
-import sqlalchemy
-import sqlalchemy.orm
-import sqlalchemy.ext.automap
+if Config.profile != SetupProfiles.DISA_STIG:
+    import pymysql
+    from setup_app.utils.cbm import CBM
+    from setup_app.utils.spanner import Spanner
+
+    my_path = PurePath(os.path.dirname(os.path.realpath(__file__)))
+    sys.path.append(my_path.parent.joinpath('pylib/sqlalchemy'))
+
+    import sqlalchemy
+    import sqlalchemy.orm
+    import sqlalchemy.ext.automap
 
 
-class DBUtils:
+class DBUtils(SetupUtils):
 
     processedKeys = []
     Base = None
@@ -89,7 +93,8 @@ class DBUtils:
                             print("{}FATAL: {}{}".format(colors.FAIL, result[1], colors.ENDC))
                         break
 
-        self.set_cbm()
+        if Config.profile != SetupProfiles.DISA_STIG:
+            self.set_cbm()
         self.default_bucket = Config.couchbase_bucket_prefix
 
     def sqlconnection(self, log=True):
@@ -117,12 +122,26 @@ class DBUtils:
             self.metadata = sqlalchemy.MetaData()
             self.session.connection()
             base.logIt("{} Connection was successful".format(Config.rdbm_type.upper()))
+            self.set_mysql_version()
             return True, self.session
 
         except Exception as e:
             if log:
                 base.logIt("Can't connect to {} server: {}".format(Config.rdbm_type.upper(), str(e), True))
             return False, e
+
+
+
+    def set_mysql_version(self):
+        try:
+            base.logIt("Determining MySQL version")
+            qresult = self.exec_rdbm_query('select version()', getresult=1)
+            self.mysql_version = self.get_version(qresult[0])
+            base.logIt("MySQL version was found as {}".format(self.mysql_version))
+        except Exception as e:
+            base.logIt("Cant determine MySQL version due to {}. Set to unknown".format(e))
+            self.mysql_version = (0, 0, 0)
+
 
     @property
     def json_dialects_instance(self):
@@ -220,7 +239,7 @@ class DBUtils:
                         )
             dn = self.ldap_conn.response[0]['dn']
             oxTrustConfApplication = json.loads(self.ldap_conn.response[0]['attributes']['oxTrustConfApplication'][0])
-        
+
         elif self.moddb in (BackendTypes.MYSQL, BackendTypes.PGSQL, BackendTypes.SPANNER):
             result = self.search(search_base='ou=oxtrust,ou=configuration,o=gluu', search_filter='(objectClass=oxTrustConfiguration)', search_scope=ldap3.BASE)
             dn = result['dn'] 

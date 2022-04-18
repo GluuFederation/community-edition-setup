@@ -101,6 +101,7 @@ current_number_of_cpu = multiprocessing.cpu_count()
 disk_st = os.statvfs('/')
 current_free_disk_space = round(disk_st.f_bavail * disk_st.f_frsize / (1024 * 1024 *1024), 1)
 
+
 def check_resources():
 
     if current_file_max < static.file_max:

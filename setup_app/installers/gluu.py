@@ -460,3 +460,4 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             self.run([paths.cmd_chmod, 'g+rwX', '-R', sys_path])
 
         self.chown(jetty_absolute_dir.parent.as_posix(), Config.user_group, recursive=True)
+

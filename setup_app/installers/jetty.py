@@ -243,6 +243,7 @@ class JettyInstaller(BaseInstaller, SetupUtils):
             additional_rules = []
             if serviceName == base.current_app.OxtrustInstaller.service_name:
                 additional_rules.append(fapolicyd_rule_tmp.format(Config.templateRenderingDict['service_user'], base.current_app.SamlInstaller.idp3Folder))
+                additional_rules.append('allow perm=any uid={} : path=/usr/bin/facter'.format(Config.templateRenderingDict['service_user']))
             self.fapolicyd_access(Config.templateRenderingDict['service_user'], jettyServiceBase, additional_rules)
 
 
