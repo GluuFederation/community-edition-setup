@@ -65,6 +65,8 @@ class OxauthInstaller(JettyInstaller):
         self.write_openid_keys(self.oxauth_openid_jwks_fn, jwks)
 
     def render_import_templates(self):
+        Config.templateRenderingDict['person_custom_object_class_list'] = '[]' if Config.mappingLocations['default'] == 'rdbm' else '["gluuCustomPerson", "gluuPerson"]'
+
         self.renderTemplateInOut(self.oxauth_config_json, self.templates_folder, self.output_folder)
 
         Config.templateRenderingDict['oxauth_config_base64'] = self.generate_base64_ldap_file(self.oxauth_config_json)
