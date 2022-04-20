@@ -213,8 +213,8 @@ class KeyRegenerator:
             os.makedirs(self.data_dir)
 
         self.keys_json_fn = os.path.join(self.data_dir, 'keys.json')
-        self.keystore_fn = os.path.join(self.data_dir, '{}-keys.pkcs12'.format(_AUTH_NAME_.lower()))
-
+                store_ext = 'p12' if _VENDOR_ == 'jans' else 'pkcs12'
+        self.keystore_fn = os.path.join(self.data_dir, '{}-keys.{}'.format(_AUTH_NAME_.lower(), store_ext))
 
         salt_fn = os.path.join(self.conf_dir, 'salt')
         salt_dict = jproperties_parser(salt_fn)
@@ -411,8 +411,6 @@ class KeyRegenerator:
         with open(self.keys_json_fn) as f:
             self.keys_json = f.read()
 
-        run_command(['cp', '-f', self.keys_json_fn, '/etc/certs'])
-
 
     def validate_keys(self):
 
@@ -455,7 +453,8 @@ class KeyRegenerator:
             print("Validation failed, not updating db")
             sys.exit(1)
 
-
+        # validation passed, we can copy keystore to /etc/certs
+        run_command(['cp', '-f', self.keystore_fn, '/etc/certs'])
 
     def update_spanner(self):
         print("Updating Spanner db")
