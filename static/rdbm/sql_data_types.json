@@ -76,12 +76,10 @@
   },
   "oxAuthenticationData": {
     "mysql": {
-      "size": 512,
-      "type": "VARCHAR"
+      "type": "TEXT"
     },
     "spanner": {
-      "size": 512,
-      "type": "STRING"
+      "type": "STRING(MAX)"
     }
   },
   "oxCacheConfiguration": {
