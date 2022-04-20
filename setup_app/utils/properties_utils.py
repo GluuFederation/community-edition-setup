@@ -711,9 +711,6 @@ class PropertiesUtils(SetupUtils):
 
         backend_type_str = backend_types[int(choice)-1]
 
-        if 'mysql' in backend_type_str.lower() or 'spanner' in backend_type_str.lower():
-            print("{}{}{}".format(colors.WARNING, msg.mysql_spanner_beta, colors.ENDC))
-
         if backend_type_str == BackendStrings.LOCAL_OPENDJ:
 
             used_ports = self.opendj_used_ports()
