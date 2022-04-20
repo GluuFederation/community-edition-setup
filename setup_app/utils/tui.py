@@ -419,22 +419,15 @@ class DBBackendForm(GluuSetupForm):
     def create(self):
         self.backends = self.add(npyscreen.TitleSelectOne, max_height=8, value = [0,], name=msg.chose_backend,
             values = [], scroll_exit=True)
-        self.beta_warning_label = self.add(npyscreen.TitleFixedText, name=msg.mysql_spanner_beta, relx=23, editable=False, labelColor='WARNING', hidden=True)
-
-        self.backends.value_changed_callback = self.backend_changed
 
     def do_beforeEditing(self):
         self.backend_types = propertiesUtils.get_backend_list()
         self.backends.values = self.backend_types
         self.backends.update()
 
-    def backend_changed(self, widget):
-        self.beta_warning_label.hidden = True if self.backends.value[0] < 3 else False
-        self.beta_warning_label.update()
 
     def nextButtonPressed(self):
         self.parentApp.backend_type_str = self.backend_types[self.backends.value[0]]
-
 
         if self.parentApp.backend_type_str == static.BackendStrings.LOCAL_OPENDJ:
             used_ports = self.parentApp.jettyInstaller.opendj_used_ports()
