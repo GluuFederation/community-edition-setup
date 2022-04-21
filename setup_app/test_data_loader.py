@@ -43,6 +43,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                 "-cp", client_cmd,
                 Config.non_setup_properties['key_gen_path'],
                 '-keystore', self.test_client_keystore_fn,
+                '-keystore_type', Config.default_store_type,
                 '-keypasswd', 'secret',
                 '-sig_keys', Config.default_sig_key_algs,
                 '-enc_keys', Config.default_enc_key_algs,
