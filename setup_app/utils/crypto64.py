@@ -256,7 +256,7 @@ class Crypto64:
 
         client_cmd = self.get_key_gen_client_cmd()
 
-        cmd = " ".join([Config.cmd_java,
+        args = [Config.cmd_java,
                         "-Dlog4j.defaultInitOverride=true",
                         "-cp", client_cmd,
                         Config.non_setup_properties['key_gen_path'],
@@ -271,9 +271,12 @@ class Crypto64:
                         "-dnname",
                         '"%s"' % dn_name,
                         "-expiration",
-                        "%s" % key_expiration])
+                        "%s" % key_expiration]
 
-        output = self.run([cmd], shell=True)
+        if not data_store_path.endswith('.jks'):
+            args += ['-keystore_type', Config.default_store_type]
+
+        output = self.run([' '.join(args)], shell=True)
 
         if output:
             return output.splitlines()
