@@ -10,6 +10,7 @@ from string import Template
 from setup_app.static import AppType, InstallOption
 from setup_app.config import Config
 from setup_app.utils import base
+from setup_app.utils import ldif_utils
 from setup_app.static import InstallTypes
 from setup_app.installers.base import BaseInstaller
 from setup_app.utils.setup_utils import SetupUtils
@@ -35,7 +36,16 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         schema_files = []
         self.gluu_attributes = []
 
-        for schema_fn in ('gluu_schema.json', 'custom_schema.json'):
+        json_schema_files = ['gluu_schema.json', 'custom_schema.json']
+
+        if Config.installSaml:
+            edu_person_fn = ldif_utils.schema2json(
+                        os.path.join(Config.staticFolder, 'opendj/96-eduperson.ldif'),
+                        os.path.join(Config.install_dir, 'schema')
+                        )
+            json_schema_files.append(edu_person_fn)
+
+        for schema_fn in json_schema_files:
             schema_full_path = os.path.join(Config.install_dir, 'schema', schema_fn)
             schema_files.append(schema_full_path)
             schema_ = base.readJsonFile(schema_full_path)
@@ -135,6 +145,8 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         for schema_fn in schema_files:
             schema = base.readJsonFile(schema_fn)
             for obj in schema['objectClasses']:
+                if Config.installSaml and obj['names'][0] == 'gluuPerson':
+                    obj['sql']['includeObjectClass'].append('eduPerson')
                 all_schema[obj['names'][0]] = obj
             for attr in schema['attributeTypes']:
                 all_attribs[attr['names'][0]] = attr
