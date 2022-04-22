@@ -101,6 +101,8 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         Config.templateRenderingDict['config_oxauth_test_spanner'] = '# spanner backend is not available'
         Config.templateRenderingDict['config_oxauth_test_sql'] = '# rdbm backend is not available'
 
+        Config.templateRenderingDict['client_test_store_type'] = Config.default_client_test_store_type
+
         if self.getMappingType('ldap'):
             template_text = self.readFile(os.path.join(self.template_base, 'oxauth/server/config-oxauth-test-ldap.properties.nrnd'))
             rendered_text = self.fomatWithDict(template_text, self.merge_dicts(Config.__dict__, Config.templateRenderingDict))
