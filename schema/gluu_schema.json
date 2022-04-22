@@ -4400,6 +4400,7 @@
                 "oxAlias"
             ],
             "oid": "oxAttribute",
+            "multivalued": true,
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
             "x_origin": "Gluu created attribute"
         },
