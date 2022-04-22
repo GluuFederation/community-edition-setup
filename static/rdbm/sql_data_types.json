@@ -781,16 +781,6 @@
       "type": "STRING(MAX)"
     }
   },
-  "oxAlias": {
-    "mysql": {
-      "size": 256,
-      "type": "VARCHAR"
-    },
-    "spanner": {
-      "size": 256,
-      "type": "STRING"
-    }
-  },
   "mobile": {
     "mysql": {
       "type": "JSON"
