@@ -145,7 +145,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         for schema_fn in schema_files:
             schema = base.readJsonFile(schema_fn)
             for obj in schema['objectClasses']:
-                if Config.installSaml and obj['names'][0] == 'gluuPerson':
+                if 'sql' in obj and Config.installSaml and obj['names'][0] == 'gluuPerson':
                     obj['sql']['includeObjectClass'].append('eduPerson')
                 all_schema[obj['names'][0]] = obj
             for attr in schema['attributeTypes']:
