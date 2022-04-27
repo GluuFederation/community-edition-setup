@@ -31,7 +31,7 @@ parser.add_argument('-n', help="No prompt", action='store_true')
 parser.add_argument('--no-setup', help="Do not launch setup", action='store_true')
 parser.add_argument('--dist-server-base', help="Download server", default='https://maven.gluu.org/maven')
 parser.add_argument('-profile', help="Setup profile", choices=['CE', 'DISA-STIG'], default='CE')
-parser.add_argument('--setup-branch', help="Gluu CE setup github branch", default="version_4.4.0")
+parser.add_argument('--setup-branch', help="Gluu CE setup github branch", default="master")
 parser.add_argument('-c', help="Don't download files that exists on disk", action='store_true')
 
 argsp = parser.parse_args()
@@ -166,16 +166,16 @@ services = ['casa.service', 'identity.service', 'opendj.service', 'oxauth.servic
 app_versions = {
     "JETTY_VERSION": "9.4.46.v20220331", 
     "AMAZON_CORRETTO_VERSION": "11.0.14.10.1", 
-    "OX_GITVERISON": ".Final", 
+    "OX_GITVERISON": "-SNAPSHOT", 
     "NODE_VERSION": "v14.19.1",
-    "OX_VERSION": "4.4.0", 
-    "PASSPORT_VERSION": "4.4.0", 
+    "OX_VERSION": "4.5.0", 
+    "PASSPORT_VERSION": "4.5.0", 
     "JYTHON_VERSION": "2.7.3",
     "OPENDJ_VERSION": "4.4.13",
     "SETUP_BRANCH": argsp.setup_branch,
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7",
-    "APPS_GIT_BRANCH": "version_4.4.0",
+    "APPS_GIT_BRANCH": "master",
     }
 
 jetty_dist_string = 'jetty-distribution'
