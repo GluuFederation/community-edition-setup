@@ -278,7 +278,7 @@ class Config:
         self.gluuScriptFiles = [
                             os.path.join(self.install_dir, 'static/scripts/logmanager.sh'),
                             os.path.join(self.install_dir, 'static/scripts/testBind.py'),
-                            os.path.join(self.install_dir, 'static/scripts/war_to_jetty10.py'),
+                            os.path.join(self.install_dir, 'static/scripts/jetty10CompatibleWar.py'),
                             ]
 
         self.redhat_services = ['httpd', 'rsyslog']
