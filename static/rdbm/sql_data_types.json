@@ -788,5 +788,13 @@
     "spanner": {
       "type": "ARRAY<STRING(MAX)>"
     }
+  },
+  "oxRegistrationConfiguration": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
   }
 }
