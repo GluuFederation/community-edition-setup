@@ -59,7 +59,7 @@ def war_for_jetty10(war_file, out_file, jetty_version):
 
         tmp_war_fn = os.path.join(tmp_dir, '{}.war'.format(os.urandom(6).hex()))
         print("Packing {}".format(tmp_war_fn))
-        shutil.make_archive(tmp_war_fn, format='zip', root_dir=tmp_dir)
+        shutil.make_archive(tmp_war_fn, format='zip', root_dir=unpack_dir)
         print("Renaming pack to", out_file)
         shutil.move(tmp_war_fn+'.zip', out_file)
 
