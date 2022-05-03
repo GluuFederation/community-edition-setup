@@ -121,7 +121,6 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                 rendered_text = self.fomatWithDict(template_text, self.merge_dicts(Config.__dict__, Config.templateRenderingDict))
                 Config.templateRenderingDict['config_oxauth_test_spanner'] = rendered_text
             else:
-                base.current_app.RDBMInstaller.server_time_zone()
                 template_text = self.readFile(os.path.join(self.template_base, 'oxauth/server/config-oxauth-test-sql.properties.nrnd'))
                 rendered_text = self.fomatWithDict(template_text, self.merge_dicts(Config.__dict__, Config.templateRenderingDict))
                 Config.templateRenderingDict['config_oxauth_test_sql'] = rendered_text
