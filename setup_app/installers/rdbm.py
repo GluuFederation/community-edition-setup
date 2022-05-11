@@ -85,10 +85,11 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
             if Config.rdbm_type == 'mysql':
                 result, conn = self.dbUtils.mysqlconnection(log=False)
                 if not result:
+                    time.sleep(5)
                     sql_cmd_list = [
-                        "CREATE DATABASE {};\n".format(Config.rdbm_db),
-                        "CREATE USER '{}'@'localhost' IDENTIFIED BY '{}';\n".format(Config.rdbm_user, Config.rdbm_password),
-                        "GRANT ALL PRIVILEGES ON {}.* TO '{}'@'localhost';\n".format(Config.rdbm_db, Config.rdbm_user),
+                        "CREATE DATABASE {}".format(Config.rdbm_db),
+                        "CREATE USER '{}'@'localhost' IDENTIFIED BY '{}'".format(Config.rdbm_user, Config.rdbm_password),
+                        "GRANT ALL PRIVILEGES ON {}.* TO '{}'@'localhost'".format(Config.rdbm_db, Config.rdbm_user),
                         ]
                     for cmd in sql_cmd_list:
                         self.run("echo \"{}\" | mysql".format(cmd), shell=True)
