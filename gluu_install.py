@@ -164,12 +164,12 @@ oxauth_war_fn = os.path.join(gluu_app_dir, 'oxauth.war')
 jetty_home = '/opt/gluu/jetty'
 services = ['casa.service', 'identity.service', 'opendj.service', 'oxauth.service', 'passport.service', 'fido2.service', 'idp.service', 'oxd-server.service', 'scim.service']
 app_versions = {
-    "JETTY_VERSION": "9.4.46.v20220331", 
-    "AMAZON_CORRETTO_VERSION": "11.0.14.10.1", 
-    "OX_GITVERISON": "-SNAPSHOT", 
+    "JETTY_VERSION": "10.0.9",
+    "AMAZON_CORRETTO_VERSION": "11.0.14.10.1",
+    "OX_GITVERISON": "-SNAPSHOT",
     "NODE_VERSION": "v14.19.1",
     "OX_VERSION": "4.5.0", 
-    "PASSPORT_VERSION": "master", 
+    "PASSPORT_VERSION": "master",
     "JYTHON_VERSION": "2.7.3",
     "OPENDJ_VERSION": "4.4.13",
     "SETUP_BRANCH": argsp.setup_branch,
@@ -179,14 +179,14 @@ app_versions = {
     }
 
 jetty_dist_string = 'jetty-distribution'
-if getattr(argsp, 'jetty_version', None):
-    result = re.findall('(\d*).', argsp.jetty_version)
-    if result and result[0] and result[0].isdigit():
-        if int(result[0]) > 9:
-            jetty_dist_string = 'jetty-home'
-            app_versions['JETTY_VERSION'] = argsp.jetty_version
-    else:
-        print("Can't determine Jetty Version. Continuing with version {}".format(app_versions['JETTY_VERSION']))
+if hasattr(argsp, 'jetty_version'):
+    app_versions['JETTY_VERSION'] = argsp.jetty_version
+
+result = re.findall('(\d*).', app_versions['JETTY_VERSION'])
+
+if result and result[0] and result[0].isdigit() and int(result[0]) > 9:
+    jetty_dist_string = 'jetty-home'
+
 
 def check_installation():
     if not (os.path.exists(jetty_home) and os.path.exists('/etc/gluu')):
