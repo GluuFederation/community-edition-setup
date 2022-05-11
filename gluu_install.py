@@ -265,7 +265,7 @@ def download_gcs():
         download(gcs_download_url, target_fn)
         shutil.unpack_archive(target_fn, app_dir)
 
-        req = request.urlopen('https://pypi.org/pypi/grpcio/1.37.0/json')
+        req = request.urlopen('https://pypi.org/pypi/grpcio/1.46.0/json')
         data_s = req.read()
         data = json.loads(data_s)
 
@@ -285,9 +285,7 @@ def download_gcs():
             whl_zip = zipfile.ZipFile(target_whl_fn)
 
             for member in  whl_zip.filelist:
-                fn = os.path.basename(member.filename)
-                if fn.startswith('cygrpc.cpython') and fn.endswith('x86_64-linux-gnu.so'):
-                    whl_zip.extract(member, os.path.join(app_dir, 'gcs'))
+                whl_zip.extract(member, os.path.join(app_dir, 'gcs'))
 
             whl_zip.close()
 
