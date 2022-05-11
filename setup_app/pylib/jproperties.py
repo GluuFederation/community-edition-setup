@@ -42,7 +42,7 @@ import six
 from collections import namedtuple
 try:
     from collections import MutableMapping
-except:
+except Exception:
     from collections.abc import MutableMapping
 
 
