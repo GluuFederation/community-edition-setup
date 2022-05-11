@@ -180,7 +180,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         raidus_client_jwks = json.loads(raidus_client_jwks)
         Config.templateRenderingDict['radius_jwt_pass'] = radius_jwt_pass
         raidus_client_jwks_json = json.dumps(raidus_client_jwks, indent=2)
-        Config.templateRenderingDict['gluu_ro_client_base64_jwks'] = base64.encodestring(raidus_client_jwks_json.encode('utf-8')).decode('utf-8').replace(' ','').replace('\n','')
+        Config.templateRenderingDict['gluu_ro_client_base64_jwks'] = base64.encodebytes(raidus_client_jwks_json.encode('utf-8')).decode('utf-8').replace(' ','').replace('\n','')
 
         for k in raidus_client_jwks['keys']:
             if k.get('alg') == 'RS512':
