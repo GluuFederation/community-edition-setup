@@ -4716,6 +4716,17 @@
             "substr": "caseIgnoreSubstringsMatch",
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
             "x_origin": "Gluu created attribute"
+        },
+        {
+            "desc": "oxEmailAlternate",
+            "equality": "caseIgnoreMatch",
+            "names": [
+                "oxEmailAlternate"
+            ],
+            "oid": "oxAttribute",
+            "substr": "caseIgnoreSubstringsMatch",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+            "x_origin": "Gluu created attribute"
         }
     ],
     "objectClasses": [
@@ -4824,7 +4835,8 @@
                 "oxTrustedDevicesInfo",
                 "oxUnlinkedExternalUids",
                 "oxAuthBackchannelDeviceRegistrationToken",
-                "oxAuthBackchannelUserCode"
+                "oxAuthBackchannelUserCode",
+                "oxEmailAlternate"
             ],
             "must": [
                 "objectclass"
