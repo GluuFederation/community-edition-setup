@@ -114,12 +114,6 @@ class OxtrustInstaller(JettyInstaller):
         for tmp in (self.oxtrust_config_json, self.oxtrust_cache_refresh_json, self.oxtrust_import_person_json):
             self.renderTemplateInOut(tmp, self.templates_folder, self.output_folder)
 
-        if Config.rdbm_install:
-            oxtrust_config = base.readJsonFile(self.oxtrust_config_json, ordered=True)
-            oxtrust_config['personObjectClassTypes'] = []
-            oxtrust_config['personObjectClassDisplayNames'] = []
-            self.writeFile(self.oxtrust_config_json, json.dumps(oxtrust_config, indent=2))
-
         Config.templateRenderingDict['oxtrust_config_base64'] = self.generate_base64_ldap_file(self.oxtrust_config_json)
         Config.templateRenderingDict['oxtrust_cache_refresh_base64'] = self.generate_base64_ldap_file(self.oxtrust_cache_refresh_json)
         Config.templateRenderingDict['oxtrust_import_person_base64'] = self.generate_base64_ldap_file(self.oxtrust_import_person_json)
