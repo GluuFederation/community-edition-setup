@@ -796,5 +796,61 @@
     "spanner": {
       "type": "STRING(MAX)"
     }
+  },
+    "eduPersonAffiliation": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
+  },
+  "eduPersonEntitlement": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
+  },
+  "eduPersonOrcid": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
+  },
+  "eduPersonOrgUnitDN": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
+  },
+  "eduPersonPrimaryAffiliation": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
+  },
+  "eduPersonPrimaryOrgUnitDN": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
+  },
+  "eduPersonScopedAffiliation": {
+    "mysql": {
+      "type": "JSON"
+    },
+    "spanner": {
+      "type": "ARRAY<STRING(MAX)>"
+    }
   }
 }
