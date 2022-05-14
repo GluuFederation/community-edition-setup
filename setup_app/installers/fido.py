@@ -80,3 +80,8 @@ class FidoInstaller(JettyInstaller):
             self.run([paths.cmd_mkdir, '-p', target_dir])
             self.copyFile(apple_webauthn, target_dir)
 
+        # copy external files
+        self.copyTree(
+                os.path.join(Config.distAppFolder, 'fido2'),
+                self.fido2ConfigFolder
+            )
