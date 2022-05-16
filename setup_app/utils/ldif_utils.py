@@ -130,14 +130,19 @@ def schema2json(schema_file, out_dir=None):
 
     for objcls_str in object_class_list:
         objcls_type = ObjectClass(objcls_str)
-        jans_schema['objectClasses'].append({
-                  "kind": "AUXILIARY",
-                  "may": list(objcls_type.tokens['MAY']),
-                  "names": list(objcls_type.tokens['NAME']),
-                  "oid": objcls_type.oid,
-                  "sup": list(objcls_type.tokens['SUP']),
-                  "x_origin": objcls_type.tokens['X-ORIGIN'][0] 
-        })
+        objcls_dict = {
+              "kind": "AUXILIARY",
+              "may": list(objcls_type.tokens['MAY']),
+              "names": list(objcls_type.tokens['NAME']),
+              "oid": objcls_type.oid,
+              "sup": list(objcls_type.tokens['SUP']),
+              "x_origin": objcls_type.tokens['X-ORIGIN'][0] 
+            }
+
+        if objcls_type.tokens['X-RDBM-IGNORE'][0].lower() in ('true', 'yes', 'ignore', 'ok'):
+            objcls_dict['sql'] = {"ignore": True}
+        
+        jans_schema['objectClasses'].append(objcls_dict)
 
     path, fn = os.path.split(schema_file)
     if not out_dir:

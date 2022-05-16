@@ -493,10 +493,21 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
 
 
     def prepare_opendj_schema(self):
-        self.logIt("Copying OpenDJ schema")
-        for schema_fn in self.openDjschemaFiles:
-            self.copyFile(schema_fn, self.openDjSchemaFolder)
+        sys.path.append(os.path.join(Config.install_dir, 'schema'))
+        import manager as schemaManager
 
+        self.logIt("Creating OpenDJ schema")
+
+        json_files =  glob.glob(os.path.join(Config.install_dir, 'schema/*.json'))
+        for jsf in json_files:
+            data = base.readJsonFile(jsf)
+            if 'schemaFile' in data:
+                out_file = os.path.join(Config.install_dir, 'static/opendj', data['schemaFile'])
+                schemaManager.generate(jsf, 'opendj', out_file)
+
+        opendj_schema_files = glob.glob(os.path.join(Config.install_dir, 'static/opendj/*.ldif'))
+        for schema_file in opendj_schema_files:
+            self.copyFile(schema_file, self.openDjSchemaFolder)
         self.run([paths.cmd_chmod, '-R', 'a+rX', Config.ldapBaseFolder])
         self.chown(Config.ldapBaseFolder, Config.ldap_user, Config.ldap_user, recursive=True)
 
