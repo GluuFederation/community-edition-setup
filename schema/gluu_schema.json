@@ -2470,39 +2470,6 @@
             "x_origin": "Gluu created attribute"
         },
         {
-            "desc": "oxProx Configuration",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "oxProxConf"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "oxProx access token",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "oxProxyAccessToken"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "oxProx claim mapping",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "oxProxyClaimMapping"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
             "desc": "oxState",
             "equality": "caseIgnoreMatch",
             "names": [
@@ -2615,39 +2582,6 @@
             "equality": "caseIgnoreMatch",
             "names": [
                 "oxEnrollmentCode"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "oxProx client id",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "oxProxyClientId"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "oxProx scope",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "oxProxyScope"
-            ],
-            "oid": "oxAttribute",
-            "substr": "caseIgnoreSubstringsMatch",
-            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
-            "x_origin": "Gluu created attribute"
-        },
-        {
-            "desc": "oxProx client mapping to op client",
-            "equality": "caseIgnoreMatch",
-            "names": [
-                "oxProxyToOpClientMapping"
             ],
             "oid": "oxAttribute",
             "substr": "caseIgnoreSubstringsMatch",
@@ -5639,91 +5573,6 @@
             "oid": "oxObjectClass",
             "sup": [
                 "token"
-            ],
-            "x_origin": "Gluu created objectclass"
-        },
-        {
-            "kind": "STRUCTURAL",
-            "may": [
-                "ou",
-                "oxProxConf",
-                "oxScriptDn"
-            ],
-            "must": [
-                "objectclass"
-            ],
-            "names": [
-                "oxProxConfiguration"
-            ],
-            "oid": "oxObjectClass",
-            "sup": [
-                "top"
-            ],
-            "x_origin": "Gluu created objectclass"
-        },
-        {
-            "kind": "STRUCTURAL",
-            "may": [
-                "c",
-                "displayName",
-                "inum",
-                "l",
-                "oxDomain",
-                "oxId",
-                "oxX509PEM",
-                "oxX509URL"
-            ],
-            "must": [
-                "objectclass"
-            ],
-            "names": [
-                "oxProxOp"
-            ],
-            "oid": "oxObjectClass",
-            "sup": [
-                "top"
-            ],
-            "x_origin": "Gluu created objectclass"
-        },
-        {
-            "kind": "STRUCTURAL",
-            "may": [
-                "displayName",
-                "inum",
-                "oxProxyClaimMapping",
-                "oxProxyScope",
-                "oxProxyToOpClientMapping"
-            ],
-            "must": [
-                "objectclass"
-            ],
-            "names": [
-                "oxProxClient"
-            ],
-            "oid": "oxObjectClass",
-            "sup": [
-                "top"
-            ],
-            "x_origin": "Gluu created objectclass"
-        },
-        {
-            "kind": "STRUCTURAL",
-            "may": [
-                "iat",
-                "exp",
-                "del",
-                "oxProxyAccessToken",
-                "oxProxyClientId"
-            ],
-            "must": [
-                "objectclass"
-            ],
-            "names": [
-                "oxProxAccessToken"
-            ],
-            "oid": "oxObjectClass",
-            "sup": [
-                "top"
             ],
             "x_origin": "Gluu created objectclass"
         },
