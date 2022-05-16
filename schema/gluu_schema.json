@@ -5146,7 +5146,10 @@
             "sup": [
                 "top"
             ],
-            "x_origin": "Gluu created objectclass"
+            "x_origin": "Gluu created objectclass",
+            "sql": {
+                "ignore": true
+            }
         },
         {
             "kind": "STRUCTURAL",
@@ -5163,7 +5166,10 @@
             "sup": [
                 "top"
             ],
-            "x_origin": "Gluu created objectclass"
+            "x_origin": "Gluu created objectclass",
+            "sql": {
+                "ignore": true
+            }
         },
         {
             "kind": "STRUCTURAL",
@@ -5180,7 +5186,10 @@
             "sup": [
                 "top"
             ],
-            "x_origin": "Gluu created objectclass"
+            "x_origin": "Gluu created objectclass",
+            "sql": {
+                "ignore": true
+            }
         },
         {
             "kind": "STRUCTURAL",
