@@ -1,7 +1,7 @@
 {
   "red 7": {
     "optional": "",
-    "mondatory": "httpd httpd-mod_ssl curl wget tar xz unzip rsyslog python3-ldap3 python3-requests python3-ruamel-yaml python3-certifi python3-PyMySQL bzip2"
+    "mondatory": "httpd httpd-mod_ssl curl wget tar xz unzip rsyslog python36-six python36-ldap3 python36-requests python36-ruamel-yaml python36-certifi python36-PyMySQL bzip2"
   },
   "red 8": {
       "optional": "",
@@ -28,7 +28,7 @@
   },
   "centos 7": {
     "optional": "",
-    "mondatory": "httpd mod_ssl curl wget tar xz unzip python3-ldap3 python3-requests python3-ruamel-yaml rsyslog python3-certifi python3-PyMySQL bzip2"
+    "mondatory": "httpd mod_ssl curl wget tar xz unzip rsyslog python36-six python36-ldap3 python36-requests python36-ruamel-yaml python36-certifi python36-PyMySQL bzip2"
   },
   "centos 8": {
       "optional": "",

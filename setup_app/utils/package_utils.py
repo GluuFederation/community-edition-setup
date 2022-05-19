@@ -50,16 +50,12 @@ class PackageUtils(SetupUtils):
             for package in package_list[os_type_version][install_type].split():
                 if on_disa_stig and 'python3' in package:
                     continue
-                if os_type_version in ('centos 7', 'red 7') and package.startswith('python3-'):
-                    package_query = package.replace('python3-', 'python36-')
-                else:
-                    package_query = package
-                sout, serr = self.run(query_command.format(package_query), shell=True, get_stderr=True)
+                sout, serr = self.run(query_command.format(package), shell=True, get_stderr=True)
                 if check_text in sout+serr:
-                    self.logIt('Package {0} was not installed'.format(package_query))
-                    install_list[install_type].append(package_query)
+                    self.logIt('Package {0} was not installed'.format(package))
+                    install_list[install_type].append(package)
                 else:
-                    self.logIt('Package {0} was installed'.format(package_query))
+                    self.logIt('Package {0} was installed'.format(package))
 
         install = {'mondatory': True, 'optional': False}
 
