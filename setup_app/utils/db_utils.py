@@ -319,14 +319,14 @@ class DBUtils(SetupUtils):
             n1ql = 'UPDATE `{}` USE KEYS "configuration_oxtrust" SET `oxTrustConfApplication`={}'.format(self.default_bucket, oxTrustConfApplication_js)
             self.cbm.exec_query(n1ql)
 
-    def enable_script(self, inum):
+    def enable_script(self, inum, enable=True):
         if not Config.loadData:
             return
 
         if self.moddb == BackendTypes.LDAP:
             ldap_operation_result = self.ldap_conn.modify(
                     'inum={},ou=scripts,o=gluu'.format(inum),
-                    {"oxEnabled": [ldap3.MODIFY_REPLACE, 'true']}
+                    {"oxEnabled": [ldap3.MODIFY_REPLACE, str(enable).lower()]}
                     )
             self.log_ldap_result(ldap_operation_result)
 
@@ -340,10 +340,10 @@ class DBUtils(SetupUtils):
             dn = 'inum={},ou=scripts,o=gluu'.format(inum)
             table = self.get_spanner_table_for_dn(dn)
             if table:
-                self.spanner.update_data(table=table, columns=['doc_id', 'oxEnabled'], values=[[inum, True]])
+                self.spanner.update_data(table=table, columns=['doc_id', 'oxEnabled'], values=[[inum, enable]])
 
         elif self.moddb == BackendTypes.COUCHBASE:
-            n1ql = 'UPDATE `{}` USE KEYS "scripts_{}" SET oxEnabled=true'.format(self.default_bucket, inum)
+            n1ql = 'UPDATE `{}` USE KEYS "scripts_{}" SET oxEnabled={}'.format(self.default_bucket, inum, str(enable).lower())
             self.cbm.exec_query(n1ql)
 
     def enable_service(self, service):

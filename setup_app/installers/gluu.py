@@ -431,6 +431,12 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         self.chown(Config.gluuBaseFolder, Config.root_user, Config.gluu_group, recursive=True)
         self.chown(Config.oxBaseDataFolder, Config.root_user, Config.gluu_group, recursive=True)
 
+        #enable scripts
+        self.enable_scripts(base.argsp.enable_script)
+
+        #set auth modes
+        self.set_auth_modes()
+
         for sys_path in (Config.gluuOptFolder, Config.gluuBaseFolder, Config.oxBaseDataFolder):
             self.run([paths.cmd_chmod, '-R', 'u+rwX,g+rwX,o-rwX', sys_path])
 
@@ -460,4 +466,15 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             self.run([paths.cmd_chmod, 'g+rwX', '-R', sys_path])
 
         self.chown(jetty_absolute_dir.parent.as_posix(), Config.user_group, recursive=True)
+
+    def enable_scripts(self, inums):
+        if inums:
+            for inum in inums:
+                self.dbUtils.enable_script(inum)
+
+    def set_auth_modes(self):
+        if base.argsp.ox_authentication_mode:
+            self.dbUtils.set_configuration('oxAuthenticationMode', base.argsp.ox_authentication_mode)
+        if base.argsp.ox_trust_authentication_mode:
+            self.dbUtils.set_configuration('oxTrustAuthenticationMode', base.argsp.ox_trust_authentication_mode)
 
