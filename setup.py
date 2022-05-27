@@ -170,6 +170,7 @@ if os.path.exists(Config.gluu_properties_fn):
 if not Config.noPrompt and not GSA and not Config.installed_instance and not setup_loaded:
     propertiesUtils.promptForProperties()
 
+
 if not (GSA or base.argsp.dummy):
     propertiesUtils.check_properties()
 
@@ -194,7 +195,26 @@ radiusInstaller = RadiusInstaller()
 
 rdbmInstaller.packageUtils = packageUtils
 
+
+
 if Config.installed_instance:
+
+    exit_after_me = False
+
+    if argsp.enable_script:
+        print("Enabling scripts {}".format(', '.join(argsp.enable_script)))
+        gluuInstaller.enable_scripts(argsp.enable_script)
+        exit_after_me = True
+
+    if argsp.ox_authentication_mode or argsp.ox_trust_authentication_mode:
+        print("Setting Authentication Modes")
+        gluuInstaller.set_auth_modes()
+        exit_after_me = True
+
+    if exit_after_me:
+        sys.exit()
+
+
     for installer in (openDjInstaller, couchbaseInstaller, httpdinstaller, 
                         oxauthInstaller, passportInstaller, scimInstaller, 
                         fidoInstaller, samlInstaller, oxdInstaller, 

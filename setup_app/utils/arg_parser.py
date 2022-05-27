@@ -81,6 +81,9 @@ def arg_parser():
     parser.add_argument('--generate-oxd-certificate', help="Generate certificate for oxd based on hostname", action='store_true')
     parser.add_argument('--shell', help="Drop into interactive shell before starting installation", action='store_true')
     parser.add_argument('--no-progress', help="Use simple progress", action='store_true')
+    parser.add_argument('-enable-script', action='append', help="inum of script to enable", required=False)
+    parser.add_argument('-ox-authentication-mode', help="Sets oxAuthenticationMode")
+    parser.add_argument('-ox-trust-authentication-mode', help="Sets oxTrustAuthenticationMode")
 
     # spanner options
     parser.add_argument('-spanner-project', help="Spanner project name")
