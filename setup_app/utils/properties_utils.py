@@ -201,6 +201,12 @@ class PropertiesUtils(SetupUtils):
         if p.get('ldap_install') == '0':
             p['ldap_install'] = InstallTypes.NONE
 
+        if p.get('enable-script'):
+            base.argsp.enable_script = p['enable-script'].split()
+
+        base.argsp.ox_authentication_mode = p.get('ox-authentication-mode')
+        base.argsp.ox_trust_authentication_mode = p.get('ox-trust-authentication-mode')
+
         properties_list = list(p.keys())
 
         if 'oxtrust_admin_password' not in p:
