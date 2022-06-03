@@ -447,6 +447,11 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         if Config.profile == static.SetupProfiles.DISA_STIG:
             self.disa_stig_post_install_tasks()
 
+
+        if base.argsp.gluu_scan_cert:
+            self.generate_gluu_scan_api_keystore()
+
+
     def disa_stig_post_install_tasks(self):
 
         self.chown(Config.gluuOptFolder, Config.jetty_user, Config.gluu_group)
@@ -478,3 +483,8 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         if base.argsp.ox_trust_authentication_mode:
             self.dbUtils.set_configuration('oxTrustAuthenticationMode', base.argsp.ox_trust_authentication_mode)
 
+    def generate_gluu_scan_api_keystore(self):
+        suffix = 'scan_api'
+        key_fn, csr_fn, crt_fn = self.gen_cert(suffix, 'changeit', user='jetty')
+        scan_api_keystore_fn = os.path.join(Config.certFolder, 'scanAKeystore.pcks12')
+        self.gen_keystore(suffix, scan_api_keystore_fn, 'changeit', key_fn, crt_fn, store_type='PKCS12')

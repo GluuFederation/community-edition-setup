@@ -84,6 +84,7 @@ def arg_parser():
     parser.add_argument('-enable-script', action='append', help="inum of script to enable", required=False)
     parser.add_argument('-ox-authentication-mode', help="Sets oxAuthenticationMode")
     parser.add_argument('-ox-trust-authentication-mode', help="Sets oxTrustAuthenticationMode")
+    parser.add_argument('--gluu-scan-cert', help="Creates Gluu Scan Api keystore", action='store_true')
 
     # spanner options
     parser.add_argument('-spanner-project', help="Spanner project name")

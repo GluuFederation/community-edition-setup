@@ -206,6 +206,7 @@ class PropertiesUtils(SetupUtils):
 
         base.argsp.ox_authentication_mode = p.get('ox-authentication-mode')
         base.argsp.ox_trust_authentication_mode = p.get('ox-trust-authentication-mode')
+        base.argsp.gluu_scan_cert = True if p.get('gluu-scan-cert','').lower() == 'true' else False
 
         properties_list = list(p.keys())
 

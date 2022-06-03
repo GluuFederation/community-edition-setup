@@ -130,6 +130,7 @@ class Crypto64:
         self.delete_key(alias, truststore_fn)
         self.import_cert_to_java_truststore(alias, public_certificate)
 
+        return key, csr, public_certificate
 
     def delete_key(self, alias, truststore_fn=None):
         if not truststore_fn:
