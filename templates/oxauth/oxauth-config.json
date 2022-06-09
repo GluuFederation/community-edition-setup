@@ -208,6 +208,10 @@
     "requestParameterSupported":true,
     "requestUriParameterSupported":true,
     "requireRequestUriRegistration":false,
+    "requestUriBlackList": [
+        "localhost",
+        "127.0.0.1"
+    ],
     "allowPostLogoutRedirectWithoutValidation":false,
     "introspectionAccessTokenMustHaveUmaProtectionScope":false,
     "opPolicyUri":"http://ox.gluu.org/doku.php?id=oxauth:policy",
