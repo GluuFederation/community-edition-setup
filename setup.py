@@ -42,6 +42,8 @@ packageUtils.check_and_install_packages()
 from setup_app.messages import msg
 from setup_app.config import Config
 
+sys.path.append(os.path.join(Config.distFolder, 'app/gcs'))
+
 # set profile
 if argsp.profile == 'DISA-STIG' or os.path.exists(os.path.join(paths.INSTALL_DIR, 'disa-stig')):
     Config.profile = static.SetupProfiles.DISA_STIG
