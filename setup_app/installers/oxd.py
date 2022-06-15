@@ -32,6 +32,11 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         self.ks_type_bcfks = 'bcfks'
         self.ks_type_pkcs12 = 'pkcs12'
 
+    @property
+    def oxd_hostname(self):
+        oxd_hostname, oxd_port = self.parse_url(Config.oxd_server_https)
+        return oxd_hostname
+
     def install(self):
         self.logIt("Installing {}".format(self.service_name.title()), pbar=self.service_name)
         self.run(['tar', '-zxf', Config.oxd_package, '--no-same-owner', '--strip-components=1', '-C', self.oxd_root])
@@ -69,6 +74,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         if not base.argsp.dummy:
             self.modify_config_yml()
             self.generate_keystore()
+            self.import_oxd_certificate()
 
         self.run([paths.cmd_chown, '-R', '{0}:{0}'.format(oxd_user), self.oxd_root])
 
@@ -94,17 +100,22 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         yml_str = self.readFile(self.oxd_server_yml_fn)
         oxd_yaml = ruamel.yaml.load(yml_str, ruamel.yaml.RoundTripLoader)
 
+        addr_list = [Config.ip]
+        lo = '127.0.0.1'
+        if self.oxd_hostname == 'localhost':
+            addr_list.append(lo)
+
         if 'bind_ip_addresses' in oxd_yaml:
-            oxd_yaml['bind_ip_addresses'].append(Config.ip)
+            oxd_yaml['bind_ip_addresses'] += addr_list
         else:
             for i, k in enumerate(oxd_yaml):
                 if k == 'storage':
                     break
             else:
                 i = 1
-            addr_list = [Config.ip]
-            if Config.profile == SetupProfiles.DISA_STIG:
-                addr_list.append('127.0.0.1')
+            
+            if Config.profile == SetupProfiles.DISA_STIG and lo not in addr_list:
+                addr_list.append(lo)
             oxd_yaml.insert(i, 'bind_ip_addresses',  addr_list)
 
         if Config.get('oxd_use_gluu_storage'):
@@ -184,7 +195,7 @@ class OxdInstaller(SetupUtils, BaseInstaller):
 
             self.run(cmd_cert_gen)
 
-        else:
+        elif self.oxd_hostname != 'localhost':
             oxd_key_tmp = '{}/{}'.format(tempfile.gettempdir(),'oxd.key')
             oxd_crt_tmp = '{}/{}'.format(tempfile.gettempdir(),'oxd.crt')
             oxd_p12_tmp = '{}/{}'.format(tempfile.gettempdir(),'oxd.p12')
@@ -223,14 +234,12 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             for f in (oxd_key_tmp, oxd_crt_tmp, oxd_p12_tmp):
                 self.run([paths.cmd_rm, '-f', f])
 
-        self.run([paths.cmd_rm, '-f', os.path.join(self.oxd_root,'conf/oxd-server.keystore')])
+        if os.path.exists(keystore_tmp):
+            self.run([paths.cmd_rm, '-f', os.path.join(self.oxd_root,'conf/oxd-server.keystore')])
+            self.run(['cp', '-f', keystore_tmp, self.oxd_server_keystore_fn])
+            self.run([paths.cmd_rm, '-f', keystore_tmp])
 
-        self.run(['cp', '-f', keystore_tmp, self.oxd_server_keystore_fn])
         self.run([paths.cmd_chown, 'jetty:jetty', self.oxd_server_keystore_fn])
-
-        self.run([paths.cmd_rm, '-f', keystore_tmp])
-
-        self.import_oxd_certificate()
 
 
     def installed(self):
@@ -265,12 +274,12 @@ class OxdInstaller(SetupUtils, BaseInstaller):
 
     def import_oxd_certificate(self):
 
-        oxd_hostname, oxd_port = self.parse_url(Config.oxd_server_https)
-        oxd_alias = 'oxd_' + oxd_hostname.replace('.','_')
+        oxd_alias = 'oxd_' + self.oxd_hostname.replace('.','_')
         oxd_cert_fn = os.path.join(Config.outputFolder, '{}.pem'.format(oxd_alias))
         # let's delete if alias exists
         self.delete_key(oxd_alias)
-        self.export_cert_from_store(Config.hostname, self.oxd_server_keystore_fn, self.oxd_keystore_passw, oxd_cert_fn)
+        store_alias = 'localhost' if self.oxd_hostname == 'localhost' else Config.hostname
+        self.export_cert_from_store(store_alias, self.oxd_server_keystore_fn, self.oxd_keystore_passw, oxd_cert_fn)
         self.import_cert_to_java_truststore(oxd_alias, oxd_cert_fn)
 
 
