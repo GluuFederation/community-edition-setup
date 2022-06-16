@@ -208,7 +208,7 @@
     "requestParameterSupported":true,
     "requestUriParameterSupported":true,
     "requireRequestUriRegistration":false,
-    "requestUriBlackList": [
+    "requestUriBlockList": [
         "localhost",
         "127.0.0.1"
     ],
