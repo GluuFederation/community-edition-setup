@@ -209,4 +209,13 @@ objectClass: top
 objectClass: organizationalUnit
 ou: trusted-idp
 
+################################
+
+# Document  data - LEVEL 2
+dn: ou=document,o=gluu
+objectClass: top
+objectClass: organizationalUnit
+ou: document
+
+
 
