@@ -4650,6 +4650,17 @@
             "substr": "caseIgnoreSubstringsMatch",
             "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
             "x_origin": "Gluu created attribute"
+        },
+        {
+            "desc": "Save Document",
+            "equality": "caseIgnoreMatch",
+            "names": [
+                "document"
+            ],
+            "oid": "oxAttribute",
+            "substr": "caseIgnoreSubstringsMatch",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.15",
+            "x_origin": "Gluu created attribute"
         }
     ],
     "objectClasses": [
@@ -6097,6 +6108,33 @@
             ],
             "names": [
                 "oxTrustedIdp"
+            ],
+            "oid": "oxObjectClass",
+            "sup": [
+                "top"
+            ],
+            "x_origin": "Gluu created objectclass"
+        },
+        {
+            "kind": "STRUCTURAL",
+            "may": [
+                "inum",
+                "ou",
+                "displayName",
+				"description",
+				"document",
+				"creationDate",
+				"oxModuleProperty",
+				"oxLevel",
+				"oxRevision",
+				"oxEnabled",
+				"oxAlias"				
+            ],
+            "must": [
+                "objectclass"
+            ],
+            "names": [
+                "oxDocument"
             ],
             "oid": "oxObjectClass",
             "sup": [
