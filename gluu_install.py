@@ -81,6 +81,10 @@ else:
     print("Unsopported OS. Exiting ...")
     sys.exit()
 
+if os_type == 'debian':
+    path_list = [ '/usr/local/sbin', '/usr/sbin', '/sbin', '/usr/local/bin', '/usr/bin', '/bin' ]
+    os.environ['PATH'] = os.pathsep.join(path_list) + os.pathsep + os.environ['PATH']
+
 print("OS type was determined as {}.".format(os_type))
 
 try:
