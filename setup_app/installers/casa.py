@@ -3,6 +3,7 @@ import re
 import glob
 import ssl
 import time
+import json
 
 from xml.etree import ElementTree
 
@@ -32,8 +33,11 @@ class CasaInstaller(JettyInstaller):
         self.output_folder = os.path.join(Config.outputFolder, 'casa')
         self.ldif = os.path.join(Config.outputFolder, 'casa/casa.ldif')
         self.ldif_scripts = os.path.join(Config.outputFolder, 'casa/scripts.ldif')
+        self.smtp_configuration_json = os.path.join(Config.outputFolder, 'casa/smtp_configuration.json')
         self.pylib_folder = os.path.join(Config.gluuOptPythonFolder, 'libs')
         self.casa_jetty_dir = os.path.join(self.jetty_base, 'casa')
+        self.casa_jks_fn = os.path.join(Config.certFolder, self.get_keystore_fn('casa-keys'))
+        self.casa_alias = 'casa_sig_ec256'
 
     def install(self):
 
@@ -95,6 +99,8 @@ class CasaInstaller(JettyInstaller):
         for tmp in ldif_files:
             self.renderTemplateInOut(tmp, self.templates_folder, self.output_folder)
 
+        self.renderTemplateInOut(self.smtp_configuration_json, self.templates_folder, self.output_folder)
+
         if import_script:
             self.dbUtils.import_ldif(ldif_files)
 
@@ -105,3 +111,25 @@ class CasaInstaller(JettyInstaller):
             if not os.path.exists(path):
                 self.run([paths.cmd_mkdir, '-p', path])
             self.run([paths.cmd_chown, '-R', 'jetty:jetty', path])
+
+    def generate_configuration(self):
+        if not Config.get('casa_jks_pass'):
+            Config.casa_jks_pass = self.getPW()
+
+        self.logIt("Generating casa keys", pbar=self.service_name)
+
+        self.run([Config.cmd_keytool, '-genkeypair',
+                    '-alias', self.casa_alias,
+                    '-keyalg', 'ec',
+                    '-groupname', 'secp256r1',
+                    '-sigalg', 'SHA256withECDSA',
+                    '-validity', '365',
+                    '-storetype', Config.default_store_type,
+                    '-keystore', self.casa_jks_fn,
+                    '-storepass', Config.casa_jks_pass,
+                    '-dname', 'CN=CASA CA Certificate'
+                ])
+
+    def update_backend(self):
+        smtp_configuration = base.readJsonFile(self.smtp_configuration_json)
+        self.dbUtils.set_configuration('oxSmtpConfiguration', json.dumps(smtp_configuration, indent=2).encode('utf-8'))
