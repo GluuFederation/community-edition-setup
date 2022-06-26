@@ -1,0 +1,5 @@
+{
+	"key-store":"%(casa_jks_fn)s",
+	"key-store-password":"%(casa_jks_pass)s",
+	"key-store-alias":"%(casa_alias)s"
+}
