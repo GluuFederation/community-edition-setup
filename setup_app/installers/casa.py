@@ -132,4 +132,4 @@ class CasaInstaller(JettyInstaller):
 
     def update_backend(self):
         smtp_configuration = base.readJsonFile(self.smtp_configuration_json)
-        self.dbUtils.set_configuration('oxSmtpConfiguration', json.dumps(smtp_configuration, indent=2).encode('utf-8'))
+        self.dbUtils.set_configuration('oxSmtpConfiguration', json.dumps(smtp_configuration, indent=2))
