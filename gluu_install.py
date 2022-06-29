@@ -166,7 +166,7 @@ services = ['casa.service', 'identity.service', 'opendj.service', 'oxauth.servic
 app_versions = {
     "JETTY_VERSION": "10.0.9",
     "AMAZON_CORRETTO_VERSION": "11.0.14.10.1",
-    "OX_GITVERISON": "-SNAPSHOT",
+    "OX_GITVERISON": ".Final",
     "NODE_VERSION": "v14.19.1",
     "OX_VERSION": "4.4.1", 
     "PASSPORT_VERSION": "4.4.1",
