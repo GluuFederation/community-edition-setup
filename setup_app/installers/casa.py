@@ -37,7 +37,8 @@ class CasaInstaller(JettyInstaller):
         self.pylib_folder = os.path.join(Config.gluuOptPythonFolder, 'libs')
         self.casa_jetty_dir = os.path.join(self.jetty_base, 'casa')
         self.casa_jks_fn = os.path.join(Config.certFolder, self.get_keystore_fn('casa-keys'))
-        self.casa_alias = 'casa_sig_ec256'        
+        self.casa_alias = 'casa_sig_ec256'
+        self.casa_signing_alg = 'SHA256withECDSA'
 
     def install(self):
 
@@ -122,7 +123,7 @@ class CasaInstaller(JettyInstaller):
                     '-alias', self.casa_alias,
                     '-keyalg', 'ec',
                     '-groupname', 'secp256r1',
-                    '-sigalg', 'SHA256withECDSA',
+                    '-sigalg', self.casa_signing_alg,
                     '-validity', '365',
                     '-storetype', Config.default_store_type,
                     '-keystore', self.casa_jks_fn,
