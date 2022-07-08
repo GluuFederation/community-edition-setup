@@ -12,7 +12,7 @@ from pathlib import Path
 from setup_app import paths
 from setup_app import static
 from setup_app.utils import base
-from setup_app.static import InstallTypes, AppType, InstallOption
+from setup_app.static import InstallTypes, AppType, InstallOption, SetupProfiles
 from setup_app.config import Config
 from setup_app.utils.setup_utils import SetupUtils
 from setup_app.utils.progress import gluuProgress
@@ -93,6 +93,9 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                             s = s + "%s\n%s\n%s\n\n" % (key, "-" * len(key), val)
             return s
 
+    def __init__(self):
+        if not Config.get('smtp_jks_pass'):
+            Config.smtp_jks_pass = self.getPW()
 
     def initialize(self):
         self.service_name = 'gluu'
