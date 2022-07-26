@@ -23,25 +23,16 @@ Note!: Test this script on non-production server.
   > GRANT ALL PRIVILEGES ON gluudb.* TO 'gluu'@'localhost';
   ```
 
-# Download CE Setup and Migration Script
+# Download CE Setup Fixes and Migration Script
 
-  - You need latest version of CE Setup:
+  - Download files:
     ```
-    wget https://github.com/GluuFederation/community-edition-setup/archive/refs/heads/version_4.4.1.zip
+    wget https://raw.githubusercontent.com/GluuFederation/community-edition-setup/version_4.4.1/setup_app/installers/rdbm.py -O /install/community-edition-setup/setup_app/installers/rdbm.py
+    wget https://raw.githubusercontent.com/GluuFederation/community-edition-setup/version_4.4.1/tools/ldap_to_mysql/ldap2mysql.py -O /install/community-edition-setup/ldap2mysql.py
     ```
-  
-  - Extract:
-    ```
-    unzip version_4.4.1.zip
-    ```
-  
-  - Copy migration script to Setup root directory:
-    ```
-    cd community-edition-setup-version_4.4.1
-    cp ./tools/ldap_to_mysql/ldap2mysql.py ./
-    ```
-  
+
   - Execute script:
     ```
+    cd /install/community-edition-setup/
     python3 ldap2mysql.py -rdbm-user=gluu -rdbm-password=TopSecret -rdbm-db=gluudb -rdbm-host=localhost
     ```
