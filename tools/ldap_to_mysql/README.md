@@ -12,6 +12,7 @@ Note!: Test this script on non-production server.
   On Ubuntun: `apt install python3-ldap`
 
 * Install and Configure MySQL
+* 
   Install MySQL that upports a native JSON data type (See https://dev.mysql.com/doc/refman/5.7/en/json.html).
   MySQL Server shipped with >=Ubuntu 20 and >=RHEL 8/CentOS-8-Appstream is fine.
   Create a database, namely `gluudb`, and create
