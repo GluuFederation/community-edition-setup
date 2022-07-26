@@ -32,7 +32,7 @@ Note!: Test this script on non-production server.
   
   - Extract:
     ```
-    unizp version_4.4.1.zip
+    unzip version_4.4.1.zip
     ```
   
   - Copy migration script to Setup root directory:
