@@ -14,7 +14,8 @@ Note!: Test this script on non-production server.
 * Install and Configure MySQL
   Install MySQL that upports a native JSON data type (See https://dev.mysql.com/doc/refman/5.7/en/json.html).
   Create a database, namely `gluudb`, and create
-  a user, namely `gluu`. User should have all previleges on created database. Sample MySQL commands:
+  a user, namely `gluu`. User should have all previleges on created database. Sample MySQL commands 
+  (If you installed MySQL on a seperate server, modify commands accordingly):
 
   ```
   > CREATE DATABASE gluudb;
