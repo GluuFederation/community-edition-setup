@@ -128,7 +128,7 @@ for custom_ocl in gluu_custom_schma['objectClasses']:
 for cur_ocl in schema['objectClasses']:
     if cur_ocl['names'][0] == 'gluuCustomPerson':
         for cur_anme in cur_ocl['may']:
-            if not cur_anme in gluu_custom_ocl_names:
+            if cur_anme not in gluu_custom_ocl_names:
                 for cur_atr in schema['attributeTypes']:
                     if cur_atr['names'][0] == cur_anme:
                         for dn, entry in current_attributes:
