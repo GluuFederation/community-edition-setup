@@ -30,10 +30,9 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         self.qchar = '`' if Config.rdbm_type in ('mysql', 'spanner') else '"'
         self.output_dir = os.path.join(Config.outputFolder, Config.rdbm_type)
 
-    def install(self):
 
-        self.local_install()
-        schema_files = []
+    def prepare(self):
+        self.schema_files = []
         self.gluu_attributes = []
 
         json_schema_files = ['gluu_schema.json', 'custom_schema.json']
@@ -47,11 +46,15 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
         for schema_fn in json_schema_files:
             schema_full_path = os.path.join(Config.install_dir, 'schema', schema_fn)
-            schema_files.append(schema_full_path)
+            self.schema_files.append(schema_full_path)
             schema_ = base.readJsonFile(schema_full_path)
             self.gluu_attributes += schema_.get('attributeTypes', [])
 
-        self.create_tables(schema_files)
+
+    def install(self):
+        self.prepare()
+        self.local_install()
+        self.create_tables(self.schema_files)
         self.create_subtables()
         self.import_ldif()
         self.create_indexes()
