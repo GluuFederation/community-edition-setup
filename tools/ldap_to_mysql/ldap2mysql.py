@@ -47,6 +47,7 @@ from setup_app.utils.setup_utils import SetupUtils
 from setup_app.utils.properties_utils import PropertiesUtils
 from setup_app.installers.gluu import GluuInstaller
 from setup_app.utils.ldif_utils import myLdifParser
+from setup_app.installers.opendj import OpenDjInstaller
 from setup_app.installers.rdbm import RDBMInstaller
 from setup_app.pylib.ldif4.ldif import LDIFWriter
 
@@ -61,6 +62,7 @@ gluuInstaller.initialize()
 collectProperties = CollectProperties()
 collectProperties.collect()
 Config.installed_instance = True
+openDjInstaller = OpenDjInstaller()
 rdbmInstaller = RDBMInstaller()
 propertiesUtils = PropertiesUtils()
 
@@ -150,13 +152,14 @@ schmema_files = [
     current_custom_schema_fn
     ]
 
+rdbmInstaller.prepare()
 rdbmInstaller.dbUtils.read_gluu_schema()
 
 for a in rdbm_config_params:
     if argsp_dict[a]:
         setattr(Config, a, argsp_dict[a])
 
-Config.wrends_install = static.InstallTypes.NONE
+Config.ldap_install = static.InstallTypes.NONE
 Config.rdbm_install = static.InstallTypes.REMOTE
 
 Config.mappingLocations = { group: 'rdbm' for group in Config.couchbaseBucketDict }
