@@ -20,9 +20,9 @@ Note!: Test this script on non-production server.
   (If you installed MySQL on a seperate server, modify commands accordingly):
 
   ```
-  > CREATE DATABASE gluudb;
-  > CREATE USER 'gluu'@'localhost' IDENTIFIED BY 'TopSecret';
-  > GRANT ALL PRIVILEGES ON gluudb.* TO 'gluu'@'localhost';
+  CREATE DATABASE gluudb;
+  CREATE USER 'gluu'@'localhost' IDENTIFIED BY 'TopSecret';
+  GRANT ALL PRIVILEGES ON gluudb.* TO 'gluu'@'localhost';
   ```
 
 # Download CE Setup Fixes and Migration Script
