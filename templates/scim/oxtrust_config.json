@@ -2,7 +2,9 @@
     "ScimProperties": {
         "maxCount": 200,
         "protectionMode": "%(scim_protection_mode)s",
-        "userExtensionSchemaURI": "urn:ietf:params:scim:schemas:extension:gluu:2.0:User"
+        "userExtensionSchemaURI": "urn:ietf:params:scim:schemas:extension:gluu:2.0:User",
+        "bulkMaxOperations": 30,
+        "bulkMaxPayloadSize": 3072000
     },
     "scimUmaClientKeyId": "",
     "scimUmaResourceId": "%(scim_resource_oxid)s",
