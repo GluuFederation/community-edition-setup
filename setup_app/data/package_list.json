@@ -1,41 +1,47 @@
 {
   "red 7": {
     "optional": "",
-    "mondatory": "httpd httpd-mod_ssl curl wget tar xz unzip rsyslog python36-six python36-ldap3 python36-requests python36-ruamel-yaml python36-certifi python36-PyMySQL bzip2"
+    "mondatory": "httpd httpd-mod_ssl curl wget tar xz unzip rsyslog bzip2",
+    "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel-yaml", "certifi":"python3-certifi", "pymysql":"python3-PyMySQL", "Crypto": "python3-cryptography"}
   },
   "red 8": {
       "optional": "",
-      "mondatory": "httpd mod_ssl curl wget tar xz unzip rsyslog python3-ldap3 python3-requests python3-ruamel-yaml python3-certifi python3-PyMySQL bzip2"},
+      "mondatory": "httpd mod_ssl curl wget tar xz unzip rsyslog bzip2",
+      "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel-yaml", "certifi":"python3-certifi", "pymysql":"python3-PyMySQL", "Crypto": "python3-cryptography"}
+  },
   "debian 10": {
     "optional": "",
-    "mondatory": "apache2 curl wget tar xz-utils unzip rsyslog python3-ldap3 python3-requests python3-ruamel.yaml python3-certifi python3-pymysql bzip2"
+    "mondatory": "apache2 curl wget tar xz-utils unzip rsyslog bzip2",
+    "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel.yaml", "certifi":"python3-certifi", "pymysql":"python3-pymysql", "Crypto": "python3-crypto", "distutils.util": "python3-distutils"}
   },
   "debian 9": {
     "optional": "",
-    "mondatory": "apache2 curl wget tar xz-utils unzip rsyslog python3-ldap3 python3-requests python3-ruamel.yaml python3-certifi python3-pymysql bzip2"
-  },
-  "ubuntu 18": {
-    "optional": "",
-    "mondatory": "apache2 curl wget xz-utils unzip rsyslog python3-ldap3 net-tools python3-requests python3-ruamel.yaml python3-certifi python3-pymysql bzip2"
+    "mondatory": "apache2 curl wget tar xz-utils unzip rsyslog bzip2",
+    "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel.yaml", "certifi":"python3-certifi", "pymysql":"python3-pymysql", "Crypto": "python3-crypto", "distutils.util": "python3-distutils"}
   },
   "ubuntu 20": {
       "optional": "",
-      "mondatory": "apache2 curl wget xz-utils unzip rsyslog python3-ldap3 net-tools python3-requests python3-ruamel.yaml python3-certifi python3-pymysql bzip2"
+      "mondatory": "apache2 curl wget xz-utils unzip rsyslog bzip2",
+      "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel.yaml", "pymysql":"python3-pymysql", "Crypto": "python3-crypto", "distutils.util": "python3-distutils"}
   },
   "ubuntu 22": {
       "optional": "",
-      "mondatory": "apache2 curl wget xz-utils unzip rsyslog python3-ldap3 net-tools python3-requests python3-ruamel.yaml python3-certifi python3-pymysql bzip2"
+      "mondatory": "apache2 curl wget xz-utils unzip rsyslog bzip2",
+      "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel.yaml", "pymysql":"python3-pymysql", "distutils.util": "python3-distutils", "prompt_toolkit": "python3-prompt-toolkit"}
   },
   "centos 7": {
     "optional": "",
-    "mondatory": "httpd mod_ssl curl wget tar xz unzip rsyslog python36-six python36-ldap3 python36-requests python36-ruamel-yaml python36-certifi python36-PyMySQL bzip2"
+    "mondatory": "httpd mod_ssl curl wget tar xz unzip rsyslog bzip2",
+    "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel-yaml", "pymysql":"python3-PyMySQL", "Crypto": "python3-cryptography"}
   },
   "centos 8": {
       "optional": "",
-      "mondatory": "httpd mod_ssl curl wget tar xz unzip python3-ldap3 python3-requests python3-ruamel-yaml rsyslog python3-certifi python3-PyMySQL bzip2"
+      "mondatory": "httpd mod_ssl curl wget tar xz rsyslog unzip bzip2",
+      "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel-yaml", "certifi":"python3-certifi", "pymysql":"python3-PyMySQL", "Crypto": "python3-cryptography"}
   },
   "suse 15": {
       "optional": "",
-      "mondatory": "apache2 curl wget tar xz unzip python3-ldap3 python3-requests python3-ruamel.yaml rsyslog python3-certifi python3-PyMySQL bzip2"
+      "mondatory": "apache2 curl wget tar xz unzip rsyslog bzip2",
+      "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel.yaml", "certifi":"python3-certifi", "pymysql":"python3-pymysql", "Crypto": "python3-cryptography", "distutils.util": "python3-distutils", "prompt_toolkit": "python3-prompt-toolkit"}
   }  
 }
