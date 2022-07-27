@@ -1,5 +1,6 @@
 import os
 import sys
+import importlib
 
 from setup_app import paths
 from setup_app.config import Config
@@ -42,6 +43,12 @@ class PackageUtils(SetupUtils):
             package_list[os_type_version]['mondatory'] += ' postgresql python3-psycopg2'
             if base.clone_type == 'deb':
                 package_list[os_type_version]['mondatory'] += ' postgresql-contrib'
+
+        for pypackage in package_list[os_type_version]['python']:
+            try:
+                importlib.import_module(pypackage)
+            except:
+                package_list[os_type_version]['mondatory'] += ' ' + package_list[os_type_version]['python'][pypackage]
 
         if on_disa_stig:
             package_list[os_type_version]['mondatory'] += ' java-11-openjdk-headless java-11-openjdk-devel'
