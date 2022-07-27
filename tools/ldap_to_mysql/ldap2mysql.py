@@ -47,6 +47,7 @@ from setup_app.utils.setup_utils import SetupUtils
 from setup_app.utils.properties_utils import PropertiesUtils
 from setup_app.installers.gluu import GluuInstaller
 from setup_app.utils.ldif_utils import myLdifParser
+from setup_app.installers.opendj import OpenDjInstaller
 from setup_app.installers.rdbm import RDBMInstaller
 from setup_app.pylib.ldif4.ldif import LDIFWriter
 
@@ -61,6 +62,7 @@ gluuInstaller.initialize()
 collectProperties = CollectProperties()
 collectProperties.collect()
 Config.installed_instance = True
+openDjInstaller = OpenDjInstaller()
 rdbmInstaller = RDBMInstaller()
 propertiesUtils = PropertiesUtils()
 
@@ -126,7 +128,7 @@ for custom_ocl in gluu_custom_schma['objectClasses']:
 for cur_ocl in schema['objectClasses']:
     if cur_ocl['names'][0] == 'gluuCustomPerson':
         for cur_anme in cur_ocl['may']:
-            if not cur_anme in gluu_custom_ocl_names:
+            if cur_anme not in gluu_custom_ocl_names:
                 for cur_atr in schema['attributeTypes']:
                     if cur_atr['names'][0] == cur_anme:
                         for dn, entry in current_attributes:
@@ -150,13 +152,14 @@ schmema_files = [
     current_custom_schema_fn
     ]
 
+rdbmInstaller.prepare()
 rdbmInstaller.dbUtils.read_gluu_schema()
 
 for a in rdbm_config_params:
     if argsp_dict[a]:
         setattr(Config, a, argsp_dict[a])
 
-Config.wrends_install = static.InstallTypes.NONE
+Config.ldap_install = static.InstallTypes.NONE
 Config.rdbm_install = static.InstallTypes.REMOTE
 
 Config.mappingLocations = { group: 'rdbm' for group in Config.couchbaseBucketDict }
