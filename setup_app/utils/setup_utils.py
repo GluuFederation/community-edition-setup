@@ -598,11 +598,13 @@ class SetupUtils(Crypto64):
             fapolicyd_rules_fn = '/etc/fapolicyd/rules.d/15-gluu.rules'
             if not os.path.exists(fapolicyd_rules_fn):
                 self.writeFile(fapolicyd_rules_fn, '', backup=False)
+                self.chown(fapolicyd_rules_fn, 'root', 'fapolicyd')
+                self.run([paths.cmd_chmod, '644', fapolicyd_rules_fn])
         else:
-          fapolicyd_rules_fn = '/etc/fapolicyd/fapolicyd.rules'
+            fapolicyd_rules_fn = '/etc/fapolicyd/fapolicyd.rules'
 
         fapolicyd_rules = []
-        fapolicyd_startn = 0
+        fapolicyd_startn = -1
 
         with open(fapolicyd_rules_fn) as f:
             for i, l in enumerate(f):
@@ -619,8 +621,7 @@ class SetupUtils(Crypto64):
 
         if write_facl:
             fapolicyd_rules.insert(fapolicyd_startn + 1, '\n')
-            self.writeFile(fapolicyd_rules_fn, '\n'.join(fapolicyd_rules))
-            self.chown(fapolicyd_rules_fn, 'root', 'fapolicyd')
+            self.writeFile(fapolicyd_rules_fn, '\n'.join(fapolicyd_rules) + "\n")
             self.run_service_command('restart', 'fapolicyd')
 
     def fapolicyd_access(self, uid, service_dir, additional_rules=[]):
