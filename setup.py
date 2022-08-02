@@ -126,7 +126,6 @@ for key in setupOptions:
 
 
 gluuInstaller = GluuInstaller()
-gluuInstaller.initialize()
 
 
 if not GSA and not os.path.exists(Config.gluu_properties_fn):
@@ -306,6 +305,8 @@ if argsp.shell:
 
 
 def prepare_for_installation():
+
+    gluuInstaller.initialize()
 
     gluuInstaller.copy_scripts()
     gluuInstaller.encode_passwords()

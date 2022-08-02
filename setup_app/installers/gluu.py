@@ -90,9 +90,6 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                             s = s + "%s\n%s\n%s\n\n" % (key, "-" * len(key), val)
             return s
 
-    def __init__(self):
-        if not Config.get('smtp_jks_pass'):
-            Config.smtp_jks_pass = self.getPW()
 
     def initialize(self):
         self.service_name = 'gluu'
@@ -115,6 +112,13 @@ class GluuInstaller(BaseInstaller, SetupUtils):
 
         if not Config.installed_instance and Config.profile == static.SetupProfiles.DISA_STIG:
             self.remove_pcks11_keys()
+
+        if not Config.get('smtp_jks_pass'):
+            Config.smtp_jks_pass = self.getPW()
+            try:
+                Config.smtp_jks_pass_enc = self.obscure(Config.smtp_jks_pass)
+            except Exception as e:
+                self.logIt("GluuInstaller. __init__ failed. Reason: %s" % str(e), errorLog=True)
 
         self.profile_templates(Config.templateFolder)
 
