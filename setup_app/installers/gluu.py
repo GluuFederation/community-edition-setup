@@ -93,9 +93,6 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                             s = s + "%s\n%s\n%s\n\n" % (key, "-" * len(key), val)
             return s
 
-    def __init__(self):
-        if not Config.get('smtp_jks_pass'):
-            Config.smtp_jks_pass = self.getPW()
 
     def initialize(self):
         self.service_name = 'gluu'
