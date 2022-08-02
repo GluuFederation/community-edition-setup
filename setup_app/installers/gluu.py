@@ -113,6 +113,13 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         if not Config.installed_instance and Config.profile == static.SetupProfiles.DISA_STIG:
             self.remove_pcks11_keys()
 
+        if not Config.get('smtp_jks_pass'):
+            Config.smtp_jks_pass = self.getPW()
+            try:
+                Config.smtp_jks_pass_enc = self.obscure(Config.smtp_jks_pass)
+            except Exception as e:
+                self.logIt("GluuInstaller. __init__ failed. Reason: %s" % str(e), errorLog=True)
+
         self.profile_templates(Config.templateFolder)
 
     def determine_key_gen_path(self):
