@@ -51,7 +51,7 @@ class PackageUtils(SetupUtils):
                 package_list[os_type_version]['mondatory'] += ' ' + package_list[os_type_version]['python'][pypackage]
 
         if on_disa_stig:
-            package_list[os_type_version]['mondatory'] += ' java-11-openjdk-headless java-11-openjdk-devel'
+            package_list[os_type_version]['mondatory'] += ' java-11-openjdk-headless'
 
         for install_type in install_list:
             for package in package_list[os_type_version][install_type].split():
