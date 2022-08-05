@@ -390,7 +390,8 @@ class DBUtils(SetupUtils):
         elif self.moddb == BackendTypes.SPANNER:
             table = self.get_spanner_table_for_dn(dn)
             type_val = self.get_rdbm_val(component, [value])
-            self.spanner.update_data(table='gluuConfiguration', columns=["doc_id", component], values=[["configuration", type_val]])
+            doc_id = self.get_doc_id_from_dn(dn)
+            self.spanner.update_data(table=table, columns=["doc_id", component], values=[[doc_id, type_val]])
 
         elif self.moddb == BackendTypes.COUCHBASE:
             key = ldif_utils.get_key_from(dn)
