@@ -90,10 +90,6 @@ else:
     clone_type = 'deb'
     httpd_name = 'apache2'
 
-if os_type == 'suse':
-    httpd_name = 'apache2'
-
-
 def get_os_description():
     desc_dict = { 'suse': 'SUSE', 'red': 'RHEL', 'ubuntu': 'Ubuntu', 'deb': 'Debian', 'centos': 'CentOS', 'fedora': 'Fedora' }
     descs = desc_dict.get(os_type, os_type)
