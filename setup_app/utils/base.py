@@ -99,7 +99,7 @@ def get_os_description():
     descs = desc_dict.get(os_type, os_type)
     descs += ' ' + os_version
     fipsl = os.popen('sysctl crypto.fips_enabled').read().strip().split()
-    if fipsl[0] == 'crypto.fips_enabled' and fipsl[-1] == '1':
+    if fipsl and fipsl[0] == 'crypto.fips_enabled' and fipsl[-1] == '1':
         descs += ' [FIPS]'
     return descs
 
