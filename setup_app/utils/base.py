@@ -62,7 +62,7 @@ with open(os_release_fn) as f:
                     os_type = 'red'
                 elif 'ubuntu-core' in os_type:
                     os_type = 'ubuntu'
-                elif 'sles' in os_type:
+                elif 'sles' in os_type or 'suse' in os_type:
                     os_type = 'suse'
             elif row[0] == 'VERSION_ID':
                 os_version = row[1].split('.')[0]
