@@ -16,6 +16,7 @@ import shutil
 import socket
 import multiprocessing
 import ssl
+import shlex
 
 from pathlib import Path
 from collections import OrderedDict
@@ -73,6 +74,7 @@ if not (os_type and os_version):
 os_name = os_type + os_version
 deb_sysd_clone = os_name in ('ubuntu18', 'ubuntu20', 'ubuntu22', 'debian9', 'debian10')
 
+
 # Determine service path
 if (os_type in ('centos', 'red', 'fedora', 'suse') and os_initdaemon == 'systemd') or deb_sysd_clone:
     service_path = shutil.which('systemctl')
@@ -91,6 +93,15 @@ else:
 if os_type == 'suse':
     httpd_name = 'apache2'
 
+
+def get_os_description():
+    desc_dict = { 'suse': 'SUSE', 'red': 'RHEL', 'ubuntu': 'Ubuntu', 'deb': 'Debian', 'centos': 'CentOS', 'fedora': 'Fedora' }
+    descs = desc_dict.get(os_type, os_type)
+    descs += ' ' + os_version
+    fipsl = os.popen('sysctl crypto.fips_enabled').read().strip().split()
+    if fipsl[0] == 'crypto.fips_enabled' and fipsl[-1] == '1':
+        descs += ' [FIPS]'
+    return descs
 
 # resources
 current_file_max = int(open("/proc/sys/fs/file-max").read().strip())

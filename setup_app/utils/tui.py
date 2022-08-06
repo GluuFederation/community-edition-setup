@@ -155,7 +155,7 @@ class MAIN(GluuSetupForm):
 
         self.description_label = self.add(npyscreen.MultiLineEdit, value='\n'.join(desc_wrap), max_height=6, rely=2, editable=False)
         self.description_label.autowrap = True
-        os_string = "{} {}".format(base.os_type, base.os_version).strip()
+        os_string = base.get_os_description()
         self.os_type = self.add(npyscreen.TitleFixedText, name=msg.os_type_label, begin_entry_at=18, value=os_string, editable=False)
         self.init_type = self.add(npyscreen.TitleFixedText, name=msg.init_type_label, begin_entry_at=18, value=base.os_initdaemon, editable=False)
         self.httpd_type = self.add(npyscreen.TitleFixedText, name=msg.httpd_type_label, begin_entry_at=18, value=base.httpd_name, field_width=40, editable=False)
