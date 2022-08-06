@@ -485,3 +485,28 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         if base.argsp.ox_trust_authentication_mode:
             self.dbUtils.set_configuration('oxTrustAuthenticationMode', base.argsp.ox_trust_authentication_mode)
 
+    def generate_configuration(self):
+        self.logIt("Generating smtp keys", pbar=self.service_name)
+
+        cmd_cert_gen = [Config.cmd_keytool, '-genkeypair',
+                        '-alias', Config.smtp_alias,
+                        '-keyalg', 'ec',
+                        '-groupname', 'secp256r1',
+                        '-sigalg', Config.smtp_signing_alg,
+                        '-validity', '3650',
+                        '-storetype', Config.default_store_type,
+                        '-keystore', Config.smtp_jks_fn,
+                        '-keypass', Config.smtp_jks_pass,
+                        '-storepass', Config.smtp_jks_pass,
+                        '-dname', 'CN=SMTP CA Certificate'
+                    ]
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            fips_provider = self.get_keytool_provider()
+            cmd_cert_gen += [
+                        '-providername', fips_provider['-providername'],
+                        '-provider', fips_provider['-providerclass'],
+                        '-providerpath', fips_provider['-providerpath']
+                    ]
+
+        self.run(cmd_cert_gen)
