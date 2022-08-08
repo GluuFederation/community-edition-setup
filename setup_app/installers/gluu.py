@@ -113,6 +113,13 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         if not Config.installed_instance and Config.profile == static.SetupProfiles.DISA_STIG:
             self.remove_pcks11_keys()
 
+        if not Config.get('smtp_jks_pass'):
+            Config.smtp_jks_pass = self.getPW()
+            try:
+                Config.smtp_jks_pass_enc = self.obscure(Config.smtp_jks_pass)
+            except Exception as e:
+                self.logIt("GluuInstaller. __init__ failed. Reason: %s" % str(e), errorLog=True)
+
         self.profile_templates(Config.templateFolder)
 
     def determine_key_gen_path(self):
@@ -478,3 +485,28 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         if base.argsp.ox_trust_authentication_mode:
             self.dbUtils.set_configuration('oxTrustAuthenticationMode', base.argsp.ox_trust_authentication_mode)
 
+    def generate_configuration(self):
+        self.logIt("Generating smtp keys", pbar=self.service_name)
+
+        cmd_cert_gen = [Config.cmd_keytool, '-genkeypair',
+                        '-alias', Config.smtp_alias,
+                        '-keyalg', 'ec',
+                        '-groupname', 'secp256r1',
+                        '-sigalg', Config.smtp_signing_alg,
+                        '-validity', '3650',
+                        '-storetype', Config.default_store_type,
+                        '-keystore', Config.smtp_jks_fn,
+                        '-keypass', Config.smtp_jks_pass,
+                        '-storepass', Config.smtp_jks_pass,
+                        '-dname', 'CN=SMTP CA Certificate'
+                    ]
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            fips_provider = self.get_keytool_provider()
+            cmd_cert_gen += [
+                        '-providername', fips_provider['-providername'],
+                        '-provider', fips_provider['-providerclass'],
+                        '-providerpath', fips_provider['-providerpath']
+                    ]
+
+        self.run(cmd_cert_gen)

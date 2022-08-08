@@ -435,3 +435,7 @@ class Config:
                     },
                 }
         Config.addPostSetupService = []
+
+        self.smtp_jks_fn = os.path.join(self.certFolder, 'smtp-keys' + '.' + Config.default_store_type)
+        self.smtp_alias = 'smtp_sig_ec256'
+        self.smtp_signing_alg = 'SHA256withECDSA'
