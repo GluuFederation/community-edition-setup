@@ -51,7 +51,7 @@ class PackageUtils(SetupUtils):
         for pypackage in package_list[os_type_version]['python']:
             try:
                 importlib.import_module(pypackage)
-            except Exception as e:
+            except Exception:
                 package_list[os_type_version]['mondatory'] += ' ' + package_list[os_type_version]['python'][pypackage]
 
         if on_disa_stig:
