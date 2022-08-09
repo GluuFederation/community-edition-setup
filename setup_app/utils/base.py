@@ -94,7 +94,7 @@ def get_os_description():
     desc_dict = { 'suse': 'SUSE', 'red': 'RHEL', 'ubuntu': 'Ubuntu', 'deb': 'Debian', 'centos': 'CentOS', 'fedora': 'Fedora' }
     descs = desc_dict.get(os_type, os_type)
     descs += ' ' + os_version
-    fipsl = os.popen('sysctl crypto.fips_enabled').read().strip().split()
+    fipsl = subprocess.getoutput("sysctl crypto.fips_enabled").strip().split()
     if fipsl and fipsl[0] == 'crypto.fips_enabled' and fipsl[-1] == '1':
         descs += ' [FIPS]'
     return descs
