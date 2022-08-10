@@ -113,7 +113,7 @@ class PassportInstaller(NodeInstaller):
             Config.passport_rp_client_cert_alg = 'RS512'
 
         if not Config.get('passport_rp_client_jks_pass'):
-            Config.passport_rp_client_jks_pass = 'secret'
+            Config.passport_rp_client_jks_pass = self.getPW()
 
         if not Config.get('passport_rs_client_jks_pass'):
             Config.passport_rs_client_jks_pass = self.getPW()

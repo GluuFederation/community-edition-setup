@@ -195,7 +195,9 @@ class CollectProperties(SetupUtils, BaseInstaller):
         Config.oxauthClient_pw = self.unobscure(oxTrustConfApplication['oxAuthClientPassword'])
         Config.oxauthClient_encoded_pw = oxTrustConfApplication['oxAuthClientPassword']
 
-        Config.scim_rp_client_jks_pass = 'secret' # this is static
+        if 'scimUmaClientKeyStorePassword' in oxTrustConfApplication:
+            Config.scim_rs_client_jks_pass_encoded = oxTrustConfApplication['scimUmaClientKeyStorePassword']
+            Config.scim_rp_client_jks_pass = self.unobscure(Config.scim_rs_client_jks_pass_encoded)
 
         if 'scimUmaClientId' in oxTrustConfApplication:
             Config.scim_rs_client_id =  oxTrustConfApplication['scimUmaClientId']

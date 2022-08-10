@@ -70,7 +70,7 @@ class ScimInstaller(JettyInstaller):
         Config.scim_rs_client_jks_pass_encoded = self.obscure(Config.scim_rs_client_jks_pass)
 
         if not Config.get('scim_rp_client_jks_pass'):
-            Config.scim_rp_client_jks_pass = 'secret'
+            Config.scim_rp_client_jks_pass = self.getPW()
 
         Config.enable_scim_access_policy = 'true' if Config.installPassport else 'false'
 
