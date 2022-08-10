@@ -40,7 +40,7 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
             Config.isCouchbaseUserAdmin = True
 
         if not Config.get('couchbaseTrustStorePass'):
-            Config.couchbaseTrustStorePass = 'secret'
+            Config.couchbaseTrustStorePass = self.getPW()
             Config.encoded_couchbaseTrustStorePass = self.obscure(Config.couchbaseTrustStorePass)
 
         if not Config.get('couchbase_bucket_prefix'):
