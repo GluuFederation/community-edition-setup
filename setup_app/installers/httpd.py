@@ -157,7 +157,10 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
             self.copyFile(self.apache2_ssl_conf, self.https_gluu_fn)
 
         elif base.clone_type == 'rpm': 
-            self.copyFile(self.apache2_conf, '/etc/httpd/conf/httpd.conf')
+            if self.apache_version == "2.4":
+                self.copyFile(self.apache2_24_conf, '/etc/httpd/conf/httpd.conf')
+            else:
+                self.copyFile(self.apache2_conf, '/etc/httpd/conf/httpd.conf')
             self.copyFile(self.apache2_ssl_conf, self.https_gluu_fn)
 
         elif base.clone_type == 'deb':
