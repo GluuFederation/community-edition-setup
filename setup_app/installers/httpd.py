@@ -140,12 +140,12 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
         if not Config.get('httpdKeyPass'):
             Config.httpdKeyPass = self.getPW()
 
-
         # generate httpd self signed certificate
         self.gen_cert('httpd', Config.httpdKeyPass, 'jetty')
 
-        self.enable()
-        self.start()
+        service_name = 'apache2' if base.os_type == 'suse' else base.httpd_name
+        self.enable(service_name)
+        self.start(service_name)
 
     def write_httpd_config(self):
 
@@ -153,15 +153,10 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
         for tmp in (self.apache2_conf, self.apache2_ssl_conf, self.apache2_24_conf, self.apache2_ssl_24_conf):
             self.renderTemplateInOut(tmp, self.templates_folder, self.output_folder)
 
-        # CentOS 7.* + systemd + apache 2.4
-        if self.service_name == 'httpd' and self.apache_version == "2.4":
-            self.copyFile(self.apache2_24_conf, '/etc/httpd/conf/httpd.conf')
-            self.copyFile(self.apache2_ssl_24_conf, '/etc/httpd/conf.d/https_gluu.conf')
-
         if base.os_type == 'suse':
             self.copyFile(self.apache2_ssl_conf, self.https_gluu_fn)
 
-        elif base.clone_type == 'rpm' and base.os_initdaemon == 'init':
+        elif base.clone_type == 'rpm': 
             self.copyFile(self.apache2_conf, '/etc/httpd/conf/httpd.conf')
             self.copyFile(self.apache2_ssl_conf, self.https_gluu_fn)
 

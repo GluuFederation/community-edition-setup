@@ -16,6 +16,7 @@ import shutil
 import socket
 import multiprocessing
 import ssl
+import shlex
 
 from pathlib import Path
 from collections import OrderedDict
@@ -61,7 +62,7 @@ with open(os_release_fn) as f:
                     os_type = 'red'
                 elif 'ubuntu-core' in os_type:
                     os_type = 'ubuntu'
-                elif 'sles' in os_type:
+                elif 'sles' in os_type or 'suse' in os_type:
                     os_type = 'suse'
             elif row[0] == 'VERSION_ID':
                 os_version = row[1].split('.')[0]
@@ -72,6 +73,7 @@ if not (os_type and os_version):
 
 os_name = os_type + os_version
 deb_sysd_clone = os_name in ('ubuntu18', 'ubuntu20', 'ubuntu22', 'debian9', 'debian10')
+
 
 # Determine service path
 if (os_type in ('centos', 'red', 'fedora', 'suse') and os_initdaemon == 'systemd') or deb_sysd_clone:
@@ -88,9 +90,14 @@ else:
     clone_type = 'deb'
     httpd_name = 'apache2'
 
-if os_type == 'suse':
-    httpd_name = 'apache2'
-
+def get_os_description():
+    desc_dict = { 'suse': 'SUSE', 'red': 'RHEL', 'ubuntu': 'Ubuntu', 'deb': 'Debian', 'centos': 'CentOS', 'fedora': 'Fedora' }
+    descs = desc_dict.get(os_type, os_type)
+    descs += ' ' + os_version
+    fipsl = subprocess.getoutput("sysctl crypto.fips_enabled").strip().split()
+    if fipsl and fipsl[0] == 'crypto.fips_enabled' and fipsl[-1] == '1':
+        descs += ' [FIPS]'
+    return descs
 
 # resources
 current_file_max = int(open("/proc/sys/fs/file-max").read().strip())

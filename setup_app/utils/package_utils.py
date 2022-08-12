@@ -19,8 +19,12 @@ class PackageUtils(SetupUtils):
             check_text = '0'
 
         elif base.clone_type == 'rpm':
-            install_command = 'yum install -y {0}'
-            update_command = 'yum install -y epel-release'
+            if base.os_type == 'suse':
+                install_command = 'zypper install -y {0}'
+                update_command = 'zypper refresh'
+            else:
+                install_command = 'yum install -y {0}'
+                update_command = 'yum install -y epel-release'
             query_command = 'rpm -q {0}'
             check_text = 'is not installed'
 
@@ -51,7 +55,7 @@ class PackageUtils(SetupUtils):
                 package_list[os_type_version]['mondatory'] += ' ' + package_list[os_type_version]['python'][pypackage]
 
         if on_disa_stig:
-            package_list[os_type_version]['mondatory'] += ' java-11-openjdk-headless java-11-openjdk-devel'
+            package_list[os_type_version]['mondatory'] += ' java-11-openjdk-headless'
 
         for install_type in install_list:
             for package in package_list[os_type_version][install_type].split():
