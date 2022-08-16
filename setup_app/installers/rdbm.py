@@ -196,7 +196,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                 doc_id_type = self.get_sql_col_type('doc_id', sql_tbl_name)
                 if Config.rdbm_type == 'pgsql':
                     sql_cmd = 'CREATE TABLE "{}" (doc_id {} NOT NULL UNIQUE, "objectClass" VARCHAR(48), dn VARCHAR(128), {}, PRIMARY KEY (doc_id));'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols))
-                if Config.rdbm_type == 'spanner':
+                elif Config.rdbm_type == 'spanner':
                     sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL, `objectClass` STRING(48), dn STRING(128), {}) PRIMARY KEY (`doc_id`)'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols))
                 else:
                     sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL UNIQUE, `objectClass` VARCHAR(48), dn VARCHAR(128), {}, PRIMARY KEY (`doc_id`));'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols))
@@ -392,7 +392,11 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
 
     def rdbmProperties(self):
-        if Config.rdbm_type in ('sql', 'mysql'):
+        if Config.rdbm_type in ('pgsql', 'mysql'):
+            
+            Config.templateRenderingDict['rdbm_enable_tls'] = '?enabledTLSProtocols=TLSv1.2' if Config.rdbm_type == 'mysql' else ''
+            Config.templateRenderingDict['rdbm_jdbc_type'] = Config.rdbm_type if Config.rdbm_type == 'mysql' else 'postgresql'
+
             Config.rdbm_password_enc = self.obscure(Config.rdbm_password)
             self.renderTemplateInOut(Config.gluuRDBMProperties, Config.templateFolder, Config.configFolder)
 

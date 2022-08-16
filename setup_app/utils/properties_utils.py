@@ -25,6 +25,7 @@ from setup_app.pylib.jproperties import Properties
 
 if Config.profile != SetupProfiles.DISA_STIG:
     import pymysql
+    import psycopg2
     from setup_app.utils.spanner import Spanner
 
 class PropertiesUtils(SetupUtils):
@@ -683,6 +684,8 @@ class PropertiesUtils(SetupUtils):
                          BackendStrings.REMOTE_COUCHBASE,
                          BackendStrings.LOCAL_MYSQL,
                          BackendStrings.REMOTE_MYSQL,
+                         BackendStrings.LOCAL_PGSQL,
+                         BackendStrings.REMOTE_PGSQL,
                          BackendStrings.CLOUD_SPANNER,
                          BackendStrings.SAPNNER_EMULATOR,
                         ]
@@ -812,6 +815,38 @@ class PropertiesUtils(SetupUtils):
                     break
                 except Exception as e:
                     print("  {}Can't connect to MySQL: {}{}".format(colors.DANGER, e, colors.ENDC))
+
+        elif backend_type_str == BackendStrings.LOCAL_PGSQL:
+            Config.ldap_install = InstallTypes.NONE
+            Config.rdbm_install = True
+            Config.rdbm_install_type = InstallTypes.LOCAL
+            Config.rdbm_type = 'pgsql'
+            Config.rdbm_host = 'localhost'
+            Config.rdbm_user = 'gluu'
+            Config.rdbm_password = self.getPW(special='.*=+-()[]{}')
+            Config.rdbm_port = 5432
+            Config.rdbm_db = 'gluudb'
+
+        elif backend_type_str == BackendStrings.REMOTE_PGSQL:
+            Config.ldap_install = InstallTypes.NONE
+            Config.rdbm_install = True
+            Config.rdbm_install_type = InstallTypes.REMOTE
+            Config.rdbm_type = 'pgsql'
+
+            while True:
+                Config.rdbm_host = self.getPrompt("  PgSQL host", Config.get('rdbm_host'))
+                Config.rdbm_port = self.getPrompt("  PgSQL port", 5432, itype=int, indent=1)
+                Config.rdbm_user = self.getPrompt("  PgSQL user", Config.get('rdbm_user'))
+                Config.rdbm_password = self.getPrompt("  PgSQL password")
+                Config.rdbm_db = self.getPrompt("  PgSQL database", Config.get('rdbm_db'))
+
+                try:
+                    psycopg2.connect(dbname=Config.rdbm_db, user=Config.rdbm_user, password=Config.rdbm_password, host=Config.rdbm_host, port=Config.rdbm_port)
+                    print("  {}PgSQL connection was successfull{}".format(colors.OKGREEN, colors.ENDC))
+                    break
+                except Exception as e:
+                    print("  {}Can't connect to PgSQL: {}{}".format(colors.DANGER, e, colors.ENDC))
+
 
         elif backend_type_str in (BackendStrings.CLOUD_SPANNER, BackendStrings.SAPNNER_EMULATOR):
             Config.ldap_install = InstallTypes.NONE

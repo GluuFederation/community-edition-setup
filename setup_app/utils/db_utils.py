@@ -24,7 +24,6 @@ from setup_app.utils.setup_utils import SetupUtils
 
 
 if Config.profile != SetupProfiles.DISA_STIG:
-    import pymysql
     from setup_app.utils.cbm import CBM
     from setup_app.utils.spanner import Spanner
 
@@ -778,10 +777,11 @@ class DBUtils(SetupUtils):
         self.Base.prepare()
 
         # fix JSON type for mariadb
-        for tbl in self.Base.classes:
-            for col in tbl.__table__.columns:
-                if isinstance(col.type, sqlalchemy.dialects.mysql.LONGTEXT) and col.comment.lower() == 'json':
-                    col.type = sqlalchemy.dialects.mysql.json.JSON()
+        if Config.rdbm_type == 'mysql':
+            for tbl in self.Base.classes:
+                for col in tbl.__table__.columns:
+                    if isinstance(col.type, sqlalchemy.dialects.mysql.LONGTEXT) and col.comment.lower() == 'json':
+                        col.type = sqlalchemy.dialects.mysql.json.JSON()
 
         base.logIt("Reflected tables {}".format(list(self.metadata.tables.keys())))
 
