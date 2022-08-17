@@ -22,7 +22,7 @@
   "debian 11": {
     "optional": "",
     "mondatory": "apache2 curl wget tar xz-utils unzip rsyslog bzip2",
-    "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel.yaml", "certifi":"python3-certifi", "pymysql":"python3-pymysql", "distutils.util": "python3-distutils"}
+    "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel.yaml", "certifi":"python3-certifi", "pymysql":"python3-pymysql", "cryptography":"python3-cryptography", "distutils.util": "python3-distutils"}
   },
   "ubuntu 20": {
       "optional": "",
