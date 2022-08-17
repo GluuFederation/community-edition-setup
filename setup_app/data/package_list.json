@@ -9,15 +9,20 @@
       "mondatory": "httpd mod_ssl curl wget tar xz unzip rsyslog bzip2",
       "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel-yaml", "certifi":"python3-certifi", "pymysql":"python3-PyMySQL", "Crypto": "python3-cryptography"}
   },
+  "debian 9": {
+    "optional": "",
+    "mondatory": "apache2 curl wget tar xz-utils unzip rsyslog bzip2",
+    "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel.yaml", "certifi":"python3-certifi", "pymysql":"python3-pymysql", "Crypto": "python3-crypto", "distutils.util": "python3-distutils"}
+  },
   "debian 10": {
     "optional": "",
     "mondatory": "apache2 curl wget tar xz-utils unzip rsyslog bzip2",
     "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel.yaml", "certifi":"python3-certifi", "pymysql":"python3-pymysql", "Crypto": "python3-crypto", "distutils.util": "python3-distutils"}
   },
-  "debian 9": {
+  "debian 11": {
     "optional": "",
     "mondatory": "apache2 curl wget tar xz-utils unzip rsyslog bzip2",
-    "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel.yaml", "certifi":"python3-certifi", "pymysql":"python3-pymysql", "Crypto": "python3-crypto", "distutils.util": "python3-distutils"}
+    "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel.yaml", "certifi":"python3-certifi", "pymysql":"python3-pymysql", "distutils.util": "python3-distutils"}
   },
   "ubuntu 20": {
       "optional": "",
