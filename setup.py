@@ -3915,7 +3915,7 @@ class Setup(object):
                             '"%s"' % self.ldap_binddn,
                             '--bindPasswordFile',
                             self.ldapPassFn] + changes
-            self.run(dsconfigCmd, cwd=cwd, env={'OPENDJ_JAVA_HOME': self.jre_home})
+            self.run(' '.join(dsconfigCmd), cwd=cwd, shell=True, env={'OPENDJ_JAVA_HOME': self.jre_home})
 
     def export_opendj_public_cert(self):
         # Load password to acces OpenDJ truststore
@@ -4065,7 +4065,7 @@ class Setup(object):
                                              '--trustAll',
                                              '--noPropertiesFile',
                                              '--no-prompt']
-                        self.run(indexCmd, cwd=cwd, env={'OPENDJ_JAVA_HOME': self.jre_home})
+                        self.run(' '.join(indexCmd), cwd=cwd, shell=True, env={'OPENDJ_JAVA_HOME': self.jre_home})
 
         except:
             self.logIt("Error occured during backend " + backend + " LDAP indexing", True)
