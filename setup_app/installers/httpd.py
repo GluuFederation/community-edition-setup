@@ -33,11 +33,13 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
         self.apache2_conf = os.path.join(self.output_folder, 'httpd.conf')
         if Config.profile == SetupProfiles.DISA_STIG:
             self.apache2_24_conf = os.path.join(self.output_folder, 'httpd_2.4.fips.conf')
+            self.apache2_ssl_conf = os.path.join(self.output_folder, 'https_gluu.fips.conf')
+            self.apache2_ssl_24_conf = os.path.join(self.output_folder, 'https_gluu.fips.conf')
         else:
             self.apache2_24_conf = os.path.join(self.output_folder, 'httpd_2.4.conf')
+            self.apache2_ssl_conf = os.path.join(self.output_folder, 'https_gluu.conf')
+            self.apache2_ssl_24_conf = os.path.join(self.output_folder, 'https_gluu.conf')
 
-        self.apache2_ssl_conf = os.path.join(self.output_folder, 'https_gluu.conf')
-        self.apache2_ssl_24_conf = os.path.join(self.output_folder, 'https_gluu.conf')
         if base.os_type == 'suse':
             self.https_gluu_fn = '/etc/apache2/vhosts.d/_https_gluu.conf'
         elif base.clone_type == 'rpm':
