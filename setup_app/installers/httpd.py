@@ -76,6 +76,9 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
         for tmp_fn in error_templates:
             self.copyFile(tmp_fn, '/var/www/html')
 
+        if Config.profile == SetupProfiles.DISA_STIG:
+            self.chown('/var/www/html', 'apache', 'apache', True)
+
         # we only need these modules
         mods_enabled = ['env', 'log_config', 'proxy', 'proxy_http', 'access_compat', 'alias', 'authn_core', 'authz_core', 'authz_host', 'headers', 'mime', 'mpm_event', 'proxy_ajp', 'security2', 'reqtimeout', 'setenvif', 'socache_shmcb', 'ssl', 'unique_id', 'rewrite']
 
