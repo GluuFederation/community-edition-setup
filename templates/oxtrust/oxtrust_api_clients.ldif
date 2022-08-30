@@ -3,7 +3,7 @@ dn: inum=%(oxtrust_resource_server_client_id)s,ou=clients,o=gluu
 objectClass: oxAuthClient
 objectClass: top
 inum: %(oxtrust_resource_server_client_id)s
-displayName: API Resource Server Client
+displayName: oxTrust API UMA RS
 oxAuthAppType: native
 oxAuthGrantType: client_credentials
 oxAuthIdTokenSignedResponseAlg: HS256
