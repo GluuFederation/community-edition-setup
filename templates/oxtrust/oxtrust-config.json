@@ -20,12 +20,20 @@
         "gluuPerson",
         "eduPerson"
     ],
-    "oxTrustAdminUIlocalesSupported": [
-	    "English",
-	    "French",
-	    "Russian"
-  	],
-
+    "adminUiLocaleSupported":[
+    	{
+    		"locale" : "en",
+    		"displayName" : "English"
+    	},
+    	{
+    		"locale" : "fr",
+    		"displayName" : "French"
+    	},
+    	{
+    		"locale" : "rs",
+    		"displayName" : "Russian"
+    	}
+    ],
     "svnConfigurationStoreRoot":"unused",
     "svnConfigurationStorePassword":"unused",
     "persistSVN": false,
