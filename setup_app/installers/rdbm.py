@@ -393,12 +393,11 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
     def rdbmProperties(self):
         if Config.rdbm_type in ('pgsql', 'mysql'):
-            
-            Config.templateRenderingDict['rdbm_enable_tls'] = '?enabledTLSProtocols=TLSv1.2' if Config.rdbm_type == 'mysql' else ''
-            Config.templateRenderingDict['rdbm_jdbc_type'] = Config.rdbm_type if Config.rdbm_type == 'mysql' else 'postgresql'
-
             Config.rdbm_password_enc = self.obscure(Config.rdbm_password)
-            self.renderTemplateInOut(Config.gluuRDBMProperties, Config.templateFolder, Config.configFolder)
+            src_temp_fn = os.path.join(Config.templateFolder, 'gluu-{}.properties'.format(Config.rdbm_type))
+            targtet_fn = os.path.join(Config.configFolder, Config.gluuRDBMProperties)
+            rendered_tmp = self.render_template(src_temp_fn)
+            self.writeFile(targtet_fn, rendered_tmp)
 
         elif Config.rdbm_type == 'spanner':
             if Config.spanner_emulator_host:

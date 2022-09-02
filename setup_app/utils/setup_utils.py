@@ -393,23 +393,28 @@ class SetupUtils(Crypto64):
 
         return text % dictionary
 
-
-    def renderTemplateInOut(self, file_path, template_folder, output_folder, backup=False):
-        fn = os.path.basename(file_path)
-        in_fp = os.path.join(template_folder, fn) 
-        self.logIt("Rendering template %s" % in_fp)
-        template_text = self.readFile(in_fp)
-
-        # Create output folder if needed
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
-
+    def render_template(self, tmp_fn):
+        template_text = self.readFile(tmp_fn)
         format_dict = self.merge_dicts(Config.__dict__, Config.templateRenderingDict)
         for k in format_dict:
             if isinstance(format_dict[k], bool):
                 format_dict[k] = str(format_dict[k]).lower()
 
         rendered_text = self.fomatWithDict(template_text, format_dict)
+
+        return rendered_text
+
+    def renderTemplateInOut(self, file_path, template_folder, output_folder, backup=False):
+        fn = os.path.basename(file_path)
+        in_fp = os.path.join(template_folder, fn) 
+        self.logIt("Rendering template %s" % in_fp)
+
+        # Create output folder if needed
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        rendered_text = self.render_template(in_fp)
+
         out_fp = os.path.join(output_folder, fn)
         self.writeFile(out_fp, rendered_text, backup=backup)
 

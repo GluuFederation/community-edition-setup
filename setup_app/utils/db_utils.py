@@ -445,7 +445,7 @@ class DBUtils(SetupUtils):
                 return result
             return
         sqlalchemy_table = self.Base.classes[table].__table__
-        return self.session.query(sqlalchemy_table).filter(sqlalchemy_table).filter(sqlalchemy_table.columns.dn == dn).first()
+        return self.session.query(sqlalchemy_table).filter(sqlalchemy_table.columns.dn == dn).first()
 
     def spanner_to_dict(self, data):
         if not data or 'rows' not in data:
