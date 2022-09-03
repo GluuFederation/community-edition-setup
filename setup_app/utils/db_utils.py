@@ -825,7 +825,7 @@ class DBUtils(SetupUtils):
 
         data_type = self.get_attr_sql_data_type(key)
 
-        if data_type in ('SMALLINT', 'BOOL'):
+        if data_type in ('SMALLINT', 'BOOL', 'BOOLEAN'):
             if val[0].lower() in ('1', 'on', 'true', 'yes', 'ok'):
                 return 1 if data_type == 'SMALLINT' else True
             return 0 if data_type == 'SMALLINT' else False

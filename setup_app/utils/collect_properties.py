@@ -80,7 +80,6 @@ class CollectProperties(SetupUtils, BaseInstaller):
             Config.rdbm_user = gluu_sql_prop['auth.userName']
             Config.rdbm_password_enc = gluu_sql_prop['auth.userPassword']
             Config.rdbm_password = self.unobscure(Config.rdbm_password_enc)
-            Config.rdbm_db = gluu_sql_prop['db.schema.name']
 
         if not Config.persistence_type in ('couchbase', 'ldap') and os.path.exists(Config.gluuSpannerProperties):
             Config.rdbm_type = 'spanner'
