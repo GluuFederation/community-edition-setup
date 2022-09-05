@@ -20,20 +20,7 @@
         "gluuPerson",
         "eduPerson"
     ],
-    "adminUiLocaleSupported":[
-    	{
-    		"locale" : "en",
-    		"displayName" : "English"
-    	},
-    	{
-    		"locale" : "fr",
-    		"displayName" : "French"
-    	},
-    	{
-    		"locale" : "rs",
-    		"displayName" : "Russian"
-    	}
-    ],
+    "adminUiLocaleSupported": %(adminUiLocaleSupported)s,
     "svnConfigurationStoreRoot":"unused",
     "svnConfigurationStorePassword":"unused",
     "persistSVN": false,
