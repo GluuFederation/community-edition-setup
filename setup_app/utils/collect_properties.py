@@ -80,6 +80,9 @@ class CollectProperties(SetupUtils, BaseInstaller):
             Config.rdbm_user = gluu_sql_prop['auth.userName']
             Config.rdbm_password_enc = gluu_sql_prop['auth.userPassword']
             Config.rdbm_password = self.unobscure(Config.rdbm_password_enc)
+            if Config.rdbm_type == 'postgresql':
+                Config.rdbm_type = 'pgsql'
+
 
         if not Config.persistence_type in ('couchbase', 'ldap') and os.path.exists(Config.gluuSpannerProperties):
             Config.rdbm_type = 'spanner'
@@ -131,7 +134,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
         admin_dn = None
         result = dbUtils.search('o=gluu', search_filter='(&(gluuGroupType=gluuManagerGroup)(objectClass=gluuGroup))', search_scope=ldap3.SUBTREE)
         if result:
-            if Config.persistence_type in ('sql',):
+            if Config.persistence_type in ('sql',) and Config.rdbm_type != 'pgsql':
                 admin_dn = result['member']['v'][0]
             else:
                 admin_dn = result['member'][0]

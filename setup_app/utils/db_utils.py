@@ -144,7 +144,7 @@ class DBUtils(SetupUtils):
 
     @property
     def json_dialects_instance(self):
-        return sqlalchemy.dialects.mysql.json.JSON if Config.rdbm_type == 'mysql' else sqlalchemy.dialects.postgresql.json.JSON
+        return sqlalchemy.dialects.mysql.json.JSON if Config.rdbm_type == 'mysql' else sqlalchemy.dialects.postgresql.json.JSONB
 
     def mysqlconnection(self, log=True):
         return self.sqlconnection(log)
@@ -164,8 +164,7 @@ class DBUtils(SetupUtils):
 
         for attr in attribDataTypes.listAttributes:
             if attr not in self.sql_data_types:
-                self.sql_data_types[attr] = { 'mysql': {'type': 'JSON'}, 'spanner': {'type': 'ARRAY<STRING(MAX)>'} }
-
+                self.sql_data_types[attr] = { 'mysql': {'type': 'JSON'}, 'pgsql': {'type': 'JSONB'},  'spanner': {'type': 'ARRAY<STRING(MAX)>'} }
 
     def in_subtable(self, table, attr):
         if table in self.sub_tables[Config.rdbm_type]:
@@ -667,17 +666,19 @@ class DBUtils(SetupUtils):
                 else:
                     oxConfigurationProperty = {'v': []}
 
-                for i, oxconfigprop in enumerate(oxConfigurationProperty['v'][:]):
+                ox_configuration_property_list = oxConfigurationProperty['v'] if Config.rdbm_type == 'mysql' else oxConfigurationProperty
+
+                for i, oxconfigprop in enumerate(ox_configuration_property_list[:]):
                     if isinstance(oxconfigprop, str):
                         oxconfigprop = json.loads(oxconfigprop)
                     if oxconfigprop.get('value1') == 'allowed_clients' and client_id not in oxconfigprop['value2']:
                         oxconfigprop['value2'] = self.add2strlist(client_id, oxconfigprop['value2'])
-                        oxConfigurationProperty['v'][i] = json.dumps(oxconfigprop)
+                        ox_configuration_property_list[i] = json.dumps(oxconfigprop)
                         break
                 else:
-                    oxConfigurationProperty['v'].append(json.dumps({'value1': 'allowed_clients', 'value2': client_id}))
+                    ox_configuration_property_list.append(json.dumps({'value1': 'allowed_clients', 'value2': client_id}))
 
-                sqlalchemyObj.oxConfigurationProperty = oxConfigurationProperty
+                sqlalchemyObj.oxConfigurationProperty = oxConfigurationProperty if BackendTypes.MYSQL else ox_configuration_property_list
                 self.session.commit()
 
 
@@ -843,10 +844,9 @@ class DBUtils(SetupUtils):
             json_data = {'v':[]}
             for d in val:
                 json_data['v'].append(d)
-
             return json_data
 
-        if data_type == 'ARRAY<STRING(MAX)>':
+        if data_type in ('ARRAY<STRING(MAX)>', 'JSONB'):
             return val
 
         return val[0]
@@ -929,7 +929,10 @@ class DBUtils(SetupUtils):
                             if isinstance(sqlalchObj.__table__.columns[attribute].type, self.json_dialects_instance):
                                 cur_val = copy.deepcopy(getattr(sqlalchObj, attribute))
                                 for val_ in new_val:
-                                    cur_val['v'].append(val_)
+                                    if Config.rdbm_type == 'mysql':
+                                        cur_val['v'].append(val_)
+                                    else:
+                                        cur_val.append(val_)
                                 setattr(sqlalchObj, attribute, cur_val)
                             else:
                                 setattr(sqlalchObj, attribute, new_val[0])
@@ -983,7 +986,7 @@ class DBUtils(SetupUtils):
 
                         for col in sqlalchCls.__table__.columns:
                             if isinstance(col.type, self.json_dialects_instance) and col.name not in vals:
-                                vals[col.name] = {'v': []}
+                                vals[col.name] = {'v': []} if Config.rdbm_type == 'mysql' else []
 
                         sqlalchObj = sqlalchCls()
 

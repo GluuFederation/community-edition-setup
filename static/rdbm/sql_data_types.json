@@ -181,6 +181,9 @@
     "mysql": {
       "type": "JSON"
     },
+    "pgsql": {
+      "type": "JSONB"
+    },
     "spanner": {
       "type": "ARRAY<STRING(MAX)>"
     }
@@ -526,6 +529,9 @@
     "mysql": {
       "type": "JSON"
     },
+    "pgsql": {
+      "type": "JSONB"
+    },
     "spanner": {
       "type": "ARRAY<STRING(MAX)>"
     }
@@ -785,6 +791,9 @@
     "mysql": {
       "type": "JSON"
     },
+    "pgsql": {
+      "type": "JSONB"
+    },
     "spanner": {
       "type": "ARRAY<STRING(MAX)>"
     }
@@ -801,6 +810,9 @@
     "mysql": {
       "type": "JSON"
     },
+    "pgsql": {
+      "type": "JSONB"
+    },
     "spanner": {
       "type": "ARRAY<STRING(MAX)>"
     }
@@ -808,6 +820,9 @@
   "eduPersonEntitlement": {
     "mysql": {
       "type": "JSON"
+    },
+    "pgsql": {
+      "type": "JSONB"
     },
     "spanner": {
       "type": "ARRAY<STRING(MAX)>"
@@ -817,6 +832,9 @@
     "mysql": {
       "type": "JSON"
     },
+    "pgsql": {
+      "type": "JSONB"
+    },
     "spanner": {
       "type": "ARRAY<STRING(MAX)>"
     }
@@ -824,6 +842,9 @@
   "eduPersonOrgUnitDN": {
     "mysql": {
       "type": "JSON"
+    },
+    "pgsql": {
+      "type": "JSONB"
     },
     "spanner": {
       "type": "ARRAY<STRING(MAX)>"
@@ -833,6 +854,9 @@
     "mysql": {
       "type": "JSON"
     },
+    "pgsql": {
+      "type": "JSONB"
+    },
     "spanner": {
       "type": "ARRAY<STRING(MAX)>"
     }
@@ -841,6 +865,9 @@
     "mysql": {
       "type": "JSON"
     },
+    "pgsql": {
+      "type": "JSONB"
+    },
     "spanner": {
       "type": "ARRAY<STRING(MAX)>"
     }
@@ -848,6 +875,9 @@
   "eduPersonScopedAffiliation": {
     "mysql": {
       "type": "JSON"
+    },
+    "pgsql": {
+      "type": "JSONB"
     },
     "spanner": {
       "type": "ARRAY<STRING(MAX)>"
