@@ -10,6 +10,8 @@
       "sn"
     ],
     "custom": [
+      "(lower(\"uid\"))",
+      "(lower(\"mail\"))"
     ]
   },
   "oxAuthClient": {

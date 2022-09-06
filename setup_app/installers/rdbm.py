@@ -294,7 +294,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         else:
             for tblCls in self.dbUtils.Base.classes.keys():
                 tblObj = self.dbUtils.Base.classes[tblCls]()
-                tbl_fields = sql_indexes.get(tblCls, {}).get('fields', []) +  sql_indexes['__common__']['fields']
+                tbl_fields = sql_indexes.get(tblCls, {}).get('fields', []) + sql_indexes['__common__']['fields']
 
                 for attr in tblObj.__table__.columns:
                     if attr.name == 'doc_id':
@@ -354,7 +354,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                                     )
                         self.dbUtils.exec_rdbm_query(sql_cmd)
                     elif Config.rdbm_type == 'pgsql':
-                        sql_cmd = 'CREATE INDEX ON "{}" ("{}");'.format(
+                        sql_cmd = 'CREATE INDEX ON "{}" {};'.format(
                                     tblCls,
                                     custom_index
                                     )
