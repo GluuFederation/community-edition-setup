@@ -20,7 +20,7 @@
         "gluuPerson",
         "eduPerson"
     ],
-
+    "adminUiLocaleSupported": %(adminUiLocaleSupported)s,
     "svnConfigurationStoreRoot":"unused",
     "svnConfigurationStorePassword":"unused",
     "persistSVN": false,

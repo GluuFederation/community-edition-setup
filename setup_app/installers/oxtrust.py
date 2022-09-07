@@ -4,6 +4,7 @@ import uuid
 import json
 
 from setup_app import paths
+from setup_app import static
 from setup_app.utils import base
 from setup_app.static import AppType, InstallOption, SetupProfiles
 from setup_app.config import Config
@@ -110,6 +111,11 @@ class OxtrustInstaller(JettyInstaller):
 
 
     def render_import_templates(self):
+
+        if Config.profile == static.SetupProfiles.DISA_STIG:
+            Config.templateRenderingDict['adminUiLocaleSupported'] = '[{"locale" : "en", "displayName" : "English"}]'
+        else:
+            Config.templateRenderingDict['adminUiLocaleSupported'] = '[{"locale" : "en", "displayName" : "English"}, {"locale" : "fr", "displayName" : "French"}, {"locale" : "rs", "displayName" : "Russian"}]'
 
         for tmp in (self.oxtrust_config_json, self.oxtrust_cache_refresh_json, self.oxtrust_import_person_json):
             self.renderTemplateInOut(tmp, self.templates_folder, self.output_folder)
