@@ -95,11 +95,15 @@ class OxdInstaller(SetupUtils, BaseInstaller):
 
         self.enable()
 
-    def modify_config_yml(self):
-        self.logIt("Configuring", pbar=self.service_name)
+    def get_yaml_config(self):
         yml_str = self.readFile(self.oxd_server_yml_fn)
         oxd_yaml = ruamel.yaml.load(yml_str, ruamel.yaml.RoundTripLoader)
+        return oxd_yaml
 
+    def modify_config_yml(self):
+        self.logIt("Configuring", pbar=self.service_name)
+
+        oxd_yaml = self.get_yaml_config()
         addr_list = [Config.ip]
         lo = '127.0.0.1'
         if self.oxd_hostname == 'localhost':
@@ -159,8 +163,8 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             admin_connectors['jceProvider'] = self.fips_provider['-providerclass']
             admin_connectors['validateCerts'] = 'false'
 
-            oxd_yaml['crypt_provider_key_store_path']=self.oxd_jwks_keystore_fn
-            oxd_yaml['crypt_provider_key_store_password']=self.oxd_keystore_passw
+            oxd_yaml['crypt_provider_key_store_path'] = self.oxd_jwks_keystore_fn
+            oxd_yaml['crypt_provider_key_store_password'] = self.oxd_keystore_passw
 
         yml_str = ruamel.yaml.dump(oxd_yaml, Dumper=ruamel.yaml.RoundTripDumper)
         self.writeFile(self.oxd_server_yml_fn, yml_str)
@@ -273,13 +277,13 @@ class OxdInstaller(SetupUtils, BaseInstaller):
 
 
     def import_oxd_certificate(self):
-
+        oxd_yaml = self.get_yaml_config()
         oxd_alias = 'oxd_' + self.oxd_hostname.replace('.','_')
         oxd_cert_fn = os.path.join(Config.outputFolder, '{}.pem'.format(oxd_alias))
         # let's delete if alias exists
         self.delete_key(oxd_alias)
         store_alias = 'localhost' if self.oxd_hostname == 'localhost' else Config.hostname
-        self.export_cert_from_store(store_alias, self.oxd_server_keystore_fn, self.oxd_keystore_passw, oxd_cert_fn)
+        self.export_cert_from_store(store_alias, oxd_yaml['server']['applicationConnectors'][0]['keyStorePath'], self.oxd_keystore_passw, oxd_cert_fn)
         self.import_cert_to_java_truststore(oxd_alias, oxd_cert_fn)
 
 
