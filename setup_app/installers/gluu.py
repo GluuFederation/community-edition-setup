@@ -454,6 +454,9 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         if Config.profile == static.SetupProfiles.DISA_STIG:
             self.disa_stig_post_install_tasks()
 
+        if base.argsp.gluu_passwurd_cert:
+            self.generate_gluu_passwurd_api_keystore()
+
     def disa_stig_post_install_tasks(self):
 
         self.chown(Config.gluuOptFolder, Config.jetty_user, Config.gluu_group)
@@ -473,6 +476,14 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             self.run([paths.cmd_chmod, 'g+rwX', '-R', sys_path])
 
         self.chown(jetty_absolute_dir.parent.as_posix(), Config.user_group, recursive=True)
+
+
+    def generate_gluu_passwurd_api_keystore(self):
+        suffix = 'passwurd_api'
+        key_fn, csr_fn, crt_fn = self.gen_cert(suffix, 'changeit', user='jetty')
+        passwurd_api_keystore_fn = os.path.join(Config.certFolder, 'passwurdAKeystore.pcks12')
+        self.gen_keystore(suffix, passwurd_api_keystore_fn, 'changeit', key_fn, crt_fn, store_type='PKCS12')
+
 
     def enable_scripts(self, inums):
         if inums:
