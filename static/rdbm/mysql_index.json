@@ -7,10 +7,10 @@
       "displayName",
       "givenName",
       "ppid",
-      "sn"
+      "sn",
+      "address"
     ],
     "custom": [
-      "(CAST(address->'$.v' AS CHAR(48) ARRAY))",
       "(lower(`uid`))",
       "(lower(`mail`))"
     ]

@@ -7,7 +7,8 @@
       "displayName",
       "givenName",
       "ppid",
-      "sn"
+      "sn",
+      "address"
     ],
     "custom": [
       "(lower(\"uid\"))",
@@ -23,6 +24,7 @@
       "oxAuthClientSecretExpiresAt"
     ],
     "custom": [
+      "(\"del\", \"exp\")"
     ]
   },
   "oxAuthUmaPCT": {
@@ -30,6 +32,7 @@
       "tknCde"
     ],
     "custom": [
+      "(\"del\", \"exp\")"
     ]
   },
   "oxAuthCustomScope": {
@@ -46,6 +49,7 @@
       "creationDate"
     ],
     "custom": [
+      "(\"del\", \"exp\")"
     ]
   },
   "oxMetric": {
@@ -56,6 +60,7 @@
       "oxEndDate"
     ],
     "custom": [
+      "(\"del\", \"exp\")"
     ]
   },
   "token": {
@@ -66,6 +71,7 @@
       "tknCde"
     ],
     "custom": [
+      "(\"del\", \"exp\")"
     ]
   },
   "oxDeviceRegistration": {
@@ -78,11 +84,13 @@
       "creationDate"
     ],
     "custom": [
+      "(\"del\", \"exp\")"
     ]
   },
   "cache": {
     "fields": [],
     "custom": [
+      "(\"del\", \"exp\")"
     ]
   },
   "oxAuthSessionId": {
@@ -91,6 +99,7 @@
       "sid"
     ],
     "custom": [
+      "(\"del\", \"exp\")"
     ]
   },
   "oxUmaResource": {
@@ -100,6 +109,7 @@
       "oxAuthUmaScope"
     ],
     "custom": [
+      "(\"del\", \"exp\")"
     ]
   },
   "oxClientAuthorization": {
@@ -108,6 +118,7 @@
       "oxAuthUserId"
     ],
     "custom": [
+      "(\"del\", \"exp\")"
     ]
   },
   "gluuPerson_oxExternalUid": {
@@ -158,6 +169,7 @@
   "cibaRequest": {
     "fields": [],
     "custom": [
+      "(\"oxStatus\", \"exp\")"
     ]
   },
   "jansStatEntry": {
