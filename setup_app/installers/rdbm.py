@@ -27,11 +27,11 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         self.install_type = InstallOption.OPTONAL
         self.install_var = 'rdbm_install'
         self.register_progess()
-        self.qchar = '`' if Config.rdbm_type in ('mysql', 'spanner') else '"'
         self.output_dir = os.path.join(Config.outputFolder, Config.rdbm_type)
 
 
     def prepare(self):
+        self.qchar = '`' if Config.rdbm_type in ('mysql', 'spanner') else '"'
         self.schema_files = []
         self.gluu_attributes = []
 
@@ -306,7 +306,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                     if isinstance(attr.type, self.dbUtils.json_dialects_instance):
 
                         if attr.name in tbl_fields:
-                            if self.dbUtils.mysql_version < (5, 7, 38):
+                            if Config.rdbm_type == 'mysql' and self.dbUtils.mysql_version < (5, 7, 38):
                                 self.old_mysql_json_index(tblCls, attr.name)
                             else:
                                 for i, ind_str in enumerate(sql_indexes['__common__']['JSON']):

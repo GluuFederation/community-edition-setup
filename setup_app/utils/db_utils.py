@@ -86,7 +86,7 @@ class DBUtils(SetupUtils):
             for group in Config.mappingLocations:
                 if Config.mappingLocations[group] == 'rdbm':
                     if Config.rdbm_type in ('mysql', 'pgsql'):
-                        base.logIt("Making MySql Conncetion")
+                        base.logIt("Making {} Conncetion".format(Config.rdbm_type))
                         result = self.mysqlconnection()
                         if not result[0]:
                             print("{}FATAL: {}{}".format(colors.FAIL, result[1], colors.ENDC))
@@ -121,7 +121,8 @@ class DBUtils(SetupUtils):
             self.metadata = sqlalchemy.MetaData()
             self.session.connection()
             base.logIt("{} Connection was successful".format(Config.rdbm_type.upper()))
-            self.set_mysql_version()
+            if Config.rdbm_type == 'mysql':
+                self.set_mysql_version()
             return True, self.session
 
         except Exception as e:
