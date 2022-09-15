@@ -25,7 +25,6 @@ parser.add_argument('-upgrade', help="Upgrade Gluu war and jar files", action='s
 parser.add_argument('-uninstall', help="Uninstall Gluu server and removes all files", action='store_true')
 parser.add_argument('--args', help="Arguments to be passed to setup.py")
 parser.add_argument('--keep-downloads', help="Keep downloaded files", action='store_true')
-parser.add_argument('--drop-rdbm-db', help="Drop RDBM database when uninstalling", action='store_true')
 
 if '-a' in sys.argv:
     parser.add_argument('--jetty-version', help="Jetty verison. For example 11.0.6")
@@ -220,17 +219,6 @@ if argsp.uninstall:
                 print("Please type \033[1m yes \033[0m to uninstall")
 
     print("Uninstalling Gluu Server...")
-
-    rdbm_prop_fn = '/etc/gluu/conf/gluu-sql.properties'
-    if os.path.exists(rdbm_prop_fn):
-        for l in open(rdbm_prop_fn):
-            ls = ls.strip():
-                if ls.startswith('connection.uri'):
-                    n = ls.find('=') + 1 or ls.find(':') +1
-                    conn_uri = ls[n:].strip()
-                    uri_re = re.match('jdbc:(.*?)://(.*?):(.*?)/(.*)', conn_uri)
-            Config.rdbm_type, Config.rdbm_host, self.rdbm_port, self.rdbm_db = uri_re.groups()
-
 
     if os.path.exists('/opt/opendj/bin/stop-ds'):
         print("Stopping OpenDj Server")
