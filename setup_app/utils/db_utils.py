@@ -24,7 +24,6 @@ from setup_app.utils.setup_utils import SetupUtils
 
 
 if Config.profile != SetupProfiles.DISA_STIG:
-    import pymysql
     from setup_app.utils.cbm import CBM
     from setup_app.utils.spanner import Spanner
 
@@ -87,7 +86,7 @@ class DBUtils(SetupUtils):
             for group in Config.mappingLocations:
                 if Config.mappingLocations[group] == 'rdbm':
                     if Config.rdbm_type in ('mysql', 'pgsql'):
-                        base.logIt("Making MySql Conncetion")
+                        base.logIt("Making {} Conncetion".format(Config.rdbm_type))
                         result = self.mysqlconnection()
                         if not result[0]:
                             print("{}FATAL: {}{}".format(colors.FAIL, result[1], colors.ENDC))
@@ -122,7 +121,8 @@ class DBUtils(SetupUtils):
             self.metadata = sqlalchemy.MetaData()
             self.session.connection()
             base.logIt("{} Connection was successful".format(Config.rdbm_type.upper()))
-            self.set_mysql_version()
+            if Config.rdbm_type == 'mysql':
+                self.set_mysql_version()
             return True, self.session
 
         except Exception as e:
@@ -145,7 +145,7 @@ class DBUtils(SetupUtils):
 
     @property
     def json_dialects_instance(self):
-        return sqlalchemy.dialects.mysql.json.JSON if Config.rdbm_type == 'mysql' else sqlalchemy.dialects.postgresql.json.JSON
+        return sqlalchemy.dialects.mysql.json.JSON if Config.rdbm_type == 'mysql' else sqlalchemy.dialects.postgresql.json.JSONB
 
     def mysqlconnection(self, log=True):
         return self.sqlconnection(log)
@@ -165,8 +165,7 @@ class DBUtils(SetupUtils):
 
         for attr in attribDataTypes.listAttributes:
             if attr not in self.sql_data_types:
-                self.sql_data_types[attr] = { 'mysql': {'type': 'JSON'}, 'spanner': {'type': 'ARRAY<STRING(MAX)>'} }
-
+                self.sql_data_types[attr] = { 'mysql': {'type': 'JSON'}, 'pgsql': {'type': 'JSONB'},  'spanner': {'type': 'ARRAY<STRING(MAX)>'} }
 
     def in_subtable(self, table, attr):
         if table in self.sub_tables[Config.rdbm_type]:
@@ -446,7 +445,7 @@ class DBUtils(SetupUtils):
                 return result
             return
         sqlalchemy_table = self.Base.classes[table].__table__
-        return self.session.query(sqlalchemy_table).filter(sqlalchemy_table).filter(sqlalchemy_table.columns.dn == dn).first()
+        return self.session.query(sqlalchemy_table).filter(sqlalchemy_table.columns.dn == dn).first()
 
     def spanner_to_dict(self, data):
         if not data or 'rows' not in data:
@@ -668,17 +667,19 @@ class DBUtils(SetupUtils):
                 else:
                     oxConfigurationProperty = {'v': []}
 
-                for i, oxconfigprop in enumerate(oxConfigurationProperty['v'][:]):
+                ox_configuration_property_list = oxConfigurationProperty['v'] if Config.rdbm_type == 'mysql' else oxConfigurationProperty
+
+                for i, oxconfigprop in enumerate(ox_configuration_property_list[:]):
                     if isinstance(oxconfigprop, str):
                         oxconfigprop = json.loads(oxconfigprop)
                     if oxconfigprop.get('value1') == 'allowed_clients' and client_id not in oxconfigprop['value2']:
                         oxconfigprop['value2'] = self.add2strlist(client_id, oxconfigprop['value2'])
-                        oxConfigurationProperty['v'][i] = json.dumps(oxconfigprop)
+                        ox_configuration_property_list[i] = json.dumps(oxconfigprop)
                         break
                 else:
-                    oxConfigurationProperty['v'].append(json.dumps({'value1': 'allowed_clients', 'value2': client_id}))
+                    ox_configuration_property_list.append(json.dumps({'value1': 'allowed_clients', 'value2': client_id}))
 
-                sqlalchemyObj.oxConfigurationProperty = oxConfigurationProperty
+                sqlalchemyObj.oxConfigurationProperty = oxConfigurationProperty if BackendTypes.MYSQL else ox_configuration_property_list
                 self.session.commit()
 
 
@@ -778,10 +779,11 @@ class DBUtils(SetupUtils):
         self.Base.prepare()
 
         # fix JSON type for mariadb
-        for tbl in self.Base.classes:
-            for col in tbl.__table__.columns:
-                if isinstance(col.type, sqlalchemy.dialects.mysql.LONGTEXT) and col.comment.lower() == 'json':
-                    col.type = sqlalchemy.dialects.mysql.json.JSON()
+        if Config.rdbm_type == 'mysql':
+            for tbl in self.Base.classes:
+                for col in tbl.__table__.columns:
+                    if isinstance(col.type, sqlalchemy.dialects.mysql.LONGTEXT) and col.comment.lower() == 'json':
+                        col.type = sqlalchemy.dialects.mysql.json.JSON()
 
         base.logIt("Reflected tables {}".format(list(self.metadata.tables.keys())))
 
@@ -825,7 +827,7 @@ class DBUtils(SetupUtils):
 
         data_type = self.get_attr_sql_data_type(key)
 
-        if data_type in ('SMALLINT', 'BOOL'):
+        if data_type in ('SMALLINT', 'BOOL', 'BOOLEAN'):
             if val[0].lower() in ('1', 'on', 'true', 'yes', 'ok'):
                 return 1 if data_type == 'SMALLINT' else True
             return 0 if data_type == 'SMALLINT' else False
@@ -843,10 +845,9 @@ class DBUtils(SetupUtils):
             json_data = {'v':[]}
             for d in val:
                 json_data['v'].append(d)
-
             return json_data
 
-        if data_type == 'ARRAY<STRING(MAX)>':
+        if data_type in ('ARRAY<STRING(MAX)>', 'JSONB'):
             return val
 
         return val[0]
@@ -929,7 +930,10 @@ class DBUtils(SetupUtils):
                             if isinstance(sqlalchObj.__table__.columns[attribute].type, self.json_dialects_instance):
                                 cur_val = copy.deepcopy(getattr(sqlalchObj, attribute))
                                 for val_ in new_val:
-                                    cur_val['v'].append(val_)
+                                    if Config.rdbm_type == 'mysql':
+                                        cur_val['v'].append(val_)
+                                    else:
+                                        cur_val.append(val_)
                                 setattr(sqlalchObj, attribute, cur_val)
                             else:
                                 setattr(sqlalchObj, attribute, new_val[0])
@@ -983,7 +987,7 @@ class DBUtils(SetupUtils):
 
                         for col in sqlalchCls.__table__.columns:
                             if isinstance(col.type, self.json_dialects_instance) and col.name not in vals:
-                                vals[col.name] = {'v': []}
+                                vals[col.name] = {'v': []} if Config.rdbm_type == 'mysql' else []
 
                         sqlalchObj = sqlalchCls()
 

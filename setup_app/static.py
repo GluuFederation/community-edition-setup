@@ -30,6 +30,8 @@ class BackendStrings:
     REMOTE_MYSQL     = 'Remote MySQL'
     CLOUD_SPANNER    = 'Cloud Spanner'
     SAPNNER_EMULATOR = 'Spanner Emulator'
+    LOCAL_PGSQL      = 'Local PgSQL'
+    REMOTE_PGSQL      = 'Remote PgSQL'
 
 
 class PersistenceType:

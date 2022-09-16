@@ -27,11 +27,11 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         self.install_type = InstallOption.OPTONAL
         self.install_var = 'rdbm_install'
         self.register_progess()
-        self.qchar = '`' if Config.rdbm_type in ('mysql', 'spanner') else '"'
         self.output_dir = os.path.join(Config.outputFolder, Config.rdbm_type)
 
 
     def prepare(self):
+        self.qchar = '`' if Config.rdbm_type in ('mysql', 'spanner') else '"'
         self.schema_files = []
         self.gluu_attributes = []
 
@@ -196,7 +196,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                 doc_id_type = self.get_sql_col_type('doc_id', sql_tbl_name)
                 if Config.rdbm_type == 'pgsql':
                     sql_cmd = 'CREATE TABLE "{}" (doc_id {} NOT NULL UNIQUE, "objectClass" VARCHAR(48), dn VARCHAR(128), {}, PRIMARY KEY (doc_id));'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols))
-                if Config.rdbm_type == 'spanner':
+                elif Config.rdbm_type == 'spanner':
                     sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL, `objectClass` STRING(48), dn STRING(128), {}) PRIMARY KEY (`doc_id`)'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols))
                 else:
                     sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL UNIQUE, `objectClass` VARCHAR(48), dn VARCHAR(128), {}, PRIMARY KEY (`doc_id`));'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols))
@@ -294,7 +294,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         else:
             for tblCls in self.dbUtils.Base.classes.keys():
                 tblObj = self.dbUtils.Base.classes[tblCls]()
-                tbl_fields = sql_indexes.get(tblCls, {}).get('fields', []) +  sql_indexes['__common__']['fields']
+                tbl_fields = sql_indexes.get(tblCls, {}).get('fields', []) + sql_indexes['__common__']['fields']
 
                 for attr in tblObj.__table__.columns:
                     if attr.name == 'doc_id':
@@ -306,7 +306,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                     if isinstance(attr.type, self.dbUtils.json_dialects_instance):
 
                         if attr.name in tbl_fields:
-                            if self.dbUtils.mysql_version < (5, 7, 38):
+                            if Config.rdbm_type == 'mysql' and self.dbUtils.mysql_version < (5, 7, 38):
                                 self.old_mysql_json_index(tblCls, attr.name)
                             else:
                                 for i, ind_str in enumerate(sql_indexes['__common__']['JSON']):
@@ -321,7 +321,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                                                 )
                                         self.dbUtils.exec_rdbm_query(sql_cmd)
                                     elif Config.rdbm_type == 'pgsql':
-                                        sql_cmd ='CREATE INDEX ON "{}" (({}));'.format(
+                                        sql_cmd ='CREATE INDEX ON "{}" {};'.format(
                                                 tblCls,
                                                 tmp_str.safe_substitute({'field':attr.name})
                                                 )
@@ -354,7 +354,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                                     )
                         self.dbUtils.exec_rdbm_query(sql_cmd)
                     elif Config.rdbm_type == 'pgsql':
-                        sql_cmd = 'CREATE INDEX ON "{}" ("{}");'.format(
+                        sql_cmd = 'CREATE INDEX ON "{}" {};'.format(
                                     tblCls,
                                     custom_index
                                     )
@@ -392,9 +392,12 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
 
     def rdbmProperties(self):
-        if Config.rdbm_type in ('sql', 'mysql'):
+        if Config.rdbm_type in ('pgsql', 'mysql'):
             Config.rdbm_password_enc = self.obscure(Config.rdbm_password)
-            self.renderTemplateInOut(Config.gluuRDBMProperties, Config.templateFolder, Config.configFolder)
+            src_temp_fn = os.path.join(Config.templateFolder, 'gluu-{}.properties'.format(Config.rdbm_type))
+            targtet_fn = os.path.join(Config.configFolder, Config.gluuRDBMProperties)
+            rendered_tmp = self.render_template(src_temp_fn)
+            self.writeFile(targtet_fn, rendered_tmp)
 
         elif Config.rdbm_type == 'spanner':
             if Config.spanner_emulator_host:

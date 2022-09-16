@@ -25,6 +25,7 @@ parser.add_argument('-upgrade', help="Upgrade Gluu war and jar files", action='s
 parser.add_argument('-uninstall', help="Uninstall Gluu server and removes all files", action='store_true')
 parser.add_argument('--args', help="Arguments to be passed to setup.py")
 parser.add_argument('--keep-downloads', help="Keep downloaded files", action='store_true')
+
 if '-a' in sys.argv:
     parser.add_argument('--jetty-version', help="Jetty verison. For example 11.0.6")
 parser.add_argument('-n', help="No prompt", action='store_true')
@@ -219,8 +220,9 @@ if argsp.uninstall:
 
     print("Uninstalling Gluu Server...")
 
-    print("Stopping OpenDj Server")
-    os.system('/opt/opendj/bin/stop-ds')
+    if os.path.exists('/opt/opendj/bin/stop-ds'):
+        print("Stopping OpenDj Server")
+        os.system('/opt/opendj/bin/stop-ds')
     for uf in services:
         service,ext = os.path.splitext(uf)
         if os.path.exists(os.path.join(jetty_home, service)):

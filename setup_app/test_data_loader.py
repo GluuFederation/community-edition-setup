@@ -249,7 +249,8 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         for inum in custom_scripts:
             self.dbUtils.enable_script(inum)
 
-        self.dbUtils.enable_script('DAA9-F7F8', enable=False)
+        if Config.installCasa:
+            self.dbUtils.enable_script('DAA9-F7F8', enable=False)
 
         if self.dbUtils.moddb == static.BackendTypes.LDAP:
             # Update LDAP schema
