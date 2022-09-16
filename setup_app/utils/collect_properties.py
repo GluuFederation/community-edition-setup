@@ -74,8 +74,10 @@ class CollectProperties(SetupUtils, BaseInstaller):
             gluu_sql_prop = base.read_properties_file(Config.gluuRDBMProperties)
 
             uri_re = re.match('jdbc:(.*?)://(.*?):(.*?)/(.*)', gluu_sql_prop['connection.uri'])
-            Config.rdbm_type, Config.rdbm_host, self.rdbm_port, self.rdbm_db = uri_re.groups()
-            Config.rdbm_port = int(self.rdbm_port)
+            Config.rdbm_type, Config.rdbm_host, Config.rdbm_port, Config.rdbm_db = uri_re.groups()
+            if '?' in Config.rdbm_db:
+                Config.rdbm_db = Config.rdbm_db.split('?')[0]
+            Config.rdbm_port = int(Config.rdbm_port)
             Config.rdbm_install_type = static.InstallTypes.LOCAL if Config.rdbm_host == 'localhost' else static.InstallTypes.REMOTE
             Config.rdbm_user = gluu_sql_prop['auth.userName']
             Config.rdbm_password_enc = gluu_sql_prop['auth.userPassword']
