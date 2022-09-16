@@ -48,6 +48,7 @@ def arg_parser():
     parser.add_argument('-rdbm-port', help="RDBM port")
     parser.add_argument('-rdbm-db', help="RDBM database")
     parser.add_argument('-rdbm-host', help="RDBM host")
+    parser.add_argument('--reset-rdbm-db', help="Deletes all table on target database. Warning! You will lose all data on target database.", action='store_true')
 
     parser.add_argument('--remote-couchbase', help="Enables using remote couchbase server", action='store_true')
     parser.add_argument('--local-couchbase', help="Enables installing couchbase server", action='store_true')

@@ -54,12 +54,20 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
     def install(self):
         self.prepare()
         self.local_install()
+        if Config.rdbm_install_type == InstallTypes.REMOTE and base.argsp.reset_rdbm_db:
+            self.reset_rdbm_db()
         self.create_tables(self.schema_files)
         self.create_subtables()
         self.import_ldif()
         self.create_indexes()
         self.rdbmProperties()
 
+    def reset_rdbm_db(self):
+        self.logIt("Resetting DB {}".format(Config.rdbm_db))
+        self.dbUtils.metadata.reflect(self.dbUtils.engine)
+        self.dbUtils.metadata.drop_all(self.dbUtils.engine)
+        self.dbUtils.session.commit()
+        self.dbUtils.metadata.clear()
 
     def get_col_def(self, attrname, sql_tbl_name):
         data_type = self.get_sql_col_type(attrname, sql_tbl_name)
