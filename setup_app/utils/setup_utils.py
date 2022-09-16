@@ -213,18 +213,18 @@ class SetupUtils(Crypto64):
     def applyChangesInFiles(self, changes):
         self.logIt("Applying changes to %s files..." % changes['name'])
         for change in changes['files']:
-            file = change['path']
+            cfile = change['path']
 
-            text = self.readFile(file)
-            file_backup = '%s.bak' % file
+            text = self.readFile(cfile)
+            file_backup = '%s.bak' % cfile
             self.writeFile(file_backup, text)
             self.logIt("Created backup of %s file %s..." % (changes['name'], file_backup))
 
             for replace in change['replace']:
                 text = self.replaceInText(text, replace['pattern'], replace['update'])
 
-            self.writeFile(file, text)
-            self.logIt("Wrote updated %s file %s..." % (changes['name'], file))
+            self.writeFile(cfile, text)
+            self.logIt("Wrote updated %s file %s..." % (changes['name'], cfile))
 
 
     def copyFile(self, inFile, destFolder, backup=True):

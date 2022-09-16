@@ -435,11 +435,11 @@ class DBBackendForm(GluuSetupForm):
             if used_ports:
                 npyscreen.notify_confirm(msg.used_ports.format(','.join(used_ports)), title="Warning")
                 return
-
             Config.ldap_install = static.InstallTypes.LOCAL
             Config.cb_install = static.InstallTypes.NONE
             Config.rdbm_install = False
             self.parentApp.switchForm('DBLDAPForm')
+
         elif self.parentApp.backend_type_str == static.BackendStrings.REMOTE_OPENDJ:
             Config.ldap_install = static.InstallTypes.REMOTE
             Config.cb_install = static.InstallTypes.NONE
@@ -466,6 +466,7 @@ class DBBackendForm(GluuSetupForm):
             if not Config.rdbm_user:
                 Config.rdbm_user = 'gluu'
             self.parentApp.switchForm('DBRDBMForm')
+
         elif self.parentApp.backend_type_str in (static.BackendStrings.REMOTE_MYSQL, static.BackendStrings.REMOTE_PGSQL):
             Config.ldap_install = static.InstallTypes.NONE
             Config.rdbm_install_type = static.InstallTypes.REMOTE
@@ -486,11 +487,11 @@ class DBBackendForm(GluuSetupForm):
 
 
         if self.parentApp.backend_type_str in(static.BackendStrings.LOCAL_MYSQL, static.BackendStrings.REMOTE_MYSQL):
-                Config.rdbm_type = 'mysql'
-                Config.rdbm_port = 3306
+            Config.rdbm_type = 'mysql'
+            Config.rdbm_port = 3306
         elif self.parentApp.backend_type_str in( static.BackendStrings.LOCAL_PGSQL, static.BackendStrings.REMOTE_PGSQL):
-                Config.rdbm_type = 'pgsql'
-                Config.rdbm_port = 5432
+            Config.rdbm_type = 'pgsql'
+            Config.rdbm_port = 5432
 
     def backButtonPressed(self):
         self.parentApp.switchForm('ServicesForm')
