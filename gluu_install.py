@@ -128,6 +128,10 @@ if not argsp.uninstall:
         else:
             missing_packages.append('python3-pymysql')
 
+    try:
+        import psycopg2
+    except:
+        missing_packages.append('python3-psycopg2')
 
     if not shutil.which('unzip'):
         missing_packages.append('unzip')
