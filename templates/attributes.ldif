@@ -393,12 +393,12 @@ description: Casual name of the End-User that may or may not be the same asthe g
 displayName: Nickname
 gluuAttributeEditType: user
 gluuAttributeEditType: admin
-gluuAttributeName: nickname
+gluuAttributeName: nickName
 gluuAttributeOrigin: gluuPerson
 gluuAttributeType: string
 gluuAttributeViewType: user
 gluuAttributeViewType: admin
-gluuSAML1URI: urn:mace:dir:attribute-def:nickname
+gluuSAML1URI: urn:mace:dir:attribute-def:nickName
 gluuSAML2URI: urn:oid:1.3.6.1.4.1.48710.1.3.319
 gluuStatus: active
 inum: 5EC6
