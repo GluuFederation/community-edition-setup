@@ -3426,7 +3426,7 @@
             "desc": "Casual name of the End-User",
             "equality": "caseIgnoreMatch",
             "names": [
-                "nickName",
+                "nickname",
                 "oxTrustnickname"
             ],
             "oid": "oxAttribute",
