@@ -13,7 +13,7 @@ config.sql.auth.userPassword=%(rdbm_password_enc)s
 config.sql.password.encryption.method=SSHA-256
 
 # Connection pool size
-config.sql.connection.pool.max-total=20
+config.sql.connection.pool.max-total=200
 config.sql.connection.pool.max-idle=10
 config.sql.connection.pool.min-idle=5
 
