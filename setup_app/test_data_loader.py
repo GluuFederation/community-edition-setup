@@ -85,7 +85,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         if Config.rdbm_install_type and not hasattr(base.current_app.RDBMInstaller, 'qchar'):
             base.current_app.RDBMInstaller.prepare()
 
-        if not 'key_gen_path' in Config.non_setup_properties:
+        if 'key_gen_path' not in Config.non_setup_properties:
             base.current_app.GluuInstaller.determine_key_gen_path()
 
 
