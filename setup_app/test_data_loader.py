@@ -81,6 +81,14 @@ class TestDataLoader(BaseInstaller, SetupUtils):
 
     def load_test_data(self):
         Config.pbar.progress(self.service_name, "Loading Test Data", False)
+
+        if Config.rdbm_install_type and not hasattr(base.current_app.RDBMInstaller, 'qchar'):
+            base.current_app.RDBMInstaller.prepare()
+
+        if not 'key_gen_path' in Config.non_setup_properties:
+            base.current_app.GluuInstaller.determine_key_gen_path()
+
+
         # we need ldap rebind
         if Config.persistence_type == 'ldap':
             try:

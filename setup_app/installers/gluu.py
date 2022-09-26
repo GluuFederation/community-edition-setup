@@ -22,6 +22,9 @@ class GluuInstaller(BaseInstaller, SetupUtils):
 
     install_var = 'installGluu'
 
+    def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
+
     def __repr__(self):
         txt = ''
         try:
