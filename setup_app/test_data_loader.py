@@ -88,6 +88,8 @@ class TestDataLoader(BaseInstaller, SetupUtils):
         if 'key_gen_path' not in Config.non_setup_properties:
             base.current_app.GluuInstaller.determine_key_gen_path()
 
+        Config.templateRenderingDict['rdbm_type_name'] = 'postgresql' if Config.rdbm_type == 'pgsql' else Config.rdbm_type
+        Config.templateRenderingDict['rdbm_scheme'] = 'public' if Config.rdbm_type == 'pgsql' else 'gluudb'
 
         # we need ldap rebind
         if Config.persistence_type == 'ldap':
