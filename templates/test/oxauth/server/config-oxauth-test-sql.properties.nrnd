@@ -1,4 +1,4 @@
-config.sql.db.schema.name=%(rdbm_db)s
+config.sql.db.schema.name=%(rdbm_scheme)s
 
 config.sql.connection.uri=jdbc:%(rdbm_type_name)s://%(hostname)s:%(rdbm_port)s/%(rdbm_db)s
 
