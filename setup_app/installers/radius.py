@@ -19,7 +19,7 @@ class RadiusInstaller(BaseInstaller, SetupUtils):
         self.pbar_text = "Installing Radius Base"
         self.app_type = AppType.SERVICE
         self.install_var = 'installGluuRadius'
-        self.install_type = InstallOption.MONDATORY
+        self.install_type = InstallOption.MANDATORY
         self.register_progess()
 
         self.source_files = [
