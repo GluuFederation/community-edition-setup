@@ -19,7 +19,7 @@ class JreInstaller(BaseInstaller, SetupUtils):
         self.needdb = False # we don't need backend connection in this class
         self.install_var = 'installJre'
         self.app_type = AppType.APPLICATION
-        self.install_type = InstallOption.MONDATORY
+        self.install_type = InstallOption.MANDATORY
         self.register_progess()
 
         self.open_jdk_archive_link = 'https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.4%2B11/OpenJDK11U-jdk_x64_linux_hotspot_11.0.4_11.tar.gz'

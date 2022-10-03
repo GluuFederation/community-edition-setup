@@ -97,7 +97,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
     def initialize(self):
         self.service_name = 'gluu'
         self.app_type = AppType.APPLICATION
-        self.install_type = InstallOption.MONDATORY
+        self.install_type = InstallOption.MANDATORY
         gluuProgress.register(self)
 
         Config.install_time_ldap = time.strftime('%Y%m%d%H%M%SZ', time.gmtime(time.time()))

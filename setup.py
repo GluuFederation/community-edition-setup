@@ -293,7 +293,7 @@ class PostSetup:
     service_name = 'post-setup'
     install_var = 'installPostSetup'
     app_type = static.AppType.APPLICATION
-    install_type = static.InstallOption.MONDATORY
+    install_type = static.InstallOption.MANDATORY
 
 gluuProgress.register(PostSetup)
 if not argsp.no_progress:

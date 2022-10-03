@@ -24,7 +24,7 @@ class JettyInstaller(BaseInstaller, SetupUtils):
         self.needdb = False # we don't need backend connection in this class
         self.install_var = 'installJetty'
         self.app_type = AppType.APPLICATION
-        self.install_type = InstallOption.MONDATORY
+        self.install_type = InstallOption.MANDATORY
         self.register_progess()
         self.jetty_user_home = '/home/jetty'
         self.jetty_user_home_lib = os.path.join(self.jetty_user_home, 'lib')

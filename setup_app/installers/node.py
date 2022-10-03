@@ -19,7 +19,7 @@ class NodeInstaller(BaseInstaller, SetupUtils):
         self.needdb = False # we don't need backend connection in this class
         self.install_var = 'install_node_app'
         self.app_type = AppType.APPLICATION
-        self.install_type = InstallOption.MONDATORY
+        self.install_type = InstallOption.MANDATORY
         self.register_progess()
 
         self.node_initd_script = os.path.join(Config.install_dir, 'static/system/initd/node')
