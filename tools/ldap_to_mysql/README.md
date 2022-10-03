@@ -29,8 +29,8 @@ Note!: Test this script on non-production server.
 
   - Download files:
     ```
-    wget https://raw.githubusercontent.com/GluuFederation/community-edition-setup/version_4.4.1/setup_app/installers/rdbm.py -O /install/community-edition-setup/setup_app/installers/rdbm.py
-    wget https://raw.githubusercontent.com/GluuFederation/community-edition-setup/version_4.4.1/tools/ldap_to_mysql/ldap2mysql.py -O /install/community-edition-setup/ldap2mysql.py
+    wget https://raw.githubusercontent.com/GluuFederation/community-edition-setup/version_4.4.2/setup_app/installers/rdbm.py -O /install/community-edition-setup/setup_app/installers/rdbm.py
+    wget https://raw.githubusercontent.com/GluuFederation/community-edition-setup/version_4.4.2/tools/ldap_to_mysql/ldap2mysql.py -O /install/community-edition-setup/ldap2mysql.py
     ```
 
   - Execute script:
