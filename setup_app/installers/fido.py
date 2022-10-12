@@ -67,12 +67,6 @@ class FidoInstaller(JettyInstaller):
             src = os.path.join(Config.install_dir, 'static/fido2/authenticator_cert/', f)
             self.copyFile(src, target_dir)
 
-        # Fido2 MDS TOC cert
-        self.copyFile(
-            os.path.join(Config.install_dir, 'static/fido2/mds_toc_cert/metadata-root-ca.cer'),
-            os.path.join(self.fido2ConfigFolder, 'mds/cert')
-            )
-
         # copy Apple_WebAuthn_Root_CA
         apple_webauthn = os.path.join(Config.distAppFolder, 'Apple_WebAuthn_Root_CA.pem')
         if os.path.exists(apple_webauthn):
