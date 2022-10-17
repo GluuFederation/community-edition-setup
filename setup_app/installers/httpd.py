@@ -156,21 +156,11 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
         if base.os_type == 'suse':
             self.copyFile(self.apache2_ssl_conf, self.https_gluu_fn)
 
-<<<<<<< HEAD
-        # CentOS 7.* + systemd + apache 2.4
-        elif self.service_name == 'httpd' and base.os_initdaemon == 'systemd':
-            self.copyFile(self.apache2_24_conf, '/etc/httpd/conf/httpd.conf')
-            self.copyFile(self.apache2_ssl_24_conf, '/etc/httpd/conf.d/https_gluu.conf')
-
-        elif base.clone_type == 'rpm' and base.os_initdaemon == 'init': 
-            self.copyFile(self.apache2_conf, '/etc/httpd/conf/httpd.conf')
-=======
         elif base.clone_type == 'rpm': 
             if self.apache_version == "2.4":
                 self.copyFile(self.apache2_24_conf, '/etc/httpd/conf/httpd.conf')
             else:
                 self.copyFile(self.apache2_conf, '/etc/httpd/conf/httpd.conf')
->>>>>>> e8c2a167... feat: usage of caches has been updated;
             self.copyFile(self.apache2_ssl_conf, self.https_gluu_fn)
 
         elif base.clone_type == 'deb':
