@@ -882,5 +882,13 @@
     "spanner": {
       "type": "ARRAY<STRING(MAX)>"
     }
+  },
+  "document": {
+    "mysql": {
+      "type": "TEXT"
+    },
+    "pgsql": {
+      "type": "TEXT"
+    }
   }
 }
