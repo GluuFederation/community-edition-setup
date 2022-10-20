@@ -411,6 +411,8 @@ def do_installation():
                 oxauthInstaller.make_salt()
                 app_installations()
                 prepare_for_installation()
+        else:
+            gluuInstaller.determine_key_gen_path()
 
         install_services()
 
