@@ -114,9 +114,7 @@ class Config:
             self.cmd_keytool = os.path.join(self.jre_home, 'bin/keytool')
             self.cmd_jar = os.path.join(self.jre_home, 'bin/jar')
 
-
         os.environ['OPENDJ_JAVA_HOME'] =  self.jre_home
-
 
         #create dummy progress bar that logs to file in case not defined
         progress_log_file = os.path.join(self.install_dir, 'logs', 'progress-bar.log')
