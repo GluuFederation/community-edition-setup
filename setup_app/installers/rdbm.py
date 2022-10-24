@@ -28,7 +28,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         self.install_var = 'rdbm_install'
         self.register_progess()
         self.output_dir = os.path.join(Config.outputFolder, Config.rdbm_type)
-
+        self.common_lib_dir = os.path.join(Config.jetty_base, 'common/libs/spanner')
 
     def prepare(self):
         self.qchar = '`' if Config.rdbm_type in ('mysql', 'spanner') else '"'
@@ -53,6 +53,8 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
     def install(self):
         self.prepare()
+        if Config.rdbm_type == 'spanner':
+            self.extract_libs()
         self.local_install()
         if Config.rdbm_install_type == InstallTypes.REMOTE and base.argsp.reset_rdbm_db:
             self.reset_rdbm_db()
@@ -417,6 +419,13 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
             self.renderTemplateInOut(Config.gluuSpannerProperties, Config.templateFolder, Config.configFolder)
 
+
+    def extract_libs(self):
+        lib_archive = os.path.join(Config.distGluuFolder, 'gluu-orm-spanner-libs-distribution.zip')
+        self.logIt("Extracting {}".format(lib_archive))
+        if not os.path.exists(self.common_lib_dir):
+            self.createDirs(self.common_lib_dir)
+        shutil.unpack_archive(lib_archive, self.common_lib_dir)
 
     def create_folders(self):
         self.createDirs(Config.static_rdbm_dir)

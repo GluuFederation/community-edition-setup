@@ -2,6 +2,7 @@ import os
 import glob
 import re
 import shutil
+import zipfile
 import xml.etree.ElementTree as ET
 
 from setup_app import paths
@@ -246,6 +247,9 @@ class JettyInstaller(BaseInstaller, SetupUtils):
                 additional_rules.append('allow perm=any uid={} : path=/usr/bin/facter'.format(Config.templateRenderingDict['service_user']))
             self.fapolicyd_access(Config.templateRenderingDict['service_user'], jettyServiceBase, additional_rules)
 
+        else:
+            self.configure_extra_libs(target_war_fn)
+
 
     def set_jetty_param(self, jettyServiceName, jetty_param, jetty_val, inifile='start.ini'):
 
@@ -387,12 +391,16 @@ class JettyInstaller(BaseInstaller, SetupUtils):
 
         for app_set in root.findall("Set"):
             if app_set.get('name') == 'extraClasspath':
-                path_list = [cp.strip() for cp in app_set.text.split(',')]
+                if app_set.text:
+                    for cp in app_set.text.split(','):
+                        cps = cp.strip()
+                        if cps:
+                            path_list.append(cps)
                 break
         else:
             app_set = ET.Element("Set")
             app_set.set('name', 'extraClasspath')
-            
+
             root.append(app_set)
 
         for cp in class_path.split(','):
@@ -405,3 +413,40 @@ class JettyInstaller(BaseInstaller, SetupUtils):
             f.write(b'<?xml version="1.0"  encoding="ISO-8859-1"?>\n')
             f.write(b'<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">\n')
             f.write(ET.tostring(root, method='xml'))
+
+
+    def configure_extra_libs(self, target_war_fn):
+        version_rec = re.compile('-(\d+)?\.')
+
+        builtin_libs = []
+        war_zip = zipfile.ZipFile(target_war_fn)
+        for builtin_path in war_zip.namelist():
+            if  builtin_path.endswith('.jar'):
+                builtin_libs.append(os.path.basename( builtin_path))
+        war_zip.close()
+
+        def in_war(name):
+            for fn in builtin_libs:
+                if fn.startswith(name):
+                     return fn
+
+        common_lib_dir = None
+
+        if Config.cb_install:
+            common_lib_dir = base.current_app.CouchbaseInstaller.common_lib_dir
+
+        elif Config.rdbm_install and Config.rdbm_type == 'spanner':
+            common_lib_dir = base.current_app.RDBMInstaller.common_lib_dir
+
+        if common_lib_dir:
+
+            add_custom_lib_dir = []
+            for extra_lib_fn in os.listdir(common_lib_dir):
+                version_search = version_rec.search(extra_lib_fn)
+                if version_search:
+                    version_start_index = version_search.start()
+                    name = extra_lib_fn[:version_start_index]
+                    if not in_war(name):
+                        add_custom_lib_dir.append(os.path.join(common_lib_dir, extra_lib_fn))
+
+            self.add_extra_class(','.join(add_custom_lib_dir))
