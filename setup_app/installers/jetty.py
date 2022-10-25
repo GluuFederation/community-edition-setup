@@ -193,7 +193,7 @@ class JettyInstaller(BaseInstaller, SetupUtils):
         self.copyFile(jettyServiceConfiguration, Config.osDefault)
         self.run([paths.cmd_chown, '{}:{}'.format(Config.templateRenderingDict['service_user'], Config.gluu_group), os.path.join(Config.osDefault, serviceName)])
 
-        # Render web eources file
+        # Render web reources file
         try:
             web_resources = '%s_web_resources.xml' % serviceName
             if os.path.exists('%s/jetty/%s' % (Config.templateFolder, web_resources)):
@@ -204,10 +204,15 @@ class JettyInstaller(BaseInstaller, SetupUtils):
 
         # Render web context file
         try:
-            web_context = '%s.xml' % serviceName
-            if os.path.exists('%s/jetty/%s' % (Config.templateFolder, web_context)):
-                self.renderTemplateInOut(web_context, '%s/jetty' % Config.templateFolder, '%s/jetty' % Config.outputFolder)
-                self.copyFile('%s/jetty/%s' % (Config.outputFolder, web_context), "%s/%s/webapps" % (self.jetty_base, serviceName))
+            web_context = '{}.xml'.format(serviceName)
+            jetty_temp_dir = os.path.join(Config.templateFolder, 'jetty')
+            if not os.path.exists(os.path.join(jetty_temp_dir, web_context)):
+                web_context = 'default_webcontext.xml'
+            self.renderTemplateInOut(
+                    web_context,
+                    jetty_temp_dir,
+                    out_file=os.path.join(self.jetty_base, serviceName, 'webapps/{}.xml'.format(serviceName))
+                )
         except:
             self.logIt("Error rendering service '%s' context xml" % serviceName, True)
 
