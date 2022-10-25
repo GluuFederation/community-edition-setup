@@ -426,6 +426,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         if not os.path.exists(self.common_lib_dir):
             self.createDirs(self.common_lib_dir)
         shutil.unpack_archive(lib_archive, self.common_lib_dir)
+        self.chown(os.path.join(Config.jetty_base, 'common'), Config.jetty_user, Config.gluu_group, True)
 
     def create_folders(self):
         self.createDirs(Config.static_rdbm_dir)
