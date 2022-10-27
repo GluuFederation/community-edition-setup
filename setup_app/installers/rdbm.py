@@ -72,8 +72,9 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         self.dbUtils.metadata.clear()
 
     def get_col_def(self, attrname, sql_tbl_name):
+        not_null = ' NOT NULL' if sql_tbl_name=='gluuPerson' and attrname=='inum' else ''
         data_type = self.get_sql_col_type(attrname, sql_tbl_name)
-        col_def = '{0}{1}{0} {2}'.format(self.qchar, attrname, data_type)
+        col_def = '{0}{1}{0} {2}{3}'.format(self.qchar, attrname, data_type, not_null)
         if Config.rdbm_type == 'mysql' and data_type == 'JSON':
             col_def += ' comment "json"'
         return col_def
