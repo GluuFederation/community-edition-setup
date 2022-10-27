@@ -72,8 +72,9 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         self.dbUtils.metadata.clear()
 
     def get_col_def(self, attrname, sql_tbl_name):
+        not_null = ' NOT NULL' if sql_tbl_name=='gluuPerson' and attrname=='inum' else ''
         data_type = self.get_sql_col_type(attrname, sql_tbl_name)
-        col_def = '{0}{1}{0} {2}'.format(self.qchar, attrname, data_type)
+        col_def = '{0}{1}{0} {2}{3}'.format(self.qchar, attrname, data_type, not_null)
         if Config.rdbm_type == 'mysql' and data_type == 'JSON':
             col_def += ' comment "json"'
         return col_def
@@ -204,14 +205,20 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
             if not self.dbUtils.table_exists(sql_tbl_name):
                 doc_id_type = self.get_sql_col_type('doc_id', sql_tbl_name)
+                uniq_col = ''
                 if Config.rdbm_type == 'pgsql':
-                    sql_cmd = 'CREATE TABLE "{}" (doc_id {} NOT NULL UNIQUE, "objectClass" VARCHAR(48), dn VARCHAR(128), {}, PRIMARY KEY (doc_id));'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols))
+                    if sql_tbl_name == 'gluuPerson':
+                        uniq_col = ', UNIQUE (uid)'
+                    sql_cmd = 'CREATE TABLE "{}" (doc_id {} NOT NULL UNIQUE, "objectClass" VARCHAR(48), dn VARCHAR(128), {}, PRIMARY KEY (doc_id){});'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols), uniq_col)
                 elif Config.rdbm_type == 'spanner':
-                    sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL, `objectClass` STRING(48), dn STRING(128), {}) PRIMARY KEY (`doc_id`)'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols))
+                    sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL, `objectClass` STRING(48), dn STRING(128), {}) PRIMARY KEY (`doc_id`);'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols))
                 else:
-                    sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL UNIQUE, `objectClass` VARCHAR(48), dn VARCHAR(128), {}, PRIMARY KEY (`doc_id`));'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols))
+                    if sql_tbl_name == 'gluuPerson':
+                        uniq_col = ', UNIQUE(uid)'
+                    sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL UNIQUE, `objectClass` VARCHAR(48), dn VARCHAR(128), {}, PRIMARY KEY (`doc_id`){});'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols), uniq_col)
                 self.dbUtils.exec_rdbm_query(sql_cmd)
                 tables.append(sql_cmd)
+
 
         for attrname in all_attribs:
             attr = all_attribs[attrname]
@@ -300,6 +307,10 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                                     custom_index
                                 )
                     self.dbUtils.spanner.create_table(sql_cmd)
+
+                if tblCls == 'gluuPerson':
+                    uniq_index_cmd = 'CREATE UNIQUE NULL_FILTERED INDEX gluuPerson_unique_uuid ON gluuPerson (uid)'
+                    self.dbUtils.spanner.create_table(uniq_index_cmd)
 
         else:
             for tblCls in self.dbUtils.Base.classes.keys():
