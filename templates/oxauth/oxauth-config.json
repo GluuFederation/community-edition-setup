@@ -32,7 +32,8 @@
         ["token", "id_token"],
         ["code", "token"],
         ["code", "token", "id_token"],
-        ["id_token"]
+        ["id_token"],
+        ["none"]
     ],
     "responseModesSupported":[
         "query",

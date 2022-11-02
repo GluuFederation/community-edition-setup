@@ -202,6 +202,7 @@ def dooxAuthChangesFor31(self, oxAuthPath):
     dataOxAuthConfDynamic['responseTypesSupported'].append(json.loads('["token","id_token"]'))
     dataOxAuthConfDynamic['responseTypesSupported'].append(json.loads('["code","token","id_token"]'))
     dataOxAuthConfDynamic['responseTypesSupported'].append(json.loads('["id_token"]'))
+    dataOxAuthConfDynamic['responseTypesSupported'].append(json.loads('["none"]'))
 
     dataOxAuthConfDynamic['dynamicRegistrationCustomObjectClass'] = ""
     dataOxAuthConfDynamic['dynamicRegistrationCustomAttributes'] = ['oxAuthTrustedClient']
