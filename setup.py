@@ -293,7 +293,7 @@ class PostSetup:
     service_name = 'post-setup'
     install_var = 'installPostSetup'
     app_type = static.AppType.APPLICATION
-    install_type = static.InstallOption.MONDATORY
+    install_type = static.InstallOption.MANDATORY
 
 gluuProgress.register(PostSetup)
 if not argsp.no_progress:
@@ -325,6 +325,8 @@ def prepare_for_installation():
     gluuInstaller.setup_init_scripts()
 
     gluuInstaller.obtain_java_cacert_aliases()
+
+    gluuInstaller.generate_configuration()
 
     # Installing gluu components
 
@@ -409,6 +411,8 @@ def do_installation():
                 oxauthInstaller.make_salt()
                 app_installations()
                 prepare_for_installation()
+        else:
+            gluuInstaller.determine_key_gen_path()
 
         install_services()
 

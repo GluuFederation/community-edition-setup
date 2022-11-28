@@ -66,6 +66,7 @@
     "idpUserFields":"",
 
     "ldifStore":"/var/gluu/identity/removed",
+    "keepLdifStoreHistoryDays":30,
 
     "caCertsLocation":"%(default_trust_store_fn)s",
     "caCertsPassphrase":"%(defaultTrustStorePW)s",

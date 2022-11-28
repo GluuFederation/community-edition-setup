@@ -1,10 +1,11 @@
 import os
 import glob
 import shutil
+import ssl
 
 from setup_app import paths
 from setup_app.utils import base
-from setup_app.static import AppType, InstallOption
+from setup_app.static import AppType, InstallOption, SetupProfiles
 from setup_app.config import Config
 from setup_app.utils.setup_utils import SetupUtils
 from setup_app.installers.base import BaseInstaller
@@ -31,9 +32,15 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
         self.output_folder = os.path.join(Config.outputFolder, 'apache')
 
         self.apache2_conf = os.path.join(self.output_folder, 'httpd.conf')
-        self.apache2_ssl_conf = os.path.join(self.output_folder, 'https_gluu.conf')
-        self.apache2_24_conf = os.path.join(self.output_folder, 'httpd_2.4.conf')
-        self.apache2_ssl_24_conf = os.path.join(self.output_folder, 'https_gluu.conf')
+        if Config.profile == SetupProfiles.DISA_STIG:
+            self.apache2_24_conf = os.path.join(self.output_folder, 'httpd_2.4.fips.conf')
+            self.apache2_ssl_conf = os.path.join(self.output_folder, 'https_gluu.fips.conf')
+            self.apache2_ssl_24_conf = os.path.join(self.output_folder, 'https_gluu.fips.conf')
+        else:
+            self.apache2_24_conf = os.path.join(self.output_folder, 'httpd_2.4.conf')
+            self.apache2_ssl_conf = os.path.join(self.output_folder, 'https_gluu.conf')
+            self.apache2_ssl_24_conf = os.path.join(self.output_folder, 'https_gluu.conf')
+
         if base.os_type == 'suse':
             self.https_gluu_fn = '/etc/apache2/vhosts.d/_https_gluu.conf'
         elif base.clone_type == 'rpm':
@@ -69,6 +76,9 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
 
         for tmp_fn in error_templates:
             self.copyFile(tmp_fn, '/var/www/html')
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            self.chown('/var/www/html', 'apache', 'apache', True)
 
         # we only need these modules
         mods_enabled = ['env', 'log_config', 'proxy', 'proxy_http', 'access_compat', 'alias', 'authn_core', 'authz_core', 'authz_host', 'headers', 'mime', 'mpm_event', 'proxy_ajp', 'security2', 'reqtimeout', 'setenvif', 'socache_shmcb', 'ssl', 'unique_id', 'rewrite']
@@ -145,6 +155,11 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
 
     def write_httpd_config(self):
 
+        tls_versions = ['+TLSv1.2']
+        if hasattr(ssl, 'HAS_TLSv1_3') and ssl.HAS_TLSv1_3:
+            tls_versions.append('+TLSv1.3')
+        Config.templateRenderingDict['ssl_versions'] = ' '.join(tls_versions)
+
         self.update_rendering_dict()
         for tmp in (self.apache2_conf, self.apache2_ssl_conf, self.apache2_24_conf, self.apache2_ssl_24_conf):
             self.renderTemplateInOut(tmp, self.templates_folder, self.output_folder)
@@ -153,7 +168,10 @@ class HttpdInstaller(BaseInstaller, SetupUtils):
             self.copyFile(self.apache2_ssl_conf, self.https_gluu_fn)
 
         elif base.clone_type == 'rpm': 
-            self.copyFile(self.apache2_conf, '/etc/httpd/conf/httpd.conf')
+            if self.apache_version == "2.4":
+                self.copyFile(self.apache2_24_conf, '/etc/httpd/conf/httpd.conf')
+            else:
+                self.copyFile(self.apache2_conf, '/etc/httpd/conf/httpd.conf')
             self.copyFile(self.apache2_ssl_conf, self.https_gluu_fn)
 
         elif base.clone_type == 'deb':

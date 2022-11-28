@@ -12,7 +12,7 @@ from pathlib import Path
 from setup_app import paths
 from setup_app import static
 from setup_app.utils import base
-from setup_app.static import InstallTypes, AppType, InstallOption
+from setup_app.static import InstallTypes, AppType, InstallOption, SetupProfiles
 from setup_app.config import Config
 from setup_app.utils.setup_utils import SetupUtils
 from setup_app.utils.progress import gluuProgress
@@ -21,6 +21,9 @@ from setup_app.installers.base import BaseInstaller
 class GluuInstaller(BaseInstaller, SetupUtils):
 
     install_var = 'installGluu'
+
+    def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
 
     def __repr__(self):
         txt = ''
@@ -94,7 +97,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
     def initialize(self):
         self.service_name = 'gluu'
         self.app_type = AppType.APPLICATION
-        self.install_type = InstallOption.MONDATORY
+        self.install_type = InstallOption.MANDATORY
         gluuProgress.register(self)
 
         Config.install_time_ldap = time.strftime('%Y%m%d%H%M%SZ', time.gmtime(time.time()))

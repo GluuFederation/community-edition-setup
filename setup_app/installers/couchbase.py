@@ -31,8 +31,11 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
         self.couchbaseIndexJson = os.path.join(Config.install_dir, 'static/couchbase/index.json')
         self.couchbaseInitScript = os.path.join(Config.install_dir, 'static/system/initd/couchbase-server')
         self.couchebaseCert = os.path.join(Config.certFolder, 'couchbase.pem')
+        self.common_lib_dir = os.path.join(Config.jetty_base, 'common/libs/couchbase')
 
     def install(self):
+
+        self.extract_libs()
 
         if Config.couchbase_hostname == 'localhost':
             Config.couchbase_hostname = Config.hostname
@@ -183,9 +186,8 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
 
     def couchbaseExecQuery(self, queryFile):
         self.logIt("Running Couchbase query from file " + queryFile)
-        
+
         query_file = open(queryFile)
-        
         for line in query_file:
             query = line.strip()
             if query:
@@ -204,10 +206,10 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
                     attrquoted.append(a)
 
             attrquoteds = ', '.join(attrquoted)
-            
+
             index_name = '{0}_static_{1}'.format(bucket, str(uuid.uuid4()).split('-')[1])
             cmd = 'CREATE INDEX `{0}` ON `{1}`({2}) WHERE ({3})'.format(index_name, bucket, attrquoteds, wherec)
-        
+
         else:
             if '(' in ''.join(ind):
                 attr_ = ind[0]
@@ -232,7 +234,6 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
         couchbase_index = json.loads(couchbase_index_str)
 
         self.logIt("Running Couchbase index creation for " + bucket + " bucket")
-
 
         index_list = couchbase_index.get(bucket,{})
 
@@ -387,8 +388,16 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
             "See /opt/couchbase/LICENSE.txt"+e
             )
 
+    def extract_libs(self):
+        lib_archive = os.path.join(Config.distGluuFolder, 'gluu-orm-couchbase-libs-distribution.zip')
+        self.logIt("Extracting {}".format(lib_archive))
+        if not os.path.exists(self.common_lib_dir):
+            self.createDirs(self.common_lib_dir)
+        shutil.unpack_archive(lib_archive, self.common_lib_dir)
+        self.chown(os.path.join(Config.jetty_base, 'common'), Config.jetty_user, Config.gluu_group, True)
+
     def installed(self):
-        
+
         if os.path.exists(self.couchebaseInstallDir):
             cb_install = InstallTypes.LOCAL
         elif os.path.exists(self.couchbaseTrustStoreFn):
