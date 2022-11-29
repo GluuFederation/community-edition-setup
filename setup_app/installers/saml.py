@@ -231,6 +231,7 @@ class SamlInstaller(JettyInstaller):
             if Config.persistence_type == 'sql':
                 self.data_source_properties = self.data_source_properties + '.sql'
                 bean_formatter = 'rdbm'
+                Config.non_setup_properties['rdbm_driver'] = 'postgresql' if Config.rdbm_type == 'pgsql' else Config.rdbm_type
             else:
                 bean_formatter = 'couchbase'
 
