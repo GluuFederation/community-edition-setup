@@ -3,4 +3,5 @@ idp.attribute.resolver.datasource.jdbcUrl=jdbc:%(rdbm_name)s://%(rdbm_host)s:%(r
 idp.attribute.resolver.datasource.user=%(rdbm_user)s
 idp.attribute.resolver.datasource.password=%(rdbm_password)s
 idp.attribute.resolver.datasource.serverTimezone=%(server_time_zone)s
-idp.attribute.resolver.sql.searchFilter=select * from `gluuPerson` where ((LOWER(uid) = "$requestContext.principalName") OR (LOWER(mail) = "$requestContext.principalName")) AND (objectClass = "gluuPerson")
+idp.attribute.resolver.sql.searchFilter=%(sql_search_filter)s
+
