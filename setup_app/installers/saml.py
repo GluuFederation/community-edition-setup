@@ -232,11 +232,11 @@ class SamlInstaller(JettyInstaller):
                 self.data_source_properties = self.data_source_properties + '.sql'
                 bean_formatter = 'rdbm'
                 if Config.rdbm_type == 'pgsql':
-                    Config.non_setup_properties['rdbm_driver'] = 'postgresql'
-                    Config.non_setup_properties['rdbm_driver_origin'] = 'org'
+                    Config.non_setup_properties['rdbm_driver_class'] = 'org.postgresql.Driver'
+                    Config.non_setup_properties['rdbm_name'] = 'postgresql'
                 else:
-                     Config.non_setup_properties['rdbm_driver'] = Config.rdbm_type
-                     Config.non_setup_properties['rdbm_driver_origin'] = 'com'
+                     Config.non_setup_properties['rdbm_driver_class'] = 'com.{}.jdbc.Driver'.format(Config.rdbm_type)
+                     Config.non_setup_properties['rdbm_name'] = Config.rdbm_type
             else:
                 bean_formatter = 'couchbase'
 
