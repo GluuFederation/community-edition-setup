@@ -231,6 +231,14 @@ class SamlInstaller(JettyInstaller):
             if Config.persistence_type == 'sql':
                 self.data_source_properties = self.data_source_properties + '.sql'
                 bean_formatter = 'rdbm'
+                if Config.rdbm_type == 'pgsql':
+                    Config.non_setup_properties['rdbm_driver_class'] = 'org.postgresql.Driver'
+                    Config.non_setup_properties['rdbm_name'] = 'postgresql'
+                    Config.non_setup_properties['sql_search_filter'] = '''select * from "gluuPerson" where ((LOWER("uid") = '$requestContext.principalName') OR (LOWER("mail") = '$requestContext.principalName')) AND ("objectClass" = 'gluuPerson')'''
+                else:
+                     Config.non_setup_properties['rdbm_driver_class'] = 'com.{}.jdbc.Driver'.format(Config.rdbm_type)
+                     Config.non_setup_properties['rdbm_name'] = Config.rdbm_type
+                     Config.non_setup_properties['sql_search_filter'] = '''select * from `gluuPerson` where ((LOWER(uid) = "$requestContext.principalName") OR (LOWER(mail) = "$requestContext.principalName")) AND (objectClass = "gluuPerson")'''
             else:
                 bean_formatter = 'couchbase'
 
