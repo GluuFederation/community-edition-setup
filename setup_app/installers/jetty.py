@@ -241,7 +241,6 @@ class JettyInstaller(BaseInstaller, SetupUtils):
         jetty_service_webapps = os.path.join(jettyServiceBase, 'webapps')
         target_war_fn = os.path.join(jetty_service_webapps, os.path.basename(self.source_files[0][0]))
         self.copyFile(self.source_files[0][0], jetty_service_webapps)
-        self.war_for_jetty10(target_war_fn)
 
         self.run([paths.cmd_chown, '-R', '{}:{}'.format(Config.templateRenderingDict['service_user'], Config.gluu_group), jettyServiceBase])
 
@@ -350,41 +349,6 @@ class JettyInstaller(BaseInstaller, SetupUtils):
             installedComponents.append('passport')
 
         return self.calculate_aplications_memory(Config.application_max_ram, installedComponents)
-
-    def war_for_jetty10(self, war_file):
-        if self.jetty_dist_string == 'jetty-home':
-            tmp_dir = '/tmp/war_{}'.format(os.urandom(6).hex())
-            shutil.unpack_archive(war_file, tmp_dir, format='zip')
-            jetty_env_fn = os.path.join(tmp_dir, 'WEB-INF/jetty-env.xml')
-
-            if not os.path.exists(jetty_env_fn):
-                shutil.rmtree(tmp_dir)
-                return
-
-            tree = ET.parse(jetty_env_fn)
-            root = tree.getroot()
-
-            for new in root.findall("New"):
-                for arg in new.findall("Arg"):
-                    for ref in arg.findall("Ref"):
-                        if ref.attrib.get('id') == 'webAppCtx':
-                            ref.set('refid', 'webAppCtx')
-                            ref.attrib.pop('id')
-
-            jetty_web_fn = os.path.join(tmp_dir, 'WEB-INF/jetty-web.xml')
-            if os.path.exists(jetty_web_fn):
-                os.remove(jetty_web_fn)
-            xml_header = '<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "https://www.eclipse.org/jetty/configure_{}.dtd">\n\n'.format(self.jetty_version_string.replace('.', '_'))
-            with open(jetty_env_fn, 'wb') as f:
-                f.write(b'<?xml version="1.0" encoding="UTF-8"?>\n')
-                f.write(xml_header.encode())
-                f.write(ET.tostring(root,method='xml'))
-
-            tmp_war_fn = '/tmp/{}.war'.format(os.urandom(6).hex())
-            shutil.make_archive(tmp_war_fn, format='zip', root_dir=tmp_dir)
-            shutil.rmtree(tmp_dir)
-            os.remove(war_file)
-            shutil.move(tmp_war_fn+'.zip', war_file)
 
 
     def add_extra_class(self, class_path, xml_fn=None):
