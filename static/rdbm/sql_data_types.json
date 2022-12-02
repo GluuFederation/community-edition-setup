@@ -889,6 +889,9 @@
     },
     "pgsql": {
       "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
     }
   }
 }
