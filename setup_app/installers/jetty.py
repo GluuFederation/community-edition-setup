@@ -391,7 +391,7 @@ class JettyInstaller(BaseInstaller, SetupUtils):
         war_zip = zipfile.ZipFile(target_war_fn)
         for builtin_path in war_zip.namelist():
             if  builtin_path.endswith('.jar'):
-                builtin_libs.append(os.path.basename( builtin_path))
+                builtin_libs.append(os.path.basename(builtin_path))
         war_zip.close()
 
         def in_war(name):
