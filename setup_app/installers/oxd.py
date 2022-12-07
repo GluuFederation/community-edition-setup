@@ -3,6 +3,7 @@ import glob
 import socket
 import ruamel.yaml
 import tempfile
+import pathlib
 
 from setup_app import paths
 from setup_app.static import AppType, InstallOption, fapolicyd_rule_tmp
@@ -92,6 +93,8 @@ class OxdInstaller(SetupUtils, BaseInstaller):
             self.run(['restorecon', '-rv', os.path.join(self.oxd_root, 'bin')])
 
             self.run([paths.cmd_chown, '{}:{}'.format(oxd_user, Config.gluu_group), os.path.join(Config.osDefault, self.service_name)])
+
+        self.configure_extra_libs()
 
         self.enable()
 
@@ -291,3 +294,19 @@ class OxdInstaller(SetupUtils, BaseInstaller):
         if not os.path.exists(self.oxd_root):
             self.run([paths.cmd_mkdir, self.oxd_root])
 
+
+    def configure_extra_libs(self):
+
+        if Config.cb_install:
+            common_lib_dir = base.current_app.CouchbaseInstaller.common_lib_dir
+        elif Config.rdbm_install and Config.rdbm_type == 'spanner':
+            common_lib_dir = base.current_app.RDBMInstaller.common_lib_dir
+        else:
+            return
+
+        target_path = pathlib.Path(self.oxd_root).joinpath('lib')
+
+        for common_lib in pathlib.Path(common_lib_dir).glob('*.jar'):
+            target_lib = target_path.joinpath(common_lib.name)
+            if not target_lib.exists():
+                target_lib.symlink_to(common_lib)
