@@ -102,7 +102,7 @@ class Config:
             self.jre_home = Path(self.cmd_java).resolve().parent.parent.as_posix()
             self.cmd_keytool = shutil.which('keytool')
             self.cmd_jar = shutil.which('jar')
-            os.environ['GLUU_SERVICES'] = 'installHttpd installOxd installCasa installScimServer installFido2'
+            os.environ['GLUU_SERVICES'] = 'installHttpd installOxd installCasa installScimServer'
             self.default_store_type = 'bcfks'
             self.opendj_truststore_format = base.argsp.opendj_keystore_type
             self.default_client_test_store_type = 'pkcs12'
