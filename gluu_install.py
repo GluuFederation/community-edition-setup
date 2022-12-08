@@ -175,16 +175,16 @@ services = ['casa.service', 'identity.service', 'opendj.service', 'oxauth.servic
 app_versions = {
     "JETTY_VERSION": "10.0.9",
     "AMAZON_CORRETTO_VERSION": "11.0.14.10.1",
-    "OX_GITVERISON": "-SNAPSHOT",
+    "OX_GITVERISON": ".Final",
     "NODE_VERSION": "v14.19.1",
     "OX_VERSION": "4.5.0", 
-    "PASSPORT_VERSION": "master",
+    "PASSPORT_VERSION": "4.5.0",
     "JYTHON_VERSION": "2.7.3",
     "OPENDJ_VERSION": "4.5.0",
     "SETUP_BRANCH": argsp.setup_branch,
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7",
-    "APPS_GIT_BRANCH": "master",
+    "APPS_GIT_BRANCH": "version_4.5.0",
     }
 
 jetty_dist_string = 'jetty-distribution'
