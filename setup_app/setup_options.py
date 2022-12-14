@@ -181,4 +181,13 @@ def get_setup_options():
         print(msg.spanner_idp_warning)
         setupOptions['installSaml'] = False
 
+    if base.argsp.properties:
+        prop_list = base.argsp.properties.split(',')
+        for props in prop_list:
+            n = props.find(':')
+            if n > 0:
+                p_key = props[:n].strip()
+                p_val = props[n+1:].strip()
+                setupOptions[p_key] = p_val
+
     return setupOptions
