@@ -86,6 +86,7 @@ def arg_parser():
     parser.add_argument('-ox-authentication-mode', help="Sets oxAuthenticationMode")
     parser.add_argument('-ox-trust-authentication-mode', help="Sets oxTrustAuthenticationMode")
     parser.add_argument('--gluu-passwurd-cert', help="Creates Gluu Passwurd API keystore", action='store_true')
+    parser.add_argument('-properties', help="Other properties. Example: encode_salt:Y83EBo94vj9b4iyKDX2drmZk,default_store_type:JKS")
 
     # spanner options
     parser.add_argument('-spanner-project', help="Spanner project name")
