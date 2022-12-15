@@ -129,11 +129,12 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                 if base.clone_type == 'rpm':
                     hba_file_path_query = self.run('''su - postgres -c "psql -U postgres -d postgres -t -c \\"SHOW hba_file;\\""''', shell=True)
                     if hba_file_path_query and hba_file_path_query.strip():
+                        self.stop('postgresql')
                         hba_file_path = hba_file_path_query.strip()
                         hba_file_content = self.readFile(hba_file_path)
                         hba_file_content = 'host\t{0}\t{1}\t127.0.0.1/32\tmd5\nhost\t{0}\t{1}\t::1/128\tmd5\n'.format(Config.rdbm_db, Config.rdbm_user) + hba_file_content
                         self.writeFile(hba_file_path, hba_file_content)
-                        self.restart('postgresql')
+                        self.start('postgresql')
 
         self.dbUtils.bind(force=True)
 
