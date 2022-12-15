@@ -427,12 +427,23 @@ class SetupUtils(Crypto64):
     def createUser(self, userName, homeDir, shell='/bin/bash'):
 
         try:
+            grp.getgrnam(userName)
+            user_group_exists = True
+        except KeyError:
+            user_group_exists = False
+
+        try:
             pwd.getpwnam(userName)
             self.logIt("User {} exists".format(userName))
         except KeyError:
             try:
                 useradd = '/usr/sbin/useradd'
-                cmd = [useradd, '--system', '--user-group', '--shell', shell, userName]
+                cmd = [useradd, '--system', '--shell', shell, userName]
+                if user_group_exists:
+                    cmd.insert(1, '-g')
+                    cmd.insert(2, userName)
+                else:
+                    cmd.insert(1, '--user-group')
                 if homeDir:
                     cmd.insert(-1, '--create-home')
                     cmd.insert(-1, '--home-dir')
@@ -444,8 +455,9 @@ class SetupUtils(Crypto64):
                     self.logOSChanges("User %s with homedir %s was created" % (userName, homeDir))
                 else:
                     self.logOSChanges("User %s without homedir was created" % (userName))
-            except:
-                self.logIt("Error adding user", True)
+
+            except Exception as e:
+                self.logIt("Error adding user: {}".format(e), True)
 
     def createGroup(self, groupName):
         try:
