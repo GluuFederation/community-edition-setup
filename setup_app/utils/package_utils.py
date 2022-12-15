@@ -49,6 +49,8 @@ class PackageUtils(SetupUtils):
                 package_list[os_type_version]['mandatory'] += ''
             elif base.clone_type == 'rpm':
                 package_list[os_type_version]['mandatory'] += ' postgresql-server'
+                self.run(['dnf', '-y', 'module', 'disable', 'postgresql'])
+                self.run(['dnf', '-y', 'module', 'reset', 'postgresql'])
                 self.run(['dnf', '-y', 'module', 'enable', 'postgresql:12'])
 
         for pypackage in package_list[os_type_version]['python']:
