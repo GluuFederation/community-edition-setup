@@ -114,6 +114,7 @@
     "clientBlackList": ["*.attacker.com/*"],
 
     "oxTrustApiTestMode": false,
+    "oxTrustProtectionMode": "OAUTH",
 
     "cleanServiceInterval":300,
     "loggingLevel": "INFO",
