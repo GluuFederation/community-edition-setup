@@ -138,7 +138,7 @@ class msg:
 
     installation_description_java = "Corretto is a build of the Open Java Development Kit (OpenJDK) with long-term support from Amazon. Corretto is certified using the Java Technical Compatibility Kit (TCK) to ensure it meets the Java SE standard."
     installation_description_opendj = "OpenDJ is an LDAPv3 compliant directory service, which has been developed for the Java platform, providing a high performance, highly available, and secure store for the identities managed by your organization."
-    installation_description_oxauth = "oxAuth is an open source OpenID Connect Provider (OP) and UMA Authorization Server (AS). The project also includes OpenID Connect Client code which can be used by websites to validate tokens."
+    installation_description_oxauth = "oxAuth is an open source OpenID Connect Provider (OP) and OAuth Authorization Server (AS). It is the core component that issues access tokens and renders login pages."
     installation_description_oxtrust = "oxTrust is a Weld based web application for Gluu Server administration."
     installation_description_saml = "The Gluu Server acts as a SAML identity provider (IDP) to support outbound SAML single sign-on (SSO)."
     installation_description_passport = "Gluu bundles the Passport.js authentication middleware project to support user authentication at external SAML, OAuth, and OpenID Connect providers "
