@@ -31,8 +31,12 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         self.output_dir = os.path.join(Config.outputFolder, Config.rdbm_type)
         self.common_lib_dir = os.path.join(Config.jetty_base, 'common/libs/spanner')
 
+
+    @property
+    def qchar(self):
+        return '`' if Config.rdbm_type in ('mysql', 'spanner') else '"'
+
     def prepare(self):
-        self.qchar = '`' if Config.rdbm_type in ('mysql', 'spanner') else '"'
         self.schema_files = []
         self.gluu_attributes = []
 
