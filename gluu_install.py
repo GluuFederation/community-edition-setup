@@ -298,14 +298,6 @@ def extract_subdir(zip_fn, sub_dir, target_dir, par_dir=None):
             )
     zip_obj.close()
 
-def extract_pylib():
-    cryptography_url = 'https://files.pythonhosted.org/packages/7a/46/8b58d6b8244ff613ecb983b9428d1168dd0b014a34e13fb19737b9ba1fc1/cryptography-39.0.0-cp36-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl'
-    pyjwt_url = 'https://github.com/jpadilla/pyjwt/archive/refs/tags/2.6.0.zip'
-    with TemporaryDirectory() as download_dir:
-        target_fn = os.path.join(download_dir, os.path.basename(cryptography_url))
-        download(url, target_fn)
-        extract_subdir(target_fn, 'cryptography', pylib_dir, '')
-
 
 def package_oxd():
     oxd_tgz_fn = os.path.join(gluu_app_dir, 'oxd-server.tgz')
@@ -393,6 +385,7 @@ if not argsp.u:
 shutil.copy(os.path.join(gluu_app_dir, 'facter'), '/usr/bin')
 os.chmod('/usr/bin/facter', 33261)
 
+os.makedirs(certs_dir)
 shutil.copy(os.path.join(gluu_app_dir, 'casa.pub'), certs_dir)
 
 if argsp.upgrade:
