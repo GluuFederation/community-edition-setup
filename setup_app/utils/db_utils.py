@@ -285,7 +285,7 @@ class DBUtils(SetupUtils):
             oxAuthConfDynamic.update(entries)
             doc_id = self.get_doc_id_from_dn(dn)
 
-            self.spanner_client.write_data(table='oxAuthConfiguration', columns=['doc_id', 'oxAuthConfDynamic'], values=[[doc_id, json.dumps(oxAuthConfDynamic)]], mutation='update')
+            self.spanner_client.write_data(table='oxAuthConfiguration', columns=['doc_id', 'oxAuthConfDynamic'], values=[doc_id, json.dumps(oxAuthConfDynamic)], mutation='update')
 
         elif self.moddb == BackendTypes.COUCHBASE:
             for k in entries:
@@ -317,7 +317,7 @@ class DBUtils(SetupUtils):
             dn, oxTrustConfApplication = self.get_oxTrustConfApplication()
             oxTrustConfApplication.update(entries)
             doc_id = self.get_doc_id_from_dn(dn)
-            self.spanner_client.write_data(table='oxTrustConfiguration', columns=['doc_id', 'oxTrustConfApplication'], values=[[doc_id, json.dumps(oxTrustConfApplication)]], mutation='update')
+            self.spanner_client.write_data(table='oxTrustConfiguration', columns=['doc_id', 'oxTrustConfApplication'], values=[doc_id, json.dumps(oxTrustConfApplication)], mutation='update')
 
         elif self.moddb == BackendTypes.COUCHBASE:
             n1ql = 'UPDATE `{}` USE KEYS "configuration_oxtrust" SET `oxTrustConfApplication`={}'.format(self.default_bucket, oxTrustConfApplication_js)
@@ -344,7 +344,7 @@ class DBUtils(SetupUtils):
             dn = 'inum={},ou=scripts,o=gluu'.format(inum)
             table = self.get_spanner_table_for_dn(dn)
             if table:
-                self.spanner_client.write_data(table=table, columns=['doc_id', 'oxEnabled'], values=[[inum, enable]], mutation='update')
+                self.spanner_client.write_data(table=table, columns=['doc_id', 'oxEnabled'], values=[inum, enable], mutation='update')
 
         elif self.moddb == BackendTypes.COUCHBASE:
             n1ql = 'UPDATE `{}` USE KEYS "scripts_{}" SET oxEnabled={}'.format(self.default_bucket, inum, str(enable).lower())
@@ -364,7 +364,7 @@ class DBUtils(SetupUtils):
             self.session.commit()
 
         elif self.moddb == BackendTypes.SPANNER:
-            self.spanner_client.write_data(table='gluuConfiguration', columns=['doc_id', service], values=[["configuration", True]], mutation='update')
+            self.spanner_client.write_data(table='gluuConfiguration', columns=['doc_id', service], values=["configuration", True], mutation='update')
 
         elif self.moddb == BackendTypes.COUCHBASE:
             n1ql = 'UPDATE `{}` USE KEYS "configuration" SET {}=true'.format(self.default_bucket, service)
@@ -395,7 +395,7 @@ class DBUtils(SetupUtils):
             table = self.get_spanner_table_for_dn(dn)
             type_val = self.get_rdbm_val(component, [value])
             doc_id = self.get_doc_id_from_dn(dn)
-            self.spanner_client.write_data(table=table, columns=["doc_id", component], values=[[doc_id, type_val]], mutation='update')
+            self.spanner_client.write_data(table=table, columns=["doc_id", component], values=[doc_id, type_val], mutation='update')
 
         elif self.moddb == BackendTypes.COUCHBASE:
             key = ldif_utils.get_key_from(dn)
@@ -685,7 +685,7 @@ class DBUtils(SetupUtils):
 
             if not added:
                 oxConfigurationProperty.append(json.dumps({'value1': 'allowed_clients', 'value2': client_id}))
-            self.spanner_client.write_data(table='oxCustomScript', columns=['doc_id', 'oxConfigurationProperty'], values=[[script_inum,  oxConfigurationProperty]], mutation='update')
+            self.spanner_client.write_data(table='oxCustomScript', columns=['doc_id', 'oxConfigurationProperty'], values=[script_inum,  oxConfigurationProperty], mutation='update')
 
         elif backend_location == BackendTypes.COUCHBASE:
             bucket = self.get_bucket_for_dn(dn)
@@ -996,7 +996,7 @@ class DBUtils(SetupUtils):
                                 for subval in entry[change_attr]:
                                     typed_val = self.get_rdbm_val(change_attr, subval, rdbm_type='spanner')
                                     dict_doc_id = self.get_sha_digest(typed_val)
-                                    self.spanner_client.write_data(table=sub_table, columns=['doc_id', 'dict_doc_id', change_attr], values=[[doc_id, typed_val, typed_val]])
+                                    self.spanner_client.write_data(table=sub_table, columns=['doc_id', 'dict_doc_id', change_attr], values=[doc_id, typed_val, typed_val])
 
                             else:
                                 data_list = self.spanner_client.get_dict_data('SELECT {} FROM {} WHERE doc_id="{}"'.format(entry['add'][0], table, doc_id))
@@ -1006,7 +1006,7 @@ class DBUtils(SetupUtils):
                                         typed_val = self.get_rdbm_val(change_attr, cur_val, rdbm_type='spanner')
                                         cur_data.append(typed_val)
 
-                                self.spanner_client.write_data(table=table, columns=['doc_id', change_attr], values=[[doc_id, cur_data]], mutation='update')
+                                self.spanner_client.write_data(table=table, columns=['doc_id', change_attr], values=[doc_id, cur_data], mutation='update')
 
                     elif 'replace' in entry and 'changetype' in entry:
                         table = self.get_spanner_table_for_dn(dn)
@@ -1020,7 +1020,7 @@ class DBUtils(SetupUtils):
                             #for subval in typed_val:
                             #    self.spanner.update_data(table=sub_table, columns=['doc_id', replace_attr], values=[[doc_id, subval]])
                         else:
-                            self.spanner_client.write_data(table=table, columns=['doc_id', replace_attr], values=[[doc_id, typed_val]], mutation='update')
+                            self.spanner_client.write_data(table=table, columns=['doc_id', replace_attr], values=[doc_id, typed_val], mutation='update')
 
                     else:
                         vals = {}
@@ -1060,10 +1060,10 @@ class DBUtils(SetupUtils):
                         columns = [ *vals.keys() ]
                         values = [ vals[lkey] for lkey in columns ]
 
-                        self.spanner_client.write_data(table=table_name, columns=columns, values=[values])
+                        self.spanner_client.write_data(table=table_name, columns=columns, values=values)
 
                         for sdata in subtable_data:
-                            self.spanner_client.write_data(table=sdata[0], columns=sdata[1], values=sdata[2])
+                            self.spanner_client.write_data(table=sdata[0], columns=sdata[1], values=sdata[2][0])
 
                 elif backend_location == BackendTypes.COUCHBASE:
                     if len(entry) < 3:
