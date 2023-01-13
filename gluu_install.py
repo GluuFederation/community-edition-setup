@@ -373,7 +373,7 @@ if not argsp.u:
     download('https://secure.globalsign.com/cacert/root-r3.crt', os.path.join(app_dir, 'fido2/mds/cert/root-r3.crt'))
 
     download('https://files.pythonhosted.org/packages/7a/46/8b58d6b8244ff613ecb983b9428d1168dd0b014a34e13fb19737b9ba1fc1/cryptography-39.0.0-cp36-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl', os.path.join(app_dir, 'cryptography.whl'))
-    download('https://github.com/jpadilla/pyjwt/archive/refs/tags/2.6.0.zip', os.path.join(app_dir, 'pyjwt.zip'))
+    download('https://github.com/jpadilla/pyjwt/archive/refs/tags/2.4.0.zip', os.path.join(app_dir, 'pyjwt.zip'))
 
 
     if not argsp.upgrade:
