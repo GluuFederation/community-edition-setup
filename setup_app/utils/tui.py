@@ -28,7 +28,8 @@ from setup_app.utils.progress import gluuProgress
 if Config.profile != static.SetupProfiles.DISA_STIG:
     import pymysql
     import psycopg2
-    from setup_app.utils.spanner import Spanner
+    from setup_app.utils.spanner_rest_client import SpannerClient
+
 
 
 import npyscreen
@@ -697,8 +698,14 @@ class DBSpannerForm(GluuSetupForm):
         npyscreen.notify("Please wait while checking spanner connection", title="Wait!")
 
         try:
-            spanner = Spanner()
-            spanner.get_session()
+            SpannerClient(
+                            project_id=Config.spanner_project,
+                            instance_id=Config.spanner_instance,
+                            database_id=Config.spanner_database,
+                            google_application_credentials=Config.google_application_credentials,
+                            emulator_host=Config.spanner_emulator_host,
+                            log_dir=os.path.join(Config.install_dir, 'logs')
+                    )
         except Exception as e:
             npyscreen.notify_confirm("ERROR getting session from spanner: {}".format(e), title="Warning")
             return
