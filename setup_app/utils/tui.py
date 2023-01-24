@@ -313,6 +313,9 @@ class ServicesForm(GluuSetupForm):
                     self.services_before_this_form.append(service)
                 cb.update()
 
+        if Config.installed_instance and Config.rdbm_type == 'spanner':
+            self.installSaml.editable = False
+
         if Config.installed_instance and 'installCasa' in self.services_before_this_form:
             self.oxd_url.hidden = True
             self.oxd_url.update()
