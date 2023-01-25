@@ -88,6 +88,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
 
         if not Config.persistence_type in ('couchbase', 'ldap') and os.path.exists(Config.gluuSpannerProperties):
             Config.rdbm_type = 'spanner'
+            Config.rdbm_install_type = static.InstallTypes.REMOTE
             gluu_spanner_prop = base.read_properties_file(Config.gluuSpannerProperties)
 
             Config.spanner_project = gluu_spanner_prop['connection.project']
