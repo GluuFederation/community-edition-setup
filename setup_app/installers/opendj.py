@@ -194,6 +194,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
     def generate_opendj_certs(self):
 
         self.writeFile(self.opendj_trusstore_setup_key_fn, Config.opendj_truststore_pass)
+        self.writeFile(self.opendj_pck11_setup_key_fn, Config.defaultTrustStorePW)
 
         keystore = Config.opendj_trust_store_fn if Config.opendj_truststore_format.upper() == 'BCFKS' else 'NONE'
 
