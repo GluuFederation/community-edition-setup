@@ -42,6 +42,9 @@ class CollectProperties(SetupUtils, BaseInstaller):
         oxidp_ConfigurationEntryDN = gluu_prop['oxidp_ConfigurationEntryDN']
         gluu_ConfigurationDN = 'ou=configuration,o=gluu'
 
+        if Config.persistence_type in ('sql', 'spanner'):
+            Config.rdbm_install = True
+
         if Config.persistence_type in ('couchbase', 'sql', 'spanner'):
             ptype = 'rdbm' if Config.persistence_type in ('sql', 'spanner') else 'couchbase'
             Config.mappingLocations = { group: ptype for group in Config.couchbaseBucketDict }

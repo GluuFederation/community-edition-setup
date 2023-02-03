@@ -463,5 +463,5 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         self.createDirs(Config.static_rdbm_dir)
 
     def installed(self):
-        return os.path.exists(Config.gluuRDBMProperties)
+        return os.path.exists(Config.gluuRDBMProperties) or os.path.exists(Config.gluuSpannerProperties)
 
