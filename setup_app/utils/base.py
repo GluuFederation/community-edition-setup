@@ -13,11 +13,15 @@ import subprocess
 import traceback
 import re
 import shutil
+import socket
 import multiprocessing
 import ssl
+import shlex
 
+from pathlib import Path
 from collections import OrderedDict
 from urllib.request import urlretrieve
+from types import SimpleNamespace
 
 # disable ssl certificate check
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -29,11 +33,11 @@ from setup_app.pylib.jproperties import Properties
 
 # Note!!! This module should be imported after paths
 
-cur_dir = os.path.dirname(os.path.realpath(__file__))
-ces_dir = os.path.split(cur_dir)[0]
+cur_dir = Path(__file__).parent.as_posix()
+ces_dir = Path(__file__).parent.parent.as_posix()
+par_dir = Path(__file__).parent.parent.parent.as_posix()
 
-snap = os.environ.get('SNAP','')
-snap_common = snap_common_dir = os.environ.get('SNAP_COMMON','')
+current_app = SimpleNamespace()
 
 re_split_host = re.compile(r'[^,\s,;]+')
 
@@ -58,6 +62,8 @@ with open(os_release_fn) as f:
                     os_type = 'red'
                 elif 'ubuntu-core' in os_type:
                     os_type = 'ubuntu'
+                elif 'sles' in os_type or 'suse' in os_type:
+                    os_type = 'suse'
             elif row[0] == 'VERSION_ID':
                 os_version = row[1].split('.')[0]
 
@@ -66,25 +72,32 @@ if not (os_type and os_version):
     sys.exit()
 
 os_name = os_type + os_version
-deb_sysd_clone = os_name in ('ubuntu18', 'ubuntu20', 'debian9', 'debian10')
+deb_sysd_clone = os_name.startswith(('ubuntu', 'debian'))
+
 
 # Determine service path
-if (os_type in ('centos', 'red', 'fedora') and os_initdaemon == 'systemd') or deb_sysd_clone:
+if (os_type in ('centos', 'red', 'fedora', 'suse') and os_initdaemon == 'systemd') or deb_sysd_clone:
     service_path = shutil.which('systemctl')
 elif os_type in ['debian', 'ubuntu']:
     service_path = '/usr/sbin/service'
 else:
     service_path = '/sbin/service'
 
-if os_type in ('centos', 'red', 'fedora'):
+if os_type in ('centos', 'red', 'fedora', 'suse'):
     clone_type = 'rpm'
     httpd_name = 'httpd'
 else:
     clone_type = 'deb'
     httpd_name = 'apache2'
 
-if snap:
-    snapctl = shutil.which('snapctl')
+def get_os_description():
+    desc_dict = { 'suse': 'SUSE', 'red': 'RHEL', 'ubuntu': 'Ubuntu', 'deb': 'Debian', 'centos': 'CentOS', 'fedora': 'Fedora' }
+    descs = desc_dict.get(os_type, os_type)
+    descs += ' ' + os_version
+    fipsl = subprocess.getoutput("sysctl crypto.fips_enabled").strip().split()
+    if fipsl and fipsl[0] == 'crypto.fips_enabled' and fipsl[-1] == '1':
+        descs += ' [FIPS]'
+    return descs
 
 # resources
 current_file_max = int(open("/proc/sys/fs/file-max").read().strip())
@@ -92,8 +105,9 @@ current_mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
 current_mem_size = round(current_mem_bytes / (1024.**3), 1) #in GB
 current_number_of_cpu = multiprocessing.cpu_count()
 
-disk_st = os.statvfs(snap_common if snap else '/')
+disk_st = os.statvfs('/')
 current_free_disk_space = round(disk_st.f_bavail * disk_st.f_frsize / (1024 * 1024 *1024), 1)
+
 
 def check_resources():
 
@@ -209,9 +223,6 @@ def get_clean_args(args):
 
 # args = command + args, i.e. ['ls', '-ltr']
 def run(args, cwd=None, env=None, useWait=False, shell=False, get_stderr=False):
-    if snap and args[0] in [paths.cmd_chown]:
-        return ''
-
     output = ''
     log_arg = ' '.join(args) if type(args) is list else args
     logIt('Running: %s' % log_arg)
@@ -279,7 +290,7 @@ def find_script_names(ldif_file):
                 result = rec.search(l)
                 if result:
                     name_list.append(result.groups()[0])
-                
+
     return name_list
 
 def download(url, dst):
@@ -288,6 +299,27 @@ def download(url, dst):
         logIt("Creating driectory", pardir)
         os.makedirs(pardir)
     logIt("Downloading {} to {}".format(url, dst))
-    result = urlretrieve(url, dst)
-    f_size = result[1].get('Content-Length','0')
-    logIt("Download size: {} bytes".format(f_size))
+    download_tries = 1
+    while download_tries < 4:
+        try:
+            result = urlretrieve(url, dst)
+            f_size = result[1].get('Content-Length','0')
+            logIt("Download size: {} bytes".format(f_size))
+            time.sleep(0.1)
+        except:
+             logIt("Error downloading {}. Download will be re-tried once more".format(url))
+             download_tries += 1
+             time.sleep(1)
+        else:
+            break
+
+def check_port_available(port_list, host='localhost'):
+    open_ports = []
+    for port in port_list:
+        socket_object = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        check_port = socket_object.connect_ex((host, port))
+        if check_port == 0:
+            open_ports.append(str(port))
+        socket_object.close()
+
+    return open_ports

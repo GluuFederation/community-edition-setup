@@ -1,15 +1,19 @@
 import os
 import glob
 import uuid
+import json
 
 from setup_app import paths
-from setup_app.static import AppType, InstallOption
+from setup_app import static
+from setup_app.utils import base
+from setup_app.static import AppType, InstallOption, SetupProfiles
 from setup_app.config import Config
 from setup_app.installers.jetty import JettyInstaller
 
 class OxtrustInstaller(JettyInstaller):
 
     def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'identity'
         self.app_type = AppType.SERVICE
         self.install_type = InstallOption.OPTONAL
@@ -17,7 +21,7 @@ class OxtrustInstaller(JettyInstaller):
         self.register_progess()
 
         self.source_files = [
-                (os.path.join(Config.distGluuFolder,'identity.war'), 'https://ox.gluu.org/maven/org/gluu/oxtrust-server/%s/oxtrust-server-%s.war' % (Config.oxVersion, Config.oxVersion))
+                (os.path.join(Config.distGluuFolder,'identity.war'), Config.maven_root + '/maven/org/gluu/oxtrust-server/%s/oxtrust-server-%s.war' % (Config.oxVersion, Config.oxVersion))
                 ]
 
         self.templates_folder = os.path.join(Config.templateFolder, 'oxtrust')
@@ -42,10 +46,9 @@ class OxtrustInstaller(JettyInstaller):
         self.pairwiseCalculationKey = None
         self.pairwiseCalculationSalt = None
 
-        # TODO: oxtrust-api installation
         # oxTrust Api configuration
-        self.api_rs_client_jks_fn = os.path.join(Config.certFolder, 'api-rs.jks')
-        self.api_rp_client_jks_fn = os.path.join(Config.certFolder, 'api-rp.jks')
+        self.api_rs_client_jks_fn = os.path.join(Config.certFolder, self.get_keystore_fn('api-rs'))
+        self.api_rp_client_jks_fn = os.path.join(Config.certFolder, self.get_keystore_fn('api-rp'))
 
 
     def install(self):
@@ -53,24 +56,25 @@ class OxtrustInstaller(JettyInstaller):
 
         self.installJettyService(self.jetty_app_configuration[self.service_name], True)
 
-        jettyServiceWebapps = os.path.join(self.jetty_base, self.service_name, 'webapps')
-        self.copyFile(self.source_files[0][0], jettyServiceWebapps)
+        for folder in (self.oxPhotosFolder, self.oxTrustRemovedFolder, self.oxTrustCacheRefreshFolder):
+            self.run([paths.cmd_mkdir, '-m', '775', '-p', folder])
+            user_group = '{}:{}'.format(self.service_name, Config.gluu_group) if Config.profile == SetupProfiles.DISA_STIG else Config.user_group
+            self.run([paths.cmd_chown, '-R', user_group, folder])
 
         self.enable()
 
     def generate_api_configuration(self):
 
-        # TODO: Question: Should we do if oxtrust_api installtion?
         if not Config.get('api_rs_client_jks_pass'):
-            Config.api_rs_client_jks_pass = 'secret'
+            Config.api_rs_client_jks_pass = self.getPW()
             Config.api_rs_client_jks_pass_encoded = self.obscure(Config.api_rs_client_jks_pass)
-        self.api_rs_client_jwks = self.gen_openid_jwks_jks_keys(self.api_rs_client_jks_fn, Config.api_rs_client_jks_pass)
+        self.api_rs_client_jwks = self.gen_openid_data_store_keys(self.api_rs_client_jks_fn, Config.api_rs_client_jks_pass)
         Config.templateRenderingDict['api_rs_client_base64_jwks'] = self.generate_base64_string(self.api_rs_client_jwks, 1)
 
         if not Config.get('api_rp_client_jks_pass'):
-            Config.api_rp_client_jks_pass = 'secret'
+            Config.api_rp_client_jks_pass = self.getPW()
             Config.api_rp_client_jks_pass_encoded = self.obscure(Config.api_rp_client_jks_pass)
-        self.api_rp_client_jwks = self.gen_openid_jwks_jks_keys(self.api_rp_client_jks_fn, Config.api_rp_client_jks_pass)
+        self.api_rp_client_jwks = self.gen_openid_data_store_keys(self.api_rp_client_jks_fn, Config.api_rp_client_jks_pass)
         Config.templateRenderingDict['api_rp_client_base64_jwks'] = self.generate_base64_string(self.api_rp_client_jwks, 1)
 
 
@@ -108,6 +112,11 @@ class OxtrustInstaller(JettyInstaller):
 
     def render_import_templates(self):
 
+        if Config.profile == static.SetupProfiles.DISA_STIG:
+            Config.templateRenderingDict['adminUiLocaleSupported'] = '[{"locale" : "en", "displayName" : "English"}]'
+        else:
+            Config.templateRenderingDict['adminUiLocaleSupported'] = '[{"locale" : "en", "displayName" : "English"}, {"locale" : "fr", "displayName" : "French"}, {"locale" : "rs", "displayName" : "Russian"}]'
+
         for tmp in (self.oxtrust_config_json, self.oxtrust_cache_refresh_json, self.oxtrust_import_person_json):
             self.renderTemplateInOut(tmp, self.templates_folder, self.output_folder)
 
@@ -115,7 +124,6 @@ class OxtrustInstaller(JettyInstaller):
         Config.templateRenderingDict['oxtrust_cache_refresh_base64'] = self.generate_base64_ldap_file(self.oxtrust_cache_refresh_json)
         Config.templateRenderingDict['oxtrust_import_person_base64'] = self.generate_base64_ldap_file(self.oxtrust_import_person_json)
 
-        # TODO: Question: Should we do import lidf_oxtrust_api and ldif_oxtrust_api_clients in oxtrust_api installtion?
         ldif_files = [
                 self.ldif_config,
                 self.lidf_oxtrust_api,
@@ -126,8 +134,7 @@ class OxtrustInstaller(JettyInstaller):
 
         for tmp in ldif_files:
             self.renderTemplateInOut(tmp, self.templates_folder, self.output_folder)
-        
-        # TODO: Question: Should we leave general scripts to oxtrustinstaller and move others to their own installers?
+
         self.prepare_base64_extension_scripts()
         self.renderTemplateInOut(self.ldif_scripts, Config.templateFolder, Config.outputFolder)
         ldif_files.append(self.ldif_scripts)
@@ -141,5 +148,3 @@ class OxtrustInstaller(JettyInstaller):
             self.run([paths.cmd_mkdir, '-m', '775', '-p', folder])
             self.run([paths.cmd_chown, '-R', 'root:gluu', folder])
 
-    def installed(self):
-        return os.path.exists(os.path.join(Config.jetty_base, self.service_name, 'start.ini'))

@@ -20,10 +20,38 @@ displayName: Gluu Test Group 2
 ######################################
 # People
 ######################################
+# testadmin user
+dn: inum=%(testadmin_inum)s,ou=people,o=gluu
+objectClass: top
+objectClass: gluuCustomPerson
+objectClass: gluuPerson
+inum: %(testadmin_inum)s
+uid: testadmin
+givenName: Admin
+middleName: Admin
+nickname: Admin
+preferredUsername: testadmin
+sn: User
+userPassword: %(encoded_oxtrust_testadmin_password)s
+gluuStatus: active
+memberOf: inum=60B7,ou=groups,o=gluu
+displayName: Default Admin User
+mail: testadmin@%(hostname)s
+emailVerified: true
+telephoneNumber: 555-1212
+phoneNumberVerified: true
+profile: https://www.facebook.com/gluufederation/
+picture: https://www.gluu.org/wp-content/themes/gluu/images/gl.png
+website: https://www.gluu.org/
+gender: male
+birthdate: 20170907123010.485Z
+zoneinfo: America/Los_Angeles
+c: US
+
 dn: inum=B1F3-AEAE-B798,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 cn: Test User
 sn: User
 o: Test
@@ -63,8 +91,8 @@ oxAuthBackchannelDeviceRegistrationToken: dv95B2zWvZBEGbcAf3byKO
 
 dn: inum=B1F3-AEAE-B799,ou=people,o=gluu
 objectClass: top
-objectClass: gluuPerson
 objectClass: gluuCustomPerson
+objectClass: gluuPerson
 cn: Test User2
 sn: User2
 o: Test

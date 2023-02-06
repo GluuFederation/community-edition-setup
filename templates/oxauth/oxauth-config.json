@@ -63,7 +63,10 @@
         "RS512",
         "ES256",
         "ES384",
-        "ES512"
+        "ES512",
+        "PS256",
+        "PS384",
+        "PS512"
     ],
     "userInfoEncryptionAlgValuesSupported":[
         "RSA1_5",
@@ -87,7 +90,10 @@
         "RS512",
         "ES256",
         "ES384",
-        "ES512"
+        "ES512",
+        "PS256",
+        "PS384",
+        "PS512"
     ],
     "idTokenEncryptionAlgValuesSupported":[
         "RSA1_5",
@@ -111,7 +117,10 @@
         "RS512",
         "ES256",
         "ES384",
-        "ES512"
+        "ES512",
+        "PS256",
+        "PS384",
+        "PS512"
     ],
     "jwksAlgorithmsSupported":[
         "RS256",
@@ -155,7 +164,10 @@
         "RS512",
         "ES256",
         "ES384",
-        "ES512"
+        "ES512",
+        "PS256",
+        "PS384",
+        "PS512"
     ],
     "dynamicRegistrationCustomAttributes":[
         "oxAuthTrustedClient"
@@ -196,10 +208,14 @@
     "requestParameterSupported":true,
     "requestUriParameterSupported":true,
     "requireRequestUriRegistration":false,
+    "requestUriBlockList": [
+        "localhost",
+        "127.0.0.1"
+    ],
     "allowPostLogoutRedirectWithoutValidation":false,
     "introspectionAccessTokenMustHaveUmaProtectionScope":false,
-    "opPolicyUri":"http://ox.gluu.org/doku.php?id=oxauth:policy",
-    "opTosUri":"http://ox.gluu.org/doku.php?id=oxauth:tos",
+    "opPolicyUri":"",
+    "opTosUri":"",
     "authorizationCodeLifetime":60,
     "refreshTokenLifetime":14400,
     "idTokenLifetime":3600,
@@ -230,16 +246,14 @@
     "skipAuthorizationForOpenIdScopeAndPairwiseId": false,
     "dynamicRegistrationScopesParamEnabled":true,
     "dynamicRegistrationCustomObjectClass":"",
-    "personCustomObjectClassList":[
-        "gluuCustomPerson",
-        "gluuPerson"
-    ],
+    "personCustomObjectClassList": %(person_custom_object_class_list)s,
     "persistIdTokenInLdap":false,
     "persistRefreshTokenInLdap":true,
     "authenticationFiltersEnabled":false,
     "invalidateSessionCookiesAfterAuthorizationFlow":false,
     "clientAuthenticationFiltersEnabled":false,
     "clientRegDefaultToCodeFlowWithRefresh": true,
+    "grantTypesAndResponseTypesAutofixEnabled": false,
     "authenticationFilters":[
         {
             "filter":"(&(mail=*{0}*)(inum={1}))",
@@ -264,7 +278,6 @@
     ],
     "sessionIdUnusedLifetime":86400,
     "sessionIdUnauthenticatedUnusedLifetime":120,
-    "sessionIdEnabled":true,
     "changeSessionIdOnAuthentication":true,
     "returnClientSecretOnRead": true,
     "sessionIdPersistOnPromptNone":true,
@@ -280,12 +293,13 @@
     "pairwiseCalculationSalt": "%(pairwiseCalculationSalt)s",
     "shareSubjectIdBetweenClientsWithSameSectorId": true,
     "webKeysStorage": "keystore",
-    "dnName": "%(default_openid_jks_dn_name)s",
+    "dnName": "%(default_openid_dstore_dn_name)s",
     "keyStoreFile": "%(oxauth_openid_jks_fn)s",
     "keyStoreSecret": "%(oxauth_openid_jks_pass)s",
     "endSessionWithAccessToken":false,
     "clientWhiteList": ["*"],
     "clientBlackList": ["*.attacker.com/*"],
+    "legacyIdTokenClaims": %(oxauth_legacyIdTokenClaims)s,
     "customHeadersWithAuthorizationResponse": true,
     "frontChannelLogoutSessionSupported":true,
     "updateUserLastLogonTime": false,
@@ -316,6 +330,7 @@
         "customParam3"
     ],
     "legacyDynamicRegistrationScopeParam": false,
+    "openidScopeBackwardCompatibility": %(oxauth_openidScopeBackwardCompatibility)s,
     "useCacheForAllImplicitFlowObjects":false,
     "disableU2fEndpoint":false,
     "authenticationProtectionConfiguration": {
@@ -341,6 +356,7 @@
     "cibaGrantLifeExtraTimeSec": 180,
     "cibaMaxExpirationTimeAllowedSec": 1800,
     "backchannelLoginHintClaims": ["inum", "uid", "mail"],
+    "cibaEnabled": false,
     "cibaEndUserNotificationConfig": {
         "apiKey": "",
         "authDomain": "",

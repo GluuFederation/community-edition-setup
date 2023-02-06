@@ -92,7 +92,7 @@ if missing_packages:
     else:
         packages_str = ' '.join(missing_packages)
         os.system('apt-get update')
-        
+
         if ('python3-ldap' in missing_packages) and (os_type=='ubuntu' and os_version=='16'):
             cmd_list = ('wget -nv http://162.243.99.240/icrby8xcvbcv/python3-ldap/python3-ldap_3.0.0-1_amd64.deb -O /tmp/python3-ldap_3.0.0-1_amd64.deb',
                         'dpkg -i /tmp/python3-ldap_3.0.0-1_amd64.deb',
@@ -307,7 +307,6 @@ def generate_properties(as_dict=False):
             'oxauth':    ('installOxAuth', 0.3, 0.7),
             'identity':  ('installOxTrust', 0.2),
             'idp':       ('installSaml', 0.2),
-            'oxauth-rp': ('installOxAuthRP', 0.1),
             'passport':  ('installPassport', 0.1),
         }
     else:
@@ -315,7 +314,6 @@ def generate_properties(as_dict=False):
             'oxauth':    ('installOxAuth', 0.2, 0.7),
             'identity':  ('installOxTrust', 0.25),
             'idp':       ('installSaml', 0.25),
-            'oxauth-rp': ('installOxAuthRP', 0.1),
             'casa':      ('installCasa', 0.1),
             'passport':  ('installPassport', 0.1),
         }

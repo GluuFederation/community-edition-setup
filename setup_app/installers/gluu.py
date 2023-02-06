@@ -5,13 +5,14 @@ import inspect
 import base64
 import shutil
 import re
+import glob
 
 from pathlib import Path
 
 from setup_app import paths
 from setup_app import static
 from setup_app.utils import base
-from setup_app.static import InstallTypes, AppType, InstallOption
+from setup_app.static import InstallTypes, AppType, InstallOption, SetupProfiles
 from setup_app.config import Config
 from setup_app.utils.setup_utils import SetupUtils
 from setup_app.utils.progress import gluuProgress
@@ -20,6 +21,9 @@ from setup_app.installers.base import BaseInstaller
 class GluuInstaller(BaseInstaller, SetupUtils):
 
     install_var = 'installGluu'
+
+    def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
 
     def __repr__(self):
         txt = ''
@@ -33,18 +37,28 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                 txt += 'countryCode'.ljust(30) + Config.countryCode.rjust(35) + "\n"
                 txt += 'Applications max ram'.ljust(30) + str(Config.application_max_ram).rjust(35) + "\n"
 
+                if Config.ldap_install == InstallTypes.LOCAL and Config.get('opendj_ram'):
+                    txt += 'OpenDJ max ram (MB)'.ljust(30) + str(Config.opendj_ram).rjust(35) + "\n"
+
                 txt += 'Install oxAuth'.ljust(30) + repr(Config.installOxAuth).rjust(35) + "\n"
                 txt += 'Install oxTrust'.ljust(30) + repr(Config.installOxTrust).rjust(35) + "\n"
 
                 bc = []
-                if Config.wrends_install:
-                    t_ = 'wrends'
-                    if Config.wrends_install == InstallTypes.REMOTE:
+                if Config.ldap_install:
+                    t_ = 'opendj'
+                    if Config.ldap_install == InstallTypes.REMOTE:
                         t_ += '[R]'
                     bc.append(t_)
+
                 if Config.cb_install:
                     t_ = 'couchbase'
                     if Config.cb_install == InstallTypes.REMOTE:
+                        t_ += '[R]'
+                    bc.append(t_)
+
+                if Config.rdbm_install:
+                    t_ = Config.rdbm_type
+                    if Config.rdbm_install_type == InstallTypes.REMOTE:
                         t_ += '[R]'
                     bc.append(t_)
 
@@ -57,28 +71,33 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             txt += 'Install Apache 2 web server'.ljust(30) + repr(Config.installHttpd).rjust(35) + (' *' if 'installHttpd' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Fido2 Server'.ljust(30) + repr(Config.installFido2).rjust(35) + (' *' if 'installFido2' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Scim Server'.ljust(30) + repr(Config.installScimServer).rjust(35) + (' *' if 'installScimServer' in Config.addPostSetupService else '') + "\n"
-            txt += 'Install Shibboleth SAML IDP'.ljust(30) + repr(Config.installSaml).rjust(35) + (' *' if 'installSaml' in Config.addPostSetupService else '') + "\n"
-            txt += 'Install oxAuth RP'.ljust(30) + repr(Config.installOxAuthRP).rjust(35) + (' *' if 'installOxAuthRP' in Config.addPostSetupService else '') + "\n"
-            txt += 'Install Passport '.ljust(30) + repr(Config.installPassport).rjust(35) + (' *' if 'installPassport' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Casa '.ljust(30) + repr(Config.installCasa).rjust(35) + (' *' if 'installCasa' in Config.addPostSetupService else '') + "\n"
             txt += 'Install Oxd '.ljust(30) + repr(Config.installOxd).rjust(35) + (' *' if 'installOxd' in Config.addPostSetupService else '') + "\n"
-            txt += 'Install Gluu Radius '.ljust(30) + repr(Config.installGluuRadius).rjust(35) + (' *' if 'installGluuRadius' in Config.addPostSetupService else '') + "\n"
+
+            if Config.profile != static.SetupProfiles.DISA_STIG:
+                txt += 'Install Shibboleth SAML IDP'.ljust(30) + repr(Config.installSaml).rjust(35) + (' *' if 'installSaml' in Config.addPostSetupService else '') + "\n"
+                txt += 'Install Passport '.ljust(30) + repr(Config.installPassport).rjust(35) + (' *' if 'installPassport' in Config.addPostSetupService else '') + "\n"
+                txt += 'Install Fido2 Server'.ljust(30) + repr(Config.installFido2).rjust(35) + (' *' if 'installFido2' in Config.addPostSetupService else '') + "\n"
+                txt += 'Install Gluu Radius '.ljust(30) + repr(Config.installGluuRadius).rjust(35) + (' *' if 'installGluuRadius' in Config.addPostSetupService else '') + "\n"
+
+            txt += 'Load Test Data '.ljust(30) + repr( base.argsp.t).rjust(35) + "\n"
             return txt
 
         except:
             s = ""
-            for key in list(Config.__dict__):
-                if not key in ('__dict__',):
-                    val = getattr(Config, key)
-                    if not inspect.ismethod(val):
-                        s = s + "%s\n%s\n%s\n\n" % (key, "-" * len(key), val)
+            if not base.argsp.dummy:
+                for key in list(Config.__dict__):
+                    if key not in ('__dict__',):
+                        val = getattr(Config, key)
+                        if not inspect.ismethod(val):
+                            s = s + "%s\n%s\n%s\n\n" % (key, "-" * len(key), val)
             return s
 
 
     def initialize(self):
         self.service_name = 'gluu'
         self.app_type = AppType.APPLICATION
-        self.install_type = InstallOption.MONDATORY
+        self.install_type = InstallOption.MANDATORY
         gluuProgress.register(self)
 
         Config.install_time_ldap = time.strftime('%Y%m%d%H%M%SZ', time.gmtime(time.time()))
@@ -92,6 +111,22 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             self.logIt("Downloading {}".format(os.path.basename(oxauth_client_jar_url)))
             base.download(oxauth_client_jar_url, Config.non_setup_properties['oxauth_client_jar_fn'])
 
+        self.determine_key_gen_path()
+
+        if not Config.installed_instance and Config.profile == static.SetupProfiles.DISA_STIG:
+            self.remove_pcks11_keys()
+
+        if not Config.get('smtp_jks_pass'):
+            Config.smtp_jks_pass = self.getPW()
+            try:
+                Config.smtp_jks_pass_enc = self.obscure(Config.smtp_jks_pass)
+            except Exception as e:
+                self.logIt("GluuInstaller. __init__ failed. Reason: %s" % str(e), errorLog=True)
+
+        self.profile_templates(Config.templateFolder)
+
+    def determine_key_gen_path(self):
+
         self.logIt("Determining key generator path")
         oxauth_client_jar_zf = zipfile.ZipFile(Config.non_setup_properties['oxauth_client_jar_fn'])
 
@@ -103,7 +138,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                 p, e = os.path.splitext(f)
                 Config.non_setup_properties['key_export_path'] = p.replace(os.path.sep, '.')
 
-        if (not 'key_gen_path' in Config.non_setup_properties) or (not 'key_export_path' in Config.non_setup_properties):
+        if ('key_gen_path' not in Config.non_setup_properties) or ('key_export_path' not in Config.non_setup_properties):
             self.logIt("Can't determine key generator and/or key exporter path form {}".format(Config.non_setup_properties['oxauth_client_jar_fn']), True, True)
         else:
             self.logIt("Key generator path was determined as {}".format(Config.non_setup_properties['key_export_path']))
@@ -111,8 +146,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
     def configureSystem(self):
         self.logIt("Configuring system", 'gluu')
         self.customiseSystem()
-        if not base.snap:
-            self.createGroup('gluu')
+        self.createGroup('gluu')
         self.makeFolders()
 
         if Config.persistence_type == 'hybrid':
@@ -127,34 +161,36 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             if not os.path.exists(folder):
                 self.run([paths.cmd_mkdir, '-p', folder])
 
-        if not base.snap:
-            self.run([paths.cmd_chown, '-R', 'root:gluu', Config.certFolder])
-            self.run([paths.cmd_chmod, '551', Config.certFolder])
-            self.run([paths.cmd_chmod, 'ga+w', "/tmp"]) # Allow write to /tmp
+
+        self.run([paths.cmd_chown, '-R', '{}:{}'.format(Config.root_user, Config.gluu_user), Config.certFolder])
+        self.run([paths.cmd_chmod, '551', Config.certFolder])
+        self.run([paths.cmd_chmod, 'ga+w', "/tmp"]) # Allow write to /tmp
 
     def customiseSystem(self):
-        if not base.snap:
-            if Config.os_initdaemon == 'init':
-                system_profile_update = Config.system_profile_update_init
-            else:
-                system_profile_update = Config.system_profile_update_systemd
 
-            # Render customized part
-            self.renderTemplate(system_profile_update)
-            renderedSystemProfile = self.readFile(system_profile_update)
+        if Config.os_initdaemon == 'init':
+            system_profile_update = Config.system_profile_update_init
+        else:
+            system_profile_update = Config.system_profile_update_systemd
 
-            # Read source file
-            currentSystemProfile = self.readFile(Config.sysemProfile)
+        # Render customized part
+        self.renderTemplate(system_profile_update)
+        renderedSystemProfile = self.readFile(system_profile_update)
 
+        # Read source file
+        currentSystemProfile = self.readFile(Config.sysemProfile)
+
+        if 'Added by Gluu' not in currentSystemProfile:
             # Write merged file
             self.backupFile(Config.sysemProfile)
             resultSystemProfile = "\n".join((currentSystemProfile, renderedSystemProfile))
             self.writeFile(Config.sysemProfile, resultSystemProfile)
 
-            # Fix new file permissions
-            self.run([paths.cmd_chmod, '644', Config.sysemProfile])
+        # Fix new file permissions
+        self.run([paths.cmd_chmod, '644', Config.sysemProfile])
 
     def make_salt(self):
+
         if not Config.encode_salt:
             Config.encode_salt= self.getPW() + self.getPW()
 
@@ -173,7 +209,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         if not templates:
             templates = Config.ce_templates
 
-        if Config.persistence_type=='couchbase':
+        if Config.persistence_type in ('couchbase', 'sql', 'spanner'):
             Config.ce_templates[Config.ox_ldap_properties] = False
 
         for fullPath in templates:
@@ -250,7 +286,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         if base.clone_type == 'rpm':
             for service in Config.redhat_services:
                 self.run(["/sbin/chkconfig", service, "on"])
-        elif not base.snap:
+        else:
             for service in Config.debian_services:
                 self.run([paths.cmd_update_rc , service, 'defaults'])
                 self.run([paths.cmd_update_rc, service, 'enable'])
@@ -266,35 +302,21 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         encode_script = self.readFile(os.path.join(Config.templateFolder, 'encode.py'))
         encode_script = encode_script % self.merge_dicts(Config.__dict__, Config.templateRenderingDict)
         self.writeFile(os.path.join(Config.gluuOptBinFolder, 'encode.py'), encode_script)
-        self.logIt("Error rendering encode script", True)
 
         super_gluu_lisence_renewer_fn = os.path.join(Config.staticFolder, 'scripts', 'super_gluu_license_renewer.py')
 
-        if base.snap:
-            target_fn = os.path.join(Config.gluuOptBinFolder, 'super_gluu_lisence_renewer.py')
-            self.run(['cp', '-f', super_gluu_lisence_renewer_fn, target_fn])
 
-        else:
-            target_fn = '/etc/cron.daily/super_gluu_lisence_renewer'
-            self.run(['cp', '-f', super_gluu_lisence_renewer_fn, target_fn])
-            self.run([paths.cmd_chown, 'root:root', target_fn])
-            self.run([paths.cmd_chmod, '+x', target_fn])
+        target_fn = '/etc/cron.daily/super_gluu_lisence_renewer'
+        self.run(['cp', '-f', super_gluu_lisence_renewer_fn, target_fn])
+        self.run([paths.cmd_chown, '{0}:{0}'.format(Config.root_user), target_fn])
+        self.run([paths.cmd_chmod, '+x', target_fn])
 
-            print_version_scr_fn = os.path.join(Config.install_dir, 'setup_app/utils/printVersion.py')
-            self.run(['cp', '-f', print_version_scr_fn , Config.gluuOptBinFolder])
-            self.run([paths.cmd_ln, '-s', 'printVersion.py' , 'show_version.py'], cwd=Config.gluuOptBinFolder)
+        print_version_scr_fn = os.path.join(Config.install_dir, 'setup_app/utils/printVersion.py')
+        self.run(['cp', '-f', print_version_scr_fn , Config.gluuOptBinFolder])
+        self.run([paths.cmd_ln, '-s', 'printVersion.py' , 'show_version.py'], cwd=Config.gluuOptBinFolder)
 
         for scr in Path(Config.gluuOptBinFolder).glob('*'):
             scr_path = scr.as_posix()
-            if base.snap and scr_path.endswith('.py'):
-                scr_content = self.readFile(scr_path).splitlines()
-                first_line = '#!' + paths.cmd_py3
-                if scr_content[0].startswith('#!'):
-                    scr_content[0] = first_line
-                else:
-                    scr_content.insert(0, first_line)
-                self.writeFile(scr_path, '\n'.join(scr_content), backup=False)
-
             self.run([paths.cmd_chmod, '700', scr_path])
 
     def update_hostname(self):
@@ -318,7 +340,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
             hostname_file_content = self.readFile(Config.etc_hosts)
             with open(Config.etc_hosts,'w') as w:
                 for l in hostname_file_content.splitlines():
-                    if not Config.hostname in l.split():
+                    if Config.hostname not in l.split():
                         w.write(l+'\n')
 
                 w.write('{}\t{}\n'.format(Config.ip, Config.hostname))
@@ -358,55 +380,147 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                 except:
                     self.logIt("Error writing %s to %s" % (output_fn, dest_fn), True)
 
+
+    def render_custom_templates(self, ldif_dir):
+        output_dir_p = Path(ldif_dir + '.output')
+        self.logIt("Rendering custom templates from {} to {}".format(ldif_dir, output_dir_p))
+
+        for p in Path(ldif_dir).rglob('*'):
+            if p.is_file():
+                out_file_p = output_dir_p.joinpath(p.relative_to(ldif_dir))
+                if not out_file_p.parent.exists():
+                    out_file_p.parent.mkdir(parents=True)
+                try:
+                    self.renderTemplateInOut(p.as_posix(), p.parent.as_posix(), out_file_p.parent.as_posix())
+                except Exception:
+                    self.logIt("Error writing template {}".format(out_file_p), True)
+
+
+    def import_custom_ldif_dir(self, ldif_dir):
+        ldif_dir = ldif_dir.rstrip('/')
+        self.logIt("Importing Custom LDIF files", pbar='post-setup')
+        self.render_custom_templates(ldif_dir)
+
+        output_dir = ldif_dir + '.output'
+
+        for p in Path(output_dir).rglob('*.ldif'):
+            ldif = p.as_posix()
+            self.logIt("Importing rendered custom ldif {}".format(ldif))
+            try:
+                self.dbUtils.import_ldif([ldif])
+            except Exception:
+                self.logIt("Error importing custom ldif file {}".format(ldif), True)
+
+
     def post_install_tasks(self):
+        # set systemd timeout
+        self.set_systemd_timeout()
+
+        if base.argsp.import_ldif:
+            self.dbUtils.bind(force=True)
+            self.import_custom_ldif_dir(base.argsp.import_ldif)
 
         self.deleteLdapPw()
 
-        if base.snap:
-            #write post-install.py script
-            self.logIt("Writing snap-post-setup.py", pbar='post-setup')
-            post_setup_script = self.readFile(os.path.join(Config.templateFolder, 'snap-post-setup.py'))
-            
-            for key, val in (('{{SNAP_NAME}}', os.environ['SNAP_NAME']),
-                             ('{{SNAP_PY3}}', paths.cmd_py3),
-                             ('{{SNAP}}', base.snap),
-                             ('{{SNAP_COMMON}}', base.snap_common)
-                             ):
-            
-                post_setup_script = post_setup_script.replace(key, val)
+        for f in os.listdir(Config.certFolder):
+            if not f.startswith('passport-'):
+                fpath = os.path.join(Config.certFolder, f)
+                self.chown(fpath, Config.root_user, Config.gluu_group)
+                self.run([paths.cmd_chmod, '660', fpath])
+                self.run([paths.cmd_chmod, 'u+X', fpath])
+        self.chown(Config.gluuOptPythonFolder, Config.root_user, Config.gluu_user, recursive=True)
 
-            post_setup_script_fn = os.path.join(Config.install_dir, 'snap-post-setup.py')
-            with open(post_setup_script_fn, 'w') as w:
-                w.write(post_setup_script)
-            self.run([paths.cmd_chmod, '+x', post_setup_script_fn])
+        if Config.profile != static.SetupProfiles.DISA_STIG:
+            self.run([paths.cmd_chown, Config.user_group, Config.jetty_base])
+            for p in glob.glob(os.path.join(Config.gluuOptFolder, '*')):
+                if 'node' in p:
+                    continue
+                self.chown(p, Config.jetty_user, Config.gluu_user, recursive=True)
+            self.chown(Config.gluuOptFolder, Config.jetty_user, Config.gluu_user)
 
-            if not Config.installed_instance:
-                Config.post_messages.insert(0, "Please execute:\nsudo " + post_setup_script_fn)
+        self.chown(Config.gluuBaseFolder, Config.root_user, Config.gluu_group, recursive=True)
+        self.chown(Config.oxBaseDataFolder, Config.root_user, Config.gluu_group, recursive=True)
 
-            self.logIt("Setting permissions", pbar='post-setup')
+        #enable scripts
+        self.enable_scripts(base.argsp.enable_script)
 
-            for crt_fn in Path(os.path.join(base.snap_common, 'etc/certs')).glob('*'):
-                self.run([paths.cmd_chmod, '0600', crt_fn.as_posix()])
+        #set auth modes
+        self.set_auth_modes()
 
-            for spath in ('gluu', 'etc/gluu/conf', 'opendj/db'):
-                for gpath in Path(os.path.join(base.snap_common, spath)).rglob('*'):
-                    if ('node_modules' in gpath.as_posix()) or ('gluu/bin' in gpath.as_posix()) or ('jetty/temp' in gpath.as_posix()):
-                        continue
-                    chm_mode = '0755' if os.path.isdir(gpath.as_posix()) else '0600'
-                    self.run([paths.cmd_chmod, chm_mode, gpath.as_posix()])
+        for sys_path in (Config.gluuOptFolder, Config.gluuBaseFolder, Config.oxBaseDataFolder):
+            self.run([paths.cmd_chmod, '-R', 'u+rwX,g+rwX,o-rwX', sys_path])
 
-            self.add_yacron_job(
-                    command = os.path.join(Config.gluuOptBinFolder, 'super_gluu_lisence_renewer.py'), 
-                    schedule = '0 2 * * *', # everyday at 2 am
-                    name='super-gluu-license-renewer', 
-                    args={'captureStderr': True}
-                    )
+        if not Config.installed_instance:
+            cron_service = 'crond' if base.clone_type == 'rpm' else 'cron'
+            self.restart(cron_service)
 
-            self.restart('yacron')
+        if Config.profile == static.SetupProfiles.DISA_STIG:
+            self.disa_stig_post_install_tasks()
 
-            self.writeFile(os.path.join(base.snap_common, 'etc/hosts.gluu'), Config.ip + '\t' + Config.hostname)
+        if base.argsp.gluu_passwurd_cert:
+            self.generate_gluu_passwurd_api_keystore()
 
-        else:
-            if not Config.installed_instance:
-                cron_service = 'crond' if base.os_type in ['centos', 'red', 'fedora'] else 'cron'
-                self.restart(cron_service)
+    def disa_stig_post_install_tasks(self):
+
+        self.chown(Config.gluuOptFolder, Config.jetty_user, Config.gluu_group)
+
+        jetty_absolute_dir = Path(Config.jetty_home).resolve()
+
+        # selinux proxypass
+        setsebool_cmd = shutil.which('setsebool')
+        self.run([setsebool_cmd, 'httpd_can_network_connect', '1'])
+        # make it permanent
+        self.run([setsebool_cmd, 'httpd_can_network_connect', '1', '-P'])
+
+        for sys_path in (Config.jetty_base,
+                            jetty_absolute_dir.as_posix(),
+                            Config.gluuBaseFolder,
+                            os.path.join(Config.distFolder,'scripts')):
+            self.run([paths.cmd_chmod, 'g+rwX', '-R', sys_path])
+
+        self.chown(jetty_absolute_dir.parent.as_posix(), Config.user_group, recursive=True)
+
+
+    def generate_gluu_passwurd_api_keystore(self):
+        suffix = 'passwurd_api'
+        key_fn, csr_fn, crt_fn = self.gen_cert(suffix, 'changeit', user='jetty')
+        passwurd_api_keystore_fn = os.path.join(Config.certFolder, 'passwurdAKeystore.pcks12')
+        self.gen_keystore(suffix, passwurd_api_keystore_fn, 'changeit', key_fn, crt_fn, store_type='PKCS12')
+
+
+    def enable_scripts(self, inums):
+        if inums:
+            for inum in inums:
+                self.dbUtils.enable_script(inum)
+
+    def set_auth_modes(self):
+        if base.argsp.ox_authentication_mode:
+            self.dbUtils.set_configuration('oxAuthenticationMode', base.argsp.ox_authentication_mode)
+        if base.argsp.ox_trust_authentication_mode:
+            self.dbUtils.set_configuration('oxTrustAuthenticationMode', base.argsp.ox_trust_authentication_mode)
+
+    def generate_configuration(self):
+        self.logIt("Generating smtp keys", pbar=self.service_name)
+
+        cmd_cert_gen = [Config.cmd_keytool, '-genkeypair',
+                        '-alias', Config.smtp_alias,
+                        '-keyalg', 'ec',
+                        '-groupname', 'secp256r1',
+                        '-sigalg', Config.smtp_signing_alg,
+                        '-validity', '3650',
+                        '-storetype', Config.default_store_type,
+                        '-keystore', Config.smtp_jks_fn,
+                        '-keypass', Config.smtp_jks_pass,
+                        '-storepass', Config.smtp_jks_pass,
+                        '-dname', 'CN=SMTP CA Certificate'
+                    ]
+
+        if Config.profile == SetupProfiles.DISA_STIG:
+            fips_provider = self.get_keytool_provider()
+            cmd_cert_gen += [
+                        '-providername', fips_provider['-providername'],
+                        '-provider', fips_provider['-providerclass'],
+                        '-providerpath', fips_provider['-providerpath']
+                    ]
+
+        self.run(cmd_cert_gen)

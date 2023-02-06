@@ -10,6 +10,8 @@ import base64
 import json
 import string
 import random
+import pwd
+import grp
 import hashlib
 import ruamel.yaml
 
@@ -19,7 +21,7 @@ from urllib.parse import urlparse
 from setup_app import paths
 from setup_app.config import Config
 from setup_app.utils import base
-from setup_app.static import InstallTypes
+from setup_app.static import InstallTypes, SetupProfiles
 from setup_app.utils.crypto64 import Crypto64
 
 class SetupUtils(Crypto64):
@@ -51,7 +53,7 @@ class SetupUtils(Crypto64):
         base.logIt(*args, **kwargs)
 
 
-    def backupFile(self, inFile, destFolder=None, move=False):
+    def backupFile(self, inFile, destFolder=None, move=False, cur_content=''):
 
         if destFolder:
             if os.path.isfile(destFolder):
@@ -61,6 +63,15 @@ class SetupUtils(Crypto64):
                 destFile = os.path.join(destFolder, inName)
         else:
             destFile = inFile
+
+        # check if file is the same
+        if os.path.isfile(destFile):
+            with open(destFile, 'rb') as f:
+                old_content = f.read()
+            if isinstance(cur_content, str):
+                cur_content = cur_content.encode()
+            if cur_content == old_content:
+                return
 
         bc = 1
         while True:
@@ -74,6 +85,7 @@ class SetupUtils(Crypto64):
 
         if not destFile.startswith('/opt'):
             self.logOSChanges("File %s was backed up as %s" % (destFile, backupFile_fn))
+
 
 
     def appendLine(self, line, fileName=False):
@@ -163,7 +175,7 @@ class SetupUtils(Crypto64):
 
         inFilePathText = None
         if backup:
-            self.backupFile(outFilePath)
+            self.backupFile(outFilePath, cur_content=text)
         try:
             with open(outFilePath, 'w') as w:
                 w.write(text)
@@ -172,20 +184,19 @@ class SetupUtils(Crypto64):
 
         return inFilePathText
 
-    def insertLinesInFile(self, inFilePath, index, text):        
-            inFilePathLines = None                    
-            try:            
-                inFilePathLines = self.readFile(inFilePath).splitlines()            
-                try:
-                    self.backupFile(inFilePath)
-                    inFilePathLines.insert(index, text)    
-                    inFileText = ''.join(inFilePathLines)
-                    self.writeFile(inFilePath, inFileText)
-                except:            
-                    self.logIt("Error writing %s" % inFilePathLines, True)            
-            except:            
-                self.logIt("Error reading %s" % inFilePathLines, True)
-                    
+    def insertLinesInFile(self, inFilePath, index, text):
+        inFilePathLines = None
+        try:
+            inFilePathLines = self.readFile(inFilePath).splitlines()
+            try:
+                inFilePathLines.insert(index, text)
+                inFileText = ''.join(inFilePathLines)
+                self.writeFile(inFilePath, inFileText)
+            except:
+                self.logIt("Error writing %s" % inFilePathLines, True)
+        except:
+            self.logIt("Error reading %s" % inFilePathLines, True)
+
     def commentOutText(self, text):
         textLines = text.splitlines()
 
@@ -202,22 +213,28 @@ class SetupUtils(Crypto64):
     def applyChangesInFiles(self, changes):
         self.logIt("Applying changes to %s files..." % changes['name'])
         for change in changes['files']:
-            file = change['path']
+            cfile = change['path']
 
-            text = self.readFile(file)
-            file_backup = '%s.bak' % file
+            text = self.readFile(cfile)
+            file_backup = '%s.bak' % cfile
             self.writeFile(file_backup, text)
             self.logIt("Created backup of %s file %s..." % (changes['name'], file_backup))
 
             for replace in change['replace']:
                 text = self.replaceInText(text, replace['pattern'], replace['update'])
 
-            self.writeFile(file, text)
-            self.logIt("Wrote updated %s file %s..." % (changes['name'], file))
+            self.writeFile(cfile, text)
+            self.logIt("Wrote updated %s file %s..." % (changes['name'], cfile))
 
 
-    def copyFile(self, inFile, destFolder):
-        self.backupFile(inFile, destFolder)
+    def copyFile(self, inFile, destFolder, backup=True):
+        if os.path.isfile(inFile):
+            with open(inFile, 'rb') as f:
+                cur_content = f.read()
+        else:
+            cur_content = ''
+        if backup:
+            self.backupFile(inFile, destFolder, cur_content=cur_content)
         self.logIt("Copying file {} to {}".format(inFile, destFolder))
         try:
             shutil.copy(inFile, destFolder)
@@ -240,8 +257,11 @@ class SetupUtils(Crypto64):
                         self.removeFile(d)
 
                     if not os.path.exists(d) or os.stat(s).st_mtime - os.stat(d).st_mtime > 1:
+                        with open(s, 'rb') as fi:
+                            cur_content = fi.read()
+                        self.backupFile(s, d, cur_content=cur_content)    
                         shutil.copy2(s, d)
-                        self.backupFile(s, d)
+                        
 
             self.logIt("Copied tree %s to %s" % (src, dst))
         except:
@@ -373,25 +393,33 @@ class SetupUtils(Crypto64):
 
         return text % dictionary
 
-
-    def renderTemplateInOut(self, filePath, templateFolder, outputFolder, me=''):
-        fn = os.path.basename(filePath)
-        in_fp = os.path.join(templateFolder, fn) 
-        self.logIt("Rendering template %s" % in_fp)
-        template_text = self.readFile(in_fp)
-
-        # Create output folder if needed
-        if not os.path.exists(outputFolder):
-            os.makedirs(outputFolder)
-
+    def render_template(self, tmp_fn):
+        template_text = self.readFile(tmp_fn)
         format_dict = self.merge_dicts(Config.__dict__, Config.templateRenderingDict)
         for k in format_dict:
             if isinstance(format_dict[k], bool):
                 format_dict[k] = str(format_dict[k]).lower()
 
         rendered_text = self.fomatWithDict(template_text, format_dict)
-        out_fp = os.path.join(outputFolder, fn)
-        self.writeFile(out_fp, rendered_text)
+
+        return rendered_text
+
+    def renderTemplateInOut(self, file_path, template_folder, output_folder=None, backup=False, out_file=None):
+        fn = os.path.basename(file_path)
+        in_fp = os.path.join(template_folder, fn) 
+        self.logIt("Rendering template %s" % in_fp)
+
+        if not output_folder:
+            output_folder = os.path.dirname(out_file)
+
+        # Create output folder if needed
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        rendered_text = self.render_template(in_fp)
+
+        out_fp = out_file or os.path.join(output_folder, fn)
+        self.writeFile(out_fp, rendered_text, backup=backup)
 
     def renderTemplate(self, filePath):
         self.renderTemplateInOut(filePath, Config.templateFolder, Config.outputFolder)
@@ -399,31 +427,59 @@ class SetupUtils(Crypto64):
     def createUser(self, userName, homeDir, shell='/bin/bash'):
 
         try:
-            useradd = '/usr/sbin/useradd'
-            cmd = [useradd, '--system', '--user-group', '--shell', shell, userName]
-            if homeDir:
-                cmd.insert(-1, '--create-home')
-                cmd.insert(-1, '--home-dir')
-                cmd.insert(-1, homeDir)
-            else:
-                cmd.insert(-1, '--no-create-home')
-            self.run(cmd)
-            if homeDir:
-                self.logOSChanges("User %s with homedir %s was created" % (userName, homeDir))
-            else:
-                self.logOSChanges("User %s without homedir was created" % (userName))
-        except:
-            self.logIt("Error adding user", True)
+            grp.getgrnam(userName)
+            user_group_exists = True
+        except KeyError:
+            user_group_exists = False
+
+        try:
+            pwd.getpwnam(userName)
+            self.logIt("User {} exists".format(userName))
+        except KeyError:
+            try:
+                useradd = '/usr/sbin/useradd'
+                cmd = [useradd, '--system', '--shell', shell, userName]
+                if user_group_exists:
+                    cmd.insert(1, '-g')
+                    cmd.insert(2, userName)
+                else:
+                    cmd.insert(1, '--user-group')
+                if homeDir:
+                    cmd.insert(-1, '--create-home')
+                    cmd.insert(-1, '--home-dir')
+                    cmd.insert(-1, homeDir)
+                else:
+                    cmd.insert(-1, '--no-create-home')
+                self.run(cmd)
+                if homeDir:
+                    self.logOSChanges("User %s with homedir %s was created" % (userName, homeDir))
+                else:
+                    self.logOSChanges("User %s without homedir was created" % (userName))
+
+            except Exception as e:
+                self.logIt("Error adding user: {}".format(e), True)
 
     def createGroup(self, groupName):
         try:
-            groupadd = '/usr/sbin/groupadd'
-            self.run([groupadd, groupName])
-            self.logOSChanges("Group %s was created" % (groupName))
-        except:
-            self.logIt("Error adding group", True)
+            grp.getgrnam(groupName)
+            self.logIt("Group {} exists".format(groupName))
+        except KeyError:
+            try:
+                groupadd = '/usr/sbin/groupadd'
+                self.run([groupadd, groupName])
+                self.logOSChanges("Group %s was created" % (groupName))
+            except:
+                self.logIt("Error adding group", True)
 
     def addUserToGroup(self, groupName, userName):
+        try:
+            grpdb = grp.getgrnam(groupName)
+        except KeyError:
+            self.createGroup(groupName)
+            grpdb = grp.getgrnam(groupName)
+        if userName in grpdb.gr_mem:
+            self.logIt("User {} is already member of {}".format(userName, groupName))
+            return
         try:
             usermod = '/usr/sbin/usermod'
             self.run([usermod, '-a', '-G', groupName, userName])
@@ -431,9 +487,21 @@ class SetupUtils(Crypto64):
         except:
             self.logIt("Error adding group", True)
 
+    def set_systemd_timeout(self, t=300):
+        systemd_conf_fn = '/etc/systemd/system.conf'
+        systemd_conf = []
+
+        for l in open(systemd_conf_fn):
+            tl = l.strip('#')
+            if tl.startswith('DefaultTimeoutStartSec'):
+                systemd_conf.append('DefaultTimeoutStartSec={}s\n'.format(t))
+            else:
+                systemd_conf.append(l)
+
+        self.writeFile(systemd_conf_fn, ''.join(systemd_conf))
+
+
     def fix_init_scripts(self, serviceName, initscript_fn):
-        if base.snap:
-            return
 
         changeTo = None
 
@@ -442,7 +510,7 @@ class SetupUtils(Crypto64):
         if Config.persistence_type == 'couchbase' or 'default' in couchbase_mappings:
             changeTo = 'couchbase-server'
 
-        if Config.wrends_install == InstallTypes.REMOTE or Config.cb_install == InstallTypes.REMOTE:
+        if Config.ldap_install == InstallTypes.REMOTE or Config.cb_install == InstallTypes.REMOTE:
             changeTo = ''
 
         if changeTo != None:
@@ -472,19 +540,34 @@ class SetupUtils(Crypto64):
 
         self.run([paths.cmd_chmod, '+x', service_init_script_fn])
 
+        if Config.profile == SetupProfiles.DISA_STIG:
+            self.run([paths.cmd_chown, '{}:{}'.format(Config.templateRenderingDict['service_user'], Config.gluu_group), service_init_script_fn])
+            self.run(['semanage', 'fcontext', '-a', '-t', 'usr_t', service_init_script_fn])
+            self.run(['restorecon', '-v', service_init_script_fn])
+
+
     def load_certificate_text(self, filePath):
         self.logIt("Load certificate %s" % filePath)
         certificate_text = self.readFile(filePath)
         certificate_text = certificate_text.replace('-----BEGIN CERTIFICATE-----', '').replace('-----END CERTIFICATE-----', '').strip()
         return certificate_text
 
-    def render_templates_folder(self, templatesFolder):
+    def render_templates_folder(self, templatesFolder, ignoredirs=[], ignorefiles=[]):
         self.logIt("Rendering templates folder: %s" % templatesFolder)
 
-        #coucbase_dict = self.couchbaseDict()
+        def in_ignoredirs(p):
+            for idir in ignoredirs:
+                if p.as_posix().startswith(idir):
+                    return True
 
         tp = Path(templatesFolder)
         for te in tp.rglob('*'):
+            if in_ignoredirs(te):
+                continue
+
+            if te.is_file() and te.name in ignorefiles:
+                continue
+
             if te.is_file() and not te.name.endswith('.nrnd'):
                 self.logIt("Rendering template {}".format(te))
                 rp = te.relative_to(Config.templateFolder)
@@ -502,25 +585,120 @@ class SetupUtils(Crypto64):
                 self.logIt("Writing rendered template {}".format(fullOutputFile))
                 fullOutputFile.write_text(rendered_text)
 
-    def add_yacron_job(self, command, schedule, name=None, args={}):
-        if not name:
-            name = command
+    def render_unit_file(self, service_name):
+        self.renderTemplateInOut(service_name+'.service', os.path.join(Config.templateFolder, 'systemd'), Config.system_dir)
 
-        yacron_yaml_fn = os.path.join(base.snap_common, 'etc/cron-jobs.yaml')
+    def create_service_user(self, service_user):
+        # create user for this service if not exists
+        service_home_dir = os.path.join('/home', service_user)
+        try:
+            pwd.getpwnam(service_user)
+        except Exception:
+            self.createUser(service_user, service_home_dir)
+            self.addUserToGroup(Config.gluu_group, service_user)
 
-        yml_str = self.readFile(yacron_yaml_fn)
-        yacron_yaml = ruamel.yaml.load(yml_str, ruamel.yaml.RoundTripLoader)
 
-        if not yacron_yaml:
-            yacron_yaml = {'jobs': []}
+    def port_used(self, port):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex(('127.0.0.1', int(port)))
+        ret_val = result == 0
+        sock.close()
+        return ret_val
 
-        if 'jobs' not in yacron_yaml:
-            yacron_yaml['jobs'] = []
+    def opendj_used_ports(self):
+        ports = []
+        for port in (Config.ldaps_port, Config.ldap_admin_port):
+            if self.port_used(port):
+                ports.append(port)
+        return ports
 
-        job = { 'command': command, 'schedule': schedule, 'name': name }
-        job.update(args)
-        
-        yacron_yaml['jobs'].append(job)
+    def apply_fapolicyd_rules(self, rules):
 
-        yml_str = ruamel.yaml.dump(yacron_yaml, Dumper=ruamel.yaml.RoundTripDumper)
-        self.writeFile(yacron_yaml_fn, yml_str)
+        if os.path.exists('/etc/fapolicyd/rules.d'):
+            fapolicyd_rules_fn = '/etc/fapolicyd/rules.d/15-gluu.rules'
+            if not os.path.exists(fapolicyd_rules_fn):
+                self.writeFile(fapolicyd_rules_fn, '', backup=False)
+                self.chown(fapolicyd_rules_fn, 'root', 'fapolicyd')
+                self.run([paths.cmd_chmod, '644', fapolicyd_rules_fn])
+        else:
+            fapolicyd_rules_fn = '/etc/fapolicyd/fapolicyd.rules'
+
+        fapolicyd_rules = []
+        fapolicyd_startn = -1
+
+        with open(fapolicyd_rules_fn) as f:
+            for i, l in enumerate(f):
+                ls = l.strip()
+                if ls.startswith('%languages'):
+                    fapolicyd_startn = i
+                fapolicyd_rules.append(ls)
+
+        write_facl = False
+        for rule in rules:
+            if rule not in fapolicyd_rules:
+                fapolicyd_rules.insert(fapolicyd_startn + 1, rule)
+                write_facl = True
+
+        if write_facl:
+            fapolicyd_rules.insert(fapolicyd_startn + 1, '\n')
+            self.writeFile(fapolicyd_rules_fn, '\n'.join(fapolicyd_rules) + "\n")
+            self.run_service_command('restart', 'fapolicyd')
+
+    def fapolicyd_access(self, uid, service_dir, additional_rules=[]):
+
+        self.jettyAbsoluteDir = Path('/opt/jetty').resolve().parent.as_posix()
+        self.jythonAbsoluteDir = Path('/opt/jython').resolve().as_posix()
+
+        facl_tmp = [
+                'allow perm=any uid=%(uid)s : dir=%(jre_home)s/',
+                'allow perm=any uid=%(uid)s : dir=%(gluuOptFolder)s/',
+                'allow perm=any uid=%(uid)s : dir=%(distFolder)s/',
+                'allow perm=any uid=%(uid)s : dir=%(jettyAbsoluteDir)s/',
+                'allow perm=any uid=%(uid)s : dir=%(jythonAbsoluteDir)s/',
+                'allow perm=any uid=%(uid)s : dir=%(service_dir)s/',
+                'allow perm=any uid=%(uid)s : dir=%(osDefault)s/',
+                'allow perm=any uid=%(uid)s : dir=%(gluuBaseFolder)s/',
+                'allow perm=any uid=%(uid)s : dir=%(gluuOptPythonFolder)s/',
+                'allow perm=any uid=%(uid)s : dir=%(gluuOptPythonFolder)s/libs/',
+                '# give access to gluu service %(uid)s',
+                ]
+
+        for a_rule in additional_rules:
+            facl_tmp.insert(0, a_rule)
+
+        rules = []
+        for acl in facl_tmp:
+            facl = acl % self.merge_dicts(Config.templateRenderingDict, Config.__dict__, self.__dict__, {'uid': uid, 'service_dir': service_dir})
+            rules.append(facl)
+
+        self.apply_fapolicyd_rules(rules)
+
+
+    def get_keystore_fn(self, keystore_name):
+        return keystore_name + '.' + Config.default_store_type
+
+    def get_client_test_keystore_fn(self, keystore_name):
+        return keystore_name + '.' + Config.default_client_test_store_type
+
+    def chown(self, fn, user, group=None, recursive=False):
+        cmd = [paths.cmd_chown]
+        if recursive:
+            cmd.append('-R')
+        usr_grp = '{}:{}'.format(user, group) if group else user
+        cmd += [usr_grp, fn]
+        self.run(cmd)
+
+    def get_version(self, s):
+        ret_val = [0, 0 ,0]
+        result = re.search(r'([\d.]+)', s)
+        if result:
+            version_string = result.group(0)
+            try:
+                for i, n in enumerate(version_string.split('.')):
+                    ret_val[i] = int(n)
+                    if i > 1:
+                        break
+            except Exception:
+                pass
+
+        return tuple(ret_val)

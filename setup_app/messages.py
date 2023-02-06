@@ -1,13 +1,18 @@
 class msg:
-    
+
     MAIN_label = "System Information"
     HostForm_label = "Gathering Information"
     ServicesForm_label = "Select Services to Install"
-    DBBackendForm_label = "Choose to Store in OpenDJ"
+    DBBackendForm_label = "Choose Database Backend"
     StorageSelectionForm_label = "Hybrid Storage Selection"
     InstallStepsForm_label = "Installing Gluu Server"
     DisplaySummaryForm_label = "Gluu Server Installation Summary"
-    version_label = 'Gluu CE'
+    DBLDAPForm_label = "LDAP Options"
+    DBCBForm_label = "Couchbase Options"
+    DBRDBMForm_label = "RDBM Options"
+    DBSpannerForm_label = "Spanner Options"
+
+    version_label = 'Gluu {}'
     decription = "Use setup.py to configure your Gluu Server and to add initial data required for oxAuth and oxTrust to start. If setup.properties is found in this folder, these properties will automatically be used instead of the interactive setup."
 
     os_type_label = "Detected OS"
@@ -24,29 +29,45 @@ class msg:
     password_label = "Password"
     hosts_label = "Hosts"
     username_label = "Username"
-    
+
+    cb_username_label = "Couchbase Username"
+    cb_password_label = "Couchbase Password"
+    cb_hosts_label = "Couchbase Hosts"
+
+    rdbm_username_label = "{} User"
+    rdbm_password_label = "{} Password"
+    rdbm_host_label = "{} Host"
+    rdbm_db_label = "{} Database"
+    rdbm_db_port_label = "{} Port"
+
+    spanner_project_label = "Spanner Project"
+    spanner_instance_label = "Spanner Instance"
+    spanner_database_label = "Spanner Database"
+    spanner_cred_label = "Google application creditentals file"
+    spanner_emulator_host_label = "Emulator Host"
+
     installOxAuth_label = "Install OxAuth"
     installOxTrust_label = "Install OxTrust"
     backend_types_label = "Backend Types"
     java_type_label = "Java Type"
     installHttpd_label = "Install Apache" 
     installSaml_label = "Install Saml" 
-    installOxAuthRP_label = "Install OxAuthRP" 
     installPassport_label = "Install Passport" 
     installGluuRadius_label = "Install Radius"
-    wrends_storages_label = "Store on OpenDJ"
+    ldap_storages_label = "Store on OpenDJ"
     installing_label = "Current"
     installOxd_label = "Install Oxd"
     installCasa_label = "Install Casa"
     installScimServer_label = "Install Scim"
     installFido2_label = "Install Fido2"
-    
+    chose_backend = "Backend"
+
     insufficient_free_disk_space = "Available free disk space was determined to be {1:0.1f} GB. This is less than the required disk space of {} GB."
     insufficient_mem_size = "RAM size was determined to be {:0.1f} GB. This is less than the suggested RAM size of {} GB"
     insufficient_number_of_cpu = "Available CPU Units found was {}. This is less than the required amount of {} CPU Units"
     insufficient_file_max = "Maximum number of files that can be opened on this computer is {}. Please increase number of file-max to {} on the host system and re-run setup.py"
     insufficient_free_disk_space = "Available free disk space was determined to be {} GB. This is less than the required disk space of {}"
-    
+
     suggested_free_disk_space = 40 #in GB
     suggested_number_of_cpu = 2
     suggested_file_max = 64000
@@ -64,13 +85,13 @@ class msg:
     acknowledge_lisence = "I acknowledge that use of the Gluu Server is under the Apache-2.0 license"
     acknowledge_lisence_ask = "Please check License Agreement"
     setup_properties_warning = "** All clear text passwords contained in\n/install/community-edition-setup/setup.properties.last."
-    
+
     enter_hostname = "Please enter hostname"
     enter_hostname_local = "Hostname can't be localhost"
     enter_valid_email = "Please enter valid email address"
     enter_valid_ip = "Please enter valid IP Address"
     enter_valid_countryCode = "Please enter two letter country code"
-
+    enter_valid_city = "Please enter at least two letters City"
 
     ask_installHttpd = "Install Apache HTTPD Server"
     ask_installSaml = "Install Shibboleth SAML IDP"
@@ -79,12 +100,15 @@ class msg:
     ask_installGluuRadius = "Install Gluu Radius"
     ask_installCasa = "Install Casa"
     ask_installOxd = "Install Oxd"
-    ask_wrends_install = "Install OpenDJ"
+    ask_ldap_install = "Install OpenDJ"
     ask_installScimServer = "Install Scim Server"
     ask_installFido2 = "Install Fido2"
 
 
-    wrends_install_options = ["Don't Install","Install Locally","Use Remote OpenDJ"]
+    ldap_install_options = ["Don't Install","Install Locally","Use Remote OpenDJ"]
+    ldap_admin_password_label = "LDAP Admin Password"
+    ldap_remote_label =  "LDAP Hostname"
+    opendj_port_availibility = "Setup needs port{0} {1} {2} free. Please stop services listening {3} port{0}."
     oxd_url_label = "oxd Server URL"
     install_oxd_or_url_warning = "Please either enter oxd Server URL or check Install Oxd"
     oxd_connection_error = "Can't connect to oxd-server with url {}. Reason: {}"
@@ -99,6 +123,8 @@ class msg:
     notify_select_backend = "Please select one of the backends either local install or remote" 
     weak_password = "Password for {} must be at least 6 characters and include one uppercase letter, one lowercase letter, one digit, and one special character."
     unselected_storages = "Note: Unselected storages will go Couchbase Server"
+    spanner_idp_warning = "Shibboleth SAML IDP is not suppoerted with Spanner backend."
+    idp_unselect = "Please go back and unselect to install Shibboleth SAML IDP"
 
     no_help = "No help is provided for this screen."
     
@@ -112,7 +138,7 @@ class msg:
 
     installation_description_java = "Corretto is a build of the Open Java Development Kit (OpenJDK) with long-term support from Amazon. Corretto is certified using the Java Technical Compatibility Kit (TCK) to ensure it meets the Java SE standard."
     installation_description_opendj = "OpenDJ is an LDAPv3 compliant directory service, which has been developed for the Java platform, providing a high performance, highly available, and secure store for the identities managed by your organization."
-    installation_description_oxauth = "oxAuth is an open source OpenID Connect Provider (OP) and UMA Authorization Server (AS). The project also includes OpenID Connect Client code which can be used by websites to validate tokens."
+    installation_description_oxauth = "oxAuth is an open source OpenID Connect Provider (OP) and OAuth Authorization Server (AS). It is the core component that issues access tokens and renders login pages."
     installation_description_oxtrust = "oxTrust is a Weld based web application for Gluu Server administration."
     installation_description_saml = "The Gluu Server acts as a SAML identity provider (IDP) to support outbound SAML single sign-on (SSO)."
     installation_description_passport = "Gluu bundles the Passport.js authentication middleware project to support user authentication at external SAML, OAuth, and OpenID Connect providers "
@@ -125,9 +151,10 @@ class msg:
     installation_description_casa = "Gluu Casa is a self-service web portal for end-users to manage authentication and authorization preferences for their account in a Gluu Server."
     installation_description_scim = "The Gluu Server implements SCIM to offer standard REST APIs for performing CRUD operations (create, read, update and delete) against user data."
     installation_description_fido2 = "FIDO 2.0 (FIDO2) is an open authentication standard that enables people to leverage common devices to authenticate to online services in both mobile and desktop environments"
-    
+
     installation_description_scripts = "Interception scripts can be used to implement custom business logic for authentication, authorization and more in a way that is upgrade-proof and doesn't require forking the Gluu Server code."
-    
-    
+
     installation_error = "The following error occurred while installing Gluu Server:"
     exit_post_setup = "No service was selected to install. Exit now?"
+
+    used_ports = "Port(s) {} should be free to continue. Please check."

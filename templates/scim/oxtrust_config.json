@@ -1,8 +1,14 @@
 {
-    "scimTestMode": %(scimTestMode)s,
-    "scimUmaClientId":"%(scim_rs_client_id)s",
-    "scimUmaClientKeyId":"",
-    "scimUmaResourceId":"%(scim_resource_oxid)s",
+    "ScimProperties": {
+        "maxCount": 200,
+        "protectionMode": "%(scim_protection_mode)s",
+        "userExtensionSchemaURI": "urn:ietf:params:scim:schemas:extension:gluu:2.0:User",
+        "bulkMaxOperations": 30,
+        "bulkMaxPayloadSize": 3072000
+    },
+    "scimUmaClientKeyId": "",
+    "scimUmaResourceId": "%(scim_resource_oxid)s",
+    "scimUmaClientId": "%(scim_rs_client_id)s",
     "scimUmaScope":"https://%(hostname)s/oxauth/restv1/uma/scopes/scim_access",
     "scimUmaClientKeyStoreFile":"%(scim_rs_client_jks_fn)s",
     "scimUmaClientKeyStorePassword":"%(scim_rs_client_jks_pass_encoded)s"

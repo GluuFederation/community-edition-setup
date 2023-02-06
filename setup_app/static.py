@@ -17,14 +17,40 @@ class colors:
 class BackendTypes:
     LDAP      = 1
     COUCHBASE = 2
+    MYSQL     = 3
+    PGSQL     = 4
+    SPANNER   = 5
+
+class BackendStrings:
+    LOCAL_OPENDJ     = 'Local OpenDj'
+    REMOTE_OPENDJ    = 'Remote OpenDj'
+    LOCAL_COUCHBASE  = 'Local Couchbase'
+    REMOTE_COUCHBASE = 'Remote Couchbase'
+    LOCAL_MYSQL      = 'Local MySQL'
+    REMOTE_MYSQL     = 'Remote MySQL'
+    CLOUD_SPANNER    = 'Cloud Spanner'
+    SAPNNER_EMULATOR = 'Spanner Emulator'
+    LOCAL_PGSQL      = 'Local PgSQL'
+    REMOTE_PGSQL      = 'Remote PgSQL'
+
+
+class PersistenceType:
+    ldap      = 'ldap'
+    sql       = 'sql'
+    couchbase = 'couchbase'
 
 class AppType:
     APPLICATION = 1
     SERVICE     = 2
 
 class InstallOption:
-    MONDATORY = 1
+    MANDATORY = 1
     OPTONAL   = 2
+
+class SetupProfiles:
+    CE          = 'ce'
+    DISA_STIG   = 'disa-stig'
+
 
 COMPLETED = -99
 ERROR = -101
@@ -33,3 +59,4 @@ suggested_mem_size = 3.7 # in GB
 suggested_number_of_cpu = 2
 suggested_free_disk_space = 40 #in GB
 file_max = 64000
+fapolicyd_rule_tmp = 'allow perm=any uid={} : dir={}'

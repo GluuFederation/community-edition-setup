@@ -1,25 +1,17 @@
 SERVICE_NAME=oxd-server
 JAVA_HOME=/opt/jre
 JAVA=$JAVA_HOME/bin/java
-if [ -z "$OXD_LOGS" ]
-then
-    OXD_LOGS=/var/log/oxd-server
-fi
-
+OXD_LOGS=/var/log/oxd-server
 OXD_HOME=/opt/oxd-server
 OXD_CONF=$OXD_HOME/conf
-
-if [ -z "$OXD_USER" ]
-then
-    OXD_USER=jetty
-fi
+OXD_USER=%(service_user)s
 LIB=$OXD_HOME/lib
 OXD_RUN=$OXD_HOME
 OXD_PID_FILE=$OXD_RUN/oxd-server.pid
-OXD_STATE=$OXD_HOME/run/oxd-server.state
+OXD_STATE=/gluu/oxd-server/run/oxd-server.state
 OXD_INIT_LOG=$OXD_LOGS/oxd-server.log
 
-ALL_JARS=ls $LIB/* -t | sort -r | head -n 1
-CLASSPATH="$ALL_JARS:$OXD_HOME/lib/oxd-server.jar org.gluu.oxd.server.OxdServerApplication"
+ALL_JARS=`ls $LIB/* -t | sort -r | head -n 1`
+CLASSPATH="$ALL_JARS:$OXD_HOME/lib/oxd-server.jar:$LIB/* org.gluu.oxd.server.OxdServerApplication"
 
-JAVA_OPTIONS="-server -Xms256m -Xmx512m -XX:MaxMetaspaceSize=256m -XX:+DisableExplicitGC -Djava.net.preferIPv4Stack=true  -Djavax.net.ssl.trustStore=%(defaultTrustStoreFN)s -Djavax.net.ssl.trustStorePassword=changeit -cp $CLASSPATH  server $OXD_CONF/oxd-server.yml"
+JAVA_OPTIONS="-server -Xms256m -Xmx512m -XX:MaxMetaspaceSize=256m -XX:+DisableExplicitGC -Djava.net.preferIPv4Stack=true -cp $CLASSPATH  server $OXD_CONF/oxd-server.yml"

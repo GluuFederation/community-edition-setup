@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
+import sys
+sys.path.append('/usr/lib/python3.6/gluu-packaged/')
+
 import site
 import re
 import glob
-import sys
 import os
 import subprocess
 import argparse
@@ -18,18 +20,25 @@ from urllib.parse import urljoin
 
 run_time = time.strftime("%Y-%m-%d_%H-%M-%S")
 ces_dir = '/install/community-edition-setup'
+dist_dir = '/opt/dist'
 
 parser = argparse.ArgumentParser(description="This script extracts community-edition-setup package and runs setup.py without arguments")
 parser.add_argument('-o', help="download latest package from github and override current community-edition-setup", action='store_true')
 parser.add_argument('--args', help="Arguments to be passed to setup.py")
 parser.add_argument('-b', help="Github branch name, e.g. version_4.0.b4")
+parser.add_argument('-profile', help="Setup profile", choices=['CE', 'DISA-STIG'], default='CE')
 
 argsp = parser.parse_args()
 
-npyscreen_package = '/opt/dist/app/npyscreen-master.zip'
+if argsp.profile == 'DISA-STIG':
+    dist_dir = '/var/gluu/dist'
+
+app_dir = os.path.join(dist_dir, 'app')
+
+npyscreen_package = os.path.join(app_dir, 'npyscreen-master.zip')
 
 if argsp.o:
-    for cep in glob.glob('/opt/dist/gluu/community-edition-setup*.zip'):
+    for cep in glob.glob(os.path.join(dist_dir, 'gluu/community-edition-setup*.zip')):
         os.remove(cep)
     if os.path.exists(ces_dir):
         back_dir = ces_dir+'.back.'+run_time
@@ -47,7 +56,7 @@ if argsp.b:
 
 download_link = urljoin(github_base_url, arhchive_name)
 
-ces_list = glob.glob('/opt/dist/gluu/community-edition-setup*.zip')
+ces_list = glob.glob(os.path.join(dist_dir, 'gluu/community-edition-setup*.zip'))
 
 if not ces_list:
     if not argsp.o:
@@ -59,9 +68,9 @@ if not ces_list:
     if not dl.strip() or dl.lower()[0]=='y':
         print("Downloading ", download_link)
         result = requests.get(download_link, allow_redirects=True)
-        with open('/opt/dist/gluu/community-edition-setup.zip', 'wb') as w:
+        with open(os.path.join(dist_dir, 'gluu/community-edition-setup.zip'), 'wb') as w:
             w.write(result.content)
-        ces_list = [os.path.join('/opt/dist/gluu', arhchive_name)]
+        ces_list = [os.path.join(dist_dir, 'gluu', arhchive_name)]
     else:
         print("Exiting...")
         sys.exit()
@@ -98,6 +107,10 @@ post_setup = '/install/community-edition-setup/post-setup-add-components.py'
 if os.path.exists(post_setup):
     os.chmod(post_setup, 33261)
 
+gluu_install = '/install/community-edition-setup/gluu_install.py'
+if os.path.exists(gluu_install):
+    os.remove(gluu_install)
+
 if argsp.o:
     npy_download_link = 'https://github.com/npcole/npyscreen/archive/master.zip'
     result = requests.get(npy_download_link, allow_redirects=True)
@@ -115,7 +128,7 @@ if os.path.exists(npyscreen_package):
         target_dir = '/tmp/npyscreen_tmp'
         npyzip.extractall(target_dir)
         npyzip.close()
-        
+
         shutil.copytree(
             os.path.join(target_dir, parent_dir, 'npyscreen'),
             dest_dir
@@ -123,3 +136,26 @@ if os.path.exists(npyscreen_package):
 
         shutil.rmtree(target_dir)
 
+print("Extracting sqlalchemy")
+sqlalchemy_fn = os.path.join(app_dir, 'sqlalchemy.zip')
+sqlalchemy_zip = zipfile.ZipFile(sqlalchemy_fn)
+sqlalchemy_parent_dir = sqlalchemy_zip.filelist[0].filename
+target_dir = '/tmp/sqlalchemy_tmp'
+
+if os.path.exists(target_dir):
+    shutil.rmtree(target_dir)
+
+sqlalchemy_zip.extractall(target_dir)
+sqlalchemy_zip.close()
+
+sqlalchemy_dir = os.path.join(ces_dir, 'setup_app/pylib/sqlalchemy')
+
+shutil.copytree(
+    os.path.join(target_dir, sqlalchemy_parent_dir, 'lib/sqlalchemy'),
+    sqlalchemy_dir
+    )
+
+shutil.rmtree(target_dir)
+
+if argsp.profile == 'DISA-STIG':
+    open(os.path.join(ces_dir, 'disa-stig'),'wb').close()

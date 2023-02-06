@@ -1,5 +1,6 @@
 # Author: Jose Gonzalez
 
+from java.lang import Integer
 from java.util import Collections, HashMap, HashSet, ArrayList, Arrays, Date
 from java.nio.charset import Charset
 
@@ -123,13 +124,14 @@ class PersonAuthentication(PersonAuthenticationType):
                     print "Casa. authenticate for step 1. Unknown username"
                 else:
                     platform_data = self.parsePlatformData(requestParameters)
-                    mfaOff = foundUser.getAttribute("oxPreferredMethod") == None
+                    preferred = foundUser.getAttribute("oxPreferredMethod")
+                    mfaOff = preferred == None
                     logged_in = False
 
                     if mfaOff:
                         logged_in = authenticationService.authenticate(user_name, user_password)
                     else:
-                        acr = self.getSuitableAcr(foundUser, platform_data)
+                        acr = self.getSuitableAcr(foundUser, platform_data, preferred)
                         if acr != None:
                             module = self.authenticators[acr]
                             logged_in = module.authenticate(module.configAttrs, requestParameters, step)
@@ -434,7 +436,7 @@ class PersonAuthentication(PersonAuthenticationType):
         return deviceInf
 
 
-    def getSuitableAcr(self, user, deviceInf):
+    def getSuitableAcr(self, user, deviceInf, preferred):
 
         onMobile = deviceInf != None and 'isMobile' in deviceInf and deviceInf['isMobile']
         id = user.getUserId()
@@ -444,15 +446,16 @@ class PersonAuthentication(PersonAuthenticationType):
 
         for s in self.scriptsList:
             name = s.getName()
-            if user_methods.contains(name) and name in self.authenticators and s.getLevel() > strongest and (not onMobile or name in self.mobile_methods):
+            level = Integer.MAX_VALUE if name == preferred else s.getLevel()
+            if user_methods.contains(name) and level > strongest and (not onMobile or name in self.mobile_methods):
                 acr = name
-                strongest = s.getLevel()
+                strongest = level
 
         print "Casa. getSuitableAcr. On mobile = %s" % onMobile
         if acr == None and onMobile:
             print "Casa. getSuitableAcr. No mobile-friendly authentication method available for user %s" % id
             # user_methods is not empty when this function is called, so just pick any
-            acr = user_methods.get(0)
+            acr = user_methods.stream().findFirst().get()
 
         print "Casa. getSuitableAcr. %s was selected for user %s" % (acr, id)
         return acr
@@ -616,7 +619,7 @@ class PersonAuthentication(PersonAuthenticationType):
 
         session_attributes = identity.getSessionId().getSessionAttributes()
         if session_attributes.containsKey("remote_ip"):
-            remote_ip = session_attributes.get("remote_ip")
+            remote_ip = session_attributes.get("remote_ip").split(",", 2)[0].strip()
             if StringHelper.isNotEmpty(remote_ip):
 
                 httpService = CdiUtil.bean(HttpService)

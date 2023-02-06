@@ -1,0 +1,15 @@
+[Unit]
+Description=oxd-server daemon
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/opt/oxd-server/bin/oxd-server start
+ExecStop=/opt/oxd-server/bin/oxd-server stop
+RemainAfterExit=yes
+User=%(service_user)s
+Group=gluu
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,229 @@
+{
+  "gluuPerson": {
+    "fields": [
+      "inum",
+      "uid",
+      "mail",
+      "displayName",
+      "givenName",
+      "ppid",
+      "sn"
+    ],
+    "custom": [
+      "(lower(`uid`))",
+      "(lower(`mail`))"
+    ]
+  },
+  "oxAuthClient": {
+    "fields": [
+      "inum",
+      "displayName",
+      "description",
+      "oxAuthRegistrationAccessToken",
+      "oxAuthClientSecretExpiresAt"
+    ],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxAuthUmaPCT": {
+    "fields": [
+      "tknCde"
+    ],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxAuthCustomScope": {
+    "fields": [
+      "oxId",
+      "displayName",
+      "description"
+    ],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxU2fRequest": {
+    "fields": [
+      "creationDate"
+    ],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxMetric": {
+    "fields": [
+      "oxApplicationType",
+      "oxMetricType",
+      "oxStartDate",
+      "oxEndDate"
+    ],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "token": {
+    "fields": [
+      "authzCode",
+      "grtId",
+      "ssnId",
+      "tknCde"
+    ],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxDeviceRegistration": {
+    "fields": [
+      "oxApplication",
+      "personInum",
+      "oxStatus",
+      "oxDeviceHashCode",
+      "oxDeviceKeyHandle",
+      "creationDate"
+    ],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "cache": {
+    "fields": [],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxAuthSessionId": {
+    "fields": [
+      "oxAuthUserDN",
+      "sid"
+    ],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxUmaResource": {
+    "fields": [
+      "oxId",
+      "displayName",
+      "oxAuthUmaScope"
+    ],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "oxClientAuthorization": {
+    "fields": [
+      "oxAuthClientId",
+      "oxAuthUserId"
+    ],
+    "custom": [
+      "`del`, `exp`"
+    ]
+  },
+  "gluuPerson_oxExternalUid": {
+    "fields": [
+      "oxExternalUid"
+    ],
+    "custom": []
+  },
+  "gluuGroup": {
+    "fields": [
+      "inum",
+      "displayName",
+      "description"
+    ],
+    "custom": []
+  },
+  "gluuAttribute": {
+    "fields": [
+      "inum",
+      "displayName",
+      "description",
+      "gluuAttributeName",
+      "gluuAttributeOrigin"
+    ],
+    "custom": []
+  },
+  "oxCustomScript": {
+    "fields": [
+      "inum",
+      "oxScriptType"
+    ],
+    "custom": []
+  },
+  "oxUmaResourcePermission": {
+    "fields": [
+      "oxTicket"
+    ],
+    "custom": []
+  },
+  "pairwiseIdentifier": {
+    "fields": [
+      "oxAuthClientId",
+      "oxAuthUserId",
+      "oxSectorIdentifier"
+    ],
+    "custom": []
+  },
+  "cibaRequest": {
+    "fields": [],
+    "custom": [
+      "`oxStatus`, `exp`"
+    ]
+  },
+  "jansStatEntry": {
+    "fields": [
+      "jansId"
+    ],
+    "custom": []
+  },
+  "gluuPasswordResetRequest": {
+    "fields": [
+      "creationDate"
+    ],
+    "custom": []
+  },
+  "oxFido2AuthenticationEntry": {
+    "fields": [
+      "creationDate",
+      "oxStatus",
+      "personInum"
+    ],
+    "custom": []
+  },
+  "oxFido2RegistrationEntry": {
+    "fields": [
+      "creationDate",
+      "oxStatus",
+      "personInum"
+    ],
+    "custom": []
+  },
+  "gluuSAMLconfig": {
+    "fields": [
+      "inum",
+      "displayName",
+      "description"
+    ],
+    "custom": []
+  },
+  "gluuInumMap": {
+    "fields": [
+      "inum",
+      "gluuStatus"
+    ],
+    "custom": []
+  },
+   "__common__": {
+    "JSON": [
+      "CAST($field->'$.v' AS CHAR(128) ARRAY)",
+      "CAST($field->'$.v[0]' AS CHAR(128))",
+      "CAST($field->'$.v[1]' AS CHAR(128))",
+      "CAST($field->'$.v[2]' AS CHAR(128))"
+    ],
+    "fields": [
+      "uid"
+    ]
+  }
+}

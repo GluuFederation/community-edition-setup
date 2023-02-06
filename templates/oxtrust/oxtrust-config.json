@@ -20,13 +20,13 @@
         "gluuPerson",
         "eduPerson"
     ],
-
+    "adminUiLocaleSupported": %(adminUiLocaleSupported)s,
     "svnConfigurationStoreRoot":"unused",
     "svnConfigurationStorePassword":"unused",
-    "persistSVN":false,
+    "persistSVN": false,
 
-    "allowPersonModification":true,
-    "updateStatus":true,
+    "allowPersonModification": true,
+    "updateStatus": true,
 
     "clientAssociationAttribute":"inum",
 
@@ -40,10 +40,10 @@
     ],
 
     "photoRepositoryRootDir":"/var/gluu/photos",
-    "photoRepositoryThumbWidth":300,
-    "photoRepositoryThumbHeight":300,
-    "photoRepositoryCountLeveles":3,
-    "photoRepositoryCountFoldersPerLevel":20,
+    "photoRepositoryThumbWidth": 300,
+    "photoRepositoryThumbHeight": 300,
+    "photoRepositoryCountLeveles": 3,
+    "photoRepositoryCountFoldersPerLevel": 20,
 
 
     "spMetadataPath":"",
@@ -54,13 +54,22 @@
 
     ],
 
-    "configGeneration":%(oxTrustConfigGeneration)s,
-    "ignoreValidation":false,
+    "configGeneration": %(oxTrustConfigGeneration)s,
+    "ignoreValidation": false,
+
+    "gluuSpCert":"/etc/certs/shibIDP.crt",
+
+    "idpBindDn":"cn=Directory Manager",
+    "idpBindPassword":"%(encoded_ox_ldap_pw)s",
+    "idpLdapProtocol":"ldaps",
+    "idpLdapServer":"%(ldap_hostname)s:%(ldaps_port)s",
+    "idpUserFields":"",
 
     "ldifStore":"/var/gluu/identity/removed",
+    "keepLdifStoreHistoryDays":30,
 
-    "caCertsLocation":"/usr/java/latest/jre/lib/security/cacerts",
-    "caCertsPassphrase":"",
+    "caCertsLocation":"%(default_trust_store_fn)s",
+    "caCertsPassphrase":"%(defaultTrustStorePW)s",
 
     "certDir":"/etc/certs/",
     "tempCertDir":"/etc/certs/temp",
@@ -93,11 +102,11 @@
     "cssLocation":"",
     "jsLocation":"",
 
-    "rptConnectionPoolUseConnectionPooling":true,
-    "rptConnectionPoolMaxTotal":200,
-    "rptConnectionPoolDefaultMaxPerRoute":20,
-    "rptConnectionPoolValidateAfterInactivity":10,
-    "rptConnectionPoolCustomKeepAliveTimeout":5,
+    "rptConnectionPoolUseConnectionPooling": true,
+    "rptConnectionPoolMaxTotal": 200,
+    "rptConnectionPoolDefaultMaxPerRoute": 20,
+    "rptConnectionPoolValidateAfterInactivity": 10,
+    "rptConnectionPoolCustomKeepAliveTimeout": 5,
 
     "organizationName":"%(orgName)s",
 
@@ -105,12 +114,11 @@
     "clientBlackList": ["*.attacker.com/*"],
 
     "oxTrustApiTestMode": false,
-    "ScimProperties": {
-        "maxCount": 200
-    },
+    "oxTrustProtectionMode": "OAUTH",
+
     "cleanServiceInterval":300,
     "loggingLevel": "INFO",
     "loggingLayout": "text",
     "passwordResetRequestExpirationTime":600,
-    "useLocalCache":true
+    "useLocalCache": true
 }

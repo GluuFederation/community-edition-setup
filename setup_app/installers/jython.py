@@ -12,12 +12,12 @@ from setup_app.installers.base import BaseInstaller
 class JythonInstaller(BaseInstaller, SetupUtils):
 
     def __init__(self):
+        setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'jython'
         self.install_var = 'installJython'
         self.app_type = AppType.APPLICATION
-        self.install_type = InstallOption.MONDATORY
-        if not base.snap:
-            self.register_progess()
+        self.install_type = InstallOption.MANDATORY
+        self.register_progess()
 
         self.needdb = False # we don't need backend connection in this class
 

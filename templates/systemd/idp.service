@@ -1,0 +1,14 @@
+[Unit]
+Description=Idp service
+After=oxauth.service
+
+[Service]
+Type=forking
+ExecStart=%(distFolder)s/scripts/idp start
+ExecStop=%(distFolder)s/scripts/idp stop
+User=%(service_user)s
+Group=gluu
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target
