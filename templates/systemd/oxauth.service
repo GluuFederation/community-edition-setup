@@ -1,6 +1,6 @@
 [Unit]
 Description=Oxauth service
-After=opendj.service
+After=%(start_oxauth_after)s
 
 [Service]
 Type=forking
