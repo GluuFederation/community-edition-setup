@@ -94,9 +94,13 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                 if base.os_type == 'suse':
                     self.restart('mariadb')
                     self.enable('mariadb')
+                    Config.start_oxauth_after = 'mariadb.service'
                 elif base.clone_type == 'rpm':
                     self.restart('mysqld')
-
+                    Config.start_oxauth_after = 'mysqld.service'
+                else:
+                    Config.start_oxauth_after = 'mysql.service'
+                    
             if Config.rdbm_type == 'mysql':
                 result, conn = self.dbUtils.mysqlconnection(log=False)
                 if not result:
@@ -112,8 +116,10 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
             elif Config.rdbm_type == 'pgsql':
                 if base.clone_type == 'rpm':
                     self.run(['postgresql-setup', 'initdb'])
+                    Config.start_oxauth_after = 'postgresql.service'
                 elif base.clone_type == 'deb':
                     self.run([paths.cmd_chmod, '640', '/etc/ssl/private/ssl-cert-snakeoil.key'])
+                    Config.start_oxauth_after = 'postgresql.service'
 
                 self.enable('postgresql')
                 self.restart('postgresql')

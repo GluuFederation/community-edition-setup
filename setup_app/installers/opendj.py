@@ -136,6 +136,7 @@ class OpenDjInstaller(BaseInstaller, SetupUtils):
     def install_opendj(self):
         self.logIt("Running OpenDJ Setup")
 
+        Config.start_oxauth_after = 'opendj.service'
         Config.templateRenderingDict['opendj_pck11_setup_key_fn'] = self.opendj_pck11_setup_key_fn
         Config.templateRenderingDict['opendj_trusstore_setup_key_fn'] = self.opendj_trusstore_setup_key_fn
         self.renderTemplateInOut(Config.ldap_setup_properties, Config.templateFolder, Config.outputFolder)

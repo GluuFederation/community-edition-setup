@@ -1,6 +1,6 @@
 [Unit]
 Description=fido2 service
-After=opendj.service
+After=oxauth.service
 
 [Service]
 Type=forking
