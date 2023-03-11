@@ -241,7 +241,7 @@ def download(url, target_fn):
 def download_gcs():
     if not os.path.exists(os.path.join(app_dir, 'gcs')):
         print("Downloading Spanner modules")
-        gcs_download_url = 'http://162.243.99.240/icrby8xcvbcv/spanner/gcs.tgz'
+        gcs_download_url = 'http://ox.gluu.org/icrby8xcvbcv/spanner/gcs.tgz'
         tmp_dir = '/tmp/' + os.urandom(5).hex()
         target_fn = os.path.join(tmp_dir, 'gcs.tgz')
         download(gcs_download_url, target_fn)
