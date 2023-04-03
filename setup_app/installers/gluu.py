@@ -483,9 +483,17 @@ class GluuInstaller(BaseInstaller, SetupUtils):
 
     def generate_gluu_passwurd_api_keystore(self):
         suffix = 'passwurd_api'
-        key_fn, csr_fn, crt_fn = self.gen_cert(suffix, 'changeit', user='jetty')
-        passwurd_api_keystore_fn = os.path.join(Config.certFolder, 'passwurdAKeystore.pcks12')
-        self.gen_keystore(suffix, passwurd_api_keystore_fn, 'changeit', key_fn, crt_fn, store_type='PKCS12')
+        Config.passwurd_api_keystore_pass = self.getPW()
+        Config.passwurd_api_keystore_pass_enc = self.obscure(Config.passwurd_api_keystore_pass)
+        key_fn, csr_fn, crt_fn = self.gen_cert(suffix, Config.passwurd_api_keystore_pass, user='jetty')
+        Config.passwurd_api_keystore_fn = os.path.join(Config.certFolder, 'passwurdAKeystore.pkcs12')
+        self.gen_keystore(suffix, Config.passwurd_api_keystore_fn, Config.passwurd_api_keystore_pass, key_fn, crt_fn, store_type='PKCS12')
+
+        tmp_dir = os.path.join(Config.templateFolder, 'scan')
+        scan_creds_fn = os.path.join(tmp_dir, 'scan_creds.json')
+        scan_creds_out_fn = os.path.join(Config.configFolder, os.path.basename(scan_creds_fn))
+        self.renderTemplateInOut(file_path=scan_creds_fn, template_folder=tmp_dir, out_file=scan_creds_out_fn)
+        self.chown(scan_creds_out_fn, Config.user_group)
 
 
     def enable_scripts(self, inums):
