@@ -70,5 +70,24 @@ class CacheRefresh(CacheRefreshType):
 
         return True
 
+    # Update user entry loaded from source server
+    #   user is org.gluu.oxtrust.ldap.cache.model.GluuSimplePerson
+    #   configurationAttributes is java.util.Map<String, SimpleCustomProperty>
+    def updateSourceUser(self, user, configurationAttributes):
+        print "Cache refresh. UpdateUser method"
+
+        attributes = user.getCustomAttributes()
+        sourceServer = user.getSourceServerName()
+        if StringHelper.equals(sourceServer, "ad1"):
+            # Add new attribute preferredLanguage
+            attrPrefferedLanguage = GluuCustomAttribute("preferredLanguage", "en-us")
+            attributes.add(attrPrefferedLanguage)
+        else if StringHelper.equals(sourceServer, "ad2"):
+            # Add new attribute preferredLanguage
+            attrPrefferedLanguage = GluuCustomAttribute("preferredLanguage", "en-gb")
+            attributes.add(attrPrefferedLanguage)
+
+        return True
+
     def getApiVersion(self):
         return 11
