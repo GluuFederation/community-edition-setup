@@ -4,17 +4,7 @@ objectClass: oxAuthCustomScope
 objectClass: top
 displayName: API Read Access
 inum: OO11-AABB
-oxId: oxtrust-api-read
-oxUmaPolicyScriptDn: inum=OO11-BAFE,ou=scripts,o=gluu
-oxScopeType: uma
-
-# API Scope
-dn: inum=1122-BBCC,ou=scopes,o=gluu
-objectClass: oxAuthCustomScope
-objectClass: top
-displayName: API Write Access
-inum: 1122-BBCC
-oxId: oxtrust-api-write
+oxId: https://%(hostname)s/oxauth/restv1/uma/scopes/config_api_access
 oxUmaPolicyScriptDn: inum=OO11-BAFE,ou=scripts,o=gluu
 oxScopeType: uma
 
@@ -27,7 +17,6 @@ owner: inum=%(admin_inum)s,ou=people,o=gluu
 oxFaviconImage: http://www.gluu.org/img/api_logo.png
 oxAssociatedClient: inum=%(oxtrust_resource_server_client_id)s,ou=clients,o=gluu
 oxAuthUmaScope: inum=OO11-AABB,ou=scopes,o=gluu
-oxAuthUmaScope: inum=1122-BBCC,ou=scopes,o=gluu
 oxId: %(oxtrust_resource_id)s
 oxResource: https://%(hostname)s/identity/restv1/api/v1
 oxRevision: 1

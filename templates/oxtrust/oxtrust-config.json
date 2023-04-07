@@ -95,7 +95,7 @@
     "apiUmaClientId":"%(oxtrust_resource_server_client_id)s",
     "apiUmaClientKeyId":"",
     "apiUmaResourceId":"%(oxtrust_resource_id)s",
-    "apiUmaScope":"https://%(hostname)s/oxauth/restv1/uma/scopes/oxtrust-api-read",
+    "apiUmaScope":"https://%(hostname)s/oxauth/restv1/uma/scopes/config_api_access",
     "apiUmaClientKeyStoreFile":"%(api_rs_client_jks_fn)s",
     "apiUmaClientKeyStorePassword":"%(api_rs_client_jks_pass_encoded)s",
 
