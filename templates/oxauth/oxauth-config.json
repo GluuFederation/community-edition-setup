@@ -277,7 +277,7 @@
         }
     ],
     "sessionIdUnusedLifetime":86400,
-    "sessionIdUnauthenticatedUnusedLifetime":120,
+    "sessionIdUnauthenticatedUnusedLifetime":7200,
     "changeSessionIdOnAuthentication":true,
     "returnClientSecretOnRead": true,
     "sessionIdPersistOnPromptNone":true,
@@ -341,7 +341,7 @@
     },
     "loggingLevel": "INFO",
     "loggingLayout": "text",
-    "errorHandlingMethod":"internal",
+    "errorHandlingMethod":"remote",
     "useLocalCache":true,
     "backchannelTokenDeliveryModesSupported": [],
     "backchannelAuthenticationRequestSigningAlgValuesSupported": [],
