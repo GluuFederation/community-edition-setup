@@ -37,3 +37,12 @@ objectClass: samlAcr
 parent: shibboleth.SAML2AuthnContextClassRef
 classRef: urn:oasis:names:tc:SAML:2.0:ac:classes:Password
 inum: FF64
+
+dn: inum=5D35,ou=samlAcrs,o=gluu
+objectClass: top
+objectClass: samlAcr
+parent: shibboleth.SAML2AuthnContextClassRef
+classRef: https://refeds.org/profile/mfa
+inum: 5D35
+
+
