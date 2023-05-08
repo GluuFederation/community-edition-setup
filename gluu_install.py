@@ -178,7 +178,7 @@ app_versions = {
     "AMAZON_CORRETTO_VERSION": "11.0.14.10.1",
     "OX_GITVERISON": "-SNAPSHOT",
     "NODE_VERSION": "v14.19.1",
-    "OX_VERSION": "4.5.0", 
+    "OX_VERSION": "4.6.0",
     "PASSPORT_VERSION": "master",
     "JYTHON_VERSION": "2.7.3",
     "OPENDJ_VERSION": "4.5.0",
