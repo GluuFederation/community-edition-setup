@@ -80,8 +80,8 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         not_null = ' NOT NULL' if sql_tbl_name=='gluuPerson' and attrname=='inum' else ''
         data_type = self.get_sql_col_type(attrname, sql_tbl_name)
         col_def = '{0}{1}{0} {2}{3}'.format(self.qchar, attrname, data_type, not_null)
-        if Config.rdbm_type == 'mysql' and data_type == 'JSON':
-            col_def += ' comment "json"'
+        if Config.rdbm_type == 'mysql' and self.dbUtils.mariadb and data_type == 'JSON':
+            col_def += ' check (json_valid({0}{1}{0}))'.format(self.qchar, attrname)
         return col_def
 
     def local_install(self):
