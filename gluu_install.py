@@ -173,9 +173,9 @@ oxauth_war_fn = os.path.join(gluu_app_dir, 'oxauth.war')
 jetty_home = '/opt/gluu/jetty'
 services = ['casa.service', 'identity.service', 'opendj.service', 'oxauth.service', 'passport.service', 'fido2.service', 'idp.service', 'oxd-server.service', 'scim.service']
 app_versions = {
-    "JETTY_VERSION": "10.0.9",
-    "AMAZON_CORRETTO_VERSION": "11.0.14.10.1",
-    "OX_GITVERISON": "-SNAPSHOT",
+    "JETTY_VERSION": "10.0.15",
+    "AMAZON_CORRETTO_VERSION": "11.0.19.7.1",
+    "OX_GITVERISON": ".Final",
     "NODE_VERSION": "v14.19.1",
     "OX_VERSION": "4.5.1", 
     "PASSPORT_VERSION": "4.5.1",
