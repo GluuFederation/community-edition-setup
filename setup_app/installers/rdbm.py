@@ -6,6 +6,7 @@ import sqlalchemy
 import shutil
 
 from string import Template
+from collections import OrderedDict
 
 from setup_app import paths
 from setup_app.static import AppType, InstallOption
@@ -173,14 +174,12 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
         return data_type
 
-    def create_tables(self, schema_files):
-        self.logIt("Creating tables for {}".format(schema_files))
-        tables = []
-        all_schema = {}
-        all_attribs = {}
-        column_add = 'COLUMN ' if Config.rdbm_type == 'spanner' else ''
-        alter_table_sql_cmd = 'ALTER TABLE %s{}%s ADD %s{};' % (self.qchar, self.qchar, column_add)
+    def get_sql_tables(self, schema_files):
 
+        tables_dict = OrderedDict()
+        all_schema = {}
+        tables_dict['__allattribs__'] = {}
+        
         for schema_fn in schema_files:
             schema = base.readJsonFile(schema_fn)
             for obj in schema['objectClasses']:
@@ -188,7 +187,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                     obj['sql']['includeObjectClass'].append('eduPerson')
                 all_schema[obj['names'][0]] = obj
             for attr in schema['attributeTypes']:
-                all_attribs[attr['names'][0]] = attr
+                tables_dict['__allattribs__'][attr['names'][0]] = attr
 
         subtable_attrs = {}
         for stbl in self.dbUtils.sub_tables.get(Config.rdbm_type):
@@ -201,7 +200,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                 continue
 
             sql_tbl_name = obj['names'][0]
-            sql_tbl_cols = []
+            tables_dict[sql_tbl_name] = []
 
             attr_list = obj['may']
             if 'sql' in obj:
@@ -224,50 +223,89 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                     continue
 
                 cols_.append(attrname)
-                col_def = self.get_col_def(attrname, sql_tbl_name) 
-                sql_tbl_cols.append(col_def)
+                data_type = self.get_sql_col_type(attrname, sql_tbl_name)
+                tables_dict[sql_tbl_name].append((attrname, data_type))
 
-            if not self.dbUtils.table_exists(sql_tbl_name):
-                doc_id_type = self.get_sql_col_type('doc_id', sql_tbl_name)
-                uniq_col = ''
-                if Config.rdbm_type == 'pgsql':
-                    if sql_tbl_name == 'gluuPerson':
-                        uniq_col = ', UNIQUE (uid)'
-                    sql_cmd = 'CREATE TABLE "{}" (doc_id {} NOT NULL UNIQUE, "objectClass" VARCHAR(48), dn VARCHAR(128), {}, PRIMARY KEY (doc_id){});'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols), uniq_col)
-                elif Config.rdbm_type == 'spanner':
-                    sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL, `objectClass` STRING(48), dn STRING(128), {}) PRIMARY KEY (`doc_id`);'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols))
-                else:
-                    if sql_tbl_name == 'gluuPerson':
-                        uniq_col = ', UNIQUE(uid)'
-                    sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL UNIQUE, `objectClass` VARCHAR(48), dn VARCHAR(128), {}, PRIMARY KEY (`doc_id`){});'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols), uniq_col)
-                self.dbUtils.exec_rdbm_query(sql_cmd)
-                tables.append(sql_cmd)
+        return tables_dict
 
+
+    def create_table(self, sql_tbl_name, sql_tbl_cols_list):
+        sql_tbl_cols = [' '.join(col) for col in sql_tbl_cols_list]
+
+        if not self.dbUtils.table_exists(sql_tbl_name):
+            doc_id_type = self.get_sql_col_type('doc_id', sql_tbl_name)
+            uniq_col = ''
+            if Config.rdbm_type == 'pgsql':
+                if sql_tbl_name == 'gluuPerson':
+                    uniq_col = ', UNIQUE (uid)'
+                sql_cmd = 'CREATE TABLE "{}" (doc_id {} NOT NULL UNIQUE, "objectClass" VARCHAR(48), dn VARCHAR(128), {}, PRIMARY KEY (doc_id){});'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols), uniq_col)
+            elif Config.rdbm_type == 'spanner':
+                sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL, `objectClass` STRING(48), dn STRING(128), {}) PRIMARY KEY (`doc_id`);'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols))
+            else:
+                if sql_tbl_name == 'gluuPerson':
+                    uniq_col = ', UNIQUE(uid)'
+                sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL UNIQUE, `objectClass` VARCHAR(48), dn VARCHAR(128), {}, PRIMARY KEY (`doc_id`){});'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols), uniq_col)
+
+            self.dbUtils.exec_rdbm_query(sql_cmd)
+            self.appendLine(sql_cmd, os.path.join(self.output_dir, 'gluu_tables.sql'))
+
+
+    def get_columns_of_table(self, table_name):
+        tbl_cls = self.dbUtils.Base.classes[table_name]
+        cols = [ col_cls.name for col_cls in tbl_cls.__table__.columns ]
+        return cols
+
+    def add_missing_attributes(self, all_attribs):
 
         for attrname in all_attribs:
             attr = all_attribs[attrname]
             if attr.get('sql', {}).get('add_table'):
-                col_def = self.get_col_def(attrname, sql_tbl_name)
-                sql_cmd = alter_table_sql_cmd.format(attr['sql']['add_table'], col_def)
+                tbl_name = attr['sql']['add_table']
+                self.add_attribute_to_table(tbl_name, attr)
 
-                if Config.rdbm_type == 'spanner':
-                    req = self.dbUtils.spanner.create_table(sql_cmd.strip(';'))
-                else:
-                    self.dbUtils.exec_rdbm_query(sql_cmd)
-                tables.append(sql_cmd)
+    def add_attribute_to_table(self, tbl_name, attrib):
+        col_def = self.get_col_def(attrib['names'][0], tbl_name)
+        self.add_col_to_table(tbl_name, col_def)
 
-        self.writeFile(os.path.join(self.output_dir, 'gluu_tables.sql'), '\n'.join(tables))
+    def add_col_to_table(self, tbl_name, col_def):
+        self.logIt("Adding column {} to {}".format(col_def, tbl_name))
+
+        column_add = 'COLUMN ' if Config.rdbm_type == 'spanner' else ''
+        alter_table_sql_cmd = 'ALTER TABLE %s{}%s ADD %s{};' % (self.qchar, self.qchar, column_add)
+        sql_cmd = alter_table_sql_cmd.format(tbl_name, col_def)
+
+        if Config.rdbm_type == 'spanner':
+            req = self.dbUtils.spanner.create_table(sql_cmd.strip(';'))
+        else:
+            self.dbUtils.exec_rdbm_query(sql_cmd)
+
+        self.appendLine(sql_cmd, os.path.join(self.output_dir, 'gluu_tables.sql'))
+
+    def create_tables(self, schema_files):
+        self.logIt("Creating tables for {}".format(schema_files))
+        tables_dict = self.get_sql_tables(schema_files)
+        for tbl_name in tables_dict:
+            if tbl_name.startswith('__') and tbl_name.endswith('__'):
+                continue
+            self.create_table(tbl_name, tables_dict[tbl_name])
+
 
     def create_subtables(self):
 
         for subtable in self.dbUtils.sub_tables.get(Config.rdbm_type, {}):
             for sattr, sdt in self.dbUtils.sub_tables[Config.rdbm_type][subtable]:
-                subtable_columns = []
-                sql_cmd = 'CREATE TABLE `{0}_{1}` (`doc_id` STRING(64) NOT NULL, `dict_doc_id` STRING(64), `{1}` {2}) PRIMARY KEY (`doc_id`, `dict_doc_id`), INTERLEAVE IN PARENT `{0}` ON DELETE CASCADE'.format(subtable, sattr, sdt)
-                self.dbUtils.spanner.create_table(sql_cmd)
-                sql_cmd_index = 'CREATE INDEX `{0}_{1}Idx` ON `{0}_{1}` (`{1}`)'.format(subtable, sattr)
-                self.dbUtils.spanner.create_table(sql_cmd_index)
-
+                subtbl_name = '{0}_{1}'.format(subtable, sattr)
+                if subtbl_name not in self.dbUtils.Base.classes:
+                    subtable_columns = []
+                    sql_cmd = 'CREATE TABLE `{0}_{1}` (`doc_id` STRING(64) NOT NULL, `dict_doc_id` STRING(64), `{1}` {2}) PRIMARY KEY (`doc_id`, `dict_doc_id`), INTERLEAVE IN PARENT `{0}` ON DELETE CASCADE'.format(subtable, sattr, sdt)
+                    self.dbUtils.spanner.create_table(sql_cmd)
+                    sql_cmd_index = 'CREATE INDEX `{0}_{1}Idx` ON `{0}_{1}` (`{1}`)'.format(subtable, sattr)
+                    self.dbUtils.spanner.create_table(sql_cmd_index)
+                else:
+                    subtable_cols = self.get_columns_of_table(subtbl_name)
+                    if sdt not in subtable_cols:
+                        col_def = '{0}{1}{0} {2}'.format(self.qchar, sattr, sdt)
+                        self.add_col_to_table(subtbl_name, col_def)
 
     def get_index_name(self, attrname):
         return re.sub(r'[^0-9a-zA-Z\s]+','_', attrname)
