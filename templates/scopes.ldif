@@ -187,4 +187,4 @@ description: This scope is required for calling Statistic Endpoint
 displayName: call_static_endpoint
 defaultScope: false
 oxAttributes: {"spontaneousClientId":"","spontaneousClientScopes":[],"showInConfigurationEndpoint":false}
-oxScopeType: openid
+oxScopeType: oauth
