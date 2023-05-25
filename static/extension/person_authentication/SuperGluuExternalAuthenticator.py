@@ -1060,7 +1060,7 @@ class PersonAuthentication(PersonAuthenticationType):
             mailService.sendMail(self.audit_email, subject, body)
 
     def buildNotifyAuthorizationHeader(self):
-        token = self.getAccessTokenJansServer(self.AS_ENDPOINT, self.AS_REDIRECT_URI, self.AS_CLIENT_ID, self.AS_CLIENT_SECRET)
+        token = self.getAccessTokenJansServer(self.AS_ENDPOINT, self.AS_CLIENT_ID, self.AS_CLIENT_SECRET)
         authorizationHeader =  "Bearer %s" % token
         
         return authorizationHeader
