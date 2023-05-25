@@ -834,7 +834,7 @@ class PersonAuthentication(PersonAuthenticationType):
                                 if debug:
                                     print "Super-Gluu. Send iOS SNS push notification. token: '%s', message: '%s', send_notification_result: '%s', apple_push_platform: '%s'" % (push_token, push_message, send_notification_result, apple_push_platform)
                             elif self.pushGluuMode:
-                                send_notification_result = self.pushAppleService.sendNotification(self.buildNotifyAuthorizationHeader(), targetEndpointArn, push_message)
+                                send_notification_result = self.pushAppleService.sendNotification(self.buildNotifyAuthorizationHeader(), targetEndpointArn, push_message, self.gluu_ios_platform_id)
                                 if debug:
                                     print "Super-Gluu. Send iOS Gluu push notification. token: '%s', message: '%s', send_notification_result: '%s'" % (push_token, push_message, send_notification_result)
                         else:
@@ -881,7 +881,7 @@ class PersonAuthentication(PersonAuthenticationType):
                                 if debug:
                                     print "Super-Gluu. Send Android SNS push notification. token: '%s', message: '%s', send_notification_result: '%s'" % (push_token, push_message, send_notification_result)
                             elif self.pushGluuMode:
-                                send_notification_result = self.pushAndroidService.sendNotification(self.buildNotifyAuthorizationHeader(), targetEndpointArn, push_message)
+                                send_notification_result = self.pushAndroidService.sendNotification(self.buildNotifyAuthorizationHeader(), targetEndpointArn, push_message, self.gluu_android_platform_id)
                                 if debug:
                                     print "Super-Gluu. Send Android Gluu push notification. token: '%s', message: '%s', send_notification_result: '%s'" % (push_token, push_message, send_notification_result)
                         else:
@@ -933,7 +933,7 @@ class PersonAuthentication(PersonAuthenticationType):
             targetEndpointArn = pushSnsService.createPlatformArn(pushClient, platformApplicationArn, pushToken, user)
         else:
             customUserData = pushSnsService.getCustomUserData(user)
-            registerDeviceResponse = pushClient.registerDevice(self.buildNotifyAuthorizationHeader(), pushToken, customUserData);
+            registerDeviceResponse = pushClient.registerDevice(self.buildNotifyAuthorizationHeader(), pushToken, customUserData, platformId);
             if registerDeviceResponse != None and registerDeviceResponse.getStatusCode() == 200:
                 targetEndpointArn = registerDeviceResponse.getEndpointArn()
         
