@@ -137,14 +137,9 @@ class PersonAuthentication(PersonAuthenticationType):
             return False
         self.AS_SSA = configurationAttributes.get("AS_SSA").getValue2()
 
-        if not configurationAttributes.containsKey("AS_REDIRECT_URI"):
-            print "Super-Gluu. Scan. Initialization. Property AS_REDIRECT_URI is mandatory"
-            return False
-        self.AS_REDIRECT_URI = configurationAttributes.get("AS_REDIRECT_URI").getValue2()
-
         # Upon client creation, this value is populated, after that this call will not go through in subsequent script restart
         if StringHelper.isEmptyString(self.AS_CLIENT_ID):
-            clientRegistrationResponse = self.registerScanClient(self.AS_ENDPOINT, self.AS_REDIRECT_URI, self.AS_SSA, customScript)
+            clientRegistrationResponse = self.registerScanClient(self.AS_ENDPOINT, self.AS_ENDPOINT, self.AS_SSA, customScript)
             if clientRegistrationResponse == None:
                 return False
 
@@ -1070,10 +1065,10 @@ class PersonAuthentication(PersonAuthenticationType):
         
         return authorizationHeader
 
-    def getAccessTokenJansServer(self, asBaseUrl, asRedirectUri, asClientId, asClientSecret):
+    def getAccessTokenJansServer(self, asBaseUrl, asClientId, asClientSecret):
         endpointUrl = asBaseUrl + "/jans-auth/restv1/token"
 
-        body = "grant_type=client_credentials&scope=https://api.gluu.org/auth/scopes/scan.supergluu&redirect_uri=%s" % asRedirectUri
+        body = "grant_type=client_credentials&scope=https://api.gluu.org/auth/scopes/scan.supergluu"
 
         authData = base64.b64encode(("%s:%s" % (asClientId, asClientSecret)).encode('utf-8'))
         headers = {"Accept" : "application/json"}
