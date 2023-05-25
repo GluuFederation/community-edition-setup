@@ -765,6 +765,20 @@
       "type": "STRING"
     }
   },
+  "oxApplication": {
+    "mysql": {
+      "size": 96,
+      "type": "VARCHAR"
+    },
+    "pgsql": {
+      "size": 96,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 96,
+      "type": "STRING"
+    }
+  },
   "oxRequest": {
     "mysql": {
       "type": "TEXT"
