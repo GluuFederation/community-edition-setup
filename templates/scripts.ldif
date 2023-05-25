@@ -397,8 +397,7 @@ description: Super Gluu authentication module
 displayName: super_gluu
 oxEnabled: false
 inum: 92F0-BF9E
-oxConfigurationProperty: {"value1":"AS_ENDPOINT","value2":"https://account-dev.gluu.cloud","hide":false,"description":""}
-oxConfigurationProperty: {"value1":"AS_REDIRECT_URI","value2":"https://account-dev.gluu.cloud","hide":false,"description":""}
+oxConfigurationProperty: {"value1":"AS_ENDPOINT","value2":"https://account.gluu.org","hide":false,"description":""}
 oxConfigurationProperty: {"value1":"AS_SSA","value2":"","hide":false,"description":""}
 oxConfigurationProperty: {"value1":"AS_CLIENT_ID","value2":"","hide":false,"description":""}
 oxConfigurationProperty: {"value1":"AS_CLIENT_SECRET","value2":"","hide":false,"description":""}
