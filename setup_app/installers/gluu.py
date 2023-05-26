@@ -80,6 +80,10 @@ class GluuInstaller(BaseInstaller, SetupUtils):
                 txt += 'Install Fido2 Server'.ljust(30) + repr(Config.installFido2).rjust(35) + (' *' if 'installFido2' in Config.addPostSetupService else '') + "\n"
                 txt += 'Install Gluu Radius '.ljust(30) + repr(Config.installGluuRadius).rjust(35) + (' *' if 'installGluuRadius' in Config.addPostSetupService else '') + "\n"
 
+
+            if Config.get('generate_passwurd_api_keystore') or base.argsp.gluu_passwurd_cert:
+                txt += 'Passwurd API keystore'.ljust(30) + 'True'.rjust(35) + (' *' if 'generate_passwurd_api_keystore' in Config.addPostSetupService else '') + "\n"
+
             txt += 'Load Test Data '.ljust(30) + repr( base.argsp.t).rjust(35) + "\n"
             return txt
 
@@ -457,7 +461,7 @@ class GluuInstaller(BaseInstaller, SetupUtils):
         if Config.profile == static.SetupProfiles.DISA_STIG:
             self.disa_stig_post_install_tasks()
 
-        if base.argsp.gluu_passwurd_cert:
+        if base.argsp.gluu_passwurd_cert or Config.get('generate_passwurd_api_keystore'):
             self.generate_gluu_passwurd_api_keystore()
 
     def disa_stig_post_install_tasks(self):

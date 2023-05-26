@@ -673,6 +673,15 @@ class PropertiesUtils(SetupUtils):
             Config.addPostSetupService.append('installGluuRadius')
 
 
+    def promptForPasswurdApiKeystore(self):
+
+        generate_passwurd_api_keystore = self.getPrompt("Generate Gluu Passwurd API keystore?", 'No')[0].lower()
+        Config.generate_passwurd_api_keystore = True if generate_passwurd_api_keystore == 'y' else False
+
+        if Config.installed_instance and Config.generate_passwurd_api_keystore:
+            Config.addPostSetupService.append('generate_passwurd_api_keystore')
+
+
     def get_backend_list(self):
 
         backend_list = [

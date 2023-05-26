@@ -245,6 +245,10 @@ if Config.installed_instance:
             if 'installCasa' in Config.addPostSetupService and 'installOxd' not in Config.addPostSetupService and not oxdInstaller.installed():
                 Config.addPostSetupService.append('installOxd')
 
+        if argsp.gluu_passwurd_cert:
+            Config.addPostSetupService.append('generate_passwurd_api_keystore')
+        else:
+            propertiesUtils.promptForPasswurdApiKeystore()
 
         if not Config.addPostSetupService:
             print("No service was selected to install. Exiting ...")
