@@ -25,6 +25,10 @@ parser.add_argument('-upgrade', help="Upgrade Gluu war and jar files", action='s
 parser.add_argument('-uninstall', help="Uninstall Gluu server and removes all files", action='store_true')
 parser.add_argument('--args', help="Arguments to be passed to setup.py")
 parser.add_argument('--keep-downloads', help="Keep downloaded files", action='store_true')
+parser.add_argument('-maven-user', help="Maven username", required=True)
+parser.add_argument('-maven-password', help="Maven password", required=True)
+
+
 
 if '-a' in sys.argv:
     parser.add_argument('--jetty-version', help="Jetty verison. For example 11.0.6")
@@ -262,6 +266,14 @@ if argsp.uninstall:
 
     sys.exit()
 
+
+passman = request.HTTPPasswordMgrWithDefaultRealm()
+passman.add_password(None, maven_root, argsp.maven_user, argsp.maven_password)
+authhandler = request.HTTPBasicAuthHandler(passman)
+opener = request.build_opener(authhandler)
+request.install_opener(opener)
+
+
 def download(url, target_fn):
     dst = os.path.join(app_dir, target_fn)
     pardir, fn = os.path.split(dst)
@@ -269,6 +281,7 @@ def download(url, target_fn):
         os.makedirs(pardir)
 
     print("Opening url", url)
+
 
     with request.urlopen(url) as resp:
         if argsp.c and os.path.exists(dst) and resp.length == os.stat(dst).st_size:
