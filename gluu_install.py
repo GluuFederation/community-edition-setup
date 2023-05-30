@@ -28,6 +28,11 @@ parser.add_argument('--keep-downloads', help="Keep downloaded files", action='st
 
 if '-a' in sys.argv:
     parser.add_argument('--jetty-version', help="Jetty verison. For example 11.0.6")
+
+if '-uninstall' not in sys.argv:
+    parser.add_argument('-maven-user', help="Maven username", required=True)
+    parser.add_argument('-maven-password', help="Maven password", required=True)
+
 parser.add_argument('-n', help="No prompt", action='store_true')
 parser.add_argument('--no-setup', help="Do not launch setup", action='store_true')
 parser.add_argument('--dist-server-base', help="Download server", default='https://maven.gluu.org/maven')
