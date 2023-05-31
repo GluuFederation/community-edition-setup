@@ -25,8 +25,14 @@ parser.add_argument('-upgrade', help="Upgrade Gluu war and jar files", action='s
 parser.add_argument('-uninstall', help="Uninstall Gluu server and removes all files", action='store_true')
 parser.add_argument('--args', help="Arguments to be passed to setup.py")
 parser.add_argument('--keep-downloads', help="Keep downloaded files", action='store_true')
+
 if '-a' in sys.argv:
     parser.add_argument('--jetty-version', help="Jetty verison. For example 11.0.6")
+
+if '-uninstall' not in sys.argv:
+    parser.add_argument('-maven-user', help="Maven username", required=True)
+    parser.add_argument('-maven-password', help="Maven password", required=True)
+
 parser.add_argument('-n', help="No prompt", action='store_true')
 parser.add_argument('--no-setup', help="Do not launch setup", action='store_true')
 parser.add_argument('--dist-server-base', help="Download server", default='https://maven.gluu.org/maven')
@@ -237,6 +243,14 @@ if argsp.uninstall:
         os.system('rm -r -f ' + p)
 
     sys.exit()
+
+
+passman = request.HTTPPasswordMgrWithDefaultRealm()
+passman.add_password(None, maven_root, argsp.maven_user, argsp.maven_password)
+authhandler = request.HTTPBasicAuthHandler(passman)
+opener = request.build_opener(authhandler)
+request.install_opener(opener)
+
 
 def download(url, target_fn):
     dst = os.path.join(app_dir, target_fn)
