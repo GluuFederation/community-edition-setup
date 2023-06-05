@@ -25,6 +25,8 @@ parser.add_argument('-upgrade', help="Upgrade Gluu war and jar files", action='s
 parser.add_argument('-uninstall', help="Uninstall Gluu server and removes all files", action='store_true')
 parser.add_argument('--args', help="Arguments to be passed to setup.py")
 parser.add_argument('--keep-downloads', help="Keep downloaded files", action='store_true')
+parser.add_argument('-k', help="Don't validate the server's certificate", action='store_true')
+
 
 if '-a' in sys.argv:
     parser.add_argument('--jetty-version', help="Jetty verison. For example 11.0.6")
@@ -41,6 +43,10 @@ parser.add_argument('--setup-branch', help="Gluu CE setup github branch", defaul
 parser.add_argument('-c', help="Don't download files that exists on disk", action='store_true')
 
 argsp = parser.parse_args()
+
+if argsp.k:
+    import ssl
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 maven_base = argsp.dist_server_base.rstrip('/')
 maven_root = '/'.join(maven_base.split('/')[:-1]).rstrip('/')
