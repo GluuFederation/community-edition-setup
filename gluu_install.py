@@ -43,7 +43,7 @@ parser.add_argument('-c', help="Don't download files that exists on disk", actio
 
 argsp = parser.parse_args()
 
-if argsp.k:
+if '-a' in sys.argv and argsp.k:
     import ssl
     ssl._create_default_https_context = ssl._create_unverified_context
 
