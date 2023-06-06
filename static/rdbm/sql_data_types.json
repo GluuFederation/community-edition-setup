@@ -312,17 +312,6 @@
       "type": "STRING(MAX)"
     }
   },
-  "oxClaimRedirectURI": {
-    "mysql": {
-      "type": "TINYTEXT"
-    },
-    "pgsql": {
-      "type": "TEXT"
-    },
-    "spanner": {
-      "type": "STRING(MAX)"
-    }
-  },
   "oxJwt": {
     "mysql": {
       "type": "TEXT"
