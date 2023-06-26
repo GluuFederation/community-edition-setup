@@ -2,12 +2,12 @@
   "red 7": {
     "optional": "",
     "mondatory": "httpd httpd-mod_ssl curl wget tar xz unzip rsyslog bzip2",
-    "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel-yaml", "certifi":"python3-certifi", "pymysql":"python3-PyMySQL", "Crypto": "python3-cryptography"}
+    "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel-yaml", "certifi":"python3-certifi", "pymysql":"python3-PyMySQL"}
   },
   "red 8": {
       "optional": "",
       "mondatory": "httpd mod_ssl curl wget tar xz unzip rsyslog bzip2",
-      "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel-yaml", "certifi":"python3-certifi", "pymysql":"python3-PyMySQL", "Crypto": "python3-cryptography"}
+      "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel-yaml", "certifi":"python3-certifi", "pymysql":"python3-PyMySQL"}
   },
   "debian 11": {
     "optional": "",
@@ -37,12 +37,12 @@
   "centos 7": {
     "optional": "",
     "mondatory": "httpd mod_ssl curl wget tar xz unzip rsyslog bzip2",
-    "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel-yaml", "pymysql":"python3-PyMySQL", "Crypto": "python3-cryptography"}
+    "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel-yaml", "pymysql":"python3-PyMySQL"}
   },
   "centos 8": {
       "optional": "",
       "mondatory": "httpd mod_ssl curl wget tar xz rsyslog unzip bzip2",
-      "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel-yaml", "certifi":"python3-certifi", "pymysql":"python3-PyMySQL", "Crypto": "python3-cryptography"}
+      "python": {"ldap3":"python3-ldap3", "requests":"python3-requests", "ruamel.yaml":"python3-ruamel-yaml", "certifi":"python3-certifi", "pymysql":"python3-PyMySQL"}
   },
   "suse 15": {
       "optional": "",
