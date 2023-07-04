@@ -185,6 +185,6 @@ oxId: jans_stat
 inum: C4F7
 description: This scope is required for calling Statistic Endpoint
 displayName: call_static_endpoint
-defaultScope: false
+defaultScope: true
 oxAttributes: {"spontaneousClientId":"","spontaneousClientScopes":[],"showInConfigurationEndpoint":false}
 oxScopeType: oauth
