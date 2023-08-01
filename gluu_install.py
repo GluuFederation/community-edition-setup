@@ -8,9 +8,8 @@ import shutil
 import site
 import argparse
 
-
-
 from urllib.request import urlretrieve
+from urllib import request
 
 cur_dir = os.path.dirname(os.path.realpath(__file__))
 gluu_app_dir = '/opt/dist/gluu'
@@ -27,6 +26,10 @@ parser.add_argument('-u', help="Use downloaded components", action='store_true')
 parser.add_argument('-uninstall', help="Uninstall Jans server and removes all files", action='store_true')
 parser.add_argument('--args', help="Arguments to be passed to setup.py")
 parser.add_argument('--keep-downloads', help="Keep downloaded files", action='store_true')
+
+if '-uninstall' not in sys.argv:
+    parser.add_argument('-maven-user', help="Maven username", required=True)
+    parser.add_argument('-maven-password', help="Maven password", required=True)
 
 argsp = parser.parse_args()
 
@@ -93,6 +96,13 @@ if argsp.uninstall:
         os.system('rm -r -f ' + p)
 
     sys.exit()
+
+passman = request.HTTPPasswordMgrWithDefaultRealm()
+passman.add_password(None, 'https://ox.gluu.org', argsp.maven_user, argsp.maven_password)
+authhandler = request.HTTPBasicAuthHandler(passman)
+opener = request.build_opener(authhandler)
+request.install_opener(opener)
+
 
 def download(url, target_fn):
     dst = os.path.join(app_dir, target_fn)
