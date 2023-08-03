@@ -816,17 +816,18 @@ class DBUtils(SetupUtils):
     def get_rdbm_val(self, key, val, rdbm_type=None):
 
         data_type = self.get_attr_sql_data_type(key)
+        val_ = val[0] if isinstance(val, list) or isinstance(val, tuple) else val
 
         if data_type in ('SMALLINT', 'BOOL', 'BOOLEAN'):
-            if val[0].lower() in ('1', 'on', 'true', 'yes', 'ok'):
+            if val_.lower() in ('1', 'on', 'true', 'yes', 'ok'):
                 return 1 if data_type == 'SMALLINT' else True
             return 0 if data_type == 'SMALLINT' else False
 
         if data_type == 'INT':
-            return int(val[0])
+            return int(val_)
 
         if data_type in ('DATETIME(3)', 'TIMESTAMP'):
-            dval = val[0].strip('Z')
+            dval = val_.strip('Z')
             sep= 'T' if rdbm_type == 'spanner' else ' '
             postfix = 'Z' if rdbm_type == 'spanner' else ''
             return "{}-{}-{}{}{}:{}:{}{}{}".format(dval[0:4], dval[4:6], dval[6:8], sep, dval[8:10], dval[10:12], dval[12:14], dval[14:17], postfix)
@@ -840,7 +841,7 @@ class DBUtils(SetupUtils):
         if data_type in ('ARRAY<STRING(MAX)>', 'JSONB'):
             return val
 
-        return val[0]
+        return val_
 
     def get_clean_objcet_class(self, entry):
 
