@@ -284,7 +284,7 @@ class ChangeGluuHostname:
 
     def change_httpd_conf(self):
         print "Changing httpd configurations"
-        if self.os_type.lower() in ('centos', 'red', 'redhat'):
+        if self.os_type.lower() in ('centos', 'red', 'redhat', 'rhel'):
             httpd_conf = os.path.join(self.container, 'etc/httpd/conf/httpd.conf')
             https_gluu = os.path.join(self.container, 'etc/httpd/conf.d/https_gluu.conf')
             conf_files = [httpd_conf, https_gluu]
