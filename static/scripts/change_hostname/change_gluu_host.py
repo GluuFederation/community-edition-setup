@@ -69,10 +69,10 @@ class Installer:
             
             self.container = '/opt/gluu-server-{}'.format(gluu_version)
         
-            if ('Ubuntu' in self.server_os) or ('Debian' in self.server_os):
+            if self.server_os.lower() in ('ubuntu', 'debian'):
                 self.run_command = 'chroot {} /bin/bash -c "{}"'.format(self.container,'{}')
                 self.install_command = 'chroot {} /bin/bash -c "apt-get install -y {}"'.format(self.container,'{}')
-            elif 'CentOS' in self.server_os:
+            elif self.server_os.lower() in ('centos', 'red', 'redhat', 'rhel')::
                 self.run_command = ('ssh -o IdentityFile=/etc/gluu/keys/gluu-console '
                                 '-o Port=60022 -o LogLevel=QUIET -o '
                                 'StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null '
