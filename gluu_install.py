@@ -18,6 +18,8 @@ from urllib import request
 from urllib.parse import urljoin
 from tempfile import TemporaryDirectory
 
+sys.path.append('/usr/lib/python{}.{}/gluu-packaged'.format(sys.version_info.major, sys.version_info.minor))
+
 parser = argparse.ArgumentParser(description="This script downloads Gluu Server components and fires setup")
 parser.add_argument('-a', help=argparse.SUPPRESS, action='store_true')
 parser.add_argument('-u', help="Use downloaded components", action='store_true')
