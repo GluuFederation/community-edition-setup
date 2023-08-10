@@ -16,7 +16,7 @@ import subprocess
 from pathlib import Path
 from urllib import request
 from urllib.parse import urljoin
-from tempfile import TemporaryDirectory
+
 
 sys.path.append('/usr/lib/python{}.{}/gluu-packaged'.format(sys.version_info.major, sys.version_info.minor))
 
@@ -60,7 +60,6 @@ app_dir = os.path.join(opt_dist_dir, 'app')
 ces_dir = '/install/community-edition-setup'
 scripts_dir = os.path.join(opt_dist_dir, 'scripts')
 certs_dir = '/etc/certs'
-pylib_dir = os.path.join(ces_dir, 'setup_app/pylib/')
 
 os_type, os_version = '', ''
 
@@ -308,30 +307,40 @@ def download(url, target_fn):
             shutil.copyfileobj(resp, out_file)
 
 
-def extract_subdir(zip_fn, sub_dir, target_dir, par_dir=None):
-    target_fp = os.path.join(target_dir, os.path.basename(sub_dir))
-    if os.path.exists(target_fp):
-        return
+def download_gcs():
+    if not os.path.exists(os.path.join(app_dir, 'gcs')):
+        print("Downloading Spanner modules")
+        gcs_download_url = 'https://ox.gluu.org/icrby8xcvbcv/spanner/gcs.tgz'
+        tmp_dir = '/tmp/' + os.urandom(5).hex()
+        target_fn = os.path.join(tmp_dir, 'gcs.tgz')
+        download(gcs_download_url, target_fn)
+        shutil.unpack_archive(target_fn, app_dir)
 
-    zip_obj = zipfile.ZipFile(zip_fn, "r")
-    if par_dir is None:
-        par_dir = zip_obj.namelist()[0]
+        req = request.urlopen('https://pypi.org/pypi/grpcio/1.46.0/json')
+        data_s = req.read()
+        data = json.loads(data_s)
 
-    with TemporaryDirectory() as unpack_dir:
-        zip_obj.extractall(unpack_dir)
-        shutil.copytree(
-            os.path.join(unpack_dir, par_dir, sub_dir),
-            target_fp
-            )
-    zip_obj.close()
+        pyversion = 'cp{0}{1}'.format(sys.version_info.major, sys.version_info.minor)
 
-def extract_pylib():
-    cryptography_url = 'https://files.pythonhosted.org/packages/7a/46/8b58d6b8244ff613ecb983b9428d1168dd0b014a34e13fb19737b9ba1fc1/cryptography-39.0.0-cp36-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl'
-    pyjwt_url = 'https://github.com/jpadilla/pyjwt/archive/refs/tags/2.6.0.zip'
-    with TemporaryDirectory() as download_dir:
-        target_fn = os.path.join(download_dir, os.path.basename(cryptography_url))
-        download(url, target_fn)
-        extract_subdir(target_fn, 'cryptography', pylib_dir, '')
+        package = {}
+
+        for package_ in data['urls']:
+
+            if package_['python_version'] == pyversion and 'manylinux' in package_['filename'] and package_['filename'].endswith('x86_64.whl'):
+                if package_['upload_time'] > package.get('upload_time',''):
+                    package = package_
+
+        if package.get('url'):
+            target_whl_fn = os.path.join(tmp_dir, os.path.basename(package['url']))
+            download(package['url'], target_whl_fn)
+            whl_zip = zipfile.ZipFile(target_whl_fn)
+
+            for member in  whl_zip.filelist:
+                whl_zip.extract(member, os.path.join(app_dir, 'gcs'))
+
+            whl_zip.close()
+
+        shutil.rmtree(tmp_dir)
 
 
 def package_oxd():
@@ -407,8 +416,6 @@ if not argsp.u:
     download('https://mds.fidoalliance.org/', os.path.join(app_dir, 'fido2/mds/toc/toc.jwt'))
     download('https://secure.globalsign.com/cacert/root-r3.crt', os.path.join(app_dir, 'fido2/mds/cert/root-r3.crt'))
 
-    download('https://files.pythonhosted.org/packages/7a/46/8b58d6b8244ff613ecb983b9428d1168dd0b014a34e13fb19737b9ba1fc1/cryptography-39.0.0-cp36-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl', os.path.join(app_dir, 'cryptography.whl'))
-    download('https://github.com/jpadilla/pyjwt/archive/refs/tags/2.6.0.zip', os.path.join(app_dir, 'pyjwt.zip'))
 
 
     if not argsp.upgrade:
@@ -417,10 +424,75 @@ if not argsp.u:
     package_oxd()
 
 
+# we need some files form community-edition-setup.zip
+ces = os.path.join(gluu_app_dir, 'community-edition-setup.zip')
+ces_zip = zipfile.ZipFile(ces)
+ces_par_dir = ces_zip.namelist()[0]
+
+def extract_from_ces(src, target_fn):
+    dst = os.path.join(app_dir, target_fn)
+    print("Extracting {} from community-edition-setup.zip to {}".format(src, dst))
+    content = ces_zip.read(os.path.join(ces_par_dir, src))
+    p, f = os.path.split(dst)
+    if not os.path.exists(p):
+        os.makedirs(p)
+    with open(dst, 'wb') as w:
+        w.write(content)
+
+
+def extract_file(zip_fn, source, target, ren=False):
+    zip_obj = zipfile.ZipFile(zip_fn, "r")
+    for member in zip_obj.infolist():
+        if not member.is_dir() and member.filename.endswith(source):
+            if ren:
+                target_p = Path(target)
+            else:
+                p = Path(member.filename)
+                target_p = Path(target).joinpath(p.name)
+                if not target_p.parent.exists():
+                    target_p.parent.mkdir(parents=True)
+            target_p.write_bytes(zip_obj.read(member))
+            break
+    zip_obj.close()
+
+extract_from_ces('templates/jetty.conf.tmpfiles.d', 'jetty.conf')
 shutil.copy(os.path.join(gluu_app_dir, 'facter'), '/usr/bin')
 os.chmod('/usr/bin/facter', 33261)
 
+npyscreen_package = os.path.join(app_dir, 'npyscreen-master.zip')
+
+site_libdir = site.getsitepackages()[0]
+dest_dir = os.path.join(site_libdir, 'npyscreen')
+
+if not os.path.exists(dest_dir):
+    print("Extracting npyscreen to", dest_dir)
+    npyzip = zipfile.ZipFile(npyscreen_package)
+    parent_dir = npyzip.filelist[0].filename
+    target_dir = '/tmp/npyscreen_tmp'
+    npyzip.extractall(target_dir)
+    npyzip.close()
+
+    shutil.copytree(
+        os.path.join(target_dir, parent_dir, 'npyscreen'),
+        dest_dir
+        )
+
+    shutil.rmtree(target_dir)
+
+
+target_dir = '/tmp/{}/ces_tmp'.format(os.urandom(5).hex())
+
+if not argsp.upgrade and os.path.exists(ces_dir):
+    shutil.rmtree(ces_dir)
+
+ces_zip.extractall(target_dir)
+
+for gdir in (ces_dir, certs_dir):
+    if not os.path.exists(gdir):
+        os.makedirs(gdir)
+
 shutil.copy(os.path.join(gluu_app_dir, 'casa.pub'), certs_dir)
+
 
 if argsp.upgrade:
 
@@ -448,29 +520,30 @@ if argsp.upgrade:
 
 else:
     print("Extracting community-edition-setup package")
-    extract_subdir(
-        os.path.join(gluu_app_dir, 'community-edition-setup.zip'),
-        '',
-        ces_dir
-        )
+    source_dir = os.path.join(target_dir, ces_par_dir)
+    ces_zip.close()
 
-    extract_libs = [
-            ('npyscreen-master.zip', 'npyscreen', None)
-            ]
-    if argsp.profile != 'DISA-STIG':
-        extract_libs += [
-                    ('sqlalchemy.zip', 'lib/sqlalchemy', None),
-                    ('cryptography.whl', 'cryptography', ''),
-                    ('pyjwt.zip', 'jwt', None)
-                    ]
-
-    for zip_fn, sub_dir, par_dir in extract_libs:
-        print("Extracting", zip_fn)
-        extract_subdir(os.path.join(app_dir, zip_fn), sub_dir, pylib_dir, par_dir)
-
+    cmd = 'cp -r -f {}* {}'.format(source_dir, ces_dir)
+    os.system(cmd)
 
     if argsp.profile == 'DISA-STIG':
         open(os.path.join(ces_dir, 'disa-stig'), 'w').close()
+
+    shutil.rmtree(target_dir)
+
+    if argsp.profile != 'DISA-STIG':
+        download_gcs()
+
+    sqlalchemy_zfn = os.path.join(app_dir, 'sqlalchemy.zip')
+    sqlalchemy_zip = zipfile.ZipFile(sqlalchemy_zfn, "r")
+    sqlalchemy_par_dir = sqlalchemy_zip.namelist()[0]
+    tmp_dir = os.path.join('/tmp', os.urandom(2).hex())
+    sqlalchemy_zip.extractall(tmp_dir)
+    shutil.copytree(
+            os.path.join(tmp_dir, sqlalchemy_par_dir, 'lib/sqlalchemy'), 
+            os.path.join(ces_dir, 'setup_app/pylib/sqlalchemy')
+            )
+    shutil.rmtree(tmp_dir)
 
     if argsp.profile == 'DISA-STIG':
         war_zip = zipfile.ZipFile(oxauth_war_fn, "r")
