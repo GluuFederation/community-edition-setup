@@ -196,13 +196,13 @@ app_versions = {
     "OX_GITVERISON": ".Final",
     "NODE_VERSION": "v14.19.1",
     "OX_VERSION": "4.5.2", 
-    "PASSPORT_VERSION": "4.5.1",
+    "PASSPORT_VERSION": "4.5.2",
     "JYTHON_VERSION": "2.7.3",
     "OPENDJ_VERSION": "4.5.0",
     "SETUP_BRANCH": argsp.setup_branch,
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7",
-    "APPS_GIT_BRANCH": "version_4.5.1",
+    "APPS_GIT_BRANCH": "version_4.5.2",
     }
 
 jetty_dist_string = 'jetty-distribution'
