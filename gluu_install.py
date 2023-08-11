@@ -18,6 +18,8 @@ from urllib import request
 from urllib.parse import urljoin
 from tempfile import TemporaryDirectory
 
+sys.path.append('/usr/lib/python{}.{}/gluu-packaged'.format(sys.version_info.major, sys.version_info.minor))
+
 parser = argparse.ArgumentParser(description="This script downloads Gluu Server components and fires setup")
 parser.add_argument('-a', help=argparse.SUPPRESS, action='store_true')
 parser.add_argument('-u', help="Use downloaded components", action='store_true')
@@ -150,16 +152,22 @@ if not argsp.uninstall:
 
     if missing_packages:
         packages_str = ' '.join(missing_packages)
+        if os_type+os_version in ('centos9'):
+            packages_str = packages_str.replace('python3-', 'python-')
         if not argsp.n:
             result = input("Missing package(s): {0}. Install now? (Y|n): ".format(packages_str))
             if result.strip() and result.strip().lower()[0] == 'n':
                 sys.exit("Can't continue without installing these packages. Exiting ...")
 
         if os_type in ('red', 'centos'):
+            print("Installing epel-release")
             cmd = '{} install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{}.noarch.rpm'.format(package_installer, os_version)
             os.system(cmd)
             cmd = '{} clean all'
             os.system(cmd)
+            print("Enabling CRB repository")
+            os.system('/usr/bin/crb enable')
+
         elif deb_clone:
             subprocess.run(shlex.split('{} update'.format(package_installer)))
 

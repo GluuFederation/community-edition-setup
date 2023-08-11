@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -13,7 +14,7 @@ import shutil
 import traceback
 import code
 
-sys.path.append("/usr/lib/python3.6/gluu-packaged")
+sys.path.append('/usr/lib/python{}.{}/gluu-packaged'.format(sys.version_info.major, sys.version_info.minor))
 
 from queue import Queue
 
