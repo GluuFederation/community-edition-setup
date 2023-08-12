@@ -608,6 +608,37 @@ class DBUtils(SetupUtils):
                     else:
                         return data['results'][0][bucket]
 
+    def delete_dn(self, dn):
+        if self.dn_exists(dn):
+            backend_location = self.get_backend_location_for_dn(dn)
+
+            if backend_location == BackendTypes.LDAP:
+                def recursive_delete(dn):
+                    self.ldap_conn.search(search_base=dn, search_filter='(objectClass=*)', search_scope=ldap3.LEVEL)
+                    for entry in self.ldap_conn.response:
+                        recursive_delete(entry['dn'])
+                    self.ldap_conn.delete(dn)
+                recursive_delete(dn)
+
+            elif backend_location in (BackendTypes.MYSQL, BackendTypes.PGSQL):
+                sqlalchemy_obj = self.get_sqlalchObj_for_dn(dn)
+                if sqlalchemy_obj:
+                    self.session.delete(sqlalchemy_obj)
+                    self.session.commit()
+
+            elif backend_location == BackendTypes.SPANNER:
+                tbl = self.get_spanner_table_for_dn(dn)
+                data = self.spanner_client.get_dict_data('SELECT doc_id FROM {} WHERE dn="{}"'.format(tbl, dn))
+                if data:
+                    doc_id = data[0]['doc_id']
+                    self.spanner_client.delete_data_data(tbl, doc_id)
+
+            elif backend_location == BackendTypes.COUCHBASE:
+                key = ldif_utils.get_key_from(dn)
+                bucket =self.get_bucket_for_key(key)
+                n1ql = 'DELETE FROM `{}` USE KEYS "{}"'.format(bucket, key)
+                self.cbm.exec_query(n1ql)
+
 
     def add2strlist(self, client_id, strlist):
         value2 = []
@@ -673,7 +704,8 @@ class DBUtils(SetupUtils):
 
 
         elif backend_location == BackendTypes.SPANNER:
-            spanner_data = self.spanner_client.get_dict_data('SELECT oxConfigurationProperty from oxCustomScript WHERE dn="{}"'.format(dn))
+            spanner_data_list = self.spanner_client.get_dict_data('SELECT oxConfigurationProperty from oxCustomScript WHERE dn="{}"'.format(dn))
+            spanner_data = spanner_data_list[0]
             oxConfigurationProperty = []
             added = False
 
@@ -1009,12 +1041,14 @@ class DBUtils(SetupUtils):
                             else:
                                 data_list = self.spanner_client.get_dict_data('SELECT {} FROM {} WHERE doc_id="{}"'.format(entry['add'][0], table, doc_id))
                                 cur_data = data_list[0]
-                                if cur_data:
+                                if cur_data and change_attr in cur_data:
+                                    if not cur_data[change_attr]:
+                                        cur_data[change_attr] = []
                                     for cur_val in entry[change_attr]:
                                         typed_val = self.get_rdbm_val(change_attr, cur_val, rdbm_type='spanner')
-                                        cur_data.append(typed_val)
+                                        cur_data[change_attr].append(typed_val)
 
-                                self.spanner_client.write_data(table=table, columns=['doc_id', change_attr], values=[doc_id, cur_data], mutation='update')
+                                self.spanner_client.write_data(table=table, columns=['doc_id', change_attr], values=[doc_id, cur_data[change_attr]], mutation='update')
 
                     elif 'replace' in entry and 'changetype' in entry:
                         table = self.get_spanner_table_for_dn(dn)
