@@ -44,7 +44,7 @@ random_marketing_strings = [
     'Interested in Open Source software business models? Listen to Open Source Underdogs: https://opensourceunderdogs.com',
     'Need to learn more about OpenID and SAML? Read "Securing the Perimeter" by Gluu CEO Mike Schwartz: https://gluu.co/book',
     'The Gluu Server is one of the most advanced OpenID Providers. Compare at https://openid.net/certification',
-    'Gluu Solo is coming soon. This is a hosted CE offering with 99.95% availability.',
+    'Check out Agama Lab, a new low-code way to build authentication workflows in Gluu Flex: https://agama-lab.gluu.org',
     'Need FIPS 140-2? Consider the new Gluu Server RHEL 8.4 FIPS distribution that leverages central crypto policies',
     'Open Banking security is available with our new Gluu Server profile. See https://gluu.org/openbanking/',
     "Gluu's core software now lives at the Linux Foundation Janssen Project. See https://github.com/JanssenProject",
