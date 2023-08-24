@@ -13,8 +13,6 @@ from setup_app.installers.base import BaseInstaller
 
 class OxdInstaller(SetupUtils, BaseInstaller):
 
-    oxd_tgz_fn = os.path.join(Config.distGluuFolder, 'oxd-server.tgz')
-
     def __init__(self):
         setattr(base.current_app, self.__class__.__name__, self)
         self.service_name = 'oxd-server'
