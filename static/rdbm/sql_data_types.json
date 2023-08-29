@@ -62,7 +62,7 @@
       "type": "VARCHAR"
     },
     "spanner": {
-      "size": 100,
+      "size": 256,
       "type": "STRING"
     }
   },
@@ -895,6 +895,16 @@
     },
     "spanner": {
       "type": "STRING(MAX)"
+    }
+  },
+  "gluuHostname": {
+    "mysql": {
+      "size": 255,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 255,
+      "type": "STRING"
     }
   }
 }
