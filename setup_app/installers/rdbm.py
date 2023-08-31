@@ -229,9 +229,14 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
         return tables_dict
 
+    def quote_column(self, col):
+        if not col.startswith(self.qchar):
+            col = self.qchar + col + self.qchar
+        return col
 
     def create_table(self, sql_tbl_name, sql_tbl_cols_list):
-        sql_tbl_cols = [' '.join(col) for col in sql_tbl_cols_list]
+
+        sql_tbl_cols = [f'{self.quote_column(col)} {dtype}' for col, dtype in sql_tbl_cols_list]
 
         if not self.dbUtils.table_exists(sql_tbl_name):
             doc_id_type = self.get_sql_col_type('doc_id', sql_tbl_name)
@@ -239,7 +244,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
             if Config.rdbm_type == 'pgsql':
                 if sql_tbl_name == 'gluuPerson':
                     uniq_col = ', UNIQUE (uid)'
-                sql_cmd = 'CREATE TABLE "{}" (doc_id {} NOT NULL UNIQUE, "objectClass" VARCHAR(48), dn VARCHAR(128), {}, PRIMARY KEY (doc_id){});'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols), uniq_col)
+                sql_cmd = 'CREATE TABLE "{}" (doc_id {} NOT NULL UNIQUE, "objectClass" VARCHAR(48), "dn" VARCHAR(128), {}, PRIMARY KEY (doc_id){});'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols), uniq_col)
             elif Config.rdbm_type == 'spanner':
                 sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL, `objectClass` STRING(48), dn STRING(128), {}) PRIMARY KEY (`doc_id`);'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols))
             else:
@@ -296,7 +301,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         for subtable in self.dbUtils.sub_tables.get(Config.rdbm_type, {}):
             for sattr, sdt in self.dbUtils.sub_tables[Config.rdbm_type][subtable]:
                 subtbl_name = '{0}_{1}'.format(subtable, sattr)
-                if subtbl_name not in self.dbUtils.Base.classes:
+                if not self.dbUtils.table_exists(subtbl_name):
                     subtable_columns = []
                     sql_cmd = 'CREATE TABLE `{0}_{1}` (`doc_id` STRING(64) NOT NULL, `dict_doc_id` STRING(64), `{1}` {2}) PRIMARY KEY (`doc_id`, `dict_doc_id`), INTERLEAVE IN PARENT `{0}` ON DELETE CASCADE'.format(subtable, sattr, sdt)
                     self.dbUtils.spanner.create_table(sql_cmd)
