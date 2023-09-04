@@ -906,5 +906,15 @@
       "size": 255,
       "type": "STRING"
     }
+  },
+  "gluuSAMLspMetaDataURL": {
+    "mysql": {
+      "size": 255,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 255,
+      "type": "STRING"
+    }
   }
 }
