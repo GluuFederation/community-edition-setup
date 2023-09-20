@@ -211,7 +211,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
             Config.scim_rs_client_id =  oxTrustConfApplication['scimUmaClientId']
 
         if 'scimUmaResourceId' in oxTrustConfApplication:
-            Config.scim_resource_oxid =  oxTrustConfApplication['scimUmaResourceId']
+            Config.scim_resource_oxid = oxTrustConfApplication['scimUmaResourceId']
 
         if 'ScimProperties' in oxTrustConfApplication and oxTrustConfApplication['ScimProperties'] and 'protectionMode' in oxTrustConfApplication['ScimProperties']:
             Config.scim_protection_mode = oxTrustConfApplication['ScimProperties']['protectionMode']
@@ -226,6 +226,23 @@ class CollectProperties(SetupUtils, BaseInstaller):
             Config.scim_rs_client_jks_pass = self.unobscure(oxTrustConfApplication['scimUmaClientKeyStorePassword']) if oxTrustConfApplication['scimUmaClientKeyStorePassword'] else None
             Config.scim_rs_client_jks_fn = str(oxTrustConfApplication['scimUmaClientKeyStoreFile']) if oxTrustConfApplication['scimUmaClientKeyStoreFile'] else ''
 
+        if 'passportUmaClientId' in oxTrustConfApplication:
+            Config.passport_rs_client_id = oxTrustConfApplication['passportUmaClientId']
+
+        if 'passportUmaClientKeyStorePassword' in oxTrustConfApplication:
+            Config.passport_rs_client_jks_pass_encoded = oxTrustConfApplication['passportUmaClientKeyStorePassword']
+            Config.passport_rs_client_jks_pass = self.unobscure(Config.passport_rs_client_jks_pass_encoded)
+
+        passport_config_fn = os.path.join(Config.gluuBaseFolder, 'conf', 'passport-config.json')
+        if os.path.exists(passport_config_fn):
+            passport_config = base.readJsonFile(passport_config_fn)
+            Config.passport_rp_client_id = passport_config.get('clientId')
+
+        passport_db_data = self.dbUtils.dn_exists('ou=oxpassport,ou=configuration,o=gluu')
+        if passport_db_data:
+            gluu_passport_configuration = json.loads(passport_db_data['gluuPassportConfiguration'][0])
+            Config.passport_rp_ii_client_id = gluu_passport_configuration.get('idpInitiated', {}).get('openidclient', {}).get('clientId')
+
         # Other clients
         client_var_id_list = (
                     ('scim_rp_client_id', '1202.'),
@@ -234,6 +251,7 @@ class CollectProperties(SetupUtils, BaseInstaller):
                     ('passport_rp_ii_client_id', '1503.'),
                     ('gluu_radius_client_id', '1701.'),
                     )
+
         self.check_clients(client_var_id_list)
         self.check_clients([('passport_resource_id', '1504.')])
 

@@ -104,7 +104,7 @@ except Exception:
 queue = Queue()
 GSA = None
 
-if (not argsp.c) and sys.stdout.isatty() and (int(tty_rows) > 24) and (int(tty_columns) > 79):
+if ('--shell' not in sys.argv) and (not argsp.c) and sys.stdout.isatty() and (int(tty_rows) > 24) and (int(tty_columns) > 79):
     try:
         import npyscreen
     except Exception:
@@ -113,7 +113,7 @@ if (not argsp.c) and sys.stdout.isatty() and (int(tty_rows) > 24) and (int(tty_c
         from setup_app.utils.tui import GSA
         on_tui = True
 
-if not argsp.n and not GSA:
+if not argsp.n and not GSA and ('--shell' not in sys.argv):
     base.check_resources()
 
 
@@ -223,7 +223,7 @@ if Config.installed_instance:
 
         setattr(Config, installer.install_var, installer.installed())
 
-    if not GSA:
+    if not GSA and not argsp.shell:
         propertiesUtils.promptForProperties()
 
         for service, arg in (
@@ -246,7 +246,7 @@ if Config.installed_instance:
                 Config.addPostSetupService.append('installOxd')
 
 
-        if not Config.addPostSetupService:
+        if not Config.addPostSetupService and not argsp.shell:
             print("No service was selected to install. Exiting ...")
             sys.exit()
 
@@ -277,16 +277,17 @@ if not GSA:
             sys.exit()
 
     print()
-    print(gluuInstaller)
+    if not argsp.shell:
+        print(gluuInstaller)
 
-    proceed = True
-    if not Config.noPrompt:
-        proceed_prompt = input('Proceed with these values [Y|n] ').lower().strip()
-        if proceed_prompt and proceed_prompt[0] !='y':
-            proceed = False
+        proceed = True
+        if not Config.noPrompt:
+            proceed_prompt = input('Proceed with these values [Y|n] ').lower().strip()
+            if proceed_prompt and proceed_prompt[0] !='y':
+                proceed = False
 
-    if Config.rdbm_install_type == static.InstallTypes.LOCAL:
-        packageUtils.check_and_install_packages()
+        if Config.rdbm_install_type == static.InstallTypes.LOCAL:
+            packageUtils.check_and_install_packages()
 
 #register post setup progress
 class PostSetup:
