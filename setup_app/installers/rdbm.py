@@ -117,6 +117,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
             elif Config.rdbm_type == 'pgsql':
                 if base.clone_type == 'rpm':
+                    self.fix_pgsql_unit_file()
                     self.run(['postgresql-setup', 'initdb'])
                 elif base.clone_type == 'deb':
                     self.run([paths.cmd_chmod, '640', '/etc/ssl/private/ssl-cert-snakeoil.key'])
@@ -498,6 +499,29 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
             self.renderTemplateInOut(Config.gluuSpannerProperties, Config.templateFolder, Config.configFolder)
 
+    def fix_pgsql_unit_file(self):
+        self.logIt("Fixing postgresql unit file")
+        pg_unit_file_fn = self.get_unit_file_location('postgresql')
+        unit_file_dict = self.parse_unit_file(pg_unit_file_fn)
+
+        for i, entry in  enumerate(unit_file_dict['Service']):
+            if entry[0] == 'TimeoutSec':
+                unit_file_dict['Service'][i][1] = '5'
+                break
+        else:
+            unit_file_dict['Service'].append(['TimeoutSec', '5'])
+
+        new_unit_file_list = []
+        for section in unit_file_dict:
+            new_unit_file_list.append(f'[{section}]')
+            for i, entry in  enumerate(unit_file_dict[section]):
+                new_unit_file_list.append('='.join(entry))
+            new_unit_file_list.append('')
+
+        unit_file_content = '\n'.join(new_unit_file_list)
+        self.writeFile(pg_unit_file_fn, unit_file_content, backup=False)
+
+        self.run([paths.cmd_systemctl, 'daemon-reload'])
 
     def extract_libs(self):
         lib_archive = os.path.join(Config.distGluuFolder, 'gluu-orm-spanner-libs-distribution.zip')

@@ -17,6 +17,7 @@ import ruamel.yaml
 
 from pathlib import Path
 from urllib.parse import urlparse
+from collections import OrderedDict
 
 from setup_app import paths
 from setup_app.config import Config
@@ -702,3 +703,28 @@ class SetupUtils(Crypto64):
                 pass
 
         return tuple(ret_val)
+
+    def get_unit_file_location(self, service):
+        output = self.run([paths.cmd_systemctl, 'show', '-p', 'FragmentPath', service])
+        if output and output.startswith('FragmentPath'):
+            return output[13:].strip()
+        return ''
+
+    def parse_unit_file(self, unit_fn):
+        unit_file_content = self.readFile(unit_fn)
+        unit_file_dict = OrderedDict()
+        section = None
+        for l in unit_file_content.splitlines():
+            if l.startswith(('#', ';')) or not l:
+                continue
+            rem = re.match(r'^\[(.*)\]', l)
+            if rem:
+                section = rem.groups()[0]
+                unit_file_dict[section] = []
+
+            elif section:
+                eqn = l.find('=')
+                unit_file_dict[section].append([l[:eqn].strip(), l[eqn+1:].strip()])
+
+        return unit_file_dict
+
