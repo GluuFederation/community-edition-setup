@@ -40,7 +40,7 @@ parser.add_argument('-n', help="No prompt", action='store_true')
 parser.add_argument('--no-setup', help="Do not launch setup", action='store_true')
 parser.add_argument('--dist-server-base', help="Download server", default='https://maven.gluu.org/maven')
 parser.add_argument('-profile', help="Setup profile", choices=['CE', 'DISA-STIG'], default='CE')
-parser.add_argument('--setup-branch', help="Gluu CE setup github branch", default="version_4.5.2")
+parser.add_argument('--setup-branch', help="Gluu CE setup github branch", default="version_4.5.3")
 parser.add_argument('-c', help="Don't download files that exists on disk", action='store_true')
 
 argsp = parser.parse_args()
@@ -195,14 +195,14 @@ app_versions = {
     "AMAZON_CORRETTO_VERSION": "11.0.19.7.1",
     "OX_GITVERISON": ".Final",
     "NODE_VERSION": "v14.19.1",
-    "OX_VERSION": "4.5.2", 
-    "PASSPORT_VERSION": "4.5.2",
+    "OX_VERSION": "4.5.3", 
+    "PASSPORT_VERSION": "4.5.3",
     "JYTHON_VERSION": "2.7.3",
     "OPENDJ_VERSION": "4.5.0",
     "SETUP_BRANCH": argsp.setup_branch,
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7",
-    "APPS_GIT_BRANCH": "version_4.5.2",
+    "APPS_GIT_BRANCH": "version_4.5.3",
     }
 
 jetty_dist_string = 'jetty-distribution'
