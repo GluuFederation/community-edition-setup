@@ -255,6 +255,13 @@ class CollectProperties(SetupUtils, BaseInstaller):
         self.check_clients(client_var_id_list)
         self.check_clients([('passport_resource_id', '1504.')])
 
+        passport_saml_script = dbUtils.dn_exists('inum=D40C-1CA4,ou=scripts,o=gluu') or dbUtils.dn_exists('inum=2FDB-CF02,ou=scripts,o=gluu')
+        if passport_saml_script:
+            for conf_prop_s in passport_saml_script["oxConfigurationProperty"]:
+                conf_prop = json.loads(conf_prop_s)
+                if conf_prop.get('value1') == 'key_store_password':
+                    Config.passport_rp_client_jks_pass = conf_prop.get('value2','')
+
         o_issuer = urlparse(oxAuthConfDynamic['issuer'])
         Config.hostname = str(o_issuer.netloc)
 
