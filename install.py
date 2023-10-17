@@ -150,6 +150,9 @@ sqlalchemy_zip.close()
 
 sqlalchemy_dir = os.path.join(ces_dir, 'setup_app/pylib/sqlalchemy')
 
+if os.path.exists(sqlalchemy_dir):
+    shutil.rmtree(sqlalchemy_dir)
+
 shutil.copytree(
     os.path.join(target_dir, sqlalchemy_parent_dir, 'lib/sqlalchemy'),
     sqlalchemy_dir
