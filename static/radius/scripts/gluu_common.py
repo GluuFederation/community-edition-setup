@@ -12,7 +12,8 @@ from org.apache.http.params import CoreConnectionPNames
 from org.gluu.oxauth.service.common import EncryptionService, UserService
 from org.gluu.oxauth.service.custom import CustomScriptService
 from org.gluu.oxauth.service.fido.u2f import DeviceRegistrationService
-from org.gluu.oxauth.service.net import HttpService
+from org.gluu.oxauth.service.net import HttpService2
+from org.apache.http.entity import ContentType
 from org.gluu.oxauth.service.push.sns import PushPlatform, PushSnsService
 from org.gluu.service.cdi.util import CdiUtil
 from org.gluu.util import StringHelper
@@ -43,7 +44,7 @@ class PushNotificationContext:
 # PushNotificationManager Class
 # 
 class PushNotificationManager:
-    def __init__(self, configurationAttributes):
+    def __init__(self, customScript, configurationAttributes):
 
         self.pushSnsMode = False
         self.pushGluuMode = False
@@ -55,7 +56,6 @@ class PushNotificationManager:
         
         notificationServiceMode = configurationAttributes.get("notification_service_mode").getValue2()
         credentialsFile = configurationAttributes.get("credentials_file").getValue2()
-        print credentialsFile
         creds = self.loadCredentials(credentialsFile)
         if creds == None:
             return None
@@ -63,35 +63,39 @@ class PushNotificationManager:
         # SSA section
         if not configurationAttributes.containsKey("AS_CLIENT_ID"):
             print "Super-Gluu. Scan. Initialization. Property AS_CLIENT_ID is mandatory"
-            return False
+            return None
         self.AS_CLIENT_ID = configurationAttributes.get("AS_CLIENT_ID").getValue2()
 
         if not configurationAttributes.containsKey("AS_CLIENT_SECRET"):
             print "Super-Gluu. Scan. Initialization. Property AS_CLIENT_SECRET is mandatory"
-            return False
+            return None
         self.AS_CLIENT_SECRET = configurationAttributes.get("AS_CLIENT_SECRET").getValue2()
 
         # SSA section
         if not configurationAttributes.containsKey("AS_ENDPOINT"):
             print "Super-Gluu. Scan. Initialization. Property AS_ENDPOINT is mandatory"
-            return False
+            return None
         self.AS_ENDPOINT = configurationAttributes.get("AS_ENDPOINT").getValue2()
 
         if not configurationAttributes.containsKey("AS_SSA"):
             print "Super-Gluu. Scan. Initialization. Property AS_SSA is mandatory"
-            return False
+            return None
         self.AS_SSA = configurationAttributes.get("AS_SSA").getValue2()
 
         # Upon client creation, this value is populated, after that this call will not go through in subsequent script restart
         if StringHelper.isEmptyString(self.AS_CLIENT_ID):
             clientRegistrationResponse = self.registerScanClient(self.AS_ENDPOINT, self.AS_ENDPOINT, self.AS_SSA, customScript)
             if clientRegistrationResponse == None:
-                return False
+                print "Super-Gluu. Failed to register Scan client!!!"
+            else:
+                self.AS_CLIENT_ID = clientRegistrationResponse['client_id']
+                self.AS_CLIENT_SECRET = clientRegistrationResponse['client_secret']
 
-            self.AS_CLIENT_ID = clientRegistrationResponse['client_id']
-            self.AS_CLIENT_SECRET = clientRegistrationResponse['client_secret']
+        if StringHelper.isNotEmptyString(self.AS_CLIENT_ID) and StringHelper.isNotEmptyString(self.AS_CLIENT_SECRET):
+            self.enabledPushNotifications = self.initPushNotificationService(notificationServiceMode, creds)
+        else:
+            self.enabledPushNotifications = False
 
-        self.enabledPushNotifications = self.initPushNotificationService(notificationServiceMode, creds)
     
     def initPushNotificationService(self, serviceMode, creds):
         print "Super-Gluu. Initialize Native/SNS/Gluu notification services"
@@ -642,7 +646,7 @@ class PushNotificationManager:
         return authorizationHeader
 
     def getAccessTokenJansServer(self, asBaseUrl, asClientId, asClientSecret):
-        endpointUrl = asBaseUrl + "/jans-auth/restv1/token"
+        endpointUrl = asBaseUrl + "/oxauth/restv1/token"
 
         body = "grant_type=client_credentials&scope=https://api.gluu.org/auth/scopes/scan.supergluu"
 
@@ -686,7 +690,7 @@ class PushNotificationManager:
                     'software_statement': asSSA}
         body = json.dumps(data_org)
 
-        endpointUrl = asBaseUrl + "/jans-auth/restv1/register"
+        endpointUrl = asBaseUrl + "/oxauth/restv1/register"
         headers = {"Accept" : "application/json"}
 
         try:

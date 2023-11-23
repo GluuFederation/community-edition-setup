@@ -75,7 +75,7 @@ class ResourceOwnerPasswordCredentials(ResourceOwnerPasswordCredentialsType):
         if configurationAttributes.containsKey("issuer_id"):
             self.issuerId = configurationAttributes.get("issuer_id").getValue2()
         
-        self.pushNotificationManager = PushNotificationManager(configurationAttributes)
+        self.pushNotificationManager = PushNotificationManager(customScript, configurationAttributes)
         self.networkApi = NetworkApi()
 
         return True
