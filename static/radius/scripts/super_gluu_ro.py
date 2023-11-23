@@ -6,7 +6,7 @@ from org.gluu.oxnotify.client import NotifyClientFactory
 
 from org.gluu.model.custom.script.type.owner import ResourceOwnerPasswordCredentialsType
 from org.gluu.oxauth.model.common import SessionIdState
-from org.gluu.oxauth.model.config import ConfigurationFactory , Constants
+from org.gluu.oxauth.model.config import ConfigurationFactory, Constants
 from org.gluu.oxauth.security import Identity
 from org.gluu.oxauth.service import AuthenticationService, SessionIdService
 from org.gluu.oxauth.service.common import EncryptionService, UserService
@@ -58,8 +58,6 @@ class ResourceOwnerPasswordCredentials(ResourceOwnerPasswordCredentialsType):
         self.applicationId = "*" # wildcard. Selects all devices irrespective of the application 
         if configurationAttributes.containsKey("application_id"):
             self.applicationId = configurationAttributes.get("application_id").getValue2()
-        
-        credentialsFile = configurationAttributes.get("credentials_file").getValue2()
 
         if configurationAttributes.containsKey("push_notification_title"):
             self.pushNotificationManager.titleTemplate = configurationAttributes.get("push_notification_title").getValue2()
@@ -77,7 +75,7 @@ class ResourceOwnerPasswordCredentials(ResourceOwnerPasswordCredentialsType):
         if configurationAttributes.containsKey("issuer_id"):
             self.issuerId = configurationAttributes.get("issuer_id").getValue2()
         
-        self.pushNotificationManager = PushNotificationManager(notificationServiceMode,credentialsFile)
+        self.pushNotificationManager = PushNotificationManager(configurationAttributes)
         self.networkApi = NetworkApi()
 
         return True
