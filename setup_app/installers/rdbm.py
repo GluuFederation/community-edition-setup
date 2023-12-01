@@ -506,10 +506,10 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
         for i, entry in  enumerate(unit_file_dict['Service']):
             if entry[0] == 'TimeoutSec':
-                unit_file_dict['Service'][i][1] = '5'
+                unit_file_dict['Service'][i][1] = '300'
                 break
         else:
-            unit_file_dict['Service'].append(['TimeoutSec', '5'])
+            unit_file_dict['Service'].append(['TimeoutSec', '300'])
 
         new_unit_file_list = []
         for section in unit_file_dict:
