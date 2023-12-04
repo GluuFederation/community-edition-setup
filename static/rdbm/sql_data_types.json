@@ -16,6 +16,11 @@
       "type": "STRING(MAX)"
     }
   },
+  "gluuAttribute:description": {
+    "mysql": {
+      "type": "TEXT"
+    }
+  },
   "displayName": {
     "mysql": {
       "size": 128,
