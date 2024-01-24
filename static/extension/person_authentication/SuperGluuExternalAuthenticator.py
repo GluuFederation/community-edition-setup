@@ -899,6 +899,7 @@ class PersonAuthentication(PersonAuthenticationType):
         print "Super-Gluu. Send push notification. send_android: '%s', send_ios: '%s'" % (send_android, send_ios)
 
     def getTargetEndpointArn(self, deviceRegistrationService, pushSnsService, platform, user, u2fDevice):
+        print "Super-Gluu. Get target endpoint ARN. Preparing to build register device request with user='%s', platform='%s'" % (user.getUserId(), platform) 
         targetEndpointArn = None
                              
         # Return endpoint ARN if it created already
