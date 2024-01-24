@@ -936,6 +936,8 @@ class PersonAuthentication(PersonAuthenticationType):
             targetEndpointArn = pushSnsService.createPlatformArn(pushClient, platformApplicationArn, pushToken, user)
         else:
             customUserData = pushSnsService.getCustomUserData(user)
+            if True:
+                print "Super-Gluu. Get target endpoint ARN. Attempting to send register device request with user='%s', pushToken='%s', platformId='%s', customUserData='%s'" % (user.getUserId(), pushToken, platformId, customUserData) 
             registerDeviceResponse = pushClient.registerDevice(self.buildNotifyAuthorizationHeader(), pushToken, customUserData, platformId);
             if registerDeviceResponse != None and registerDeviceResponse.getStatusCode() == 200:
                 targetEndpointArn = registerDeviceResponse.getEndpointArn()
