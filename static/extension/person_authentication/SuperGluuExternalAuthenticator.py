@@ -802,7 +802,7 @@ class PersonAuthentication(PersonAuthenticationType):
                 if StringHelper.equalsIgnoreCase(platform, "ios") and StringHelper.isNotEmpty(push_token):
                     # Sending notification to iOS user's device
                     if self.pushAppleService == None:
-                        print "Super-Gluu. Send push notification. Apple native push notification service is not enabled"
+                        print "Super-Gluu. Send push notification. Apple push notification service is not enabled"
                     else:
                         send_notification = True
                         
@@ -857,7 +857,7 @@ class PersonAuthentication(PersonAuthenticationType):
                 if StringHelper.equalsIgnoreCase(platform, "android") and StringHelper.isNotEmpty(push_token):
                     # Sending notification to Android user's device
                     if self.pushAndroidService == None:
-                        print "Super-Gluu. Send native push notification. Android native push notification service is not enabled"
+                        print "Super-Gluu. Send native push notification. Android push notification service is not enabled"
                     else:
                         send_notification = True
 
