@@ -737,7 +737,7 @@ class PersonAuthentication(PersonAuthenticationType):
 
         if ios_creds["enabled"]:
             self.pushAppleService = gluuClient
-            self.gluu_ios_platform_id = android_creds["platform_id"]
+            self.gluu_ios_platform_id = ios_creds["platform_id"]
             print "Super-Gluu. Initialize Gluu notification services. Created iOS notification service"
 
         enabled = self.pushAndroidService != None or self.pushAppleService != None
