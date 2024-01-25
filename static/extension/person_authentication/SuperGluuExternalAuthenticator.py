@@ -48,6 +48,8 @@ class PersonAuthentication(PersonAuthenticationType):
 
     def init(self, customScript, configurationAttributes):
         print "Super-Gluu. Initialization"
+        
+        self.debugMode = False
 
         if not configurationAttributes.containsKey("authentication_mode"):
             print "Super-Gluu. Initialization. Property authentication_mode is mandatory"
@@ -797,7 +799,6 @@ class PersonAuthentication(PersonAuthenticationType):
 
                 platform = device_data.getPlatform()
                 push_token = device_data.getPushToken()
-                debug = False
 
                 if StringHelper.equalsIgnoreCase(platform, "ios") and StringHelper.isNotEmpty(push_token):
                     # Sending notification to iOS user's device
@@ -834,11 +835,11 @@ class PersonAuthentication(PersonAuthenticationType):
                                     apple_push_platform = PushPlatform.APNS_SANDBOX
         
                                 send_notification_result = pushSnsService.sendPushMessage(self.pushAppleService, apple_push_platform, targetEndpointArn, push_message, None)
-                                if debug:
+                                if self.debugMode:
                                     print "Super-Gluu. Send iOS SNS push notification. token: '%s', message: '%s', send_notification_result: '%s', apple_push_platform: '%s'" % (push_token, push_message, send_notification_result, apple_push_platform)
                             elif self.pushGluuMode:
                                 send_notification_result = self.pushAppleService.sendNotification(self.buildNotifyAuthorizationHeader(), targetEndpointArn, push_message, self.gluu_ios_platform_id)
-                                if debug:
+                                if self.debugMode:
                                     print "Super-Gluu. Send iOS Gluu push notification. token: '%s', message: '%s', send_notification_result: '%s'" % (push_token, push_message, send_notification_result)
                         else:
                             additional_fields = { "request" : super_gluu_request }
@@ -850,7 +851,7 @@ class PersonAuthentication(PersonAuthenticationType):
                             push_message = msgBuilder.build()
     
                             send_notification_result = self.pushAppleService.push(push_token, push_message)
-                            if debug:
+                            if self.debugMode:
                                 print "Super-Gluu. Send iOS Native push notification. token: '%s', message: '%s', send_notification_result: '%s'" % (push_token, push_message, send_notification_result)
                         send_ios = send_ios + 1
 
@@ -881,18 +882,18 @@ class PersonAuthentication(PersonAuthenticationType):
     
                             if self.pushSnsMode:
                                 send_notification_result = pushSnsService.sendPushMessage(self.pushAndroidService, PushPlatform.GCM, targetEndpointArn, push_message, None)
-                                if debug:
+                                if self.debugMode:
                                     print "Super-Gluu. Send Android SNS push notification. token: '%s', message: '%s', send_notification_result: '%s'" % (push_token, push_message, send_notification_result)
                             elif self.pushGluuMode:
                                 send_notification_result = self.pushAndroidService.sendNotification(self.buildNotifyAuthorizationHeader(), targetEndpointArn, push_message, self.gluu_android_platform_id)
-                                if debug:
+                                if self.debugMode:
                                     print "Super-Gluu. Send Android Gluu push notification. token: '%s', message: '%s', send_notification_result: '%s'" % (push_token, push_message, send_notification_result)
                         else:
                             msgBuilder = Message.Builder().addData("message", super_gluu_request).addData("title", title).collapseKey("single").contentAvailable(True)
                             push_message = msgBuilder.build()
     
                             send_notification_result = self.pushAndroidService.send(push_message, push_token, 3)
-                            if debug:
+                            if self.debugMode:
                                 print "Super-Gluu. Send Android Native push notification. token: '%s', message: '%s', send_notification_result: '%s'" % (push_token, push_message, send_notification_result)
                         send_android = send_android + 1
 
@@ -937,7 +938,7 @@ class PersonAuthentication(PersonAuthenticationType):
             targetEndpointArn = pushSnsService.createPlatformArn(pushClient, platformApplicationArn, pushToken, user)
         else:
             customUserData = pushSnsService.getCustomUserData(user)
-            if True:
+            if self.debugMode:
                 print "Super-Gluu. Get target endpoint ARN. Attempting to send register device request with user='%s', pushToken='%s', platformId='%s', customUserData='%s'" % (user.getUserId(), pushToken, platformId, customUserData) 
             registerDeviceResponse = pushClient.registerDevice(self.buildNotifyAuthorizationHeader(), pushToken, customUserData, platformId);
             if registerDeviceResponse != None and registerDeviceResponse.getStatusCode() == 200:
