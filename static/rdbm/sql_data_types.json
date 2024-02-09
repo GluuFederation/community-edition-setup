@@ -901,6 +901,29 @@
     },
     "pgsql": {
       "type": "TEXT"
+    },
+    "spanner": {
+      "type": "STRING(MAX)"
+    }
+  },
+  "gluuHostname": {
+    "mysql": {
+      "size": 255,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 255,
+      "type": "STRING"
+    }
+  },
+  "gluuSAMLspMetaDataURL": {
+    "mysql": {
+      "size": 255,
+      "type": "VARCHAR"
+    },
+    "spanner": {
+      "size": 255,
+      "type": "STRING"
     }
   },
   "gluuHostname": {

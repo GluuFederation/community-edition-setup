@@ -95,7 +95,7 @@ class CouchbaseInstaller(PackageUtils, BaseInstaller):
 
     def couchbaseInstall(self):
         coucbase_package = None
-
+        Config.start_oxauth_after = 'couchbase-server.service'
         cb_package_list = glob.glob(os.path.join(self.couchbasePackageFolder, 'couchbase-server-enterprise*'))
 
         if not cb_package_list:

@@ -1,0 +1,4 @@
+{
+  "keystore_path": "%(passwurd_api_keystore_fn)s",
+  "keystore_password": "%(passwurd_api_keystore_pass_enc)s"
+}

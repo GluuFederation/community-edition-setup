@@ -127,7 +127,6 @@ class PersonAuthentication(PersonAuthenticationType):
             print "Super-Gluu. Scan. Initialization. Property AS_CLIENT_SECRET is mandatory"
             return False
         self.AS_CLIENT_SECRET = configurationAttributes.get("AS_CLIENT_SECRET").getValue2()
-
         # SSA section
         if not configurationAttributes.containsKey("AS_ENDPOINT"):
             print "Super-Gluu. Scan. Initialization. Property AS_ENDPOINT is mandatory"

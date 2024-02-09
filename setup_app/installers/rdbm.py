@@ -99,10 +99,10 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                 if base.os_type == 'suse':
                     self.restart('mariadb')
                     self.enable('mariadb')
+                    Config.start_oxauth_after = 'mariadb.service'
                 elif base.clone_type == 'rpm':
                     self.restart('mysqld')
                     self.enable('mysqld')
-
             if Config.rdbm_type == 'mysql':
                 result, conn = self.dbUtils.mysqlconnection(log=False)
                 if not result:
@@ -271,6 +271,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                 tbl_name = attr['sql']['add_table']
                 self.add_attribute_to_table(tbl_name, attr)
 
+
     def add_attribute_to_table(self, tbl_name, attrib):
         col_def = self.get_col_def(attrib['names'][0], tbl_name)
         self.add_col_to_table(tbl_name, col_def)
@@ -315,6 +316,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                         col_def = '{0}{1}{0} {2}'.format(self.qchar, sattr, sdt)
                         self.add_col_to_table(subtbl_name, col_def)
 
+
     def get_index_name(self, attrname):
         return re.sub(r'[^0-9a-zA-Z\s]+','_', attrname)
 
@@ -345,11 +347,11 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                         sql_indexes['__common__']['fields'].append(attr_name)
 
         if Config.rdbm_type == 'spanner':
-            tables = self.dbUtils.spanner.get_tables()
+            tables = self.dbUtils.spanner_client.get_tables()
             for tblCls in tables:
                 tbl_fields = sql_indexes.get(tblCls, {}).get('fields', []) +  sql_indexes['__common__']['fields']
 
-                tbl_data = self.dbUtils.spanner.exec_sql('SELECT * FROM {} LIMIT 1'.format(tblCls))
+                tbl_data = self.dbUtils.spanner_client.exec_sql('SELECT * FROM {} LIMIT 1'.format(tblCls))
 
                 for attr in tbl_data.get('fields', []):
                     if attr['name'] == 'doc_id':
@@ -368,7 +370,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                                     tblCls,
                                     attr_name
                                 )
-                        self.dbUtils.spanner.create_table(sql_cmd)
+                        self.dbUtils.spanner_client.exec_sql(sql_cmd)
 
                 for i, custom_index in enumerate(sql_indexes.get(tblCls, {}).get('custom', [])):
                     sql_cmd = 'CREATE INDEX `{0}_CustomIdx{1}` ON {0} ({2})'.format(
@@ -376,11 +378,11 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                                     i+1, 
                                     custom_index
                                 )
-                    self.dbUtils.spanner.create_table(sql_cmd)
+                    self.dbUtils.spanner_client.exec_sql(sql_cmd)
 
                 if tblCls == 'gluuPerson':
                     uniq_index_cmd = 'CREATE UNIQUE NULL_FILTERED INDEX gluuPerson_unique_uuid ON gluuPerson (uid)'
-                    self.dbUtils.spanner.create_table(uniq_index_cmd)
+                    self.dbUtils.spanner_client.exec_sql(uniq_index_cmd)
 
         else:
             for tblCls in self.dbUtils.Base.classes.keys():
@@ -496,7 +498,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
             else:
                 auth_cred_target_fn = os.path.join(Config.configFolder, 'google_application_credentials.json')
                 shutil.copy(Config.google_application_credentials, auth_cred_target_fn)
-                Config.templateRenderingDict['spanner_creds'] = 'auth.credentials-file={}'.format(auth_cred_target_fn)
+                Config.templateRenderingDict['spanner_creds'] = 'connection.credentials-file={}'.format(auth_cred_target_fn)
 
             self.renderTemplateInOut(Config.gluuSpannerProperties, Config.templateFolder, Config.configFolder)
 

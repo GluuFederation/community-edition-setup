@@ -87,6 +87,7 @@ class Config:
         self.default_store_type = 'pkcs12'
         self.opendj_truststore_format = 'pkcs12'
         self.default_client_test_store_type = 'pkcs12'
+        self.start_oxauth_after = 'network.target'
 
         if self.profile == SetupProfiles.DISA_STIG:
             self.distFolder = '/var/gluu/dist'
