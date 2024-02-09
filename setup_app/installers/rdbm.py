@@ -6,6 +6,7 @@ import sqlalchemy
 import shutil
 
 from string import Template
+from collections import OrderedDict
 
 from setup_app import paths
 from setup_app.static import AppType, InstallOption
@@ -31,8 +32,12 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         self.output_dir = os.path.join(Config.outputFolder, Config.rdbm_type)
         self.common_lib_dir = os.path.join(Config.jetty_base, 'common/libs/spanner')
 
+
+    @property
+    def qchar(self):
+        return '`' if Config.rdbm_type in ('mysql', 'spanner') else '"'
+
     def prepare(self):
-        self.qchar = '`' if Config.rdbm_type in ('mysql', 'spanner') else '"'
         self.schema_files = []
         self.gluu_attributes = []
 
@@ -97,10 +102,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                     Config.start_oxauth_after = 'mariadb.service'
                 elif base.clone_type == 'rpm':
                     self.restart('mysqld')
-                    Config.start_oxauth_after = 'mysqld.service'
-                else:
-                    Config.start_oxauth_after = 'mysql.service'
-                    
+                    self.enable('mysqld')
             if Config.rdbm_type == 'mysql':
                 result, conn = self.dbUtils.mysqlconnection(log=False)
                 if not result:
@@ -115,11 +117,10 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
             elif Config.rdbm_type == 'pgsql':
                 if base.clone_type == 'rpm':
+                    self.fix_pgsql_unit_file()
                     self.run(['postgresql-setup', 'initdb'])
-                    Config.start_oxauth_after = 'postgresql.service'
                 elif base.clone_type == 'deb':
                     self.run([paths.cmd_chmod, '640', '/etc/ssl/private/ssl-cert-snakeoil.key'])
-                    Config.start_oxauth_after = 'postgresql.service'
 
                 self.enable('postgresql')
                 self.restart('postgresql')
@@ -128,8 +129,9 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                 cmd_create_db = '''su - postgres -c "psql -U postgres -d postgres -c \\"CREATE DATABASE {};\\""'''.format(Config.rdbm_db)
                 cmd_create_user = '''su - postgres -c "psql -U postgres -d postgres -c \\"CREATE USER {} WITH PASSWORD '{}';\\""'''.format(Config.rdbm_user, Config.rdbm_password)
                 cmd_grant_previlages = '''su - postgres -c "psql -U postgres -d postgres -c \\"GRANT ALL PRIVILEGES ON DATABASE {} TO {};\\""'''.format(Config.rdbm_db, Config.rdbm_user)
+                cmd_alter_db = f'''su - postgres -c "psql -U postgres -d postgres -c \\"ALTER DATABASE {Config.rdbm_db} OWNER TO {Config.rdbm_user};\\""'''
 
-                for cmd in (cmd_create_db, cmd_create_user, cmd_grant_previlages):
+                for cmd in (cmd_create_db, cmd_create_user, cmd_grant_previlages, cmd_alter_db):
                     self.run(cmd, shell=True)
 
                 if base.clone_type == 'rpm':
@@ -147,7 +149,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
     def get_sql_col_type(self, attrname, table=None):
 
         if attrname in self.dbUtils.sql_data_types:
-            type_ = self.dbUtils.sql_data_types[attrname].get(Config.rdbm_type) or self.dbUtils.sql_data_types[attrname]['mysql']
+            type_ = self.dbUtils.sql_data_types.get(f'{table}:{attrname}',{}).get(Config.rdbm_type) or self.dbUtils.sql_data_types.get(f'{table}:{attrname}',{}).get('mysql') or self.dbUtils.sql_data_types[attrname].get(Config.rdbm_type) or self.dbUtils.sql_data_types[attrname]['mysql']
             if table in type_.get('tables', {}):
                 type_ = type_['tables'][table]
             if 'size' in type_:
@@ -175,14 +177,12 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
         return data_type
 
-    def create_tables(self, schema_files):
-        self.logIt("Creating tables for {}".format(schema_files))
-        tables = []
-        all_schema = {}
-        all_attribs = {}
-        column_add = 'COLUMN ' if Config.rdbm_type == 'spanner' else ''
-        alter_table_sql_cmd = 'ALTER TABLE %s{}%s ADD %s{};' % (self.qchar, self.qchar, column_add)
+    def get_sql_tables(self, schema_files):
 
+        tables_dict = OrderedDict()
+        all_schema = {}
+        tables_dict['__allattribs__'] = {}
+        
         for schema_fn in schema_files:
             schema = base.readJsonFile(schema_fn)
             for obj in schema['objectClasses']:
@@ -190,7 +190,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                     obj['sql']['includeObjectClass'].append('eduPerson')
                 all_schema[obj['names'][0]] = obj
             for attr in schema['attributeTypes']:
-                all_attribs[attr['names'][0]] = attr
+                tables_dict['__allattribs__'][attr['names'][0]] = attr
 
         subtable_attrs = {}
         for stbl in self.dbUtils.sub_tables.get(Config.rdbm_type):
@@ -203,7 +203,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                 continue
 
             sql_tbl_name = obj['names'][0]
-            sql_tbl_cols = []
+            tables_dict[sql_tbl_name] = []
 
             attr_list = obj['may']
             if 'sql' in obj:
@@ -226,49 +226,95 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                     continue
 
                 cols_.append(attrname)
-                col_def = self.get_col_def(attrname, sql_tbl_name) 
-                sql_tbl_cols.append(col_def)
+                data_type = self.get_sql_col_type(attrname, sql_tbl_name)
+                tables_dict[sql_tbl_name].append((attrname, data_type))
 
-            if not self.dbUtils.table_exists(sql_tbl_name):
-                doc_id_type = self.get_sql_col_type('doc_id', sql_tbl_name)
-                uniq_col = ''
-                if Config.rdbm_type == 'pgsql':
-                    if sql_tbl_name == 'gluuPerson':
-                        uniq_col = ', UNIQUE (uid)'
-                    sql_cmd = 'CREATE TABLE "{}" (doc_id {} NOT NULL UNIQUE, "objectClass" VARCHAR(48), dn VARCHAR(128), {}, PRIMARY KEY (doc_id){});'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols), uniq_col)
-                elif Config.rdbm_type == 'spanner':
-                    sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL, `objectClass` STRING(48), dn STRING(128), {}) PRIMARY KEY (`doc_id`);'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols))
-                else:
-                    if sql_tbl_name == 'gluuPerson':
-                        uniq_col = ', UNIQUE(uid)'
-                    sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL UNIQUE, `objectClass` VARCHAR(48), dn VARCHAR(128), {}, PRIMARY KEY (`doc_id`){});'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols), uniq_col)
-                self.dbUtils.exec_rdbm_query(sql_cmd)
-                tables.append(sql_cmd)
+        return tables_dict
 
+    def quote_column(self, col):
+        if not col.startswith(self.qchar):
+            col = self.qchar + col + self.qchar
+        return col
+
+    def create_table(self, sql_tbl_name, sql_tbl_cols_list):
+
+        sql_tbl_cols = [f'{self.quote_column(col)} {dtype}' for col, dtype in sql_tbl_cols_list]
+
+        if not self.dbUtils.table_exists(sql_tbl_name):
+            doc_id_type = self.get_sql_col_type('doc_id', sql_tbl_name)
+            uniq_col = ''
+            if Config.rdbm_type == 'pgsql':
+                if sql_tbl_name == 'gluuPerson':
+                    uniq_col = ', UNIQUE (uid)'
+                sql_cmd = 'CREATE TABLE "{}" (doc_id {} NOT NULL UNIQUE, "objectClass" VARCHAR(48), "dn" VARCHAR(128), {}, PRIMARY KEY (doc_id){});'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols), uniq_col)
+            elif Config.rdbm_type == 'spanner':
+                sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL, `objectClass` STRING(48), dn STRING(128), {}) PRIMARY KEY (`doc_id`);'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols))
+            else:
+                if sql_tbl_name == 'gluuPerson':
+                    uniq_col = ', UNIQUE(uid)'
+                sql_cmd = 'CREATE TABLE `{}` (`doc_id` {} NOT NULL UNIQUE, `objectClass` VARCHAR(48), dn VARCHAR(128), {}, PRIMARY KEY (`doc_id`){});'.format(sql_tbl_name, doc_id_type, ', '.join(sql_tbl_cols), uniq_col)
+
+            self.dbUtils.exec_rdbm_query(sql_cmd)
+            self.appendLine(sql_cmd, os.path.join(self.output_dir, 'gluu_tables.sql'))
+
+
+    def get_columns_of_table(self, table_name):
+        tbl_cls = self.dbUtils.Base.classes[table_name]
+        cols = [ col_cls.name for col_cls in tbl_cls.__table__.columns ]
+        return cols
+
+    def add_missing_attributes(self, all_attribs):
 
         for attrname in all_attribs:
             attr = all_attribs[attrname]
             if attr.get('sql', {}).get('add_table'):
-                col_def = self.get_col_def(attrname, sql_tbl_name)
-                sql_cmd = alter_table_sql_cmd.format(attr['sql']['add_table'], col_def)
+                tbl_name = attr['sql']['add_table']
+                self.add_attribute_to_table(tbl_name, attr)
 
-                if Config.rdbm_type == 'spanner':
-                    self.dbUtils.spanner_client.exec_sql(sql_cmd.strip(';'))
-                else:
-                    self.dbUtils.exec_rdbm_query(sql_cmd)
-                tables.append(sql_cmd)
 
-        self.writeFile(os.path.join(self.output_dir, 'gluu_tables.sql'), '\n'.join(tables))
+    def add_attribute_to_table(self, tbl_name, attrib):
+        col_def = self.get_col_def(attrib['names'][0], tbl_name)
+        self.add_col_to_table(tbl_name, col_def)
+
+    def add_col_to_table(self, tbl_name, col_def):
+        self.logIt("Adding column {} to {}".format(col_def, tbl_name))
+
+        column_add = 'COLUMN ' if Config.rdbm_type == 'spanner' else ''
+        alter_table_sql_cmd = 'ALTER TABLE %s{}%s ADD %s{};' % (self.qchar, self.qchar, column_add)
+        sql_cmd = alter_table_sql_cmd.format(tbl_name, col_def)
+
+        if Config.rdbm_type == 'spanner':
+            req = self.dbUtils.spanner.create_table(sql_cmd.strip(';'))
+        else:
+            self.dbUtils.exec_rdbm_query(sql_cmd)
+
+        self.appendLine(sql_cmd, os.path.join(self.output_dir, 'gluu_tables.sql'))
+
+    def create_tables(self, schema_files):
+        self.logIt("Creating tables for {}".format(schema_files))
+        tables_dict = self.get_sql_tables(schema_files)
+        for tbl_name in tables_dict:
+            if tbl_name.startswith('__') and tbl_name.endswith('__'):
+                continue
+            self.create_table(tbl_name, tables_dict[tbl_name])
+
 
     def create_subtables(self):
 
         for subtable in self.dbUtils.sub_tables.get(Config.rdbm_type, {}):
             for sattr, sdt in self.dbUtils.sub_tables[Config.rdbm_type][subtable]:
-                subtable_columns = []
-                sql_cmd = 'CREATE TABLE `{0}_{1}` (`doc_id` STRING(64) NOT NULL, `dict_doc_id` STRING(64), `{1}` {2}) PRIMARY KEY (`doc_id`, `dict_doc_id`), INTERLEAVE IN PARENT `{0}` ON DELETE CASCADE'.format(subtable, sattr, sdt)
-                self.dbUtils.spanner_client.exec_sql(sql_cmd)
-                sql_cmd_index = 'CREATE INDEX `{0}_{1}Idx` ON `{0}_{1}` (`{1}`)'.format(subtable, sattr)
-                self.dbUtils.spanner_client.exec_sql(sql_cmd_index)
+                subtbl_name = '{0}_{1}'.format(subtable, sattr)
+                if not self.dbUtils.table_exists(subtbl_name):
+                    subtable_columns = []
+                    sql_cmd = 'CREATE TABLE `{0}_{1}` (`doc_id` STRING(64) NOT NULL, `dict_doc_id` STRING(64), `{1}` {2}) PRIMARY KEY (`doc_id`, `dict_doc_id`), INTERLEAVE IN PARENT `{0}` ON DELETE CASCADE'.format(subtable, sattr, sdt)
+                    self.dbUtils.spanner.create_table(sql_cmd)
+                    sql_cmd_index = 'CREATE INDEX `{0}_{1}Idx` ON `{0}_{1}` (`{1}`)'.format(subtable, sattr)
+                    self.dbUtils.spanner.create_table(sql_cmd_index)
+                else:
+                    subtable_cols = self.get_columns_of_table(subtbl_name)
+                    if sdt not in subtable_cols:
+                        col_def = '{0}{1}{0} {2}'.format(self.qchar, sattr, sdt)
+                        self.add_col_to_table(subtbl_name, col_def)
 
 
     def get_index_name(self, attrname):
@@ -456,6 +502,29 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
             self.renderTemplateInOut(Config.gluuSpannerProperties, Config.templateFolder, Config.configFolder)
 
+    def fix_pgsql_unit_file(self):
+        self.logIt("Fixing postgresql unit file")
+        pg_unit_file_fn = self.get_unit_file_location('postgresql')
+        unit_file_dict = self.parse_unit_file(pg_unit_file_fn)
+
+        for i, entry in  enumerate(unit_file_dict['Service']):
+            if entry[0] == 'TimeoutSec':
+                unit_file_dict['Service'][i][1] = '300'
+                break
+        else:
+            unit_file_dict['Service'].append(['TimeoutSec', '300'])
+
+        new_unit_file_list = []
+        for section in unit_file_dict:
+            new_unit_file_list.append(f'[{section}]')
+            for i, entry in  enumerate(unit_file_dict[section]):
+                new_unit_file_list.append('='.join(entry))
+            new_unit_file_list.append('')
+
+        unit_file_content = '\n'.join(new_unit_file_list)
+        self.writeFile(pg_unit_file_fn, unit_file_content, backup=False)
+
+        self.run([paths.cmd_systemctl, 'daemon-reload'])
 
     def extract_libs(self):
         lib_archive = os.path.join(Config.distGluuFolder, 'gluu-orm-spanner-libs-distribution.zip')

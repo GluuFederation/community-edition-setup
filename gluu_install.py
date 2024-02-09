@@ -20,6 +20,8 @@ from tempfile import TemporaryDirectory
 
 sys.path.append('/usr/lib/python{}.{}/gluu-packaged'.format(sys.version_info.major, sys.version_info.minor))
 
+sys.path.append('/usr/lib/python{}.{}/gluu-packaged'.format(sys.version_info.major, sys.version_info.minor))
+
 parser = argparse.ArgumentParser(description="This script downloads Gluu Server components and fires setup")
 parser.add_argument('-a', help=argparse.SUPPRESS, action='store_true')
 parser.add_argument('-u', help="Use downloaded components", action='store_true')
@@ -30,6 +32,7 @@ parser.add_argument('--keep-downloads', help="Keep downloaded files", action='st
 
 if '-a' in sys.argv:
     parser.add_argument('--jetty-version', help="Jetty verison. For example 11.0.6")
+    parser.add_argument('-k', help="Don't validate the server's certificate", action='store_true')
 
 if '-uninstall' not in sys.argv:
     parser.add_argument('-maven-user', help="Maven username", required=True)
@@ -39,10 +42,14 @@ parser.add_argument('-n', help="No prompt", action='store_true')
 parser.add_argument('--no-setup', help="Do not launch setup", action='store_true')
 parser.add_argument('--dist-server-base', help="Download server", default='https://maven.gluu.org/maven')
 parser.add_argument('-profile', help="Setup profile", choices=['CE', 'DISA-STIG'], default='CE')
-parser.add_argument('--setup-branch', help="Gluu CE setup github branch", default="master")
+parser.add_argument('--setup-branch', help="Gluu CE setup github branch", default="version_4.5.3")
 parser.add_argument('-c', help="Don't download files that exists on disk", action='store_true')
 
 argsp = parser.parse_args()
+
+if '-a' in sys.argv and argsp.k:
+    import ssl
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 maven_base = argsp.dist_server_base.rstrip('/')
 maven_root = '/'.join(maven_base.split('/')[:-1]).rstrip('/')
@@ -187,18 +194,18 @@ oxauth_war_fn = os.path.join(gluu_app_dir, 'oxauth.war')
 jetty_home = '/opt/gluu/jetty'
 services = ['casa.service', 'identity.service', 'opendj.service', 'oxauth.service', 'passport.service', 'fido2.service', 'idp.service', 'oxd-server.service', 'scim.service']
 app_versions = {
-    "JETTY_VERSION": "10.0.9",
-    "AMAZON_CORRETTO_VERSION": "11.0.14.10.1",
-    "OX_GITVERISON": "-SNAPSHOT",
-    "NODE_VERSION": "v14.19.1",
-    "OX_VERSION": "4.6.0",
-    "PASSPORT_VERSION": "master",
+    "JETTY_VERSION": "10.0.18",
+    "AMAZON_CORRETTO_VERSION": "11.0.21.9.1",
+    "OX_GITVERISON": ".Final",
+    "NODE_VERSION": "v16.16.0",
+    "OX_VERSION": "4.5.3", 
+    "PASSPORT_VERSION": "4.5.3",
     "JYTHON_VERSION": "2.7.3",
-    "OPENDJ_VERSION": "4.5.0",
+    "OPENDJ_VERSION": "4.5.2",
     "SETUP_BRANCH": argsp.setup_branch,
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7",
-    "APPS_GIT_BRANCH": "master",
+    "APPS_GIT_BRANCH": "version_4.5.3",
     }
 
 jetty_dist_string = 'jetty-distribution'

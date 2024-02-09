@@ -25,6 +25,10 @@ oxModuleProperty: {"value1":"location_type","value2":"ldap","description":""}
 oxScript::%(super_gluu_ro_script)s
 oxScriptType: resource_owner_password_credentials
 programmingLanguage: python
+oxConfigurationProperty: {"value1":"AS_ENDPOINT","value2":"https://account.gluu.org","hide":false,"description":""}
+oxConfigurationProperty: {"value1":"AS_SSA","value2":"","hide":false,"description":""}
+oxConfigurationProperty: {"value1":"AS_CLIENT_ID","value2":"","hide":false,"description":""}
+oxConfigurationProperty: {"value1":"AS_CLIENT_SECRET","value2":"","hide":false,"description":""}
 oxConfigurationProperty: {"value1":"credentials_file","value2":"/etc/certs/super_gluu_creds.json","description":""}
 oxConfigurationProperty: {"value1":"notification_service_mode", "value2":"gluu","hide":false,"description":""}
 oxConfigurationProperty: {"value1":"application_id", "value2":"https://%(hostname)s/identity/authcode.htm","hide":false,"description":""}
