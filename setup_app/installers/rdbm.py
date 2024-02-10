@@ -284,7 +284,7 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
         sql_cmd = alter_table_sql_cmd.format(tbl_name, col_def)
 
         if Config.rdbm_type == 'spanner':
-            req = self.dbUtils.spanner.create_table(sql_cmd.strip(';'))
+            req = self.dbUtils.exec_rdbm_query(sql_cmd.strip(';'))
         else:
             self.dbUtils.exec_rdbm_query(sql_cmd)
 
@@ -307,9 +307,9 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
                 if not self.dbUtils.table_exists(subtbl_name):
                     subtable_columns = []
                     sql_cmd = 'CREATE TABLE `{0}_{1}` (`doc_id` STRING(64) NOT NULL, `dict_doc_id` STRING(64), `{1}` {2}) PRIMARY KEY (`doc_id`, `dict_doc_id`), INTERLEAVE IN PARENT `{0}` ON DELETE CASCADE'.format(subtable, sattr, sdt)
-                    self.dbUtils.spanner.create_table(sql_cmd)
+                    self.dbUtils.exec_rdbm_query(sql_cmd)
                     sql_cmd_index = 'CREATE INDEX `{0}_{1}Idx` ON `{0}_{1}` (`{1}`)'.format(subtable, sattr)
-                    self.dbUtils.spanner.create_table(sql_cmd_index)
+                    self.dbUtils.exec_rdbm_query(sql_cmd_index)
                 else:
                     subtable_cols = self.get_columns_of_table(subtbl_name)
                     if sdt not in subtable_cols:
