@@ -89,9 +89,9 @@ class SetupUtils(Crypto64):
 
 
 
-    def appendLine(self, line, fileName=False):
-
-        self.backupFile(fileName)
+    def appendLine(self, line, fileName=False, backup=True):
+        if backup:
+            self.backupFile(fileName)
 
         try:
             with open(fileName, 'a') as w:
