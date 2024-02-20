@@ -247,6 +247,7 @@ class TestDataLoader(BaseInstaller, SetupUtils):
                                     'sessionIdRequestParameterEnabled': True,
                                     'skipRefreshTokenDuringRefreshing': False,
                                     'enabledComponents': ['unknown', 'health_check', 'userinfo', 'clientinfo', 'id_generation', 'registration', 'introspection', 'revoke_token', 'revoke_session', 'end_session', 'status_session', 'gluu_configuration', 'ciba', 'uma', 'u2f', 'device_authz', 'stat'],
+                                    'opPolicyUri':'https://test.as.org/policy',
                                     'cleanServiceInterval':7200
                                     }
 
