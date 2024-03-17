@@ -199,6 +199,16 @@ class PersonAuthentication(PersonAuthenticationType):
         print "Passport. prepareForStep called %s"  % str(step)
         identity = CdiUtil.bean(Identity)
 
+        faces_context = CdiUtil.bean(FacesContext)
+        request_parameters = faces_context.getExternalContext().getRequestParameterMap()
+
+        passport_strategy_failed = None
+        try:
+            passport_strategy_failed = request_parameters['failure']
+            print("Passport. failure return from passport: %s, Check Passport logs " % passport_strategy_failed)
+        except Exception as _:
+            pass
+
         if step == 1:
             #re-read the strategies config (for instance to know which strategies have enabled the email account linking)
             self.parseProviderConfigs()
@@ -240,6 +250,8 @@ class PersonAuthentication(PersonAuthenticationType):
                         print "Passport. prepareForStep. A provider value could not be extracted from custom authorization request parameter"
                     elif not provider in self.registeredProviders:
                         print "Passport. prepareForStep. Provider '%s' not part of known configured IDPs/OPs" % provider
+                    elif passport_strategy_failed != None:
+                        print("Passport. passport strategy failed : %s, Check Passport logs" % passport_strategy_failed)
                     else:
                         url = self.getPassportRedirectUrl(provider)
 
@@ -824,4 +836,3 @@ class PersonAuthentication(PersonAuthenticationType):
     def getLogoutExternalUrl(self, configurationAttributes, requestParameters):
         print "Get external logout URL call"
         return None
-    
