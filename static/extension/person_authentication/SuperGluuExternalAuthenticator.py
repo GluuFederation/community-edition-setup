@@ -1072,7 +1072,7 @@ class PersonAuthentication(PersonAuthenticationType):
         return authorizationHeader
 
     def getAccessTokenJansServer(self, asBaseUrl, asClientId, asClientSecret):
-        endpointUrl = asBaseUrl + "/oxauth/restv1/token"
+        endpointUrl = asBaseUrl + "/jans-auth/restv1/token"
 
         body = "grant_type=client_credentials&scope=https://api.gluu.org/auth/scopes/scan.supergluu"
 
@@ -1116,7 +1116,7 @@ class PersonAuthentication(PersonAuthenticationType):
                     'software_statement': asSSA}
         body = json.dumps(data_org)
 
-        endpointUrl = asBaseUrl + "/oxauth/restv1/register"
+        endpointUrl = asBaseUrl + "/jans-auth/restv1/register"
         headers = {"Accept" : "application/json"}
 
         try:
