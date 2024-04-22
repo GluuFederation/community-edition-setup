@@ -205,7 +205,7 @@ app_versions = {
     "SETUP_BRANCH": argsp.setup_branch,
     "TWILIO_VERSION": "7.17.0",
     "JSMPP_VERSION": "2.3.7",
-    "APPS_GIT_BRANCH": "master",
+    "APPS_GIT_BRANCH": "version_4.5.4",
     }
 
 jetty_dist_string = 'jetty-distribution'
