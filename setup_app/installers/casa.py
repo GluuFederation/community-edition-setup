@@ -69,13 +69,19 @@ class CasaInstaller(JettyInstaller):
 
             #Adding twilio jar path to oxauth.xml
             oxauth_xml_fn = os.path.join(self.jetty_base,  'oxauth/webapps/oxauth.xml')
-            
+
             extra_classpath_list = [
                         './custom/libs/{}'.format(os.path.basename(twillo_package)),
                         './custom/libs/{}'.format(os.path.basename(jsmpp_package)),
                         ]
 
             self.add_extra_class(','.join(extra_classpath_list), oxauth_xml_fn)
+
+        # copy is_oxauth_ready.py script
+        script_fn = 'is_oxauth_ready.py'
+        script_source_path = os.path.join(Config.staticFolder, 'scripts', script_fn)
+        self.copyFile(script_source_path, Config.gluuOptBinFolder)
+        self.run([paths.cmd_chmod, '+x', os.path.join(Config.gluuOptBinFolder, script_fn)])
 
         self.enable('casa')
 

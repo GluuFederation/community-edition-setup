@@ -4,6 +4,7 @@ After=oxauth.service
 
 [Service]
 Type=forking
+ExecStartPre=/opt/gluu/bin/is_oxauth_ready.py
 ExecStart=%(distFolder)s/scripts/casa start
 ExecStop=%(distFolder)s/scripts/casa stop
 User=%(service_user)s
