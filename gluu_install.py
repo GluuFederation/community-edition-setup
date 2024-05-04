@@ -413,8 +413,8 @@ if not argsp.u:
 
 shutil.copy(os.path.join(gluu_app_dir, 'facter'), '/usr/bin')
 os.chmod('/usr/bin/facter', 33261)
-
-os.makedirs(certs_dir)
+if not os.path.exists(certs_dir):
+    os.makedirs(certs_dir)
 shutil.copy(os.path.join(gluu_app_dir, 'casa.pub'), certs_dir)
 
 if argsp.upgrade:
