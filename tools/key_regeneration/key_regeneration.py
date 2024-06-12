@@ -456,7 +456,8 @@ class KeyRegenerator:
         run_command(['mv', '-f', self.tmp_keystore_fn, '/etc/certs'])
         run_command(['mv', '-f', self.keys_json_fn, self.data_dir])
         run_command(['rm', '-r', '-f', self.temp_dir])
-
+        run_command(['chown', 'root:gluu', self.keystore_fn])
+        run_command(['chmod', '0660', self.keystore_fn])
 
     def update_spanner(self):
         print("Updating Spanner db")
