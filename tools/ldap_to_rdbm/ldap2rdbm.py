@@ -20,14 +20,14 @@ if not result.lower().startswith('y'):
 
 
 parser = argparse.ArgumentParser(description="Gluu CE LDAP to RDBM migrator script")
-parser.add_argument('-remote-rdbm', choices=['mysql'], help="Enables using remote RDBM server", default='mysql')
+parser.add_argument('-rdbm-type', choices=['mysql', 'pgsql'], help="Enables using remote RDBM server", default='mysql')
 parser.add_argument('-rdbm-user', help="RDBM username",  required = True)
 parser.add_argument('-rdbm-password', help="RDBM password",  required = True)
 parser.add_argument('-rdbm-port', help="RDBM port", type=int)
 parser.add_argument('-rdbm-db', help="RDBM database",  required = True)
 parser.add_argument('-rdbm-host', help="RDBM host",  required = True)
 argsp = parser.parse_args()
-rdbm_config_params = ('rdbm_user', 'rdbm_password', 'rdbm_host', 'rdbm_db', 'rdbm_host', 'rdbm_port')
+rdbm_config_params = ('rdbm_type', 'rdbm_user', 'rdbm_password', 'rdbm_host', 'rdbm_db', 'rdbm_host', 'rdbm_port')
 argsp_dict = { a: getattr(argsp, a) for a in rdbm_config_params }
 sys.argv = [sys.argv[0]]
 
