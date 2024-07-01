@@ -16,6 +16,8 @@
         "metric":"ou=statistic,o=metric",
         "sectorIdentifiers": "ou=sector_identifiers,o=gluu",
         "ciba": "ou=ciba,o=gluu",
-        "stat": "ou=stat,o=gluu"
+        "stat": "ou=stat,o=gluu",
+        "fido2Attestation":"ou=fido2_register,ou=fido2,o=gluu",
+        "fido2Assertion":"ou=fido2_auth,ou=fido2,o=gluu"
     }
 }

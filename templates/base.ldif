@@ -142,6 +142,21 @@ objectClass: top
 objectClass: organizationalUnit
 ou: device
 
+dn: ou=fido2,o=gluu
+objectClass: top
+objectClass: organizationalUnit
+ou: fido2
+
+dn: ou=fido2_register,ou=fido2,o=gluu
+objectClass: top
+objectClass: organizationalUnit
+ou: fido2_register
+
+dn: ou=fido2_auth,ou=fido2,o=gluu
+objectClass: top
+objectClass: organizationalUnit
+ou: fido2_authenticate
+
 ################################
 
 # U2F data - LEVEL 2
