@@ -4250,6 +4250,17 @@
             "x_origin": "Gluu created attribute"
         },
         {
+            "desc": "oxPublicKeyIdHash",
+            "equality": "integerMatch",
+            "names": [
+                "oxPublicKeyIdHash"
+            ],
+            "oid": "oxAttribute",
+            "substr": "caseIgnoreSubstringsMatch",
+            "syntax": "1.3.6.1.4.1.1466.115.121.1.27",
+            "x_origin": "Gluu created attribute"
+        },
+        {
             "desc": "Lifetime of access token",
             "equality": "integerMatch",
             "names": [
@@ -5920,9 +5931,13 @@
                 "creationDate",
                 "oxSessionStateId",
                 "oxCodeChallenge",
+                "oxCodeChallengeHash",
                 "personInum",
                 "oxAuthenticationData",
-                "oxStatus"
+                "oxApplication",
+                "oxStatus",
+                "exp",
+                "del"
             ],
             "must": [
                 "objectclass"
@@ -5942,15 +5957,20 @@
                 "oxId",
                 "creationDate",
                 "displayName",
+                "oxApplication",
                 "oxSessionStateId",
                 "oxCodeChallenge",
                 "oxCodeChallengeHash",
                 "oxPublicKeyId",
+                "oxPublicKeyIdHash",
                 "personInum",
                 "oxRegistrationData",
+                "oxDeviceData",
                 "oxDeviceNotificationConf",
                 "oxCounter",
-                "oxStatus"
+                "oxStatus",
+                "exp",
+                "del"
             ],
             "must": [
                 "objectclass"
