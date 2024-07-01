@@ -32,7 +32,7 @@ Note!: Test this script on non-production server.
 
   `host    gluudb    gluu    0.0.0.0/0    md5`
 
-  To crate database, user and adjust previleges, connect to postgresql server bu command
+  To crate database, user and adjust previleges, connect to postgresql server by command
   `sudo su - postgres -c 'psql'`
 
   Execute the following sql commands:

@@ -50,9 +50,7 @@ from setup_app.utils.ldif_utils import myLdifParser
 from setup_app.installers.opendj import OpenDjInstaller
 from setup_app.installers.rdbm import RDBMInstaller
 from setup_app.pylib.ldif4.ldif import LDIFWriter
-
-
-
+from ldap3.utils import dn as dnutils
 
 Config.init(paths.INSTALL_DIR)
 Config.determine_version()
@@ -74,27 +72,60 @@ from ldap.schema.models import AttributeType, ObjectClass
 
 gluuInstaller.createLdapPw()
 
-current_ldif_fn = os.path.join(Config.outputFolder, 'current_data.ldif')
+out_dir = os.path.join(Config.outputFolder, 'ldap_dump')
+if not os.path.exists(out_dir):
+    os.mkdir(out_dir)
+static_ldif_fn = os.path.join(out_dir, 'statistic_data.ldif')
+current_ldif_fn = os.path.join(out_dir, 'current_data.ldif')
 
-print("Dumping all database from LDAP to {}. This may take a while...".format(current_ldif_fn))
+def dump_ldap(ldap_filter, output_fn):
+    print(f"Dumping data from LDAP with filter {ldap_filter} to {output_fn}. This may take a while...")
 
-gluuInstaller.run(' '.join([
-                        '/opt/opendj/bin/ldapsearch',
-                        '-X', '-Z', '-D',
-                        '"{}"'.format(Config.ldap_binddn),
-                        '-j',
-                        Config.ldapPassFn,
-                        '-h',
-                        Config.ldap_hostname,
-                        '-p',
-                        '1636',
-                        '-b',
-                        'o=gluu',
-                        'ObjectClass=*',
-                        '>',
-                        current_ldif_fn]), shell=True)
+
+    gluuInstaller.run(' '.join([
+                            '/opt/opendj/bin/ldapsearch',
+                            '-X', '-Z', '-D',
+                            '"{}"'.format(Config.ldap_binddn),
+                            '-j',
+                            Config.ldapPassFn,
+                            '-h',
+                            Config.ldap_hostname,
+                            '-p',
+                            '1636',
+                            '-b',
+                            'o=gluu',
+                            ldap_filter,
+                            '>',
+                            output_fn]), shell=True)
+
+print("Dumping data from LDAP Server")
+
+dump_ldap("'(objectClass=jansStatEntry)'", static_ldif_fn)
+dump_ldap("'(&(objectClass=*)(!(objectClass=jansStatEntry)))'", current_ldif_fn)
 
 gluuInstaller.deleteLdapPw()
+
+print("Migrating Statistic Data")
+
+stat_ldif_parser = myLdifParser(static_ldif_fn)
+stat_ldif_parser.parse()
+
+migrated_static_ldif_fn = static_ldif_fn + '.migrated'
+with open(migrated_static_ldif_fn, 'wb') as w:
+    stat_ldif_writer = LDIFWriter(w, cols=10000)
+
+    for dn, entry in stat_ldif_parser.entries:
+        rd_list = dnutils.parse_dn(dn)
+        stat_ou = rd_list[1][1]
+        if not rd_list[0][1].endswith(f'_{stat_ou}'):
+            jans_id = rd_list[0][1] + '_' + stat_ou
+            rd_list[0] = (rd_list[0][0], jans_id, rd_list[0][2])
+            entry['jansId'] = [jans_id]
+            dn = ','.join(['='.join([dne[0], dne[1]])  for dne in rd_list])
+
+        stat_ldif_writer.unparse(dn, entry)
+
+static_ldif_fn = migrated_static_ldif_fn
 
 print("Preparing custom schema from attributes")
 schema = {'attributeTypes':[], 'objectClasses':[]}
@@ -187,8 +218,10 @@ with open(current_ldif_tmp_fn, 'wb') as w:
 os.rename(current_ldif_tmp_fn, current_ldif_fn)
 
 
-print("Importing data into RDBM from {}. This may take a while ...".format(current_ldif_fn))
-rdbmInstaller.dbUtils.import_ldif([current_ldif_fn])
+for ldif_fn in (current_ldif_fn, static_ldif_fn):
+    print("Importing data into RDBM from {}. This may take a while ...".format(ldif_fn))
+    rdbmInstaller.dbUtils.import_ldif([ldif_fn])
+
 print("Creating indexes...")
 rdbmInstaller.create_indexes()
 
