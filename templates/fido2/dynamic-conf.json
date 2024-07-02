@@ -15,6 +15,10 @@
       "gluuCustomPerson",
       "gluuPerson"
    ],
+   "superGluuEnabled": false,
+   "sessionIdPersistInCache": false,
+   "oldU2fMigrationEnabled": true,
+   "errorReasonEnabled": false,
    "fido2Configuration":{
       "authenticatorCertsFolder":"%(fido2ConfigFolder)s/authenticator_cert",
       "mdsCertsFolder":"%(fido2ConfigFolder)s/mds/cert",
@@ -34,6 +38,10 @@
       ],
       "userAutoEnrollment":false,
       "unfinishedRequestExpiration":180,
-      "authenticationHistoryExpiration":1296000
+      "authenticationHistoryExpiration":1296000,
+      "metadataUrlsProvider":"",
+      "skipDownloadMdsEnabled":false,
+      "skipValidateMdsInAttestationEnabled":false,
+      "assertionOptionsGenerateEndpointEnabled":true
    }
 }
