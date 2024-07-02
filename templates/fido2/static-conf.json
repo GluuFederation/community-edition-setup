@@ -3,7 +3,10 @@
         "configuration":"ou=configuration,o=gluu",
         "people":"ou=people,o=gluu",
         "scripts": "ou=scripts,o=gluu",
-        "metric":"ou=statistic,o=metric",
-        "sessions":"ou=sessions,o=gluu"
+        "attributes":"ou=attributes,o=jans",
+        "sessions":"ou=sessions,o=gluu",
+        "fido2Attestation":"ou=fido2_register,ou=fido2,o=gluu",
+        "fido2Assertion":"ou=fido2_auth,ou=fido2,o=gluu",
+        "metric":"ou=statistic,o=metric"
     }
 }
