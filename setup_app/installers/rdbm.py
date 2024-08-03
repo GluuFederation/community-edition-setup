@@ -426,11 +426,13 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
 
                     elif attr.name in tbl_fields:
                         if Config.rdbm_type == 'mysql':
-                            sql_cmd = 'ALTER TABLE {0}.{1} ADD INDEX `{1}_{2}` (`{3}`);'.format(
+                            idx_key_length = '(768)' if str(attr.type) == 'TEXT' else ''
+                            sql_cmd = 'ALTER TABLE {0}.{1} ADD INDEX `{1}_{2}` (`{3}`{4});'.format(
                                         Config.rdbm_db,
                                         tblCls,
                                         ind_name,
-                                        attr.name
+                                        attr.name,
+                                        idx_key_length
                                     )
                             self.dbUtils.exec_rdbm_query(sql_cmd)
                         elif Config.rdbm_type == 'pgsql':
