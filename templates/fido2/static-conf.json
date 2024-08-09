@@ -3,7 +3,7 @@
         "configuration":"ou=configuration,o=gluu",
         "people":"ou=people,o=gluu",
         "scripts": "ou=scripts,o=gluu",
-        "attributes":"ou=attributes,o=jans",
+        "attributes":"ou=attributes,o=gluu",
         "sessions":"ou=sessions,o=gluu",
         "fido2Attestation":"ou=fido2_register,ou=fido2,o=gluu",
         "fido2Assertion":"ou=fido2_auth,ou=fido2,o=gluu",
