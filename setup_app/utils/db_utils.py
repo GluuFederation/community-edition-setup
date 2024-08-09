@@ -411,7 +411,7 @@ class DBUtils(SetupUtils):
             self.cbm.exec_query(n1ql)
 
 
-    def dn_exists(self, dn):
+    def dn_exists(self, dn, check_only=False):
         mapping_location = self.get_backend_location_for_dn(dn)
 
         if mapping_location in (BackendTypes.MYSQL, BackendTypes.PGSQL):
@@ -429,6 +429,8 @@ class DBUtils(SetupUtils):
         elif mapping_location == BackendTypes.LDAP:
             base.logIt("Querying LDAP for dn {}".format(dn))
             result = self.ldap_conn.search(search_base=dn, search_filter='(objectClass=*)', search_scope=ldap3.BASE, attributes=['*'])
+            if check_only:
+                return result
             if result:
                 key_doc = ldif_utils.get_document_from_entry(self.ldap_conn.response[0]['dn'], self.ldap_conn.response[0]['attributes'])
                 if key_doc:
