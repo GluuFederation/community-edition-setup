@@ -199,7 +199,7 @@ app_versions = {
     "OX_GITVERISON": "-SNAPSHOT",
     "NODE_VERSION": "v16.16.0",
     "OX_VERSION": "4.5.6", 
-    "PASSPORT_VERSION": "4.5.3",
+    "PASSPORT_VERSION": "4.5.6",
     "JYTHON_VERSION": "2.7.3",
     "OPENDJ_VERSION": "4.5.3",
     "SETUP_BRANCH": argsp.setup_branch,
