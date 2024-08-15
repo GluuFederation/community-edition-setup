@@ -1,6 +1,6 @@
 [Unit]
 Description=Casa service
-After=oxauth.service
+After=oxd-server.service
 
 [Service]
 Type=forking

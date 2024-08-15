@@ -1,6 +1,6 @@
 [Unit]
 Description=oxd-server daemon
-After=network.target
+After=oxauth.service
 
 [Service]
 Type=forking
