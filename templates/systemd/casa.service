@@ -1,6 +1,7 @@
 [Unit]
 Description=Casa service
 After=oxd-server.service
+Requires=oxd-server.service
 
 [Service]
 Type=forking
@@ -8,7 +9,8 @@ ExecStart=%(distFolder)s/scripts/casa start
 ExecStop=%(distFolder)s/scripts/casa stop
 User=%(service_user)s
 Group=gluu
-TimeoutSec=300
+TimeoutSec=450
+ExecStartPre=/usr/bin/sleep 210
 
 [Install]
 WantedBy=multi-user.target
