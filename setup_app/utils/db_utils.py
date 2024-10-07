@@ -1010,9 +1010,9 @@ class DBUtils(SetupUtils):
 
                         sqlalchCls = self.Base.classes[table_name]
 
-                        for col in sqlalchCls.__table__.columns:
-                            if isinstance(col.type, self.json_dialects_instance) and col.name not in vals:
-                                vals[col.name] = {'v': []} if Config.rdbm_type == 'mysql' else []
+                        #for col in sqlalchCls.__table__.columns:
+                        #    if isinstance(col.type, self.json_dialects_instance) and col.name not in vals:
+                        #        vals[col.name] = {'v': []} if Config.rdbm_type == 'mysql' else []
 
                         sqlalchObj = sqlalchCls()
 

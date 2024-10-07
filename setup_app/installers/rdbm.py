@@ -56,8 +56,11 @@ class RDBMInstaller(BaseInstaller, SetupUtils):
             self.gluu_attributes += schema_.get('attributeTypes', [])
 
 
+    @property
+    def output_dir(self):
+        return os.path.join(Config.outputFolder, Config.rdbm_type)
+
     def install(self):
-        self.output_dir = os.path.join(Config.outputFolder, Config.rdbm_type)
         if not os.path.exists(self.output_dir):
             self.createDirs(self.output_dir)
 
