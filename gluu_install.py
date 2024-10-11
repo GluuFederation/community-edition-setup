@@ -195,7 +195,7 @@ jetty_home = '/opt/gluu/jetty'
 services = ['casa.service', 'identity.service', 'opendj.service', 'oxauth.service', 'passport.service', 'fido2.service', 'idp.service', 'oxd-server.service', 'scim.service']
 app_versions = {
     "JETTY_VERSION": "10.0.18",
-    "AMAZON_CORRETTO_VERSION": "11.0.21.9.1",
+    "AMAZON_CORRETTO_VERSION": "11.0.24.8.1",
     "OX_GITVERISON": "-SNAPSHOT",
     "NODE_VERSION": "v16.16.0",
     "OX_VERSION": "4.5.6", 
