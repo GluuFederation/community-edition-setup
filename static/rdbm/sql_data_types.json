@@ -18,10 +18,11 @@
   },
   "gluuAttribute:description": {
     "mysql": {
-      "type": "TEXT"
+      "size": 1024,
+      "type": "VARCHAR"
     },
     "pgsql": {
-      "size": 768,
+      "size": 1024,
       "type": "VARCHAR"
     }
   },
